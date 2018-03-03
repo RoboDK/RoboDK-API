@@ -14,6 +14,9 @@ Just include the robodk_api.h and robodk_api.cpp files to your project.
 
 C++ Example
 ------------
+
+The Mat class represents a 4x4 matrix (pose) and it is a subclass of QMatrix4x4
+
 ```cpp
 #include "robodk_api.h"
 
@@ -32,7 +35,7 @@ void RoboDK_Start(){
     Item *ROBOT = new Item(RDK->getItem("Motoman SV3"));
 }
 
-/// Delete RDK and ROBOT items
+/// Delete RDK and ROBOT objects
 void RoboDK_Finish(){
     delete RDK;
     delete ROBOT;
