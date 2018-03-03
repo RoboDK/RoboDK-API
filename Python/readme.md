@@ -2,9 +2,7 @@
 RoboDK API for Python
 ======================
 
-RoboDK-Python on PyPi
-------------
-Full package description
+Full package description on PyPi
 https://pypi.python.org/pypi/robodk/
 
 Read the [RoboDK API description](../README.md) for more information
@@ -16,7 +14,7 @@ Requirements
 
 How to install
 ------------
-RoboDK automatically uses the PYTHONPATH pointing to the /RoboDK/Python/ folder to use the robodk.py and robolink.py modules.
+RoboDK automatically uses the PYTHONPATH environment variable pointing to the /RoboDK/Python/ folder to use the robodk.py and robolink.py modules.
 
 Alternatively, you can also install the RoboDK package for Python:
 Type:
@@ -25,7 +23,7 @@ Type:
   pip install robodk
 ```
 
-Example
+Python Example
 ------------
 ```python
 from robolink import *    # RoboDK's API
