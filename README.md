@@ -25,8 +25,8 @@ The following website provides an overview of the RoboDK API:
 https://robodk.com/offline-programming
 
 RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place...
- * Examples: https://robodk.com/examples
- * Blog: https://robodk.com/blog
+ * [Industrial Robot application examples](https://robodk.com/examples)
+ * [RoboDK Blog](https://robodk.com/blog)
 
 Requirements
 ============
@@ -39,12 +39,9 @@ The RoboDK API can be used with a free RoboDK license.
 Documentation
 =============
 
- * Introduction to the RoboDK API:
-   https://robodk.com/doc/en/RoboDK-API.html#PythonAPI
- * RoboDK API reference (based on Python):
-   https://robodk.com/doc/en/PythonAPI/index.html
- * Introduction to RoboDK for robot simulation and offline programming:
-   https://robodk.com/offline-programming
+ * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
+ * [RoboDK API reference (based on Python)](https://robodk.com/doc/en/PythonAPI/index.html)
+ * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
 
 
 Example
@@ -92,9 +89,9 @@ The following script (Python) shows an example that uses the RoboDK API for robo
 The same script used for simulation can be used for offline programming, this means that the corresponding program can be generated for the robot controller. RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
 
 For more information about robot post processors:
- * https://robodk.com/help#PostProcessor
- * https://robodk.com/doc/en/Post-Processors.html
- * https://robodk.com/doc/en/PythonAPI/postprocessor.html
+ * [Quick introduction to RoboDK post processors](https://robodk.com/help#PostProcessor)
+ * [How to use Post Processors](https://robodk.com/doc/en/Post-Processors.html)
+ * [Technical Documentation](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
 For more Examples:
  * https://robodk.com/doc/en/PythonAPI/examples.html
@@ -108,7 +105,8 @@ The following list includes the robot controllers supported by RoboDK:
  * ABB RAPID S4C: for ABB S4C robot controllers
  * Adept Vplus: for Adept V+ programming language
  * Allen Bradley Logix5000: for Allen Bradley Logix5000 PCL
- * Comau C5G: for Comau C5G robot controllers.
+ * CLOOS: for cloos robot controllers
+ * Comau C5G: for Comau C5G robot controllers
  * Denso PAC: for Denso RC7 (and older) robot controllers (PAC programming language)
  * Denso RC8: for Denso RC8 (and newer) robot controllers (PacScript programming language)
  * Dobot: for educational Dobot robots
