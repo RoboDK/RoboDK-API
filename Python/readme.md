@@ -10,14 +10,25 @@ Requirements
 - [Python](https://www.python.org/downloads/) (Python 2 and Python 3 supported)
 - [RoboDK](https://robodk.com/download)
 
+Mac and Linux usually have Python 2 installed by default.
+
 How to install
 ------------
 RoboDK automatically uses the PYTHONPATH environment variable pointing to the /RoboDK/Python/ folder to use the robodk.py and robolink.py modules.
 
 Alternatively, you can also install the RoboDK package for Python:
 ```
-  # cd path-to-python/Scripts
-  pip install robodk
+# cd path-to-python/Scripts
+pip install robodk
+```
+
+The Python interpreter and editor used by RoboDK can be set in:
+ - Tools-Options-Other
+
+Note: although it is not required, on Linux, Python 3 can be installed by typing:
+```
+sudo apt-get install pip3
+sudo apt-get install idle3
 ```
 
 Python Example
