@@ -29,7 +29,7 @@ RoboDK can be used for a wide range of applications, such as 3D printing, robot 
  * [RoboDK Blog](https://robodk.com/blog)
 
 Requirements
-============
+-------------
 
 RoboDK must be installed:
  * RoboDK Simulation Software: https://robodk.com/download
@@ -37,7 +37,7 @@ RoboDK must be installed:
 The RoboDK API can be used with a free RoboDK license.
 
 Documentation
-=============
+-------------
 
  * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
  * [RoboDK API reference (based on Python)](https://robodk.com/doc/en/PythonAPI/index.html)
@@ -45,7 +45,7 @@ Documentation
 
 
 Example
-=======
+-------------
 
 The following script (Python) shows an example that uses the RoboDK API for robot simulation and offline programming::
 ```python
@@ -97,7 +97,7 @@ For more information about robot post processors:
  * [Technical Reference](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
 Supported robots
-================
+-------------
 
 The following list includes the robot controllers supported by RoboDK:
  * ABB RAPID IRC5: for ABB IRC5 robot controllers

@@ -1,0 +1,1313 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+RoboDK_API_VB
+</name>
+</assembly>
+<members>
+<member name="M:RoboDK.FormRoboDK_API.FormRobot_FormClosed(System.Object,System.Windows.Forms.FormClosedEventArgs)">
+	<summary>
+ Stop running RoboDK when the Form is closed
+ </summary>
+	<param name="sender"></param>
+	<param name="e"></param>
+</member><member name="M:RoboDK.FormRoboDK_API.Check_RDK">
+	<summary>
+ Check if the RDK object is ready.
+ Returns True if the RoboDK API is available or False if the RoboDK API is not available.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.FormRoboDK_API.btnLoadFile_Click(System.Object,System.EventArgs)">
+	<summary>
+ Update the ROBOT variable by choosing the robot available in the currently open station
+ If more than one robot is available, a popup will be displayed
+ </summary>
+	<param name="sender"></param>
+	<param name="e"></param>
+</member><member name="M:RoboDK.FormRoboDK_API.SelectRobot">
+	<summary>
+ Update the ROBOT variable by choosing the robot available in the currently open station
+ If more than one robot is available, a popup will be displayed
+ </summary>
+</member><member name="M:RoboDK.FormRoboDK_API.Check_ROBOT">
+	<summary>
+ Check if the ROBOT object is available and valid. It will make sure that we can operate with the ROBOT object.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.FormRoboDK_API.CloseAllStations">
+	<summary>
+ Close all the stations available in RoboDK (top level items)
+ </summary>
+</member><member name="M:RoboDK.FormRoboDK_API.String_2_Values(System.String)">
+	<summary>
+ Convert a list of numbers provided as a string to an array of values
+ </summary>
+	<param name="strvalues"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.FormRoboDK_API.Values_2_String(System.Double[])">
+	<summary>
+ Convert an array of values as a string
+ </summary>
+	<param name="dvalues"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.FormRoboDK_API.rad_RunMode_Simulation_CheckedChanged(System.Object,System.EventArgs)">
+////// 1- Simulation (default): RUNMODE_SIMULATE
+////// 2- Offline programming (default): RUNMODE_MAKE_ROBOTPROG
+////// 3- Online programming: RUNMODE_RUN_ROBOT. It moves the real robot
+
+</member><member name="M:RoboDK.FormRoboDK_API.btnRun_Program_Click(System.Object,System.EventArgs)">
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+/////////// Example to run a program //////////////
+
+</member><member name="M:RoboDK.FormRoboDK_API.UnHook(System.Windows.Forms.Panel)">
+	<summary>
+ Unset the Robodk Window to the application and moves it to same screen location (to keep same layout)
+ Solves RoboDK hanging when internal MessageBoxes are displayed by RoboDK (loading NC file / generating program)
+ </summary>
+	<remarks></remarks>
+</member><member name="M:RoboDK.FormRoboDK_API.ReHook(System.Windows.Forms.Panel)">
+	<summary>
+ Sets the Robodk Window to the dedicated panel of the application
+ Solves RoboDK hanging when internal MessageBoxes are displayed by RoboDK (loading NC file / generating program)
+ </summary>
+	<remarks></remarks>
+</member><member name="M:RoboDK.FormRoboDK_API.Incremental_Move(System.String)">
+	<summary>
+ Move the the robot relative to the TCP
+ </summary>
+	<param name="button_name"></param>
+</member><member name="M:RoboDK.Mat.#ctor(System.Int32,System.Int32)">
+	<summary>
+ Matrix class constructor for any size matrix
+ </summary>
+	<param name="Rows__1">dimension 1 size (rows)</param>
+	<param name="Cols__2">dimension 2 size (columns)</param>
+</member><member name="M:RoboDK.Mat.#ctor(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+	<summary>
+ Matrix class constructor for a 4x4 homogeneous matrix
+ </summary>
+	<param name="nx">Position [0,0]</param>
+	<param name="ox">Position [0,1]</param>
+	<param name="ax">Position [0,2]</param>
+	<param name="tx">Position [0,3]</param>
+	<param name="ny">Position [1,0]</param>
+	<param name="oy">Position [1,1]</param>
+	<param name="ay">Position [1,2]</param>
+	<param name="ty">Position [1,3]</param>
+	<param name="nz">Position [2,0]</param>
+	<param name="oz">Position [2,1]</param>
+	<param name="az">Position [2,2]</param>
+	<param name="tz">Position [2,3]</param>
+</member><member name="M:RoboDK.Mat.#ctor(RoboDK.Mat)">
+	<summary>
+ Matrix class constructor for a 4x4 homogeneous matrix as a copy from another matrix
+ </summary>
+</member><member name="M:RoboDK.Mat.#ctor(System.Double,System.Double,System.Double)">
+	<summary>
+ Matrix class constructor for a 4x1 vector [x,y,z,1]
+ </summary>
+	<param name="x">x coordinate</param>
+	<param name="y">y coordinate</param>
+	<param name="z">z coordinate</param>
+</member><member name="M:RoboDK.Mat.transl(System.Double,System.Double,System.Double)">
+	<summary>
+ Return a translation matrix
+                 |  1   0   0   X |
+ transl(X,Y,Z) = |  0   1   0   Y |
+                 |  0   0   1   Z |
+                 |  0   0   0   1 |
+ </summary>
+	<param name="x">translation along X (mm)</param>
+	<param name="y">translation along Y (mm)</param>
+	<param name="z">translation along Z (mm)</param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.rotx(System.Double)">
+	<summary>
+ Return a X-axis rotation matrix
+            |  1  0        0        0 |
+ rotx(rx) = |  0  cos(rx) -sin(rx)  0 |
+            |  0  sin(rx)  cos(rx)  0 |
+            |  0  0        0        1 |
+ </summary>
+	<param name="rx">rotation around X axis (in radians)</param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.roty(System.Double)">
+	<summary>
+ Return a Y-axis rotation matrix
+            |  cos(ry)  0   sin(ry)  0 |
+ roty(ry) = |  0        1   0        0 |
+            | -sin(ry)  0   cos(ry)  0 |
+            |  0        0   0        1 |
+ </summary>
+	<param name="ry">rotation around Y axis (in radians)</param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.rotz(System.Double)">
+	<summary>
+ Return a Z-axis rotation matrix
+            |  cos(rz)  -sin(rz)   0   0 |
+ rotz(rx) = |  sin(rz)   cos(rz)   0   0 |
+            |  0         0         1   0 |
+            |  0         0         0   1 |
+ </summary>
+	<param name="rz">rotation around Z axis (in radians)</param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.ToXYZRPW">
+	<summary>
+ Calculates the equivalent position and euler angles ([x,y,z,r,p,w] vector) of the given pose 
+ Note: transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
+ See also: FromXYZRPW()
+ </summary>
+	<returns>XYZWPR translation and rotation in mm and degrees</returns>
+</member><member name="M:RoboDK.Mat.FromXYZRPW(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+	<summary>
+ Calculates the pose from the position and euler angles ([x,y,z,r,p,w] vector)
+ The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
+ </summary>
+	<param name="x"></param>
+	<param name="y"></param>
+	<param name="z"></param>
+	<param name="w"></param>
+	<param name="p"></param>
+	<param name="r"></param>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.FromXYZRPW(System.Double[])">
+	<summary>
+ Calculates the pose from the position and euler angles ([x,y,z,r,p,w] vector)
+  The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
+ </summary>
+	<param name="xyzwpr"></param>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.FromTxyzRxyz(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+	<summary>
+ Calculates the pose from the position and euler angles ([x,y,z,rx,ry,rz] array)
+ The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+ </summary>
+	<param name="x"></param>
+	<param name="y"></param>
+	<param name="z"></param>
+	<param name="rx"></param>
+	<param name="ry"></param>
+	<param name="rz"></param>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.FromTxyzRxyz(System.Double[])">
+	<summary>
+ Calculates the pose from the position and euler angles ([x,y,z,rx,ry,rz] array)
+ The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+ </summary>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.ToTxyzRxyz">
+	<summary>
+ Calculates the equivalent position and euler angles ([x,y,z,rx,ry,rz] array) of a pose 
+ Note: Pose = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+ See also: FromTxyzRxyz()
+ </summary>
+	<returns>XYZWPR translation and rotation in mm and degrees</returns>
+</member><member name="M:RoboDK.Mat.ToStaubli">
+	<summary>
+ Converts a pose (4x4 matrix) to a Staubli XYZWPR target
+ </summary>
+	<returns>XYZWPR translation and rotation in mm and degrees</returns>
+</member><member name="M:RoboDK.Mat.PoseToQuaternion(RoboDK.Mat)">
+	<summary>
+ Returns the quaternion of a pose (4x4 matrix)
+ </summary>
+	<param name="Ti"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.QuaternionToPose(System.Double[])">
+	<summary>
+ Returns the pose (4x4 matrix) from quaternion data
+ </summary>
+	<param name="qin"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.PoseToABB(RoboDK.Mat)">
+	<summary>
+ Converts a pose to an ABB target
+ </summary>
+	<param name="H"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.PoseToUR">
+	<summary>
+ Calculates the equivalent position and euler angles ([x,y,z,r,p,w] vector) of the given pose in Universal Robots format
+ Note: The difference between ToUR and ToXYZWPR is that the first one uses radians for the orientation and the second one uses degres
+ Note: transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+ See also: FromXYZRPW()
+ </summary>
+	<returns>XYZWPR translation and rotation in mm and radians</returns>
+</member><member name="M:RoboDK.Mat.URToPose(System.Double[])">
+	<summary>
+ Calculates the pose from the position and euler angles ([x,y,z,r,p,w] vector)
+ Note: The difference between FromUR and FromXYZWPR is that the first one uses radians for the orientation and the second one uses degres
+ The result is the same as calling: H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz)
+ </summary>
+	<param name="xyzwpr">The position and euler angles array</param>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.ToDoubles">
+	<summary>
+ Converts a matrix into a one-dimensional array of doubles
+ </summary>
+	<returns>one-dimensional array</returns>
+</member><member name="M:RoboDK.Mat.IsSquare">
+	<summary>
+ Check if the matrix is square
+ </summary>
+</member><member name="M:RoboDK.Mat.IsHomogeneous">
+	<summary>
+ Check if the matrix is homogeneous (4x4)
+ </summary>
+</member><member name="M:RoboDK.Mat.inv">
+	<summary>
+ Returns the inverse of a homogeneous matrix (4x4 matrix)
+ </summary>
+	<returns>Homogeneous matrix (4x4)</returns>
+</member><member name="M:RoboDK.Mat.rotate(RoboDK.Mat,RoboDK.Mat)">
+	<summary>
+ Rotate a vector given a matrix (rotation matrix or homogeneous matrix)
+ </summary>
+	<param name="pose">4x4 homogeneous matrix or 3x3 rotation matrix</param>
+	<param name="vector">4x1 or 3x1 vector</param>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.Pos">
+	<summary>
+ Returns the XYZ position of the Homogeneous matrix
+ </summary>
+	<returns>XYZ position</returns>
+</member><member name="M:RoboDK.Mat.setPos(System.Double[])">
+	<summary>
+ Sets the 4x4 position of the Homogeneous matrix
+ </summary>
+	<param name="xyz">XYZ position</param>
+</member><member name="M:RoboDK.Mat.setPos(System.Double,System.Double,System.Double)">
+	<summary>
+ Sets the 4x4 position of the Homogeneous matrix
+ </summary>
+	<param name="x">X position</param>
+	<param name="y">Y position</param>
+	<param name="z">Z position</param>
+</member><member name="M:RoboDK.Mat.Identity4x4">
+	<summary>
+ Returns an identity 4x4 matrix (homogeneous matrix)
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.Mat.Transpose">
+	<summary>
+ Transpose a matrix
+ </summary>
+	<returns></returns>
+</member><member name="T:RoboDK.Mat">
+	<summary>
+ Matrix class for robotics. 
+ </summary>
+</member><member name="T:RoboDK.RoboDK_API.RDKException">
+	<summary>
+ Class used for RoboDK exceptions
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Connected">
+	<summary>
+ Checks if the object is currently linked to RoboDK
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.#ctor(System.String,System.Boolean,System.Int32,System.String,System.String)">
+	<summary>
+ Creates a link with RoboDK
+ </summary>
+	<param name="robodk_ip"></param>
+	<param name="start_hidden__1"></param>
+	<param name="com_port"></param>
+</member><member name="M:RoboDK.RoboDK_API.Disconnect">
+	<summary>
+ Disconnect from the RoboDK API. This flushes any pending program generation.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Finish">
+	<summary>
+ Disconnect from the RoboDK API. This flushes any pending program generation.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Connect">
+	<summary>
+ Starts the link with RoboDK (automatic upon creation of the object)
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.getItem(System.String,System.Int32)">
+	<summary>
+ Returns an item by its name. If there is no exact match it will return the last closest match.
+ </summary>
+	<param name="name">Item name</param>
+	<param name="itemtype">Filter by item type RoboDK.ITEM_TYPE_...</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.getItemListNames(System.Int32)">
+	<summary>
+ Returns a list of items (list of name or pointers) of all available items in the currently open station in robodk.
+ Optionally, use a filter to return specific items (example: getItemListNames(filter = ITEM_CASE_ROBOT))
+ </summary>
+	<param name="filter">ITEM_TYPE</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.getItemList(System.Int32)">
+	<summary>
+ Returns a list of items (list of name or pointers) of all available items in the currently open station in robodk.
+ Optionally, use a filter to return specific items (example: getItemListNames(filter = ITEM_CASE_ROBOT))
+ </summary>
+	<param name="filter">ITEM_TYPE</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.ItemUserPick(System.String,System.Int32)">
+	<summary>
+ Shows a RoboDK popup to select one object from the open station.
+ An item type can be specified to filter desired items. If no type is specified, all items are selectable.
+ </summary>
+	<param name="message">Message to pop up</param>
+	<param name="itemtype">optionally filter by RoboDK.ITEM_TYPE_*</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.ShowRoboDK">
+	<summary>
+ Shows or raises the RoboDK window
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.HideRoboDK">
+	<summary>
+ Hides the RoboDK window
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.CloseRoboDK">
+	<summary>
+ Closes RoboDK window and finishes RoboDK execution
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.setWindowState(System.Int32)">
+	<summary>
+ Set the state of the RoboDK window
+ </summary>
+	<param name="windowstate"></param>
+</member><member name="M:RoboDK.RoboDK_API.Copy(RoboDK.RoboDK_API.Item)">
+//////////// Add More methods
+
+</member><member name="M:RoboDK.RoboDK_API.AddFile(System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Loads a file and attaches it to parent. It can be any file supported by robodk.
+ </summary>
+	<param name="filename">absolute path of the file</param>
+	<param name="parent">parent to attach. Leave empty for new stations or to load an object at the station root</param>
+	<returns>Newly added object. Check with item.Valid() for a successful load</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddShape(RoboDK.Mat,RoboDK.RoboDK_API.Item)">
+//////////// Add More methods
+ <summary>
+ Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
+ </summary>
+	<param name="triangle_points"> matrix 3xN or 6xN -&gt; N must be multiple of 3 because vertices must be stacked by groups of 3. Each group is a triangle.</param>
+	<param name="add_to">If True, the curve will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+	<returns>added object/shape (0 if failed)</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddCurve(RoboDK.Mat,RoboDK.RoboDK_API.Item,System.Boolean,System.Int32)">
+	<summary>
+ Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+ </summary>
+	<param name="curve_points">matrix 3xN or 6xN -&gt; N must be multiple of 3</param>
+	<param name="reference_object">object to add the curve and/or project the curve to the surface</param>
+	<param name="add_to_ref">If True, the curve will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+	<param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns>added object/curve (null if failed)</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddPoints(RoboDK.Mat,RoboDK.RoboDK_API.Item,System.Boolean,System.Int32)">
+	<summary>
+ Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+ </summary>
+	<param name="points">matrix 3xN or 6xN -&gt; N must be multiple of 3</param>
+	<param name="reference_object">object to add the curve and/or project the curve to the surface</param>
+	<param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+	<param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns>added object/curve (0 if failed)</returns>
+</member><member name="M:RoboDK.RoboDK_API.ProjectPoints(RoboDK.Mat,RoboDK.RoboDK_API.Item,System.Int32)">
+	<summary>
+ Projects a point given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
+ </summary>
+	<param name="points">matrix 3xN or 6xN -&gt; list of points to project</param>
+	<param name="object_project">object to project</param>
+	<param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Save(System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Save an item to a file. If no item is provided, the open station is saved.
+ </summary>
+	<param name="filename">absolute path to save the file</param>
+	<param name="itemsave">object or station to save. Leave empty to automatically save the current station.</param>
+</member><member name="M:RoboDK.RoboDK_API.AddStation(System.String)">
+	<summary>
+ Adds a new empty station.
+ </summary>
+	<param name="name">name of the station</param>
+	<returns>the new station created</returns>
+</member><member name="M:RoboDK.RoboDK_API.CloseStation">
+	<summary>
+ Closes the current station without suggesting to save
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.AddTarget(System.String,RoboDK.RoboDK_API.Item,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new target that can be reached with a robot.
+ </summary>
+	<param name="name">name of the target</param>
+	<param name="itemparent">parent to attach to (such as a frame)</param>
+	<param name="itemrobot">main robot that will be used to go to self target</param>
+	<returns>the new target created</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddFrame(System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new Frame that can be referenced by a robot.
+ </summary>
+	<param name="name">name of the reference frame</param>
+	<param name="itemparent">parent to attach to (such as the robot base frame)</param>
+	<returns>the new reference frame created</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddProgram(System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new Program.
+ </summary>
+	<param name="name">name of the program</param>
+	<param name="itemrobot">robot that will be used</param>
+	<returns>the new program created</returns>
+</member><member name="M:RoboDK.RoboDK_API.AddMillingProject(System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new machining project. Machining projects can also be used for 3D printing, curve following and point following.
+ </summary>
+	<param name="name">name of the machining project</param>
+	<param name="itemrobot">robot that will be used</param>
+	<returns>the new program created</returns>
+</member><member name="M:RoboDK.RoboDK_API.RunProgram(System.String)">
+	<summary>
+ Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.
+ </summary>
+	<param name="function_w_params">Function name with parameters (if any)</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.RunCode(System.String,System.Boolean)">
+	<summary>
+ Adds code to run in the program output. If the program exists it will also run the program in simulate mode.
+ </summary>
+	<param name="code"></param>
+	<param name="code_is_fcn_call"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.RunMessage(System.String,System.Boolean)">
+	<summary>
+ Shows a message or a comment in the output robot program.
+ </summary>
+	<param name="message"></param>
+	<param name="message_is_comment"></param>
+</member><member name="M:RoboDK.RoboDK_API.Render(System.Boolean)">
+	<summary>
+ Renders the scene. This function turns off rendering unless always_render is set to true.
+ </summary>
+	<param name="always_render"></param>
+</member><member name="M:RoboDK.RoboDK_API.IsInside(RoboDK.RoboDK_API.Item,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Returns (1/True) if object_inside is inside the object_parent
+ </summary>
+	<param name="object_inside"></param>
+	<param name="object_parent"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.setCollisionActive(System.Int32)">
+	<summary>
+ Set collision checking ON or OFF (COLLISION_OFF/COLLISION_OFF) according to the collision map. If collision check is activated it returns the number of pairs of objects that are currently in a collision state.
+ </summary>
+	<param name="check_state"></param>
+	<returns>Number of pairs of objects in a collision state</returns>
+</member><member name="M:RoboDK.RoboDK_API.setCollisionActivePair(System.Int32,RoboDK.RoboDK_API.Item,RoboDK.RoboDK_API.Item,System.Int32,System.Int32)">
+	<summary>
+ Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. This allows altering the collision map for Collision checking. 
+ Specify the link id for robots or moving mechanisms (id 0 is the base).
+ </summary>
+	<param name="check_state">Set to COLLISION_ON or COLLISION_OFF</param>
+	<param name="item1">Item 1</param>
+	<param name="item2">Item 2</param>
+	<param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
+	<param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
+	<returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Collisions">
+	<summary>
+ Returns the number of pairs of objects that are currently in a collision state.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Collision(RoboDK.RoboDK_API.Item,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Returns 1 if item1 and item2 collided. Otherwise returns 0.
+ </summary>
+	<param name="item1"></param>
+	<param name="item2"></param>
+	<returns>ncollisions</returns>
+</member><member name="M:RoboDK.RoboDK_API.setSimulationSpeed(System.Double)">
+	<summary>
+ Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed. Set to a high value (&gt;100) for fast simulation results.
+ </summary>
+	<param name="speed"></param>
+</member><member name="M:RoboDK.RoboDK_API.SimulationSpeed">
+	<summary>
+ Gets the current simulation speed. Set the speed to 1 for a real-time simulation.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.setRunMode(System.Int32)">
+	<summary>
+ Sets the behavior of the RoboDK API. By default, robodk shows the path simulation for movement instructions (run_mode=1=RUNMODE_SIMULATE).
+ Setting the run_mode to RUNMODE_QUICKVALIDATE allows performing a quick check to see if the path is feasible.
+ if robot.Connect() is used, RUNMODE_RUN_FROM_PC is selected automatically.
+ </summary>
+	<param name="run_mode">int = RUNMODE
+ RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)
+ RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements
+ RUNMODE_MAKE_ROBOTPROG=3  makes the robot program
+ RUNMODE_RUN_REAL=4        moves the real robot is it is connected</param>
+</member><member name="M:RoboDK.RoboDK_API.RunMode">
+	<summary>
+ Returns the behavior of the RoboDK API. By default, robodk shows the path simulation for movement instructions (run_mode=1)
+ </summary>
+	<returns>int = RUNMODE
+ RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)
+ RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements
+ RUNMODE_MAKE_ROBOTPROG=3  makes the robot program
+ RUNMODE_RUN_REAL=4        moves the real robot is it is connected</returns>
+</member><member name="M:RoboDK.RoboDK_API.getParams">
+	<summary>
+ Gets all the user parameters from the open RoboDK station.
+ The parameters can also be modified by right clicking the station and selecting "shared parameters"
+ User parameters can be added or modified by the user
+ </summary>
+	<returns>list of pairs of strings as parameter-value (list of a list)</returns>
+</member><member name="M:RoboDK.RoboDK_API.getParam(System.String)">
+	<summary>
+ Gets a global or a user parameter from the open RoboDK station.
+ The parameters can also be modified by right clicking the station and selecting "shared parameters"
+ Some available parameters:
+ PATH_OPENSTATION = folder path of the current .stn file
+ FILE_OPENSTATION = file path of the current .stn file
+ PATH_DESKTOP = folder path of the user's folder
+ Other parameters can be added or modified by the user
+ </summary>
+	<param name="param">RoboDK parameter</param>
+	<returns>value</returns>
+</member><member name="M:RoboDK.RoboDK_API.setParam(System.String,System.String)">
+	<summary>
+ Sets a global parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+ The parameters can also be modified by right clicking the station and selecting "shared parameters"
+ </summary>
+	<param name="param">RoboDK parameter</param>
+	<param name="value">value</param>
+</member><member name="M:RoboDK.RoboDK_API.ShowSequence(RoboDK.Mat)">
+	<summary>
+ Displays a sequence of joints
+ </summary>
+	<param name="matrix">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+</member><member name="M:RoboDK.RoboDK_API.Joints(RoboDK.RoboDK_API.Item[])">
+	<summary>
+ Returns the current joints of a list of robots.
+ </summary>
+	<param name="robot_item_list">list of robot items</param>
+	<returns>list of robot joints (double x nDOF)</returns>
+</member><member name="M:RoboDK.RoboDK_API.setJoints(RoboDK.RoboDK_API.Item[],System.Double[][])">
+	<summary>
+ Sets the current robot joints for a list of robot items and a list of a set of joints.
+ </summary>
+	<param name="robot_item_list">list of robot items</param>
+	<param name="joints_list">list of robot joints (double x nDOF)</param>
+</member><member name="M:RoboDK.RoboDK_API.CalibrateTool(RoboDK.Mat,System.Double[]@,System.Int32,System.Int32,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Calibrate a tool (TCP) given a number of points or calibration joints. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+ </summary>
+	<param name="poses_joints">matrix of poses in a given format or a list of joints</param>
+	<param name="error_stats">stats[mean, standard deviation, max] - Output error stats summary</param>
+	<param name="format">Euler format. Optionally, use JOINT_FORMAT and provide the robot.</param>
+	<param name="algorithm">type of algorithm (by point, plane, ...)</param>
+	<param name="robot">Robot used for calibration (if using joint values)</param>
+	<returns>TCP as [x, y, z] - calculated TCP</returns>
+</member><member name="M:RoboDK.RoboDK_API.CalibrateReference(RoboDK.Mat,System.Int32,System.Boolean,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Calibrate a Reference Frame given a list of points or joint values. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+ </summary>
+	<param name="joints">points as a 3xN matrix or nDOFsxN) - List of points or a list of robot joints</param>
+	<param name="method">type of algorithm(by point, plane, ...) CALIBRATE_FRAME_...</param>
+	<param name="use_joints">use points or joint values. The robot item must be provided if joint values is used.</param>
+	<param name="robot"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.ProgramStart(System.String,System.String,System.String,RoboDK.RoboDK_API.Item)">
+	<summary>
+ Defines the name of the program when the program is generated. It is also possible to specify the name of the post processor as well as the folder to save the program. 
+ This method must be called before any program output is generated (before any robot movement or other instruction).
+ </summary>
+	<param name="progname">name of the program</param>
+	<param name="defaultfolder">folder to save the program, leave empty to use the default program folder</param>
+	<param name="postprocessor">name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")</param>
+	<param name="robot">Robot to link</param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.setViewPose(RoboDK.Mat)">
+	<summary>
+ Set the pose of the wold reference frame with respect to the view (camera/screen)
+ </summary>
+	<param name="pose"></param>
+</member><member name="M:RoboDK.RoboDK_API.ViewPose">
+	<summary>
+ Get the pose of the wold reference frame with respect to the view (camera/screen)
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.Equals(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Returns an integer that represents the type of the item (robot, object, tool, frame, ...)
+ Compare the returned value to ITEM_CASE_* variables
+ </summary>
+	<param name="item_other"></param>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.RDK">
+	<summary>
+ Returns the RoboDK link Robolink().
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.RL">
+	<summary>
+ Returns the RoboDK link Robolink (old version)().
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Type">
+///// GENERIC ITEM CALLS
+ <summary>
+ Returns the type of an item (robot, object, target, reference frame, ...)
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Copy">
+	<summary>
+ Copy the item to the clipboard (same as Ctrl+C). Use together with Paste() to duplicate items.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.Paste">
+	<summary>
+ Paste the item from the clipboard as a child of this item (same as Ctrl+V)
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddFile(System.String)">
+	<summary>
+ Adds an object as a child of this object
+ </summary>
+	<param name="filename"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Save(System.String)">
+	<summary>
+ Save a station or object to a file
+ </summary>
+	<param name="filename"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Collision(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Checks if this item is in a collision state with another item
+ </summary>
+	<param name="item_check"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.IsInside(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Returns True if the object is inside the provided object
+ </summary>
+	<param name="item_check"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddGeometry(RoboDK.RoboDK_API.Item,RoboDK.Mat)">
+	<summary>
+ Makes a copy of the geometry fromitem adding it at a given position (pose) relative to this item.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.Delete">
+	<summary>
+ Deletes an item and its childs from the station.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.Valid">
+	<summary>
+ Checks if the item is valid. An invalid item will be returned by an unsuccessful function call.
+ </summary>
+	<returns>true if valid, false if invalid</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setParentStatic(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Moves the item to another location (parent) without changing the current position in the station
+ </summary>
+	<param name="parent"> parent to attach the item</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.AttachClosest">
+	<summary>
+ Attaches the closest object to the provided tool (see also: Set_Parent_Static).
+ </summary>
+	<returns> the item that was attached (item.Valid() is False if none found)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.DetachClosest(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Detaches the closest object attached to the tool (see also: setParentStatic).
+ </summary>
+	<param name="parent"></param>
+	<returns> the item that was detached (item.Valid() is False if none found)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.DetachAll(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Detaches any object attached to a tool (see also: setParentStatic).
+ </summary>
+	<param name="parent"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Parent">
+	<summary>
+ Returns the parent item of the item.
+ </summary>
+	<returns>the parent item of the item.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Childs">
+	<summary>
+ Returns a list of the item childs that are attached to the provided item.
+ </summary>
+	<returns>item x n -&gt; list of child items</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Visible">
+	<summary>
+ Returns 1 if the item is visible, otherwise, returns 0.
+ </summary>
+	<returns>true if visible, false if not visible</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setVisible(System.Boolean,System.Int32)">
+	<summary>
+ Sets the item visiblity status
+ </summary>
+	<param name="visible"></param>
+	<param name="visible_frame">srt the visible reference frame (1) or not visible (0)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Name">
+	<summary>
+ Returns the name of an item. The name of the item is always displayed in the RoboDK station tree
+ </summary>
+	<returns>name of the item</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setName(System.String)">
+	<summary>
+ Set the name of a RoboDK item.
+ </summary>
+	<param name="name"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setValue(System.String,RoboDK.Mat)">
+	<summary>
+ Sets a any property value to an item.
+ </summary>
+	<param name="varname">string</param>
+	<param name="value">matrix</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setValue(System.String,System.String)">
+	<summary>
+ Sets a any property value to an item.
+ </summary>
+	<param name="varname">string</param>
+	<param name="value">string</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPose(RoboDK.Mat)">
+	<summary>
+ Sets the local position (pose) of an object, target or reference frame. For example, the position of an object/frame/target with respect to its parent.
+ If a robot is provided, it will set the pose of the end efector.
+ </summary>
+	<param name="pose">4x4 homogeneous matrix</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Pose">
+	<summary>
+ Returns the local position (pose) of an object, target or reference frame. For example, the position of an object/frame/target with respect to its parent.
+ If a robot is provided, it will get the pose of the end efector
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setGeometryPose(RoboDK.Mat)">
+	<summary>
+ Sets the position (pose) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
+ </summary>
+	<param name="pose">4x4 homogeneous matrix</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.GeometryPose">
+	<summary>
+ Returns the position (pose) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPoseAbs(RoboDK.Mat)">
+	<summary>
+ Sets the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.
+ </summary>
+	<param name="pose">4x4 homogeneous matrix (pose)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.PoseAbs">
+	<summary>
+ Returns the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Recolor(System.Double[],System.Double[],System.Double)">
+	<summary>
+ Changes the color of a robot/object/tool. A color must must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+ Alpha (A) defaults to 1 (100% opaque). Set A to 0 to make an object transparent.
+ </summary>
+	<param name="tocolor">color to change to</param>
+	<param name="fromcolor">filter by this color</param>
+	<param name="tolerance">optional tolerance to use if a color filter is used (defaults to 0.1)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setColor(System.Double[])">
+	<summary>
+ Set the color of an object, tool or robot. A color must must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+ Alpha (A) defaults to 1 (100% opaque). Set A to 0 to make an object transparent.
+ </summary>
+	<param name="tocolor">color to change to</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Color">
+	<summary>
+ Returns the color of an object, tool or robot (first color found). A color is in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+ </summary>
+	<returns>the color as a list of Double of an object, tool or robot (first color found). A color is in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Scale(System.Double[])">
+	<summary>
+ Apply a scale to an object to make it bigger or smaller.
+ The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
+ </summary>
+	<param name="scale__1">scale to apply as [scale_x, scale_y, scale_z]</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddShape(RoboDK.Mat)">
+	<summary>
+ Adds a shape to the object provided some triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally
+ </summary>
+	<param name="triangle_points">matrix 3xN or 6xN -&gt; N must be multiple of 3 because vertices must be stacked by groups of 3. Each group is a triangle.</param>
+	<returns>returns the object where the curve was added or null if failed</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddCurve(RoboDK.Mat,System.Boolean,System.Int32)">
+	<summary>
+ Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+ </summary>
+	<param name="curve_points">matrix 3xN or 6xN -&gt; N must be multiple of 3</param>
+	<param name="add_to_ref">add_to_ref -&gt; If True, the curve will be added as part of the object in the RoboDK item tree</param>
+	<param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns>returns the object where the curve was added or null if failed</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddPoints(RoboDK.Mat,System.Boolean,System.Int32)">
+	<summary>
+ Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+ </summary>
+	<param name="points">matrix 3xN or 6xN -&gt; N must be multiple of 3</param>
+	<param name="add_to_ref">add_to_ref -&gt; If True, the curve will be added as part of the object in the RoboDK item tree</param>
+	<param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns>returns the object where the curve was added or null if failed</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.ProjectPoints(RoboDK.Mat,System.Int32)">
+	<summary>
+ Projects a point to the object given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
+ </summary>
+	<param name="points">matrix 3xN or 6xN -&gt; list of points to project</param>
+	<param name="projection_type">projection_type -&gt; Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
+	<returns>projected points (empty matrix if failed)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.SelectedFeature(System.Int32@,System.Int32)">
+	<summary>
+ Is the item selected.
+ </summary>
+	<param name="feature_type">FEATURE_CURVE if the last point selected was a wire, FEATURE_POINT if the last feature selected was a point or FEATURE_SURFACE otherwise.</param>
+	<param name="feature_id">index of the curve or point in the object</param>
+	<returns>is_selected as boolean</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setMillingParameters(System.String,System.Int32@,RoboDK.RoboDK_API.Item,System.String)">
+	<summary>
+ Adds a new machining project. Machining projects can also be used for 3D printing, curve following and point following.
+ </summary>
+	<param name="ncfile">name of the project</param>
+	<param name="part">(optional): item -&gt; curve or point object to automatically set up a curve/point follow project</param>
+	<param name="params"></param>
+	<returns>newprog created</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setAsCartesianTarget">
+	<summary>
+ Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.setAsJointTarget">
+	<summary>
+ Sets a target as a joint target. A joint target moves to a joints position without regarding the cartesian coordinates.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.Joints">
+	<summary>
+ Returns the current joints of a robot or the joints of a target. If the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
+ </summary>
+	<returns>double x n -&gt; joints matrix</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.JointsHome">
+	<summary>
+ Returns the home joints of a robot. These joints can be manually set in the robot "Parameters" menu, then select "Set home position"
+ </summary>
+	<returns>double x n -&gt; joints array</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.ObjectLink(System.Int32)">
+	<summary>
+ Returns an item pointer to the link id (0 for the robot base, 1 for the first link, ...).
+ This is useful if we want to show/hide certain links or change their geometry.
+ </summary>
+	<returns>item object (pointer) to the robot link</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setJoints(System.Double[])">
+	<summary>
+ Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
+ </summary>
+	<param name="joints"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.JointLimits(System.Double[],System.Double[])">
+	<summary>
+ Returns the joint limits of a robot
+ </summary>
+	<param name="lower_limits"></param>
+	<param name="upper_limits"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setJointLimits(System.Double[],System.Double[])">
+	<summary>
+ Set the robot joint limits
+ </summary>
+	<param name="lower_limit"></param>
+	<param name="upper_limit"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setRobot(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Sets the robot of a program or a target. You must set the robot linked to a program or a target every time you copy paste these objects.
+ If the robot is not provided, the first available robot will be chosen automatically.
+ </summary>
+	<param name="robot">Robot item</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setFrame(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Obsolete: Use setPoseFrame instead.
+ Sets the frame of a robot (user frame). The frame can be either an item or a 4x4 Matrix.
+ If "frame" is an item, it links the robot to the frame item. If frame is a 4x4 Matrix, it updates the linked pose of the robot frame.
+ </summary>
+	<param name="frame">item/pose -&gt; frame item or 4x4 Matrix (pose of the reference frame)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setFrame(RoboDK.Mat)">
+	<summary>
+ Obsolete: Use setPoseFrame instead.
+ Sets the frame of a robot (user frame). The frame can be either an item or a 4x4 Matrix.
+ If "frame" is an item, it links the robot to the frame item. If frame is a 4x4 Matrix, it updates the linked pose of the robot frame.
+ </summary>
+	<param name="frame">item/pose -&gt; frame item or 4x4 Matrix (pose of the reference frame)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setTool(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Obsolete: Use setPoseTool instead.
+ Sets the tool pose of a robot. The tool pose can be either an item or a 4x4 Matrix.
+ If "tool" is an item, it links the robot to the tool item. If tool is a 4x4 Matrix, it updates the linked pose of the robot tool.
+ </summary>
+	<param name="tool">item/pose -&gt; tool item or 4x4 Matrix (pose of the tool frame)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setTool(RoboDK.Mat)">
+	<summary>
+ Obsolete: Use setPoseTool instead.
+ Sets the tool pose of a robot. The tool pose can be either an item or a 4x4 Matrix.
+ If "tool" is an item, it links the robot to the tool item. If tool is a 4x4 Matrix, it updates the linked pose of the robot tool.
+ </summary>
+	<param name="tool">item/pose -&gt; tool item or 4x4 Matrix (pose of the tool frame)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPoseFrame(RoboDK.Mat)">
+	<summary>
+ Sets the reference frame of a robot(user frame). The frame can be either an item or a pose.
+ If "frame" is an item, it links the robot to the frame item. If frame is a pose, it updates the linked pose of the robot frame (with respect to the robot reference frame).
+ </summary>
+	<param name="frame_pose">4x4 homogeneous matrix (pose)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPoseFrame(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
+ If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
+ </summary>
+	<param name="frame_item">4x4 homogeneous matrix (pose)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPoseTool(RoboDK.Mat)">
+	<summary>
+ Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
+ If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
+ </summary>
+	<param name="tool_pose">4x4 homogeneous matrix (pose)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setPoseTool(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
+ If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
+ </summary>
+	<param name="tool_item">Tool item</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.PoseTool">
+	<summary>
+ Returns the tool pose of an item. If a robot is provided it will get the tool pose of the active tool held by the robot.
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.PoseFrame">
+	<summary>
+ Returns the reference frame pose of an item. If a robot is provided it will get the tool pose of the active reference frame used by the robot.
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setHtool(RoboDK.Mat)">
+	<summary>
+ Obsolete: Use setPoseTool(pose) instead. Sets the tool pose of a tool item. If a robot is provided it will set the tool pose of the active tool held by the robot.
+ </summary>
+	<param name="pose">4x4 homogeneous matrix (pose)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Htool">
+	<summary>
+ Obsolete: Use PoseTool() instead. 
+ Returns the tool pose of an item. If a robot is provided it will get the tool pose of the active tool held by the robot.
+ </summary>
+	<returns>4x4 homogeneous matrix (pose)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.AddTool(RoboDK.Mat,System.String)">
+	<summary>
+ Adds an empty tool to the robot provided the tool pose (4x4 Matrix) and the tool name.
+ </summary>
+	<param name="tool_pose">pose -&gt; TCP as a 4x4 Matrix (pose of the tool frame)</param>
+	<param name="tool_name">New tool name</param>
+	<returns>new item created</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.SolveFK(System.Double[])">
+	<summary>
+ Computes the forward kinematics of the robot for the provided joints. The tool and the reference frame are not taken into account.
+ </summary>
+	<param name="joints"></param>
+	<returns>4x4 homogeneous matrix: pose of the robot flange with respect to the robot base</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.JointsConfig(System.Double[])">
+	<summary>
+ Returns the robot configuration state for a set of robot joints.
+ </summary>
+	<param name="joints">array of joints</param>
+	<returns>3-array -&gt; configuration status as [REAR, LOWERARM, FLIP]</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.SolveIK(RoboDK.Mat)">
+	<summary>
+ Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
+ </summary>
+	<param name="pose">4x4 matrix -&gt; pose of the robot flange with respect to the robot base frame</param>
+	<returns>array of joints</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.SolveIK_All(RoboDK.Mat)">
+	<summary>
+ Computes the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
+ </summary>
+	<param name="pose">4x4 matrix -&gt; pose of the robot tool with respect to the robot frame</param>
+	<returns>double x n x m -&gt; joint list (2D matrix)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Connect(System.String)">
+	<summary>
+ Connect to a real robot using the robot driver.
+ </summary>
+	<param name="robot_ip">IP of the robot to connect. Leave empty to use the one defined in RoboDK</param>
+	<returns>status -&gt; true if connected successfully, false if connection failed</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Disconnect">
+	<summary>
+ Disconnect from a real robot (when the robot driver is used)
+ </summary>
+	<returns>status -&gt; true if disconnected successfully, false if it failed. It can fail if it was previously disconnected manually for example.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveJ(RoboDK.RoboDK_API.Item,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="itemtarget">target -&gt; target to move to as a target item (RoboDK target item)</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveJ(System.Double[],System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="joints">joints -&gt; joint target to move to.</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveJ(RoboDK.Mat,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="target">pose -&gt; pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveL(RoboDK.RoboDK_API.Item,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="itemtarget">target -&gt; target to move to as a target item (RoboDK target item)</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveL(System.Double[],System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="joints">joints -&gt; joint target to move to.</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveL(RoboDK.Mat,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="target">pose -&gt; pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveC(RoboDK.RoboDK_API.Item,RoboDK.RoboDK_API.Item,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Circular" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="itemtarget1">target -&gt; intermediate target to move to as a target item (RoboDK target item)</param>
+	<param name="itemtarget2">target -&gt; final target to move to as a target item (RoboDK target item)</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveC(System.Double[],System.Double[],System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Circular" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="joints1">joints -&gt; intermediate joint target to move to.</param>
+	<param name="joints2">joints -&gt; final joint target to move to.</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveC(RoboDK.Mat,RoboDK.Mat,System.Boolean)">
+	<summary>
+ Moves a robot to a specific target ("Move Circular" mode). By default, this function blocks until the robot finishes its movements.
+ </summary>
+	<param name="target1">pose -&gt; intermediate pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+	<param name="target2">pose -&gt; final pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+	<param name="blocking">blocking -&gt; True if we want the instruction to block until the robot finished the movement (default=true)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveJ_Collision(System.Double[],System.Double[],System.Double)">
+	<summary>
+ Checks if a joint movement is free of collision.
+ </summary>
+	<param name="j1">joints -&gt; start joints</param>
+	<param name="j2">joints -&gt; destination joints</param>
+	<param name="minstep_deg">(optional): maximum joint step in degrees</param>
+	<returns>collision : returns 0 if the movement is free of collision. Otherwise it returns the number of pairs of objects that collided if there was a collision.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.MoveL_Collision(System.Double[],System.Double[],System.Double)">
+	<summary>
+ Checks if a linear movement is free of collision.
+ </summary>
+	<param name="j1">joints -&gt; start joints</param>
+	<param name="j2">joints -&gt; destination joints</param>
+	<param name="minstep_deg">(optional): maximum joint step in degrees</param>
+	<returns>collision : returns 0 if the movement is free of collision. Otherwise it returns the number of pairs of objects that collided if there was a collision.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setSpeed(System.Double,System.Double,System.Double,System.Double)">
+	<summary>
+ Sets the speed and/or the acceleration of a robot.
+ </summary>
+	<param name="speed_linear">linear speed in mm/s (-1 = no change)</param>
+	<param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
+	<param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
+	<param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setZoneData(System.Double)">
+	<summary>
+ Sets the robot movement smoothing accuracy (also known as zone data value).
+ </summary>
+	<param name="zonedata">zonedata value (int) (robot dependent, set to -1 for fine movements)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.ShowSequence(RoboDK.Mat)">
+	<summary>
+ Displays a sequence of joints
+ </summary>
+	<param name="sequence">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Busy">
+	<summary>
+ Checks if a robot or program is currently running (busy or moving)
+ </summary>
+	<returns>busy status (true=moving, false=stopped)</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Stop">
+	<summary>
+ Stops a program or a robot
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.WaitMove(System.Double)">
+	<summary>
+ Waits (blocks) until the robot finishes its movement.
+ </summary>
+	<param name="timeout_sec">timeout -&gt; Max time to wait for robot to finish its movement (in seconds)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.WaitFinished">
+	<summary>
+ Wait until the program finishes.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.ProgramStart(System.String,System.String,System.String)">
+	<summary>
+ Defines the name of the program when the program is generated. It is also possible to specify the name of the post processor as well as the folder to save the program. 
+ This method must be called before any program output is generated (before any robot movement or other instruction).
+ </summary>
+	<param name="programname">name of the program</param>
+	<param name="folder">folder to save the program, leave empty to use the default program folder</param>
+	<param name="postprocessor">name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setAccuracyActive(System.Boolean)">
+	<summary>
+ Sets the accuracy of the robot active or inactive.
+ </summary>
+	<param name="accurate"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.FilterProgram(System.String,System.String@)">
+	<summary>
+ Filters a program file to improve accuracy for a specific robot. The robot must have been previously calibrated.
+ </summary>
+	<param name="filestr">File path of the program.</param>
+	<param name="filter_msg">Summary of the filter process..</param>
+	<returns>status : 0 if the filter succeeded, below 0 if there are conversion problems.</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.MakeProgram(System.String)">
+	<summary>
+ Saves a program to a file.
+ </summary>
+	<param name="folder">folder path of the program</param>
+	<returns>success</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.setRunType(System.Int32)">
+	<summary>
+ Sets if the program will be run in simulation mode or on the real robot.
+ Use: "PROGRAM_RUN_ON_SIMULATOR" to set the program to run on the simulator only or "PROGRAM_RUN_ON_ROBOT" to force the program to run on the robot.
+ </summary>
+</member><member name="M:RoboDK.RoboDK_API.Item.RunProgram">
+	<summary>
+ Runs a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
+ This is a non-blocking call. Use IsBusy() to check if the program execution finished.
+ Notes:
+ if setRunMode(RUNMODE_SIMULATE) is used  -&gt; the program will be simulated (default run mode)
+ if setRunMode(RUNMODE_RUN_ROBOT) is used -&gt; the program will run on the robot (default when RUNMODE_RUN_ROBOT is used)
+ if setRunMode(RUNMODE_RUN_ROBOT) is used together with program.setRunType(PROGRAM_RUN_ON_ROBOT) -&gt; the program will run sequentially on the robot the same way as if we right clicked the program and selected "Run on robot" in the RoboDK GUI        
+ </summary>
+	<returns>number of instructions that can be executed</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.RunCode(System.String)">
+	<summary>
+ Runs a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
+ Program parameters can be provided for Python calls.
+ This is a non-blocking call.Use IsBusy() to check if the program execution finished.
+ Notes: if setRunMode(RUNMODE_SIMULATE) is used  -&gt; the program will be simulated (default run mode)
+ if setRunMode(RUNMODE_RUN_ROBOT) is used -&gt;the program will run on the robot(default when RUNMODE_RUN_ROBOT is used)
+ if setRunMode(RUNMODE_RUN_ROBOT) is used together with program.setRunType(PROGRAM_RUN_ON_ROBOT) -&gt; the program will run sequentially on the robot the same way as if we right clicked the program and selected "Run on robot" in the RoboDK GUI
+ </summary>
+	<param name="parameters">Number of instructions that can be executed</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.RunCodeCustom(System.String,System.Int32)">
+	<summary>
+ Adds a program call, code, message or comment inside a program.
+ </summary>
+	<param name="code">string of the code or program to run</param>
+	<param name="run_type">INSTRUCTION_* variable to specify if the code is a progra</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Pause(System.Double)">
+	<summary>
+ Generates a pause instruction for a robot or a program when generating code. Set it to -1 (default) if you want the robot to stop and let the user resume the program anytime.
+ </summary>
+	<param name="time_ms">Time in milliseconds</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setDO(System.String,System.String)">
+	<summary>
+ Sets a variable (output) to a given value. This can also be used to set any variables to a desired value.
+ </summary>
+	<param name="io_var">io_var -&gt; digital output (string or number)</param>
+	<param name="io_value">io_value -&gt; value (string or number)</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.waitDI(System.String,System.String,System.Double)">
+	<summary>
+ Waits for an input io_id to attain a given value io_value. Optionally, a timeout can be provided.
+ </summary>
+	<param name="io_var">io_var -&gt; digital output (string or number)</param>
+	<param name="io_value">io_value -&gt; value (string or number)</param>
+	<param name="timeout_ms">int (optional) -&gt; timeout in miliseconds</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.addMoveJ(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new robot move joint instruction to a program.
+ </summary>
+	<param name="itemtarget">target to move to</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.addMoveL(RoboDK.RoboDK_API.Item)">
+	<summary>
+ Adds a new robot move linear instruction to a program.
+ </summary>
+	<param name="itemtarget">target to move to</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.ShowInstructions(System.Boolean)">
+	<summary>
+ Show instructions inside a program in RoboDK tree
+ </summary>
+	<param name="show"> optional </param>
+</member><member name="M:RoboDK.RoboDK_API.Item.InstructionCount">
+	<summary>
+ Returns the number of instructions of a program.
+ </summary>
+	<returns></returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Instruction(System.Int32,System.String@,System.Int32@,System.Int32@,System.Boolean@,RoboDK.Mat@,System.Double[]@)">
+	<summary>
+ Returns the program instruction at position id
+ </summary>
+	<param name="ins_id"></param>
+	<param name="name"></param>
+	<param name="instype"></param>
+	<param name="movetype"></param>
+	<param name="isjointtarget"></param>
+	<param name="target"></param>
+	<param name="joints"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.Update(System.Int32@,System.Double@,System.Double@,System.Boolean@)">
+	<summary>
+ Updates a program and returns the estimated time and the number of valid instructions.
+ </summary>
+	<param name="valid_instructions_number"> Returns the number of valid instructions</param>
+	<param name="program_time_seconds"> Estimated cycle time (in seconds)</param>
+	<param name="program_distance_mm"> Distance that the robot TCP will travel (in mm)</param>
+	<param name="valid_program">It is True if the program has no issues, False otherwise.</param>
+</member><member name="M:RoboDK.RoboDK_API.Item.setInstruction(System.Int32,System.String,System.Int32,System.Int32,System.Boolean,RoboDK.Mat,System.Double[])">
+	<summary>
+ Sets the program instruction at position id
+ </summary>
+	<param name="ins_id"></param>
+	<param name="name"></param>
+	<param name="instype"></param>
+	<param name="movetype"></param>
+	<param name="isjointtarget"></param>
+	<param name="target"></param>
+	<param name="joints"></param>
+</member><member name="M:RoboDK.RoboDK_API.Item.InstructionList(RoboDK.Mat@)">
+	<summary>
+ Returns the list of program instructions as an MxN matrix, where N is the number of instructions and M equals to 1 plus the number of robot axes.
+ </summary>
+	<param name="instructions">the matrix of instructions</param>
+	<returns>Returns 0 if success</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.InstructionListJoints(System.String@,RoboDK.Mat@,System.Double,System.Double,System.String)">
+	<summary>
+ Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
+ </summary>
+	<param name="error_msg">Returns a human readable error message (if any)</param>
+	<param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified</param>
+	<param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
+	<param name="deg_step">Maximum step for joint movements (degrees)</param>
+	<param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
+	<returns>Returns 0 if success, otherwise, it will return negative values</returns>
+</member><member name="M:RoboDK.RoboDK_API.Item.Finish">
+	<summary>
+ Disconnect from the RoboDK API. This flushes any pending program generation.
+ </summary>
+	<returns></returns>
+</member><member name="T:RoboDK.RoboDK_API.Item">
+	<summary>
+ The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
+ An item can also be seen as a node where other items can be attached to (child items).
+ Every item has one parent item/node and can have one or more child items/nodes
+ RoboLinkItem is a "friend" class of RoboLink.
+ </summary>
+</member><member name="T:RoboDK.RoboDK_API">
+	<summary>
+ This class is the link to allows to create macros and automate Robodk.
+ Any interaction is made through \"items\" (Item() objects). An item is an object in the
+ robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+ </summary>
+</member><member name="P:RoboDK.My.Resources.Resources.ResourceManager">
+	<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:RoboDK.My.Resources.Resources.Culture">
+	<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="T:RoboDK.My.Resources.Resources">
+	<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member>
+</members>
+</doc>
