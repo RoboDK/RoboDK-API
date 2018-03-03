@@ -1,10 +1,10 @@
 RoboDK API for Python on PiPy
-==================
+------------
 
 https://pypi.python.org/pypi/robodk/
 
 How to install
-==============
+------------
 
 Type
 ```
