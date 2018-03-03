@@ -15,7 +15,7 @@ Just include the robodk_api.h and robodk_api.cpp files to your project.
 C++ Example
 ------------
 ```c++
-// Draw a hexagon inside a circle of radius 100.0 mm
+    // Draw a hexagon inside a circle of radius 100.0 mm
     int n_sides = 6;
     float size = 100.0;
     // retrieve the reference frame and the tool frame (TCP)
@@ -28,7 +28,8 @@ C++ Example
     ROBOT->setPoseFrame(pose_frame);  // set the reference frame
     ROBOT->setPoseTool(pose_tool);    // set the tool frame: important for Online Programming
     ROBOT->setSpeed(100);             // Set Speed to 100 mm/s
-    ROBOT->setRounding(5);            // set the rounding instruction (C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
+    ROBOT->setRounding(5);            // set the rounding instruction 
+                                      //(C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
     ROBOT->RunCodeCustom("CallOnStart"); // run a program
     for (int i = 0; i <= n_sides; i++) {
         // calculate angle in degrees:
