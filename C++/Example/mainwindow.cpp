@@ -149,7 +149,10 @@ void MainWindow::on_btnProgRun_clicked(){
 void MainWindow::on_btnTestButton_clicked(){
     if (!Check_Robot()){ return; }
 
-    int runmode = RDK->RunMode(); // retrieve the run mode
+    //int runmode = RDK->RunMode(); // retrieve the run mode
+
+    //RoboDK *RDK = new RoboDK();
+    //Item *ROBOT = new Item(RDK->getItem("Motoman SV3"));
 
     // Draw a hexagon inside a circle of radius 100.0 mm
     int n_sides = 6;

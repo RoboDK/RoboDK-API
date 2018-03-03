@@ -1,11 +1,11 @@
 RoboDK API for C++
 ======================
 
-Read the [RoboDK API description](../README.md) for more information
+Read the [RoboDK API description](../README.md) for more information.
 
 Requirements
 ------------
-- [Qt](https://www.qt.io/download)
+- [Qt](https://www.qt.io/download) Open Source or Commercial
 - [RoboDK](https://robodk.com/download)
 
 How to install
@@ -14,17 +14,54 @@ Just include the robodk_api.h and robodk_api.cpp files to your project.
 
 C++ Example
 ------------
-```c++
+```cpp
+#include "robodk_api.h"
+
+// TIP: use #define RDK_SKIP_NAMESPACE to avoid using namespaces
+using namespace RoboDK_API;
+
+RoboDK *RDK = NULL;  // RDK is the interface with RoboDK
+Item *ROBOT = NULL;  // ROBOT is the robot item
+
+/// Start the RoboDK API
+void RoboDK_Start(){
+    // RoboDK starts when a RoboDK object is created.
+    RoboDK *RDK = new RoboDK();    
+    
+    // Retrieve the robot
+    Item *ROBOT = new Item(RDK->getItem("Motoman SV3"));
+}
+
+/// Delete RDK and ROBOT items
+void RoboDK_Finish(){
+    delete RDK;
+    delete ROBOT;
+}
+
+void RoboDK_Test(){
+    // Start RoboDK
+    RoboDK_Start();
+    
+    if (ROBOT == NULL || !ROBOT.Valid()){
+        // Something is wrong!
+        return;
+    }
+
     // Draw a hexagon inside a circle of radius 100.0 mm
     int n_sides = 6;
     float size = 100.0;
-    
+
     // retrieve the reference frame and the tool frame (TCP)
     Mat pose_frame = ROBOT->PoseFrame();
     Mat pose_tool = ROBOT->PoseTool();
-    
+
     // retrieve the pose of the TCP with respect to the reference frame
     Mat pose_ref = ROBOT->Pose();
+
+    // Optional: set the run mode (define if you want to simulate, 
+    // generate the program or run the program on the robot)
+    // RDK->setRunMode(RoboDK::RUNMODE_MAKE_ROBOTPROG)
+    // RDK->ProgramStart('MatlabTest');
 
     // Program start
     ROBOT->MoveJ(pose_ref);
@@ -55,4 +92,8 @@ C++ Example
     }
     ROBOT->RunCodeCustom("CallOnFinish");
     ROBOT->MoveL(pose_ref);     // move back to the reference point
+    
+    // Delete allocated items
+    RoboDK_Finish();
+}
 ```

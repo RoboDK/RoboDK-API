@@ -13,13 +13,24 @@ How to install
 ------------
 Simply include RoboDK.cs file to your project
 
-Python Example
+C# Example
 ------------
-```c#
-// retrieve the reference frame and the tool frame (TCP)
+```csharp
+// RDK holds the main object to interact with RoboDK.
+// RoboDK starts when a RoboDK object is created.
+RoboDK RDK = new RoboDK();
+
+// Select the robot among all available robots (there is no popup if there is only 1 robot)
+RoboDK.Item ROBOT = RDK.ItemUserPick("Select a robot", RoboDK.ITEM_TYPE_ROBOT);
+
+// retrieve the reference frame and the tool frame (TCP) as poses
 Mat frame = ROBOT.PoseFrame();
 Mat tool = ROBOT.PoseTool();
-int runmode = RDK.RunMode(); // retrieve the run mode 
+
+// Optional: set the run mode (define if you want to simulate, 
+// generate the program or run the program on the robot)
+// RDK.setRunMode(RoboDK.RUNMODE_MAKE_ROBOTPROG)
+// RDK.ProgramStart("MatlabTest");
 
 // Program start
 ROBOT.MoveJ(pose_ref);
