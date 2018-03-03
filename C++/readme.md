@@ -21,6 +21,8 @@ C++ Example
     // retrieve the reference frame and the tool frame (TCP)
     Mat pose_frame = ROBOT->PoseFrame();
     Mat pose_tool = ROBOT->PoseTool();
+    
+    // retrieve the pose of the TCP with respect to the reference frame
     Mat pose_ref = ROBOT->Pose();
 
     // Program start
