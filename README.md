@@ -88,14 +88,13 @@ The following script (Python) shows an example that uses the RoboDK API for robo
 
 The same script used for simulation can be used for offline programming, this means that the corresponding program can be generated for the robot controller. RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
 
-For more information about robot post processors:
- * [Quick introduction to RoboDK post processors](https://robodk.com/help#PostProcessor)
- * [How to use Post Processors](https://robodk.com/doc/en/Post-Processors.html)
- * [Technical Documentation](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
-
 For more Examples:
  * https://robodk.com/doc/en/PythonAPI/examples.html
 
+For more information about robot post processors:
+ * [Quick introduction to RoboDK post processors](https://robodk.com/help#PostProcessor)
+ * [How to use Post Processors](https://robodk.com/doc/en/Post-Processors.html)
+ * [Technical Reference](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
 Supported robots
 ================
