@@ -27,8 +27,7 @@ RoboDK.Item ROBOT = RDK.ItemUserPick("Select a robot", RoboDK.ITEM_TYPE_ROBOT);
 Mat frame = ROBOT.PoseFrame();
 Mat tool = ROBOT.PoseTool();
 
-// Optional: set the run mode (define if you want to simulate, 
-// generate the program or run the program on the robot)
+// Optional: set the run mode (define if you want to simulate, generate the program or run the program on the robot)
 // RDK.setRunMode(RoboDK.RUNMODE_MAKE_ROBOTPROG)
 // RDK.ProgramStart("MatlabTest");
 
