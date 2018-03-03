@@ -17,7 +17,6 @@ How to install
 RoboDK automatically uses the PYTHONPATH environment variable pointing to the /RoboDK/Python/ folder to use the robodk.py and robolink.py modules.
 
 Alternatively, you can also install the RoboDK package for Python:
-Type:
 ```
   # cd path-to-python/Scripts
   pip install robodk
