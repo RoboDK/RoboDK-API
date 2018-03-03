@@ -6,6 +6,8 @@ https://pypi.python.org/pypi/robodk/
 How to install
 ==============
 
-Type::
-  (cd path-to-python/Scripts)
+Type
+```
+  # cd path-to-python/Scripts
   pip install robodk
+```
