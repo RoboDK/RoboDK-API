@@ -1,9 +1,0 @@
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK.FormRoboDK.resources
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK.Resources.resources
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK.vbproj.GenerateResource.Cache
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\bin\Debug\RoboDK_API_VB.exe
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\bin\Debug\RoboDK_API_VB.pdb
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\bin\Debug\RoboDK_API_VB.xml
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK_API_VB.exe
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK_API_VB.xml
-C:\Personal\AssemblaSVN\dominfo.Net\RPC3Dcam\postprocessors\RoboDK\obj\x86\Debug\RoboDK_API_VB.pdb

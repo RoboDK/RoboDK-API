@@ -1,9 +1,7 @@
-
 RoboDK API for Python
 ======================
 
-Full package description on PyPi
-https://pypi.python.org/pypi/robodk/
+Full package description on [Python PyPi](https://pypi.python.org/pypi/robodk/)
 
 Read the [RoboDK API description](../README.md) for more information
 

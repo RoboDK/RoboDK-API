@@ -1,6 +1,6 @@
 ﻿' 25/09/2017 (Frederic De Oliveira - www.rpc3d.com)
 ' Converted from C# to VB.Net
-' Wrapped some methods from python API (RoboDK v3.2.6) // python code on non-wrapped method is commented for later conversion
+' Wrapped some methods from python API (RoboDK v3.2.6) // python code on non-wrapped method is commented for future conversion
 
 
 ' The RoboDK class allows interacting with RoboDK
