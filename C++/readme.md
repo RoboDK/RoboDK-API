@@ -18,6 +18,7 @@ C++ Example
     // Draw a hexagon inside a circle of radius 100.0 mm
     int n_sides = 6;
     float size = 100.0;
+    
     // retrieve the reference frame and the tool frame (TCP)
     Mat pose_frame = ROBOT->PoseFrame();
     Mat pose_tool = ROBOT->PoseTool();
