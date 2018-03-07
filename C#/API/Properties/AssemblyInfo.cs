@@ -1,16 +1,15 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("RoboDkApi")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Client side .NET API for RoboDK")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Zuehlke Engineering")]
+[assembly: AssemblyCompany("RoboDK")]
 [assembly: AssemblyProduct("RoboDkApi")]
-[assembly: AssemblyCopyright("Copyright © Zuehlke Engineering 2018")]
+[assembly: AssemblyCopyright("Copyright © RoboDK 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
