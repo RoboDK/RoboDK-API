@@ -3,3 +3,9 @@
 ################################################################################
 
 /.vs
+/C#/API/.vs/RoboDkApi/v15
+/C#/API/bin/Debug
+/C#/API/obj
+/C#/Example/.vs/RoboDKSampleSolution/v15
+/C#/Example/RoboDKSampleProject/obj
+/Visual Basic/Example/obj/x86
