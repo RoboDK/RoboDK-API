@@ -278,6 +278,10 @@ namespace RoboDk.API
             Process = null;
         }
 
+        public Item AddStation(string name = "New station")
+        {
+            return null;
+        }
 
         /// <summary>
         ///     Set the state of the RoboDK window
