@@ -280,7 +280,7 @@ namespace RoboDk.API
 
         public Item AddStation(string name = "New station")
         {
-            return null;
+            throw new NotImplementedException();
         }
 
         /// <summary>
