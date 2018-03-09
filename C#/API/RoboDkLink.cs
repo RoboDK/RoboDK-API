@@ -1,6 +1,6 @@
 ﻿namespace RoboDk.API
 {
-    internal class RoboDkLink
+    internal class RoboDKLink
     {
     }
 }

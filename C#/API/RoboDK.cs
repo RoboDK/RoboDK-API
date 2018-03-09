@@ -19,7 +19,7 @@ namespace RoboDk.API
     ///     Any interaction is made through \"items\" (Item() objects). An item is an object in the
     ///     robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
     /// </summary>
-    public class RoboDk : IRoboDk, IDisposable
+    public class RoboDK : IRoboDK, IDisposable
     {
         #region Constants
 
@@ -48,7 +48,7 @@ namespace RoboDk.API
         /// <param name="robodk_ip"></param>
         /// <param name="start_hidden"></param>
         /// <param name="com_port"></param>
-        public RoboDk(string robodk_ip = "localhost", bool start_hidden = false, int com_port = -1, string args = "",
+        public RoboDK(string robodk_ip = "localhost", bool start_hidden = false, int com_port = -1, string args = "",
             string path = "")
         {
             //A connection is attempted upon creation of the object"""

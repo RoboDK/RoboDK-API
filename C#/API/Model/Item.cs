@@ -67,7 +67,7 @@ namespace RoboDk.API.Model
 
         #region Constructors
 
-        public Item(RoboDk connectionLink, ulong itemPtr = 0, int itemType = -1)
+        public Item(RoboDK connectionLink, ulong itemPtr = 0, int itemType = -1)
         {
             _item = itemPtr;
             Link = connectionLink;
@@ -78,7 +78,7 @@ namespace RoboDk.API.Model
 
         #region Properties
 
-        public RoboDk Link { get; private set; }
+        public RoboDK Link { get; private set; }
 
         #endregion
 
@@ -146,7 +146,7 @@ namespace RoboDk.API.Model
         ///     Use RDK() instead. Returns the RoboDK link Robolink().
         /// </summary>
         /// <returns></returns>
-        public RoboDk RL()
+        public RoboDK RL()
         {
             return Link;
         }
@@ -155,7 +155,7 @@ namespace RoboDk.API.Model
         ///     Returns the RoboDK link Robolink().
         /// </summary>
         /// <returns></returns>
-        public RoboDk RDK()
+        public RoboDK RDK()
         {
             return Link;
         }
@@ -166,7 +166,7 @@ namespace RoboDk.API.Model
         /// </summary>
         public void NewLink()
         {
-            Link = new RoboDk();
+            Link = new RoboDK();
         }
 
         //////// GENERIC ITEM CALLS

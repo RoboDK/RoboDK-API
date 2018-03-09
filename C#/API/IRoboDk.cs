@@ -7,7 +7,7 @@ using RoboDk.API.Model;
 
 namespace RoboDk.API
 {
-    public interface IRoboDk
+    public interface IRoboDK
     {
         #region Properties
 

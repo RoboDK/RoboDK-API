@@ -46,7 +46,7 @@
     <Compile Include="Model\EulerType.cs" />
     <Compile Include="Exceptions\MatException.cs" />
     <Compile Include="Model\ProgramRunType.cs" />
-    <Compile Include="IRoboDk.cs" />
+    <Compile Include="IRoboDK.cs" />
     <Compile Include="Model\Item.cs" />
     <Compile Include="Model\ItemFlags.cs" />
     <Compile Include="Model\ItemType.cs" />
@@ -61,7 +61,7 @@
     <Compile Include="Exceptions\RdkException.cs" />
     <Compile Include="Model\ReferenceCalibrationType.cs" />
     <Compile Include="RoboDK.cs" />
-    <Compile Include="RoboDkLink.cs" />
+    <Compile Include="RoboDKLink.cs" />
     <Compile Include="Model\RoboDkWindowFlags.cs" />
     <Compile Include="Model\RunMode.cs" />
     <Compile Include="Model\SprayGunStates.cs" />
