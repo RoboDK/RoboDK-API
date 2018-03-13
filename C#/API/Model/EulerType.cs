@@ -46,14 +46,45 @@ namespace RoboDk.API.Model
     /// </summary>
     public enum EulerType
     {
-        JointFormat = -1, // joints
-        EulerRxRypRzpp = 0, // generic
-        EulerRzRypRxpp = 1, // ABB RobotStudio
-        EulerRzRypRzpp = 2, // Kawasaki, Adept, Staubli
-        EulerRzRxpRzpp = 3, // CATIA, SolidWorks
-        EulerRxRyRz = 4, // Fanuc, Kuka, Motoman, Nachi
-        EulerRzRyRx = 5, // CRS
-        EulerQueaternion = 6 // ABB Rapid
+        /// <summary>
+        /// joints 
+        /// </summary>
+        JointFormat = -1,
+
+        /// <summary>
+        /// generic
+        /// </summary>
+        EulerRxRypRzpp = 0,
+
+        /// <summary>
+        /// ABB RobotStudio
+        /// </summary>
+        EulerRzRypRxpp = 1,
+
+        /// <summary>
+        /// Kawasaki, Adept, Staubli
+        /// </summary>
+        EulerRzRypRzpp = 2,
+
+        /// <summary>
+        /// CATIA, SolidWorks
+        /// </summary>
+        EulerRzRxpRzpp = 3,
+
+        /// <summary>
+        /// Fanuc, Kuka, Motoman, Nachi
+        /// </summary>
+        EulerRxRyRz = 4, 
+
+        /// <summary>
+        /// CRS
+        /// </summary>
+        EulerRzRyRx = 5,
+
+        /// <summary>
+        /// ABB Rapid
+        /// </summary>
+        EulerQueaternion = 6
     }
 }
 

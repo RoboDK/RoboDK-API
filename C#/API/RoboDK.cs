@@ -145,48 +145,61 @@ namespace RoboDk.API
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        ///     Checks if the object is currently linked to RoboDK
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc />
         public bool Connected()
         {
             //return _socket.Connected;//does not work well
+            // See:
+            // https://stackoverflow.com/questions/2661764/how-to-check-if-a-socket-is-connected-disconnected-in-c
             if (_socket == null)
+            {
                 return false;
-            var part1 = _socket.Poll(1000, SelectMode.SelectRead);
+            }
+
+            var part1 = _socket.Poll(10000, SelectMode.SelectRead);
             var part2 = _socket.Available == 0;
+
+            // s.Poll returns true if:
+            //  - connection is closed, reset, terminated or pending(meaning no active connection)
+            //  - connection is active and there is data available for reading
+            // s.Available returns number of bytes available for reading
+            // if both are true:
+            //  - there is no data available to read so connection is not active
+
             if (part1 && part2)
+            {
                 return false;
+            }
+
             return true;
         }
 
-        /// <summary>
-        ///     Disconnect from the RoboDK API. This flushes any pending program generation.
-        /// </summary>
+        /// <inheritdoc />
         public void Disconnect()
         {
             if (_socket != null && _socket.Connected)
+            {
                 _socket.Disconnect(false);
+            }
         }
 
-        /// <summary>
-        ///     Starts the link with RoboDK (automatic upon creation of the object)
-        /// </summary>
-        /// <returns>True if connected; False otherwise</returns>
+        /// <inheritdoc />
         public bool Connect()
         {
-            //Establishes a connection with robodk. robodk must be running, otherwise, the variable APPLICATION_DIR must be set properly.
+            // Establishes a connection with robodk. 
+            // robodk must be running, otherwise, the variable APPLICATION_DIR must be set properly.
             var connected = false;
-            int port;
             for (var i = 0; i < 2; i++)
             {
+                int port;
                 for (port = PORT_START; port <= PORT_END; port++)
                 {
-                    _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                    _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+                    {
+                        SendTimeout = 1000,
+                        ReceiveTimeout = 1000
+                    };
                     //_socket = new Socket(SocketType.Stream, ProtocolType.IPv4);
-                    _socket.SendTimeout = 1000;
-                    _socket.ReceiveTimeout = 1000;
                     try
                     {
                         _socket.Connect(IP, port);
@@ -222,35 +235,23 @@ namespace RoboDk.API
                     arguments = arguments + ARGUMENTS;
                 if (ApplicationDir == "")
                 {
-                    string install_path = null;
-
-                    // retrieve install path from the registry:
-                    /*RegistryKey localKey = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
-                    localKey = localKey.OpenSubKey(@"SOFTWARE\RoboDK");
-                    if (localKey != null)
-                    {
-                        install_path = localKey.GetValue("INSTDIR").ToString();
-                        if (install_path != null)
-                        {
-                            APPLICATION_DIR = install_path + "\\bin\\RoboDK.exe";
-                        }
-                    }*/
-                    var bits = IntPtr.Size * 8;
                     using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
                     using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
                     {
-                        if (regKey != null)
+                        // key now points to the 64-bit key
+                        var installPath = regKey?.GetValue("INSTDIR").ToString();
+                        if (!string.IsNullOrEmpty(installPath))
                         {
-                            // key now points to the 64-bit key
-                            install_path = regKey.GetValue("INSTDIR").ToString();
-                            if (!string.IsNullOrEmpty(install_path))
-                                ApplicationDir = install_path + "\\bin\\RoboDK.exe";
+                            ApplicationDir = installPath + "\\bin\\RoboDK.exe";
                         }
                     }
                 }
 
                 if (ApplicationDir == "")
+                {
                     ApplicationDir = "C:/RoboDK/bin/RoboDK.exe";
+                }
+
                 Process = Process.Start(ApplicationDir, arguments);
                 // wait for the process to get started
                 Process.WaitForInputIdle(10000);
@@ -265,9 +266,7 @@ namespace RoboDk.API
             return connected;
         }
 
-        /// <summary>
-        ///     Closes RoboDK window and finishes RoboDK execution
-        /// </summary>
+        /// <inheritdoc />
         public void CloseRoboDK()
         {
             check_connection();
@@ -278,15 +277,7 @@ namespace RoboDk.API
             Process = null;
         }
 
-        public Item AddStation(string name = "New station")
-        {
-            return null;
-        }
-
-        /// <summary>
-        ///     Set the state of the RoboDK window
-        /// </summary>
-        /// <param name="windowState"></param>
+        /// <inheritdoc />
         public void SetWindowState(WindowState windowState = WindowState.Normal)
         {
             check_connection();
@@ -296,18 +287,13 @@ namespace RoboDk.API
             check_status();
         }
 
-        /////////////// Add More methods
-
-        /// <summary>
-        ///     Loads a file and attaches it to parent. It can be any file supported by robodk.
-        /// </summary>
-        /// <param name="filename">absolute path of the file</param>
-        /// <param name="parent">parent to attach. Leave empty for new stations or to load an object at the station root</param>
-        /// <returns>Newly added object. Check with item.Valid() for a successful load</returns>
+        /// <inheritdoc />
         public Item AddFile(string filename, Item parent = null)
         {
             if (!File.Exists(filename))
+            {
                 throw new FileNotFoundException(filename);
+            }
 
             check_connection();
             var command = "Add";
@@ -319,49 +305,34 @@ namespace RoboDk.API
             return newitem;
         }
 
-
-        /// <summary>
-        ///     Adds a new target that can be reached with a robot.
-        /// </summary>
-        /// <param name="name">name of the target</param>
-        /// <param name="itemparent">parent to attach to (such as a frame)</param>
-        /// <param name="itemrobot">main robot that will be used to go to self target</param>
-        /// <returns>the new target created</returns>
-        public Item AddTarget(string name, Item itemparent = null, Item itemrobot = null)
+        /// <inheritdoc />
+        public Item AddTarget(string name, Item parent = null, Item robot = null)
         {
             check_connection();
             var command = "Add_TARGET";
             send_line(command);
             send_line(name);
-            send_item(itemparent);
-            send_item(itemrobot);
+            send_item(parent);
+            send_item(robot);
             var newitem = rec_item();
             check_status();
             return newitem;
         }
 
-        /// <summary>
-        ///     Adds a new Frame that can be referenced by a robot.
-        /// </summary>
-        /// <param name="name">name of the program</param>
-        /// <param name="itemparent">robot that will be used</param>
-        /// <returns>the new program created</returns>
-        public Item AddProgram(string name, Item itemrobot = null)
+        /// <inheritdoc />
+        public Item AddProgram(string name, Item robot = null)
         {
             check_connection();
             var command = "Add_PROG";
             send_line(command);
             send_line(name);
-            send_item(itemrobot);
+            send_item(robot);
             var newitem = rec_item();
             check_status();
             return newitem;
         }
 
-        /// <summary>
-        ///     Renders the scene. This function turns off rendering unless always_render is set to true.
-        /// </summary>
-        /// <param name="alwaysRender"></param>
+        /// <inheritdoc />
         public void Render(bool alwaysRender = false)
         {
             var autoRender = !alwaysRender;
@@ -372,30 +343,7 @@ namespace RoboDk.API
             check_status();
         }
 
-        //Sends a string of characters with a \\n
-        public void send_line(string line)
-        {
-            line = line.Replace('\n', ' '); // one new line at the end only!
-            var data = Encoding.UTF8.GetBytes(line + "\n");
-            try
-            {
-                _socket.Send(data);
-            }
-            catch
-            {
-                throw new RdkException("Send line failed.");
-            }
-        }
-
-
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // public methods
-        /// <summary>
-        ///     Returns an item by its name. If there is no exact match it will return the last closest match.
-        /// </summary>
-        /// <param name="name">Item name</param>
-        /// <param name="itemType">Filter by itemType</param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public Item GetItemByName(string name, ItemType itemType = ItemType.Any)
         {
             check_connection();
@@ -420,17 +368,12 @@ namespace RoboDk.API
             return item;
         }
 
-        /// <summary>
-        ///     Returns a list of items (list of name or pointers) of all available items in the currently open station in robodk.
-        ///     Optionally, use a filter to return specific items (example: getItemListNames(filter = ITEM_CASE_ROBOT))
-        /// </summary>
-        /// <param name="filter">ITEM_TYPE</param>
-        /// <returns></returns>
-        public string[] getItemListNames(int filter = -1)
+        /// <inheritdoc />
+        public List<string> GetItemListNames(ItemType itemType = ItemType.Any)
         {
             check_connection();
             string command;
-            if (filter < 0)
+            if (itemType == ItemType.Any)
             {
                 command = "G_List_Items";
                 send_line(command);
@@ -439,64 +382,65 @@ namespace RoboDk.API
             {
                 command = "G_List_Items_Type";
                 send_line(command);
-                send_int(filter);
+                send_int((int)itemType);
             }
 
             var numitems = rec_int();
-            var listnames = new string[numitems];
+            var listnames = new List<string>(numitems);
             for (var i = 0; i < numitems; i++)
-                listnames[i] = rec_line();
+            {
+                var itemName = rec_line();
+                listnames.Add(itemName);
+            }
+
             check_status();
             return listnames;
         }
 
-        /// <summary>
-        ///     Returns a list of items (list of name or pointers) of all available items in the currently open station in robodk.
-        ///     Optionally, use a filter to return items of a specific type
-        /// </summary>
-        /// <param name="filter">Only return items of this type</param>
-        /// <returns>List of Items</returns>
-        public List<Item> GetItemList(ItemType filter = ItemType.Any)
+        /// <inheritdoc />
+        public List<Item> GetItemList(ItemType itemType = ItemType.Any)
         {
             check_connection();
             string command;
-            if (filter == ItemType.Any)
+            if (itemType == ItemType.Any)
             {
                 command = "G_List_Items_ptr";
                 send_line(command);
             }
             else
             {
-                var itemFilter = (int) filter;
                 command = "G_List_Items_Type_ptr";
                 send_line(command);
-                send_int(itemFilter);
+                send_int((int)itemType);
             }
 
             var numitems = rec_int();
             var listitems = new List<Item>(numitems);
             for (var i = 0; i < numitems; i++)
-                listitems.Add(rec_item());
+            {
+                var item = rec_item();
+                listitems.Add(item);
+            }
+
             check_status();
             return listitems;
         }
 
-        /////// add more methods
 
         /// <summary>
         ///     Shows a RoboDK popup to select one object from the open station.
         ///     An item type can be specified to filter desired items. If no type is specified, all items are selectable.
         /// </summary>
         /// <param name="message">Message to pop up</param>
-        /// <param name="itemtype">optionally filter by RoboDK.ITEM_TYPE_*</param>
+        /// <param name="itemType">optionally filter by RoboDK.ITEM_TYPE_*</param>
         /// <returns></returns>
-        public Item ItemUserPick(string message = "Pick one item", int itemtype = -1)
+        public Item ItemUserPick(string message = "Pick one item", ItemType itemType = ItemType.Any)
         {
             check_connection();
             var command = "PickItem";
             send_line(command);
             send_line(message);
-            send_int(itemtype);
+            send_int((int)itemType);
             _socket.ReceiveTimeout = 3600 * 1000;
             var item = rec_item();
             _socket.ReceiveTimeout = TIMEOUT;
@@ -1406,6 +1350,26 @@ namespace RoboDk.API
         {
             if (!is_connected() && !Connect())
                 throw new RdkException("Can't connect to RoboDK library");
+        }
+
+        /// <summary>
+        /// Sends a string of characters with a terminating '\n' character
+        /// </summary>
+        /// <param name="line">string to be send</param>
+        internal void send_line(string line)
+        {
+            StringBuilder sb = new StringBuilder(line, line.Length + 2);
+            sb.Replace('\n', ' ');  // one new line at the end only!
+            sb.Append('\n');
+            var data = Encoding.UTF8.GetBytes(sb.ToString());
+            try
+            {
+                _socket.Send(data);
+            }
+            catch
+            {
+                throw new RdkException("Send line failed.");
+            }
         }
 
         /// <summary>
