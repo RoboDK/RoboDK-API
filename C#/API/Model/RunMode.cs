@@ -41,15 +41,40 @@
 
 namespace RoboDk.API.Model
 {
-    // Script execution types
+    /// <summary>
+    /// Script execution Mode 
+    /// </summary>
     public enum RunMode
     {
-        Simulate = 1, // performs the simulation moving the robot (default)
-        QuickValidate = 2, // performs a quick check to validate the robot movements
-        MakeRobotProgram = 3, // makes the robot program
-        MakeRobotProgramAndUpload = 4, // makes the robot program and updates it to the robot
-        MakeRobotProgramAndStart = 5, // makes the robot program and starts it on the robot (independently from the PC)
-        RunRobot = 6 // moves the real robot from the PC (PC is the client, the robot behaves like a server)
+        /// <summary>
+        /// performs the simulation moving the robot (default)
+        /// </summary>
+        Simulate = 1,
+
+        /// <summary>
+        /// Performs a quick check to validate the robot movements.
+        /// </summary>
+        QuickValidate = 2,
+
+        /// <summary>
+        /// Makes the robot program.
+        /// </summary>
+        MakeRobotProgram = 3,
+
+        /// <summary>
+        /// Makes the robot program and updates it to the robot.
+        /// </summary>
+        MakeRobotProgramAndUpload = 4,
+
+        /// <summary>
+        /// Makes the robot program and starts it on the robot (independently from the PC).
+        /// </summary>
+        MakeRobotProgramAndStart = 5,
+
+        /// <summary>
+        /// Moves the real robot from the PC (PC is the client, the robot behaves like a server).
+        /// </summary>
+        RunRobot = 6 
     }
 }
 

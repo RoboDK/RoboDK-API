@@ -1289,7 +1289,6 @@ namespace RoboDk.API.Model
         /// <summary>
         /// Adds a program call, code, message or comment to the program. Returns True if succeeded.
         /// </summary>
-        /// <param
         /// <param name="code">string of the code or program to run </param>
         /// <param name="runType">specify if the code is a program</param>
         /// <returns>True if success; False othwersise</returns>
