@@ -106,7 +106,6 @@ namespace RoboDk.API
         /// Returns an item by its name. If there is no exact match it will return the last closest match.
         /// Specify what type of item you are looking for with itemtype.
         /// This is useful if 2 items have the same name but different type.
-        // (check variables itemType)
         /// </summary>
         /// <param name="name">name of the item (name of the item shown in the RoboDK station tree)</param>
         /// <param name="itemType">type of the item to be retrieved (avoids confusion if there are similar name matches).</param>
