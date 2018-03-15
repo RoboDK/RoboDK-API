@@ -86,12 +86,12 @@ namespace RoboDk.API
         /// <returns>Newly created Program Item</returns>
         Item AddProgram(string name, Item robot = null);
         
-        Item AddShape(Mat shape, Item addTo = null, bool shapeOverride = false);
-
-        void SetViewPose(Mat mat);
-
+        /// <summary>
+        /// Add a new empty station.
+        /// </summary>
+        /// <param name="name">Name of the station</param>
+        /// <returns>Newly created station Item</returns>
         Item AddStation(string name);
-
 
         /// <summary>
         /// Display/render the scene: update the display. 
