@@ -278,10 +278,7 @@ namespace RoboDk.API
             Process = null;
         }
 
-        public Item AddStation(string name = "New station")
-        {
-            throw new NotImplementedException();
-        }
+        
 
         /// <summary>
         ///     Set the state of the RoboDK window
@@ -353,6 +350,22 @@ namespace RoboDk.API
             send_line(command);
             send_line(name);
             send_item(itemrobot);
+            var newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
+        /// <summary>
+        ///     Add a new empty station. It returns the station :class:`.Item` created.
+        /// </summary>
+        /// <param name="name">Name of the new station. Default is "New station"</param>
+        /// <returns> It returns the station created</returns>
+        public Item AddStation(string name = "New station")
+        {
+            check_connection();
+            var command = "NewStation";
+            send_line(command);
+            send_line(name);
             var newitem = rec_item();
             check_status();
             return newitem;
@@ -1188,7 +1201,7 @@ namespace RoboDk.API
         ///     Set the pose of the wold reference frame with respect to the view (camera/screen)
         /// </summary>
         /// <param name="pose"></param>
-        public void setViewPose(Mat pose)
+        public void SetViewPose(Mat pose)
         {
             check_connection();
             var command = "S_ViewPose";

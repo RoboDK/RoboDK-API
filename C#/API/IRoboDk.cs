@@ -43,11 +43,18 @@ namespace RoboDk.API
         Item AddProgram(string name, Item itemrobot = null);
 
         Item AddTarget(string name, Item itemparent = null, Item itemrobot = null);
+        
+        Item AddShape(Mat shape, Item addTo = null, bool shapeOverride = false);
+
+        void SetViewPose(Mat mat);
+
+        Item AddStation(string name);
 
         void Render(bool always_render = false);
 
         void CloseRoboDK();
 
         #endregion
+
     }
 }
