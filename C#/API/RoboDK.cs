@@ -368,6 +368,18 @@ namespace RoboDk.API
             check_status();
         }
 
+        /// <summary>
+        ///    Update the screen. This updates the position of all robots and internal links according to previously set values.
+        /// </summary>
+        public void Update()
+        {
+            check_connection();
+            var command = "Refresh";
+            send_line(command);
+            send_int(0);
+            check_status();
+        }
+
         //Sends a string of characters with a \\n
         public void send_line(string line)
         {
