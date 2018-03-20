@@ -4,8 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -166,12 +169,9 @@ namespace RoboDk.API
             // if both are true:
             //  - there is no data available to read so connection is not active
 
-            if (part1 && part2)
-            {
-                return false;
-            }
+            var rtc = !(part1 && part2);
 
-            return true;
+            return rtc;
         }
 
         /// <inheritdoc />
@@ -225,14 +225,26 @@ namespace RoboDk.API
                 }
 
                 if (IP != "localhost")
+                {
                     break;
+                }
+
                 var arguments = "";
                 if (PORT_FORCED > 0)
+                {
                     arguments = "/PORT=" + PORT_FORCED + " " + arguments;
+                }
+
                 if (START_HIDDEN)
+                {
                     arguments = "/NOSPLASH /NOSHOW /HIDDEN " + arguments;
+                }
+
                 if (ARGUMENTS != "")
+                {
                     arguments = arguments + ARGUMENTS;
+                }
+
                 if (ApplicationDir == "")
                 {
                     using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
@@ -254,7 +266,7 @@ namespace RoboDk.API
 
                 Process = Process.Start(ApplicationDir, arguments);
                 // wait for the process to get started
-                Process.WaitForInputIdle(10000);
+                WaitForTcpServerPort(PORT_FORCED, 10000);
             }
 
             if (connected && !Set_connection_params())
@@ -277,7 +289,7 @@ namespace RoboDk.API
             Process = null;
         }
 
-        
+        /// <inheritdoc />
         public void SetWindowState(WindowState windowState = WindowState.Normal)
         {
             check_connection();
@@ -333,11 +345,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        ///     Add a new empty station. It returns the station :class:`.Item` created.
-        /// </summary>
-        /// <param name="name">Name of the new station. Default is "New station"</param>
-        /// <returns> It returns the station created</returns>
-        public Item AddStation(string name = "New station")
+        public Item AddStation(string name)
         {
             check_connection();
             var command = "NewStation";
@@ -348,7 +356,7 @@ namespace RoboDk.API
             return newitem;
         }
 
-        /// <summary>
+        /// <inheritdoc />
         public void Render(bool alwaysRender = false)
         {
             var autoRender = !alwaysRender;
@@ -1578,5 +1586,42 @@ namespace RoboDk.API
                 return true;
             return false;
         }
+
+        /// <summary>
+        /// Check if the requested TCP server port is open (listening).
+        /// The method os polling all registered server ports every 100ms.
+        /// It repeats the polling until the defined timeout time has elapsed.
+        /// </summary>
+        /// <param name="serverPort">TCP server port to check.</param>
+        /// <param name="millisecondsTimeout">Maximum time to wait until server port is open.</param>
+        /// <returns>True if server port is listening. False otherwise.</returns>
+        internal static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
+        {
+            int sleepTime = 100;
+            bool serverPortIsOpen = false;
+            while ((serverPortIsOpen == false) && (millisecondsTimeout > 0))
+            {
+                //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
+                IPEndPoint[] objEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+                foreach (var tcpEndPoint in objEndPoints)
+                {
+                    if (tcpEndPoint.Port == serverPort)
+                    {
+                        serverPortIsOpen = true;
+                        break;
+                    }
+                }
+
+                if (serverPortIsOpen == false)
+                {
+                    Console.WriteLine("wait for server port");
+                    Thread.Sleep(sleepTime);
+                    millisecondsTimeout -= sleepTime;
+                }
+            }
+
+            return serverPortIsOpen;
+        }
+
     }
 }
