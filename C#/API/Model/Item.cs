@@ -167,6 +167,7 @@ namespace RoboDk.API.Model
         public void NewLink()
         {
             Link = new RoboDK();
+            Link.Connect();
         }
 
         //////// GENERIC ITEM CALLS
@@ -1179,7 +1180,7 @@ namespace RoboDk.API.Model
             Link.check_status();
             Link.ReceiveTimeout = (int) (timeout_sec * 1000.0);
             Link.check_status(); //will wait here;
-            Link.ReceiveTimeout = Link.TIMEOUT;
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             //int isbusy = link.Busy(this);
             //while (isbusy)
             //{
@@ -1541,7 +1542,7 @@ namespace RoboDk.API.Model
             Link.send_array(values);
             Link.ReceiveTimeout = timeoutSec * 1000;
             double[] result = Link.rec_array();
-            Link.ReceiveTimeout = Link.TIMEOUT;
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             string msg = Link.rec_line();
             Link.check_status();
             UpdateResult updateResult = new UpdateResult(
@@ -1653,7 +1654,7 @@ namespace RoboDk.API.Model
             }
 
             int errorCode = Link.rec_int();
-            Link.ReceiveTimeout = Link.TIMEOUT;
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             errorMsg = Link.rec_line();
             Link.check_status();
             return errorCode;
