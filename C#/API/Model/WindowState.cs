@@ -46,13 +46,44 @@ namespace RoboDk.API.Model
     /// </summary>
     public enum WindowState
     {
+        /// <summary>
+        /// Hidden
+        /// </summary>
         Hidden = -1,
+
+        /// <summary>
+        /// Visible
+        /// </summary>
         Show = 0,
+
+        /// <summary>
+        /// Minimize Window
+        /// </summary>
         Minimized = 1,
+
+        /// <summary>
+        /// Show normal window (last known state)
+        /// </summary>
         Normal = 2,
+
+        /// <summary>
+        /// Show maximized window
+        /// </summary>
         Maximized = 3,
+
+        /// <summary>
+        /// Show fulscreen window
+        /// </summary>
         Fullscreen = 4,
+
+        /// <summary>
+        /// Show maximized window without the toolbar and without the menu
+        /// </summary>
         Cinema = 5,
+
+        /// <summary>
+        /// Show fulscreen window without the toolbar and without the menu
+        /// </summary>
         FullScreenCinema = 6
     }
 }

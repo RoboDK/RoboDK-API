@@ -9,3 +9,6 @@
 /C#/Example/.vs/RoboDKSampleSolution/v15
 /C#/Example/RoboDKSampleProject/obj
 /Visual Basic/Example/obj/x86
+doxygen_output
+_site
+/C#/API/log.txt

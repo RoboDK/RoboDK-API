@@ -30,7 +30,9 @@ namespace RoboDk.API.Model
         /// </summary>
         public double ProgramDistance { get; private set; }
         /// <summary>
-        /// This is a ratio from [0.00 to 1.00] showing if the path can be fully completed without any problems (1.0 means the path 100% feasible) or valid_ratio is <1.0 if there were problems along the path.
+        /// This is a ratio from [0.00 to 1.00] showing if the path can be fully completed without 
+        /// any problems (1.0 means the path 100% feasible).
+        /// ValidRatio is less then 1.0 if there were problems along the path.
         /// </summary>
         public double ValidRatio { get; private set; }
         /// <summary>
