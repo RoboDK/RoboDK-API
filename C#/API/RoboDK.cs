@@ -252,9 +252,22 @@ namespace RoboDk.API
                     ApplicationDir = "C:/RoboDK/bin/RoboDK.exe";
                 }
 
-                Process = Process.Start(ApplicationDir, arguments);
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = ApplicationDir,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                };
+                Process = Process.Start(processStartInfo);
                 // wait for the process to get started
-                Process.WaitForInputIdle(10000);
+                // Process.WaitForInputIdle(10000);
+                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+                string line = "";
+                while (!line.Contains("RoboDK is Running"))
+                {
+                    line = Process.StandardOutput.ReadLine();
+                }
             }
 
             if (connected && !Set_connection_params())
@@ -753,7 +766,7 @@ namespace RoboDk.API
             return value;
         }
 
-        /// <inheritdoc />
+        
         public void SetParameter(string parameter, string value)
         {
             check_connection();
@@ -762,6 +775,25 @@ namespace RoboDk.API
             send_line(parameter);
             send_line(value);
             check_status();
+        }
+
+        /// <inheritdoc />
+        public Item GetActiveStation()
+        {
+            check_connection();
+            send_line("G_ActiveStn");
+            Item station = rec_item();
+            check_status();
+            return station;
+        }
+
+        /// <inheritdoc />
+        public void SetActiveStation(Item station)
+        {
+            check_connection();
+            send_line("S_ActiveStn");
+            send_item(station);
+            check_status();            
         }
 
         /// <inheritdoc />
@@ -1102,26 +1134,6 @@ namespace RoboDk.API
         {
             if (!is_connected() && !Connect())
                 throw new RdkException("Can't connect to RoboDK library");
-        }
-
-        /// <summary>
-        /// Sends a string of characters with a terminating '\n' character
-        /// </summary>
-        /// <param name="line">string to be send</param>
-        internal void send_line(string line)
-        {
-            StringBuilder sb = new StringBuilder(line, line.Length + 2);
-            sb.Replace('\n', ' ');  // one new line at the end only!
-            sb.Append('\n');
-            var data = Encoding.UTF8.GetBytes(sb.ToString());
-            try
-            {
-                _socket.Send(data);
-            }
-            catch
-            {
-                throw new RdkException("Send line failed.");
-            }
         }
 
         /// <summary>
