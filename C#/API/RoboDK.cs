@@ -342,8 +342,9 @@ namespace RoboDk.API
             send_int(autoRender ? 1 : 0);
             check_status();
         }
-
-        /// <inheritdoc />
+        /// <summary>
+        ///    Update the screen. This updates the position of all robots and internal links according to previously set values.
+        /// </summary>
         public void Update()
         {
             check_connection();
@@ -1175,6 +1176,20 @@ namespace RoboDk.API
             return true;
         }
 
+        //Sends a string of characters with a \\n
+        internal void send_line(string line)
+        {
+            line = line.Replace('\n', ' '); // one new line at the end only!
+            var data = Encoding.UTF8.GetBytes(line + "\n");
+            try
+            {
+                _socket.Send(data);
+            }
+            catch
+            {
+                throw new RdkException("Send line failed.");
+            }
+        }
         internal string rec_line()
         {
             //Receives a string. It reads until if finds LF (\\n)
