@@ -340,11 +340,24 @@ namespace RoboDk.API
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
 
-            Process = Process.Start(ApplicationDir, arguments);
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = ApplicationDir,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                };
+                Process = Process.Start(processStartInfo);
 
             // wait for the process to get started
-            WaitForTcpServerPort(port, 10000);
-        }
+                // Process.WaitForInputIdle(10000);
+                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+                string line = "";
+                while (!line.Contains("RoboDK is Running"))
+                {
+                    line = Process.StandardOutput.ReadLine();
+                }
+            }
 
         /// <inheritdoc />
         public void CloseRoboDK()
@@ -434,8 +447,9 @@ namespace RoboDk.API
             send_int(autoRender ? 1 : 0);
             check_status();
         }
-
-        /// <inheritdoc />
+        /// <summary>
+        ///    Update the screen. This updates the position of all robots and internal links according to previously set values.
+        /// </summary>
         public void Update()
         {
             check_connection();
@@ -847,7 +861,7 @@ namespace RoboDk.API
             return value;
         }
 
-        /// <inheritdoc />
+        
         public void SetParameter(string parameter, string value)
         {
             check_connection();
@@ -856,6 +870,25 @@ namespace RoboDk.API
             send_line(parameter);
             send_line(value);
             check_status();
+        }
+
+        /// <inheritdoc />
+        public Item GetActiveStation()
+        {
+            check_connection();
+            send_line("G_ActiveStn");
+            Item station = rec_item();
+            check_status();
+            return station;
+        }
+
+        /// <inheritdoc />
+        public void SetActiveStation(Item station)
+        {
+            check_connection();
+            send_line("S_ActiveStn");
+            send_item(station);
+            check_status();            
         }
 
         /// <inheritdoc />
@@ -1199,26 +1232,6 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        /// Sends a string of characters with a terminating '\n' character
-        /// </summary>
-        /// <param name="line">string to be send</param>
-        internal void send_line(string line)
-        {
-            StringBuilder sb = new StringBuilder(line, line.Length + 2);
-            sb.Replace('\n', ' '); // one new line at the end only!
-            sb.Append('\n');
-            var data = Encoding.UTF8.GetBytes(sb.ToString());
-            try
-            {
-                _socket.Send(data);
-            }
-            catch
-            {
-                throw new RdkException("Send line failed.");
-            }
-        }
-
-        /// <summary>
         ///     checks the status of the connection
         /// </summary>
         internal void check_status()
@@ -1275,6 +1288,20 @@ namespace RoboDk.API
             return true;
         }
 
+        //Sends a string of characters with a \\n
+        internal void send_line(string line)
+        {
+            line = line.Replace('\n', ' '); // one new line at the end only!
+            var data = Encoding.UTF8.GetBytes(line + "\n");
+            try
+            {
+                _socket.Send(data);
+            }
+            catch
+            {
+                throw new RdkException("Send line failed.");
+            }
+        }
         internal string rec_line()
         {
             //Receives a string. It reads until if finds LF (\\n)

@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Sockets;       // For Socket communication
 using Microsoft.Win32;          // For registry keys
 
@@ -1846,9 +1847,22 @@ public class RoboDK
                 {
                     APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe";
                 }
-                PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = APPLICATION_DIR,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                };
+                PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
-                PROCESS.WaitForInputIdle(10000);
+                //PROCESS.WaitForInputIdle(10000);
+                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+                string line = "";
+                while (!line.Contains("RoboDK is Running"))
+                {
+                    line = PROCESS.StandardOutput.ReadLine();
+                }
             }
         }
         if (connected && !Set_connection_params())
@@ -2516,6 +2530,32 @@ public class RoboDK
 
 
     /// <summary>
+    /// Returns the active station item (station currently visible)
+    /// </summary>
+    /// <returns></returns>
+    public Item GetActiveStation()
+    {
+        _check_connection();
+        _send_Line("G_ActiveStn");
+        Item station = _recv_Item();
+        _check_status();
+        return station;
+    }
+
+    /// <summary>
+    /// Set the active station (project currently visible)
+    /// </summary>
+    /// <param name="station">station item, it can be previously loaded as an RDK file</param>
+    public void SetActiveStation(Item station)
+    {
+        _check_connection();
+        _send_Line("S_ActiveStn");
+        _send_Item(station);
+        _check_status();
+    }
+
+
+    /// <summary>
     /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
     /// </summary>
     /// <param name="estimate"></param>
@@ -2711,7 +2751,7 @@ public class RoboDK
         _check_status();
         return errors;
     }
-
+    
     /// <summary>
     /// Set the pose of the wold reference frame with respect to the view (camera/screen)
     /// </summary>
@@ -3896,6 +3936,19 @@ public class RoboDK
 
 
         // ---- Program item calls -----
+
+        /// <summary>
+        /// Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+        /// </summary>
+        /// <param name="accurate">set to 1 to use the accurate model or 0 to use the nominal model</param>
+        public void setAccuracyActive(int accurate = 1)
+        {
+            link._check_connection();
+            link._send_Line("S_AbsAccOn");
+            link._send_Item(this);
+            link._send_Int(accurate);
+            link._check_status();
+        }
 
         /// <summary>
         /// Saves a program to a file.
