@@ -107,7 +107,6 @@ namespace RoboDk.API
             RoboDKSimulatorIpAdress = "localhost";
             RoboDKServerStartPort = 20500;
             RoboDKServerEndPort = RoboDKServerStartPort;
-            RoboDKListeningServerPort = 0;
         }
 
         #endregion
@@ -161,11 +160,6 @@ namespace RoboDk.API
         /// TCP Port to which RoboDK is connected.
         /// </summary>
         public int RoboDKServerPort { get; private set; }
-
-        /// <summary>
-        /// Port to force RoboDK to start listening
-        /// </summary>
-        public int RoboDKListeningServerPort { get; set; }
 
         internal int ReceiveTimeout
         {
@@ -238,36 +232,19 @@ namespace RoboDk.API
             var connected = false;
             for (var i = 0; i < 2; i++)
             {
-                int port;
                 if (RoboDKServerEndPort < RoboDKServerStartPort)
                 {
                     RoboDKServerEndPort = RoboDKServerStartPort;
                 }
+
+                int port;
                 for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
                 {
-                    _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+                    _socket = ConnectToRoboDK(RoboDKSimulatorIpAdress, port);
+                    if (_socket != null)
                     {
-                        SendTimeout = 1000,
-                        ReceiveTimeout = 1000
-                    };
-
-                    //_socket = new Socket(SocketType.Stream, ProtocolType.IPv4);
-                    try
-                    {
-                        _socket.Connect(RoboDKSimulatorIpAdress, port);
-                        connected = is_connected();
-                        if (connected)
-                        {
-                            _socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
-                            _socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
-                            break;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        var s = e.Message;
-
-                        //connected = false;
+                        connected = true;
+                        break;
                     }
                 }
 
@@ -282,44 +259,7 @@ namespace RoboDk.API
                     break;
                 }
 
-                RoboDKListeningServerPort = RoboDKServerStartPort;
-                var arguments = string.Format($"/PORT={RoboDKListeningServerPort}");
-
-                if (StartHidden)
-                {
-                    arguments = string.Format($"/NOSPLASH /NOSHOW /HIDDEN {arguments}");
-                }
-
-                if (!string.IsNullOrEmpty(CommandLineOptions))
-                {
-                    arguments = string.Format($"{arguments} {CommandLineOptions}");
-                }
-
-                // No application path is given. Check the registry.
-                if (string.IsNullOrEmpty(ApplicationDir))
-                {
-                    using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-                    using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
-                    {
-                        // key now points to the 64-bit key
-                        var installPath = regKey?.GetValue("INSTDIR").ToString();
-                        if (!string.IsNullOrEmpty(installPath))
-                        {
-                            ApplicationDir = installPath + "\\bin\\RoboDK.exe";
-                        }
-                    }
-                }
-
-                // Still no application path. User Default installation directory
-                if (string.IsNullOrEmpty(ApplicationDir))
-                {
-                    ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
-                }
-
-                Process = Process.Start(ApplicationDir, arguments);
-
-                // wait for the process to get started
-                WaitForTcpServerPort(RoboDKListeningServerPort, 10000);
+                StartNewRoboDKProcess(RoboDKServerStartPort);
             }
 
             if (connected && !Set_connection_params())
@@ -329,6 +269,81 @@ namespace RoboDk.API
             }
 
             return connected;
+        }
+
+        private Socket ConnectToRoboDK(string ipAdress, int port)
+        {
+            bool connected = false;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+            {
+                SendTimeout = 1000,
+                ReceiveTimeout = 1000
+            };
+
+            try
+            {
+                socket.Connect(ipAdress, port);
+                if (socket.Connected)
+                {
+                    socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
+                    socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                    connected = true;
+                }
+            }
+            catch (Exception e)
+            {
+                var s = e.Message;
+                //connected = false;
+            }
+
+            if( !connected )
+            {
+                socket.Dispose();
+                socket = null;
+            }
+
+            return socket;
+        }
+
+        public void StartNewRoboDKProcess(int port)
+        {
+            var arguments = string.Format($"/PORT={port}");
+
+            if (StartHidden)
+            {
+                arguments = string.Format($"/NOSPLASH /NOSHOW /HIDDEN {arguments}");
+            }
+
+            if (!string.IsNullOrEmpty(CommandLineOptions))
+            {
+                arguments = string.Format($"{arguments} {CommandLineOptions}");
+            }
+
+            // No application path is given. Check the registry.
+            if (string.IsNullOrEmpty(ApplicationDir))
+            {
+                using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
+                {
+                    // key now points to the 64-bit key
+                    var installPath = regKey?.GetValue("INSTDIR").ToString();
+                    if (!string.IsNullOrEmpty(installPath))
+                    {
+                        ApplicationDir = installPath + "\\bin\\RoboDK.exe";
+                    }
+                }
+            }
+
+            // Still no application path. User Default installation directory
+            if (string.IsNullOrEmpty(ApplicationDir))
+            {
+                ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
+            }
+
+            Process = Process.Start(ApplicationDir, arguments);
+
+            // wait for the process to get started
+            WaitForTcpServerPort(port, 10000);
         }
 
         /// <inheritdoc />
@@ -1699,21 +1714,29 @@ namespace RoboDk.API
             while (serverPortIsOpen == false && millisecondsTimeout > 0)
             {
                 //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
-                IPEndPoint[] objEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
-                foreach (var tcpEndPoint in objEndPoints)
-                {
-                    if (tcpEndPoint.Port == serverPort)
-                    {
-                        serverPortIsOpen = true;
-                        break;
-                    }
-                }
+                serverPortIsOpen = CheckIfServerPortIsOpen(serverPort);
 
                 if (serverPortIsOpen == false)
                 {
                     Console.WriteLine("wait for server port");
                     Thread.Sleep(sleepTime);
                     millisecondsTimeout -= sleepTime;
+                }
+            }
+
+            return serverPortIsOpen;
+        }
+
+        private static bool CheckIfServerPortIsOpen(int serverPort)
+        {
+            bool serverPortIsOpen = false;
+            IPEndPoint[] objEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+            foreach (var tcpEndPoint in objEndPoints)
+            {
+                if (tcpEndPoint.Port == serverPort)
+                {
+                    serverPortIsOpen = true;
+                    break;
                 }
             }
 
