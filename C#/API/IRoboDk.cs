@@ -429,18 +429,6 @@ namespace RoboDk.API
         void SetParameter(string parameter, string value);
 
         /// <summary>
-        /// Set the active station (project currently visible)
-        /// </summary>
-        /// <param name="station">station item, it can be previously loaded as an RDK file</param>
-        void SetActiveStation(Item station);
-
-        /// <summary>
-        /// Returns the active station item (station currently visible)
-        /// </summary>
-        /// <returns></returns>
-        Item GetActiveStation();
-
-        /// <summary>
         /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the
         /// laser tracker will first move to those coordinates. 
         /// </summary>
