@@ -134,6 +134,18 @@ namespace RoboDk.API
         Item AddStation(string name);
 
         /// <summary>
+        /// Set the active station (project currently visible)
+        /// </summary>
+        /// <param name="station">station item, it can be previously loaded as an RDK file</param>
+        void SetActiveStation(Item station);
+
+        /// <summary>
+        /// Returns the active station item (station currently visible)
+        /// </summary>
+        /// <returns></returns>
+        Item GetActiveStation();
+
+        /// <summary>
         /// Display/render the scene: update the display. 
         /// This function turns default rendering (rendering after any modification of the station unless alwaysRender is set to true). 
         /// Use Update to update the internal links of the complete station without rendering 
