@@ -788,6 +788,25 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public Item GetActiveStation()
+        {
+            check_connection();
+            send_line("G_ActiveStn");
+            Item station = rec_item();
+            check_status();
+            return station;
+        }
+
+        /// <inheritdoc />
+        public void SetActiveStation(Item station)
+        {
+            check_connection();
+            send_line("S_ActiveStn");
+            send_item(station);
+            check_status();
+        }
+
+        /// <inheritdoc />
         public double[] LaserTrackerMeasure(double[] estimate, bool search = false)
         {
             check_connection();
