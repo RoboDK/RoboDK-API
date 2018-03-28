@@ -44,7 +44,7 @@ using RoboDk.API.Exceptions;
 
 #endregion
 
-namespace RoboDk.API.Model
+namespace RoboDk.API
 {
     /// <summary>
     /// Matrix class for robotics.

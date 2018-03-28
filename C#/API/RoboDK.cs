@@ -85,14 +85,6 @@ namespace RoboDk.API
         /// <summary>
         /// Creates a link with RoboDK
         /// </summary>
-        /// See https://robodk.com/doc/en/RoboDK-API.html#CommandLine
-        /// </param>
-        /// <param name="applicationPath">
-        /// Path to RoboDK.EXE.
-        /// Default search order:
-        /// 1) Check registry for the RoboDK installation directory.
-        /// 2) Check default installation directoy C:\RoboDK\bin
-        /// </param>
         public RoboDK()
         {
             CommandLineOptions = "";
@@ -104,7 +96,7 @@ namespace RoboDk.API
             AutoUpdate = false;
             StartHidden = false;
 
-            RoboDKSimulatorIpAdress = "localhost";
+            RoboDKServerIpAdress = "localhost";
             RoboDKServerStartPort = 20500;
             RoboDKServerEndPort = RoboDKServerStartPort;
         }
@@ -138,7 +130,7 @@ namespace RoboDk.API
         /// Defines the RoboDK Simulator IP Address.
         /// Default: localhost (Client and RoboDK Server runs on same computer)
         /// </summary>
-        public string RoboDKSimulatorIpAdress { get; set; }
+        public string RoboDKServerIpAdress { get; set; }
 
         /// <summary>
         /// Port to start looking for a RoboDK connection.
@@ -240,7 +232,7 @@ namespace RoboDk.API
                 int port;
                 for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
                 {
-                    _socket = ConnectToRoboDK(RoboDKSimulatorIpAdress, port);
+                    _socket = ConnectToRoboDK(RoboDKServerIpAdress, port);
                     if (_socket != null)
                     {
                         connected = true;
@@ -254,7 +246,7 @@ namespace RoboDk.API
                     break;
                 }
 
-                if (RoboDKSimulatorIpAdress != "localhost")
+                if (RoboDKServerIpAdress != "localhost")
                 {
                     break;
                 }
@@ -262,47 +254,13 @@ namespace RoboDk.API
                 StartNewRoboDKProcess(RoboDKServerStartPort);
             }
 
-            if (connected && !Set_connection_params())
+            if (connected && !SetConnectionParameter())
             {
                 connected = false;
                 Process = null;
             }
 
             return connected;
-        }
-
-        private Socket ConnectToRoboDK(string ipAdress, int port)
-        {
-            bool connected = false;
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
-            {
-                SendTimeout = 1000,
-                ReceiveTimeout = 1000
-            };
-
-            try
-            {
-                socket.Connect(ipAdress, port);
-                if (socket.Connected)
-                {
-                    socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
-                    socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
-                    connected = true;
-                }
-            }
-            catch (Exception e)
-            {
-                var s = e.Message;
-                //connected = false;
-            }
-
-            if( !connected )
-            {
-                socket.Dispose();
-                socket = null;
-            }
-
-            return socket;
         }
 
         public void StartNewRoboDKProcess(int port)
@@ -340,24 +298,22 @@ namespace RoboDk.API
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
 
-                var processStartInfo = new ProcessStartInfo
-                {
-                    FileName = ApplicationDir,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false
-                };
-                Process = Process.Start(processStartInfo);
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = ApplicationDir,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            Process = Process.Start(processStartInfo);
 
-            // wait for the process to get started
-                // Process.WaitForInputIdle(10000);
-                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
-                string line = "";
-                while (!line.Contains("RoboDK is Running"))
-                {
-                    line = Process.StandardOutput.ReadLine();
-                }
+            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+            string line = "";
+            while (!line.Contains("RoboDK is Running"))
+            {
+                line = Process.StandardOutput.ReadLine();
             }
+        }
 
         /// <inheritdoc />
         public void CloseRoboDK()
@@ -447,6 +403,7 @@ namespace RoboDk.API
             send_int(autoRender ? 1 : 0);
             check_status();
         }
+
         /// <summary>
         ///    Update the screen. This updates the position of all robots and internal links according to previously set values.
         /// </summary>
@@ -861,7 +818,7 @@ namespace RoboDk.API
             return value;
         }
 
-        
+
         public void SetParameter(string parameter, string value)
         {
             check_connection();
@@ -888,7 +845,7 @@ namespace RoboDk.API
             check_connection();
             send_line("S_ActiveStn");
             send_item(station);
-            check_status();            
+            check_status();
         }
 
         /// <inheritdoc />
@@ -1212,6 +1169,45 @@ namespace RoboDk.API
 
         #endregion
 
+        #region Private Methods
+
+        private Socket ConnectToRoboDK(string ipAdress, int port)
+        {
+            bool connected = false;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+            {
+                SendTimeout = 1000,
+                ReceiveTimeout = 1000
+            };
+
+            try
+            {
+                socket.Connect(ipAdress, port);
+                if (socket.Connected)
+                {
+                    socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
+                    socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                    connected = true;
+                }
+            }
+            catch (Exception e)
+            {
+                var s = e.Message;
+
+                //connected = false;
+            }
+
+            if (!connected)
+            {
+                socket.Dispose();
+                socket = null;
+            }
+
+            return socket;
+        }
+
+        #endregion
+
         #region Internal Methods
 
         //Returns 1 if connection is valid, returns 0 if connection is invalid
@@ -1302,6 +1298,7 @@ namespace RoboDk.API
                 throw new RdkException("Send line failed.");
             }
         }
+
         internal string rec_line()
         {
             //Receives a string. It reads until if finds LF (\\n)
@@ -1712,7 +1709,7 @@ namespace RoboDk.API
             Disconnect();
         }
 
-        internal bool Set_connection_params()
+        internal bool SetConnectionParameter()
         {
             send_line("CMD_START");
             var startParameter = string.Format($"{Convert.ToInt32(SafeMode)} {Convert.ToInt32(AutoUpdate)}");
@@ -1726,49 +1723,6 @@ namespace RoboDk.API
             return false;
         }
 
-        /// <summary>
-        /// Check if the requested TCP server port is open (listening).
-        /// The method os polling all registered server ports every 100ms.
-        /// It repeats the polling until the defined timeout time has elapsed.
-        /// </summary>
-        /// <param name="serverPort">TCP server port to check.</param>
-        /// <param name="millisecondsTimeout">Maximum time to wait until server port is open.</param>
-        /// <returns>True if server port is listening. False otherwise.</returns>
-        internal static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
-        {
-            int sleepTime = 100;
-            bool serverPortIsOpen = false;
-            while (serverPortIsOpen == false && millisecondsTimeout > 0)
-            {
-                //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
-                serverPortIsOpen = CheckIfServerPortIsOpen(serverPort);
-
-                if (serverPortIsOpen == false)
-                {
-                    Console.WriteLine("wait for server port");
-                    Thread.Sleep(sleepTime);
-                    millisecondsTimeout -= sleepTime;
-                }
-            }
-
-            return serverPortIsOpen;
-        }
-
-        private static bool CheckIfServerPortIsOpen(int serverPort)
-        {
-            bool serverPortIsOpen = false;
-            IPEndPoint[] objEndPoints = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
-            foreach (var tcpEndPoint in objEndPoints)
-            {
-                if (tcpEndPoint.Port == serverPort)
-                {
-                    serverPortIsOpen = true;
-                    break;
-                }
-            }
-
-            return serverPortIsOpen;
-        }
 
         #endregion
     }

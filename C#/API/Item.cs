@@ -40,13 +40,12 @@
 #region Namespaces
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using RoboDk.API.Exceptions;
+using RoboDk.API.Model;
 
 #endregion
 
-namespace RoboDk.API.Model
+namespace RoboDk.API
 {
     /// <summary>
     ///     The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target,
