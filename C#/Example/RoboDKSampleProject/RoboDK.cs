@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Sockets;       // For Socket communication
 using Microsoft.Win32;          // For registry keys
+using System.IO;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -1205,6 +1206,7 @@ public class RoboDK
 
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
+    public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
 
 
     string APPLICATION_DIR = "";            // file path to the robodk program (executable), typically C:/RoboDK/bin/RoboDK.exe. Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
@@ -1255,7 +1257,7 @@ public class RoboDK
     {
         if (!is_connected() && !Connect())
         {
-            throw new RDKException("Can't connect to RoboDK library");
+            throw new RDKException("Can't connect to RoboDK API");
         }
     }
 
@@ -1263,32 +1265,32 @@ public class RoboDK
     int _check_status()
     {
         int status = _recv_Int();
+        LAST_STATUS_MESSAGE = "";
         if (status > 0 && status < 10)
         {
-            string strproblems;
-            strproblems = "Unknown error";
+            LAST_STATUS_MESSAGE = "Unknown error";
             if (status == 1)
             {
-                strproblems = "Invalid item provided: The item identifier provided is not valid or it does not exist.";
+                LAST_STATUS_MESSAGE = "Invalid item provided: The item identifier provided is not valid or it does not exist.";
             }
             else if (status == 2)
             {//output warning
-                strproblems = _recv_Line();
+                LAST_STATUS_MESSAGE = _recv_Line();
                 //print("WARNING: " + strproblems);
                 //#warn(strproblems)# does not show where is the problem...
                 return 0;
             }
             else if (status == 3)
             { // output error
-                strproblems = _recv_Line();
-                throw new RDKException(strproblems);
+                LAST_STATUS_MESSAGE = _recv_Line();
+                throw new RDKException(LAST_STATUS_MESSAGE);
             }
             else if (status == 9)
             {
-                strproblems = "Invalid license. Contact us at: info@robodk.com";
+                LAST_STATUS_MESSAGE = "Invalid license. Contact us at: info@robodk.com";
             }
             //print(strproblems);
-            throw new RDKException(strproblems); //raise Exception(strproblems)
+            throw new RDKException(LAST_STATUS_MESSAGE); //raise Exception(strproblems)
         }
         else if (status == 0)
         {
@@ -1492,6 +1494,17 @@ public class RoboDK
     }
 
     // Sends an array of doubles
+    void _send_ArrayList(List<double> values)
+    {
+        double[] values2 = new double[values.Count];
+        for (int i = 0; i < values.Count; i++)
+        {
+            values2[i] = values[i];
+        }
+        _send_Array(values2);
+    }
+
+
     void _send_Array(double[] values)
     {
         if (values == null)
@@ -1686,6 +1699,40 @@ public class RoboDK
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
 
     /// <summary>
+    /// Return the list of recently opened files
+    /// </summary>
+    /// <param name="extension_filter"></param>
+    /// <returns></returns>
+    static public List<string> RecentFiles(string extension_filter = "")
+    {
+        string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
+        string str = "";
+        if (File.Exists(ini_file)) {
+            foreach (string line in File.ReadLines(ini_file))
+            {
+                if (line.Contains("RecentFileList="))
+                {
+                    str = line.Remove(0, "RecentFileList=".Length);
+                    break;
+                }
+            }
+        }
+        List<string> rdk_list = new List<string>();
+        string[] read_list = str.Split(',');
+        foreach (string st in read_list)
+        {
+            string st2 = st.Trim();
+            if (extension_filter.Length > 0 && st2.ToLower().EndsWith(extension_filter.ToLower()))
+            {
+                rdk_list.Add(st2);
+            }
+        }
+        return rdk_list;
+    }
+
+
+
+    /// <summary>
     /// Creates a link with RoboDK
     /// </summary>
     /// <param name="robodk_ip"></param>
@@ -1787,7 +1834,7 @@ public class RoboDK
                         break;
                     }
                 }
-                catch (Exception e)
+                catch //Exception e)
                 {
                     //connected = false;
                 }
@@ -1859,9 +1906,13 @@ public class RoboDK
                 //PROCESS.WaitForInputIdle(10000);
                 // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
                 string line = "";
-                while (!line.Contains("RoboDK is Running"))
+                while (line != null && !line.Contains("RoboDK is Running"))
                 {
                     line = PROCESS.StandardOutput.ReadLine();
+                }
+                if (line == null)
+                {
+                    connected = false;
                 }
             }
         }
@@ -2137,6 +2188,20 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Add a new empty station. It returns the station created.
+    /// </summary>
+    /// <param name="name"></param>
+    public Item AddStation(string name= "New Station")
+    {
+        _check_connection();
+        _send_Line("NewStation");
+        _send_Line(name);
+        Item newitem = _recv_Item();
+        _check_status();
+        return newitem;
+    }
+
+    /// <summary>
     /// Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
     /// </summary>
     /// <param name="triangle_points">List of vertices grouped by triangles (3xN or 6xN matrix, N must be multiple of 3 because vertices must be stacked by groups of 3)</param>
@@ -2169,6 +2234,27 @@ public class RoboDK
         _check_connection();
         _send_Line("AddWire");
         _send_Matrix2D(curve_points);
+        _send_Item(reference_object);
+        _send_Int(add_to_ref ? 1 : 0);
+        _send_Int(projection_type);
+        Item newitem = _recv_Item();
+        _check_status();
+        return newitem;
+    }
+
+    /// <summary>
+    /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+    /// </summary>
+    /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+    /// <param name="reference_object">item to attach the newly added geometry (optional)</param>
+    /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+    /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
+    /// <returns>added object/shape (0 if failed)</returns>
+    public Item AddPoints(Mat points, Item reference_object = null, bool add_to_ref = false, int projection_type = PROJECTION_ALONG_NORMAL_RECALC)
+    {
+        _check_connection();
+        _send_Line("AddPoints");
+        _send_Matrix2D(points);
         _send_Item(reference_object);
         _send_Int(add_to_ref ? 1 : 0);
         _send_Int(projection_type);
@@ -2253,6 +2339,25 @@ public class RoboDK
     {
         _check_connection();
         _send_Line("Add_PROG");
+        _send_Line(name);
+        _send_Item(itemrobot);
+        Item newitem = _recv_Item();
+        _check_status();
+        return newitem;
+    }
+
+    /// <summary>
+    /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
+    /// It returns the newly created :class:`.Item` containing the project settings.
+    /// Tip: Use the macro /RoboDK/Library/Macros/MoveRobotThroughLine.py to see an example that creates a new "curve follow project" given a list of points to follow(Option 4).
+    /// </summary>
+    /// <param name="name">Name of the project settings</param>
+    /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
+    /// <returns></returns>
+    public Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null)
+    {
+        _check_connection();
+        _send_Line("Add_MACHINING");
         _send_Line(name);
         _send_Item(itemrobot);
         Item newitem = _recv_Item();
@@ -2639,7 +2744,7 @@ public class RoboDK
         bool collision = itempicked.Valid();
         _check_status();
         return itempicked;
-    }       
+    }
 
     /// <summary>
     /// Returns the current joints of a list of robots.
@@ -2751,7 +2856,7 @@ public class RoboDK
         _check_status();
         return errors;
     }
-    
+
     /// <summary>
     /// Set the pose of the wold reference frame with respect to the view (camera/screen)
     /// </summary>
@@ -2816,6 +2921,61 @@ public class RoboDK
         return true;
     }
 
+    /// <summary>
+    /// Create a new robot or mechanism.
+    /// </summary>
+    /// <param name="type">Type of the mechanism</param>
+    /// <param name="list_obj">list of object items that build the robot</param>
+    /// <param name="param">robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot</param>
+    /// <param name="joints_build">current state of the robot(joint axes) to build the robot</param>
+    /// <param name="joints_home">joints for the home position(it can be changed later)</param>
+    /// <param name="joints_senses"></param>
+    /// <param name="joints_lim_low"></param>
+    /// <param name="joints_lim_high"></param>
+    /// <param name="base_frame"></param>
+    /// <param name="tool"></param>
+    /// <param name="name"></param>
+    /// <param name="robot">existing robot in the station to replace it(optional)</param>
+    /// <returns></returns>
+    public Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null)
+    {
+        if (tool == null)
+        {
+            tool = Mat.Identity4x4();
+        }
+        if (base_frame == null)
+        {
+            base_frame = Mat.Identity4x4();
+        }
+        int ndofs = list_obj.Count - 1;
+        _check_connection();
+        _send_Line("BuildMechanism");
+        _send_Item(robot);
+        _send_Line(name);
+        _send_Int(type);
+        _send_Int(ndofs);
+        for (int i = 0; i <= ndofs; i++)
+        {
+            _send_Item(list_obj[i]);
+        }
+        _send_Pose(base_frame);
+        _send_Pose(tool);
+        _send_ArrayList(param);
+        Mat joints_data = new Mat(ndofs, 5);
+        for (int i = 0; i < ndofs; i++)
+        {
+            joints_data[i, 0] = joints_build[i];
+            joints_data[i, 1] = joints_home[i];
+            joints_data[i, 2] = joints_senses[i];
+            joints_data[i, 3] = joints_lim_low[i];
+            joints_data[i, 4] = joints_lim_high[i];
+        }
+        _send_Matrix2D(joints_data);
+        Item new_robot = _recv_Item();
+        _check_status();
+        return new_robot;
+    }
+
 
     //------------------------------------------------------------------
     //----------------------- CAMERA VIEWS -----------------------------
@@ -2842,7 +3002,8 @@ public class RoboDK
     /// <param name="file_save_img">file path to save.Formats supported include PNG, JPEG, TIFF, ...</param>
     /// <param name="cam_handle">amera handle(pointer returned by Cam2D_Add)</param>
     /// <returns></returns>
-    public bool Cam2D_Snapshot(string file_save_img, UInt64 cam_handle = 0) {
+    public bool Cam2D_Snapshot(string file_save_img, UInt64 cam_handle = 0)
+    {
         _check_connection();
         _send_Line("Cam2D_Snapshot");
         _send_Ptr(cam_handle);
@@ -2857,9 +3018,11 @@ public class RoboDK
     /// </summary>
     /// <param name="cam_handle">camera handle(pointer returned by Cam2D_Add). Leave to 0 to close all simulated views.</param>
     /// <returns></returns>
-    public bool Cam2D_Close(UInt64 cam_handle = 0) {
+    public bool Cam2D_Close(UInt64 cam_handle = 0)
+    {
         _check_connection();
-        if (cam_handle == 0) {
+        if (cam_handle == 0)
+        {
             _send_Line("Cam2D_CloseAll");
         }
         else
@@ -3003,12 +3166,13 @@ public class RoboDK
         /// <returns></returns>
         public int Type()
         {
-            link._check_connection();
+            return type;
+            /*link._check_connection();
             link._send_Line("G_Item_Type");
             link._send_Item(this);
             int itemtype = link._recv_Int();
             link._check_status();
-            return itemtype;
+            return itemtype;*/
         }
 
         ////// add more methods
@@ -3046,6 +3210,19 @@ public class RoboDK
             }
             return true;
         }
+
+        /// <summary>
+        /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
+        /// </summary>
+        /// <param name="parent"></param>
+        public void setParent(Item parent)
+        {
+            link._check_connection();
+            link._send_Line("S_Parent");
+            link._send_Item(this);
+            link._send_Item(parent);
+            link._check_status();
+        }        
 
         ////// add more methods
 
@@ -3408,6 +3585,33 @@ public class RoboDK
             return link.ProjectPoints(points, this, projection_type);
         }
 
+
+
+        /// <summary>
+        /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+        /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
+        /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
+        /// </summary>
+        /// <param name="ncfile">path to the NC (G-code/APT/Point cloud) file to load (optional)</param>
+        /// <param name="part_obj">object holding curves or points to automatically set up a curve/point follow project (optional)</param>
+        /// <param name="options">Additional options (optional)</param>
+        /// <returns>Program (null). Use Update() to retrieve the result</returns>
+        public Item setMachiningParameters(string ncfile = "", Item part_obj = null, string options = "")
+        {
+            link._check_connection();
+            link._send_Line("S_MachiningParams");
+            link._send_Item(this);
+            link._send_Line(ncfile);
+            link._send_Item(part_obj);
+            link._send_Line("NO_UPDATE " + options);
+            link._COM.ReceiveTimeout = 3600 * 1000;
+            Item program = link._recv_Item();
+            link._COM.ReceiveTimeout = link._TIMEOUT;
+            double status = link._recv_Int() / 1000.0;
+            link._check_status();
+            return program;
+        }
+
         //"""Target item calls"""
 
         /// <summary>
@@ -3475,6 +3679,38 @@ public class RoboDK
             double[] joints = link._recv_Array();
             link._check_status();
             return joints;
+        }
+
+        /// <summary>
+        /// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
+        /// </summary>
+        /// <param name="link_id">link index(0 for the robot base, 1 for the first link, ...)</param>
+        /// <returns></returns>
+        public Item ObjectLink(int link_id = 0)
+        {
+            link._check_connection();
+            link._send_Line("G_LinkObjId");
+            link._send_Item(this);
+            link._send_Int(link_id);
+            Item item = link._recv_Item();
+            link._check_status();
+            return item;
+        }
+
+        /// <summary>
+        /// Returns an item pointer (Item class) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="type_linked">type of linked object to retrieve</param>
+        /// <returns></returns>
+        public Item getLink(int type_linked = ITEM_TYPE_ROBOT)
+        {
+            link._check_connection();
+            link._send_Line("G_LinkType");
+            link._send_Item(this);
+            link._send_Int(type_linked);
+            Item item = link._recv_Item();
+            link._check_status();
+            return item;
         }
 
         /// <summary>
@@ -3678,12 +3914,20 @@ public class RoboDK
 
         /// <summary>
         /// Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
+        /// Given a target item, MoveJ can also be applied to programs and a new movement instruction will be added.
         /// </summary>
         /// <param name="target">target -> target to move to as a target item (RoboDK target item)</param>
         /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
         public void MoveJ(Item itemtarget, bool blocking = true)
         {
-            link.moveX(itemtarget, null, null, this, 1, blocking);
+            if (type == ITEM_TYPE_PROGRAM)
+            {
+                addMoveJ(itemtarget);
+            }
+            else
+            {
+                link.moveX(itemtarget, null, null, this, 1, blocking);
+            }
         }
 
         /// <summary>
@@ -3708,12 +3952,20 @@ public class RoboDK
 
         /// <summary>
         /// Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes its movements.
+        /// Given a target item, MoveL can also be applied to programs and a new movement instruction will be added.
         /// </summary>
         /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
         /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
         public void MoveL(Item itemtarget, bool blocking = true)
         {
-            link.moveX(itemtarget, null, null, this, 2, blocking);
+            if (type == ITEM_TYPE_PROGRAM)
+            {
+                addMoveL(itemtarget);
+            }
+            else
+            {
+                link.moveX(itemtarget, null, null, this, 2, blocking);
+            }
         }
 
         /// <summary>
@@ -3954,22 +4206,26 @@ public class RoboDK
         /// Saves a program to a file.
         /// </summary>
         /// <param name="filename">File path of the program</param>
-        /// <returns>success</returns>
-        public bool MakeProgram(string filename)
+        /// <param name="run_mode">RUNMODE_MAKE_ROBOTPROG to generate the program file.Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.</param>
+        /// <returns>Transfer succeeded is True if there was a successful program transfer (if RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START are used)</returns>
+        public bool MakeProgram(string filename="", int run_mode = RUNMODE_MAKE_ROBOTPROG)
         {
             link._check_connection();
-            link._send_Line("MakeProg");
+            link._send_Line("MakeProg2");
             link._send_Item(this);
             link._send_Line(filename);
+            link._send_Int(run_mode);
+            link._COM.ReceiveTimeout = 3600 * 1000;
             int prog_status = link._recv_Int();
+            link._COM.ReceiveTimeout = link._TIMEOUT;
             string prog_log_str = link._recv_Line();
+            int transfer_status = link._recv_Int();
             link._check_status();
-            bool success = false;
-            if (prog_status > 1)
-            {
-                success = true;
-            }
-            return success; // prog_log_str
+            link.LAST_STATUS_MESSAGE = prog_log_str;
+            bool success = prog_status > 0;
+            bool transfer_ok = transfer_status > 0;
+            return success && transfer_ok; // prog_log_str
+            //return success, prog_log_str, transfer_ok
         }
 
         /// <summary>
@@ -4120,7 +4376,7 @@ public class RoboDK
         }
 
         /// <summary>
-        /// Adds a new robot move joint instruction to a program.
+        /// Adds a new robot move joint instruction to a program. Obsolete. Use MoveJ instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         public void addMoveJ(Item itemtarget)
@@ -4134,7 +4390,7 @@ public class RoboDK
         }
 
         /// <summary>
-        /// Adds a new robot move linear instruction to a program.
+        /// Adds a new robot move linear instruction to a program. Obsolete. Use MoveJ instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         public void addMoveL(Item itemtarget)
@@ -4254,13 +4510,14 @@ public class RoboDK
             link._check_connection();
             link._send_Line("Update2");
             link._send_Item(this);
-            double[] values = { collision_check, mm_step, deg_step};
+            double[] values = { collision_check, mm_step, deg_step };
             link._send_Array(values);
             link._COM.ReceiveTimeout = timeout_sec * 1000;
             double[] return_values = link._recv_Array();
             link._COM.ReceiveTimeout = link._TIMEOUT;
             string readable_msg = link._recv_Line();
             link._check_status();
+            link.LAST_STATUS_MESSAGE = readable_msg;
             double ratio_ok = return_values[3];
             if (out_nins_time_dist != null)
             {
@@ -4284,7 +4541,7 @@ public class RoboDK
         /// <param name="collision_check">Check for collisions: will set to 1 or 0</param>
         /// <param name="flags">Reserved for future compatibility</param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec=3600)
+        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600)
         {
             link._check_connection();
             link._send_Line("G_ProgJointList");
@@ -4303,7 +4560,7 @@ public class RoboDK
                 link._send_Line(save_to_file);
                 joint_list = null;
             }
-            
+
             int error_code = link._recv_Int();
             link._COM.ReceiveTimeout = link._TIMEOUT;
             error_msg = link._recv_Line();
