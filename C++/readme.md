@@ -29,10 +29,10 @@ Item *ROBOT = NULL;  // ROBOT is the robot item
 /// Start the RoboDK API
 void RoboDK_Start(){
     // RoboDK starts when a RoboDK object is created.
-    RoboDK *RDK = new RoboDK();    
+    RDK = new RoboDK();    
     
     // Retrieve the robot
-    Item *ROBOT = new Item(RDK->getItem("Motoman SV3"));
+    ROBOT = new Item(RDK->getItem("Motoman SV3"));
 }
 
 /// Delete RDK and ROBOT objects
@@ -45,7 +45,7 @@ void RoboDK_Test(){
     // Start RoboDK
     RoboDK_Start();
     
-    if (ROBOT == NULL || !ROBOT.Valid()){
+    if (ROBOT == NULL || !ROBOT->Valid()){
         // Something is wrong!
         return;
     }
