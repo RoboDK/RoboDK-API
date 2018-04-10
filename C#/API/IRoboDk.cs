@@ -53,6 +53,7 @@ namespace RoboDk.API
         #region Properties
 
         Process Process { get; }
+        string LastStatusMessage { get; } // holds any warnings for the last call
 
         string ApplicationDir { get; }
 
@@ -132,6 +133,16 @@ namespace RoboDk.API
         /// <param name="name">Name of the station</param>
         /// <returns>Newly created station Item</returns>
         Item AddStation(string name);
+        /// <summary>
+        /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
+        /// It returns the newly created :class:`.Item` containing the project settings.
+        /// Tip: Use the macro /RoboDK/Library/Macros/MoveRobotThroughLine.py to see an example that creates a new "curve follow project" given a list of points to follow(Option 4).
+        /// </summary>
+        /// <param name="name">Name of the project settings</param>
+        /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
+        /// <returns></returns>
+        Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null);
+
 
         /// <summary>
         /// Set the active station (project currently visible)
@@ -230,6 +241,12 @@ namespace RoboDk.API
         void Save(string filename, Item itemsave = null);
 
         /// <summary>
+        /// Add a new empty station. It returns the station created.
+        /// </summary>
+        /// <param name="name"></param>
+        Item AddStation(string name = "New Station");
+
+        /// <summary>
         ///     Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can
         ///     be provided optionally.
         /// </summary>
@@ -260,6 +277,16 @@ namespace RoboDk.API
         /// <returns>added object/curve (use item.Valid() to check if item is valid.)</returns>
         Item AddCurve(Mat curvePoints, Item referenceObject = null, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
+
+        /// <summary>
+        /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+        /// <param name="reference_object">item to attach the newly added geometry (optional)</param>
+        /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <returns>added object/shape (0 if failed)</returns>
+        Item AddPoints(Mat points, Item reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
         /// Projects a point given its coordinates.
@@ -542,6 +569,24 @@ namespace RoboDk.API
         /// <param name="poseTool"></param>
         /// <returns></returns>
         bool SetRobotParams(Item robot, double[][] dhm, Mat poseBase, Mat poseTool);
+
+        /// <summary>
+        /// Create a new robot or mechanism.
+        /// </summary>
+        /// <param name="type">Type of the mechanism</param>
+        /// <param name="list_obj">list of object items that build the robot</param>
+        /// <param name="param">robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot</param>
+        /// <param name="joints_build">current state of the robot(joint axes) to build the robot</param>
+        /// <param name="joints_home">joints for the home position(it can be changed later)</param>
+        /// <param name="joints_senses"></param>
+        /// <param name="joints_lim_low"></param>
+        /// <param name="joints_lim_high"></param>
+        /// <param name="base_frame"></param>
+        /// <param name="tool"></param>
+        /// <param name="name"></param>
+        /// <param name="robot">existing robot in the station to replace it(optional)</param>
+        /// <returns></returns>
+        Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null);
 
         /// <summary>
         /// Open a simulated 2D camera view. 

@@ -59,14 +59,14 @@ namespace RoboDk.API
         #region Fields
 
         private ulong _item;
-        private readonly int _type;
+        private readonly ItemType _type;
         private string _name;
 
         #endregion
 
         #region Constructors
 
-        public Item(RoboDK connectionLink, ulong itemPtr = 0, int itemType = -1)
+        public Item(RoboDK connectionLink, ulong itemPtr = 0, ItemType itemType = ItemType.Any)
         {
             _item = itemPtr;
             Link = connectionLink;
@@ -177,14 +177,15 @@ namespace RoboDk.API
         /// <returns></returns>
         public ItemType GetItemType()
         {
-            Link.check_connection();
+            /*Link.check_connection();
             var command = "G_Item_Type";
             Link.send_line(command);
             Link.send_item(this);
             var type = Link.rec_int();
             ItemType itemType = (ItemType) type;
             Link.check_status();
-            return itemType;
+            return itemType;*/
+            return _type;
         }
 
         ////// add more methods
@@ -220,6 +221,19 @@ namespace RoboDk.API
             if (_item == 0)
                 return false;
             return true;
+        }
+
+        /// <summary>
+        /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
+        /// </summary>
+        /// <param name="parent"></param>
+        public void SetParent(Item parent)
+        {
+            Link.check_connection();
+            Link.send_line("S_Parent");
+            Link.send_item(this);
+            Link.send_item(parent);
+            Link.check_status();
         }
 
         ////// add more methods
@@ -620,6 +634,31 @@ namespace RoboDk.API
             return Link.ProjectPoints(points, this, projectionType);
         }
 
+        /// <summary>
+        /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+        /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
+        /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
+        /// </summary>
+        /// <param name="ncfile">path to the NC (G-code/APT/Point cloud) file to load (optional)</param>
+        /// <param name="part_obj">object holding curves or points to automatically set up a curve/point follow project (optional)</param>
+        /// <param name="options">Additional options (optional)</param>
+        /// <returns>Program (null). Use Update() to retrieve the result</returns>
+        public Item setMachiningParameters(string ncfile = "", Item part_obj = null, string options = "")
+        {
+            Link.check_connection();
+            Link.send_line("S_MachiningParams");
+            Link.send_item(this);
+            Link.send_line(ncfile);
+            Link.send_item(part_obj);
+            Link.send_line("NO_UPDATE " + options);
+            Link.ReceiveTimeout = 3600 * 1000;
+            Item program = Link.rec_item();
+            Link.ReceiveTimeout = Link.TIMEOUT;
+            double status = Link.rec_int() / 1000.0;
+            Link.check_status();
+            return program;
+        }
+
         //"""Target item calls"""
 
         /// <summary>
@@ -905,17 +944,21 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes
-        ///     its movements.
+        /// Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
+        /// Given a target item, MoveJ can also be applied to programs and a new movement instruction will be added.
         /// </summary>
         /// <param name="target">target -> target to move to as a target item (RoboDK target item)</param>
-        /// <param name="blocking">
-        ///     blocking -> True if we want the instruction to block until the robot finished the movement
-        ///     (default=true)
-        /// </param>
-        public void MoveJ(Item target, bool blocking = true)
+        /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
+        public void MoveJ(Item itemtarget, bool blocking = true)
         {
-            Link.moveX(target, null, null, this, 1, blocking);
+            if (itemtarget.GetItemType() == ItemType.Program)
+            {
+                addMoveJ(itemtarget);
+        }
+            else
+            {
+                Link.moveX(itemtarget, null, null, this, 1, blocking);
+            }
         }
 
         /// <summary>
@@ -947,17 +990,21 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes
-        ///     its movements.
+        /// Moves a robot to a specific target ("Move Linear" mode). By default, this function blocks until the robot finishes its movements.
+        /// Given a target item, MoveL can also be applied to programs and a new movement instruction will be added.
         /// </summary>
         /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
-        /// <param name="blocking">
-        ///     blocking -> True if we want the instruction to block until the robot finished the movement
-        ///     (default=true)
-        /// </param>
+        /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
         public void MoveL(Item itemtarget, bool blocking = true)
         {
+            if (itemtarget.GetItemType() == ItemType.Program)
+            {
+                addMoveL(itemtarget);
+            }
+            else
+            {
             Link.moveX(itemtarget, null, null, this, 2, blocking);
+        }
         }
 
         /// <summary>
@@ -1196,19 +1243,26 @@ namespace RoboDk.API
         ///     Saves a program to a file.
         /// </summary>
         /// <param name="filename">File path of the program</param>
-        /// <returns>success</returns>
-        public bool MakeProgram(string filename)
+        /// <param name="run_mode">RUNMODE_MAKE_ROBOTPROG to generate the program file.Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.</param>
+        /// <returns>Transfer succeeded is True if there was a successful program transfer (if RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START are used)</returns>
+        public bool MakeProgram(string filename = "", RunMode run_mode = RunMode.MakeRobotProgram)
         {
             Link.check_connection();
-            var command = "MakeProg";
-            Link.send_line(command);
+            Link.send_line("MakeProg2");
             Link.send_item(this);
             Link.send_line(filename);
-            var progStatus = Link.rec_int();
-            var progLogStr = Link.rec_line();
+            Link.send_int((int) run_mode);
+            Link.ReceiveTimeout = 3600 * 1000;
+            int prog_status = Link.rec_int();
+            Link.ReceiveTimeout = Link.TIMEOUT;
+            string prog_log_str = Link.rec_line();
+            int transfer_status = Link.rec_int();
             Link.check_status();
-            bool success = progStatus > 1;
-            return success; // prog_log_str
+            Link.LastStatusMessage = prog_log_str;
+            bool success = prog_status > 0;
+            bool transfer_ok = transfer_status > 0;
+            return success && transfer_ok; // prog_log_str
+            //return success, prog_log_str, transfer_ok
         }
 
         /// <summary>
@@ -1380,7 +1434,7 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Adds a new robot move joint instruction to a program.
+        ///     Adds a new robot move joint instruction to a program. Obsolete. Use MoveJ instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         public void addMoveJ(Item itemtarget)
@@ -1395,7 +1449,7 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Adds a new robot move linear instruction to a program.
+        ///     Adds a new robot move linear instruction to a program. Obsolete. Use MoveL instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         public void addMoveL(Item itemtarget)
@@ -1542,10 +1596,11 @@ namespace RoboDk.API
             Link.ReceiveTimeout = timeoutSec * 1000;
             double[] result = Link.rec_array();
             Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
-            string msg = Link.rec_line();
+            string readable_msg = Link.rec_line();
             Link.check_status();
+            Link.LastStatusMessage = readable_msg;
             UpdateResult updateResult = new UpdateResult(
-                result[0], result[1], result[2], result[3], msg);
+                result[0], result[1], result[2], result[3], readable_msg);
             return updateResult;
         }
 

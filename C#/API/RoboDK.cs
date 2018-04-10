@@ -163,6 +163,7 @@ namespace RoboDk.API
         /// RoboDK.exe process.
         /// </summary>
         public Process Process { get; private set; }
+        public string LastStatusMessage { get; set; } // Last status message
 
         /// <summary>
         /// Filepath to the RoboDK.exe.
@@ -172,6 +173,43 @@ namespace RoboDk.API
         public string ApplicationDir { get; set; }
 
         #endregion
+
+
+        #region Static Methods
+        /// <summary>
+        /// Return the list of recently opened files
+        /// </summary>
+        /// <param name="extension_filter"></param>
+        /// <returns>List of files (string)</returns>
+        static public List<string> RecentFiles(string extension_filter = "")
+        {
+            string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
+            string str = "";
+            if (File.Exists(ini_file)) {
+                foreach (string line in File.ReadLines(ini_file))
+                {
+                    if (line.Contains("RecentFileList="))
+                    {
+                        str = line.Remove(0, "RecentFileList=".Length);
+                        break;
+                    }
+                }
+            }
+            List<string> rdk_list = new List<string>();
+            string[] read_list = str.Split(',');
+            foreach (string st in read_list)
+            {
+                string st2 = st.Trim();
+                if (extension_filter.Length > 0 && st2.ToLower().EndsWith(extension_filter.ToLower()))
+                {
+                    rdk_list.Add(st2);
+                }
+            }
+            return rdk_list;
+        }
+        #endregion
+
+
 
         #region Public Methods
 
@@ -309,11 +347,15 @@ namespace RoboDk.API
 
             // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
             string line = "";
-            while (!line.Contains("RoboDK is Running"))
+                while (line != null && !line.Contains("RoboDK is Running"))
             {
                 line = Process.StandardOutput.ReadLine();
             }
-        }
+                if (line == null)
+                {
+                    connected = false;
+                }
+            }
 
         /// <inheritdoc />
         public void CloseRoboDK()
@@ -389,6 +431,18 @@ namespace RoboDk.API
             send_line(command);
             send_line(name);
             var newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
+        /// <inheritdoc />
+        public Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null)
+        {
+            check_connection();
+            send_line("Add_MACHINING");
+            send_line(name);
+            send_item(itemrobot);
+            Item newitem = rec_item();
             check_status();
             return newitem;
         }
@@ -578,6 +632,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public Item AddStation(string name = "New Station")
+        {
+            check_connection();
+            send_line("NewStation");
+            send_line(name);
+            Item newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
+        /// <inheritdoc />
         public Item AddShape(Mat trianglePoints, Item addTo = null, bool shapeOverride = false)
         {
             check_connection();
@@ -602,6 +667,20 @@ namespace RoboDk.API
             send_int(addToRef ? 1 : 0);
             send_int((int) projectionType);
             var newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
+        /// <inheritdoc />
+        public Item AddPoints(Mat points, Item reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc)
+        {
+            check_connection();
+            send_line("AddPoints");
+            send_matrix(points);
+            send_item(reference_object);
+            send_int(add_to_ref ? 1 : 0);
+            send_int((int) projection_type);
+            Item newitem = rec_item();
             check_status();
             return newitem;
         }
@@ -1045,6 +1124,46 @@ namespace RoboDk.API
             check_status();
             return true;
         }
+        
+        /// <inheritdoc />
+        public Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null)
+        {
+            if (tool == null)
+            {
+                tool = Mat.Identity4x4();
+            }
+            if (base_frame == null)
+            {
+                base_frame = Mat.Identity4x4();
+            }
+            int ndofs = list_obj.Count - 1;
+            check_connection();
+            send_line("BuildMechanism");
+            send_item(robot);
+            send_line(name);
+            send_int(type);
+            send_int(ndofs);
+            for (int i = 0; i <= ndofs; i++)
+            {
+                send_item(list_obj[i]);
+            }
+            send_pose(base_frame);
+            send_pose(tool);
+            send_arrayList(param);
+            Mat joints_data = new Mat(ndofs, 5);
+            for (int i = 0; i < ndofs; i++)
+            {
+                joints_data[i, 0] = joints_build[i];
+                joints_data[i, 1] = joints_home[i];
+                joints_data[i, 2] = joints_senses[i];
+                joints_data[i, 3] = joints_lim_low[i];
+                joints_data[i, 4] = joints_lim_high[i];
+            }
+            send_matrix(joints_data);
+            Item new_robot = rec_item();
+            check_status();
+            return new_robot;
+        }
 
         /// <inheritdoc />
         public ulong Cam2DAdd(Item item, string cameraParameters = "")
@@ -1223,7 +1342,7 @@ namespace RoboDk.API
         {
             if (!is_connected() && !Connect())
             {
-                throw new RdkException("Can't connect to RoboDK library");
+                throw new RdkException("Can't connect to RoboDK API");
             }
         }
 
@@ -1233,19 +1352,20 @@ namespace RoboDk.API
         internal void check_status()
         {
             var status = rec_int();
+            LastStatusMessage = "";
             switch (status)
             {
                 case 0:
                     return;
 
                 case 1:
-                    throw new RdkException(
-                        "Invalid item provided: The item identifier provided is not valid or it does not exist.");
+                    LastStatusMessage = "Invalid item provided: The item identifier provided is not valid or it does not exist.";
+                    throw new RdkException(LastStatusMessage);
 
                 case 2:
                 {
                     //output warning
-                    var strproblems = rec_line();
+                    LastStatusMessage = rec_line();
 
                     //TODO chu: Implement warning
                     //print("WARNING: " + strproblems);
@@ -1255,17 +1375,19 @@ namespace RoboDk.API
                 case 3:
                 {
                     // output error
-                    var strproblems = rec_line();
-                    throw new RdkException(strproblems);
+                    LastStatusMessage = rec_line();
+                    throw new RdkException(LastStatusMessage);
                 }
                 case 9:
                 {
-                    throw new RdkException("Invalid license. Contact us at: info@robodk.com");
+                    LastStatusMessage = "Invalid license. Contact us at: info@robodk.com";
+                    throw new RdkException(LastStatusMessage);
                 }
                 default:
 
                     //raise Exception('Problems running function');
-                    throw new RdkException("Problems running function");
+                    LastStatusMessage = "Unknown problem running RoboDK API function";
+                    throw new RdkException(LastStatusMessage);
             }
         }
 
@@ -1361,7 +1483,7 @@ namespace RoboDk.API
             var item = BitConverter.ToUInt64(buffer1, 0);
 
             //Console.WriteLine("Received item: " + item.ToString());
-            var type = BitConverter.ToInt32(buffer2, 0);
+            var type = (ItemType) BitConverter.ToInt32(buffer2, 0);
             return new Item(this, item, type);
         }
 
@@ -1517,6 +1639,16 @@ namespace RoboDk.API
             }
 
             _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
+        }
+        // sends a list of doubles
+        internal void send_arrayList(List<double> values)
+        {
+            double[] values2 = new double[values.Count];
+            for (int i = 0; i<values.Count; i++)
+            {
+                values2[i] = values[i];
+            }
+            send_array(values2);
         }
 
         // Receives an array of doubles
