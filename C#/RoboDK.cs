@@ -2166,7 +2166,9 @@ public class RoboDK
         _send_Line("Add");
         _send_Line(filename);
         _send_Item(parent);
-        Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = 3600 * 1000;
+        Item newitem = _recv_Item();    
+        _COM.ReceiveTimeout = link._TIMEOUT;        
         _check_status();
         return newitem;
     }
