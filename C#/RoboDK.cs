@@ -1708,7 +1708,7 @@ public class RoboDK
         string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
         string str = "";
         if (File.Exists(ini_file)) {
-            foreach (string line in File.ReadLines(ini_file))
+            foreach (string line in File.ReadAllLines(ini_file))
             {
                 if (line.Contains("RecentFileList="))
                 {
@@ -2168,7 +2168,7 @@ public class RoboDK
         _send_Item(parent);
         _COM.ReceiveTimeout = 3600 * 1000;
         Item newitem = _recv_Item();    
-        _COM.ReceiveTimeout = link._TIMEOUT;        
+        _COM.ReceiveTimeout = _TIMEOUT;        
         _check_status();
         return newitem;
     }
