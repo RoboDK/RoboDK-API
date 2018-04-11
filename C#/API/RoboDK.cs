@@ -181,7 +181,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="extension_filter"></param>
         /// <returns>List of files (string)</returns>
-        static public List<string> RecentFiles(string extension_filter = "")
+        public static List<string> RecentFiles(string extension_filter = "")
         {
             string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
             string str = "";

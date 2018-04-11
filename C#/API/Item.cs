@@ -94,6 +94,7 @@ namespace RoboDk.API
             {
                 return $"RoboDK item {_item} of type {_type}";
             }
+
             return "RoboDK item (INVALID)";
         }
 
@@ -104,7 +105,7 @@ namespace RoboDk.API
         /// <param name="itemFlags">Item Flags to be set</param>
         public void SetItemFlags(ItemFlags itemFlags = ItemFlags.All)
         {
-            int flags = (int)itemFlags;
+            int flags = (int) itemFlags;
             Link.check_connection();
             string command = "S_Item_Rights";
             Link.send_line(command);
@@ -125,7 +126,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             int flags = Link.rec_int();
-            ItemFlags itemFlags = (ItemFlags)flags;
+            ItemFlags itemFlags = (ItemFlags) flags;
             Link.check_status();
             return itemFlags;
         }
@@ -219,7 +220,10 @@ namespace RoboDk.API
         public bool Valid()
         {
             if (_item == 0)
+            {
                 return false;
+            }
+
             return true;
         }
 
@@ -250,7 +254,10 @@ namespace RoboDk.API
             var nitems = Link.rec_int();
             var itemlist = new Item[nitems];
             for (var i = 0; i < nitems; i++)
+            {
                 itemlist[i] = Link.rec_item();
+            }
+
             Link.check_status();
             return itemlist;
         }
@@ -292,7 +299,10 @@ namespace RoboDk.API
         public void setVisible(bool visible, int visible_frame = -1)
         {
             if (visible_frame < 0)
+            {
                 visible_frame = visible ? 1 : 0;
+            }
+
             Link.check_connection();
             var command = "S_Visible";
             Link.send_line(command);
@@ -572,6 +582,7 @@ namespace RoboDk.API
                 fromcolor = new double[] {0, 0, 0, 0};
                 tolerance = 2;
             }
+
             Link.check_color(tocolor);
             Link.check_color(fromcolor);
             var command = "Recolor";
@@ -594,7 +605,10 @@ namespace RoboDk.API
         {
             Link.check_connection();
             if (scale.Length != 3)
+            {
                 throw new RdkException("scale must be a single value or a 3-vector value");
+            }
+
             var command = "Scale";
             Link.send_line(command);
             Link.send_item(this);
@@ -720,6 +734,38 @@ namespace RoboDk.API
             var joints = Link.rec_array();
             Link.check_status();
             return joints;
+        }
+
+        /// <summary>
+        /// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
+        /// </summary>
+        /// <param name="linkId">link index(0 for the robot base, 1 for the first link, ...)</param>
+        /// <returns></returns>
+        public Item ObjectLink(int linkId = 0)
+        {
+            Link.check_connection();
+            Link.send_line("G_LinkObjId");
+            Link.send_item(this);
+            Link.send_int(linkId);
+            Item item = Link.rec_item();
+            Link.check_status();
+            return item;
+        }
+
+        /// <summary>
+        /// Returns an item pointer (Item class) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="typeLinked">type of linked object to retrieve</param>
+        /// <returns></returns>
+        public Item GetLink(ItemType typeLinked = ItemType.Robot)
+        {
+            Link.check_connection();
+            Link.send_line("G_LinkType");
+            Link.send_item(this);
+            Link.send_int((int) typeLinked);
+            Item item = Link.rec_item();
+            Link.check_status();
+            return item;
         }
 
         /// <summary>
@@ -947,14 +993,14 @@ namespace RoboDk.API
         /// Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
         /// Given a target item, MoveJ can also be applied to programs and a new movement instruction will be added.
         /// </summary>
-        /// <param name="target">target -> target to move to as a target item (RoboDK target item)</param>
+        /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
         /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
         public void MoveJ(Item itemtarget, bool blocking = true)
         {
             if (itemtarget.GetItemType() == ItemType.Program)
             {
                 addMoveJ(itemtarget);
-        }
+            }
             else
             {
                 Link.moveX(itemtarget, null, null, this, 1, blocking);
@@ -965,7 +1011,7 @@ namespace RoboDk.API
         ///     Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes
         ///     its movements.
         /// </summary>
-        /// <param name="target">joints -> joint target to move to.</param>
+        /// <param name="joints">joints -> joint target to move to.</param>
         /// <param name="blocking">
         ///     blocking -> True if we want the instruction to block until the robot finished the movement
         ///     (default=true)
@@ -1003,8 +1049,8 @@ namespace RoboDk.API
             }
             else
             {
-            Link.moveX(itemtarget, null, null, this, 2, blocking);
-        }
+                Link.moveX(itemtarget, null, null, this, 2, blocking);
+            }
         }
 
         /// <summary>
@@ -1227,6 +1273,7 @@ namespace RoboDk.API
             Link.ReceiveTimeout = (int) (timeout_sec * 1000.0);
             Link.check_status(); //will wait here;
             Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
+
             //int isbusy = link.Busy(this);
             //while (isbusy)
             //{
@@ -1262,6 +1309,7 @@ namespace RoboDk.API
             bool success = prog_status > 0;
             bool transfer_ok = transfer_status > 0;
             return success && transfer_ok; // prog_log_str
+
             //return success, prog_log_str, transfer_ok
         }
 
@@ -1277,7 +1325,7 @@ namespace RoboDk.API
             var command = "S_ProgRunType";
             Link.send_line(command);
             Link.send_item(this);
-            Link.send_int((int)programExecutionType);
+            Link.send_int((int) programExecutionType);
             Link.check_status();
         }
 
@@ -1335,6 +1383,7 @@ namespace RoboDk.API
                 Link.send_item(this);
                 Link.send_line(parameters);
             }
+
             var progstatus = Link.rec_int();
             Link.check_status();
             return progstatus;
@@ -1353,7 +1402,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             Link.send_line(code.Replace("\n\n", "<br>").Replace("\n", "<br>"));
-            Link.send_int((int)runType);
+            Link.send_int((int) runType);
             var progstatus = Link.rec_int();
             Link.check_status();
             return progstatus == 0;
@@ -1495,18 +1544,19 @@ namespace RoboDk.API
             Link.send_int(instructionId);
 
             programInstruction.Name = Link.rec_line();
-            programInstruction.InstructionType = (InstructionType)Link.rec_int();
+            programInstruction.InstructionType = (InstructionType) Link.rec_int();
             programInstruction.MoveType = MoveType.Invalid;
             programInstruction.IsJointTarget = false;
             programInstruction.Target = null;
             programInstruction.Joints = null;
             if (programInstruction.InstructionType == InstructionType.Move)
             {
-                programInstruction.MoveType = (MoveType)Link.rec_int();
+                programInstruction.MoveType = (MoveType) Link.rec_int();
                 programInstruction.IsJointTarget = Link.rec_int() > 0 ? true : false;
                 programInstruction.Target = Link.rec_pose();
                 programInstruction.Joints = Link.rec_array();
             }
+
             Link.check_status();
             return programInstruction;
         }
@@ -1524,14 +1574,15 @@ namespace RoboDk.API
             Link.send_item(this);
             Link.send_int(instructionId);
             Link.send_line(instruction.Name);
-            Link.send_int((int)instruction.InstructionType);
+            Link.send_int((int) instruction.InstructionType);
             if (instruction.InstructionType == InstructionType.Move)
             {
-                Link.send_int((int)instruction.MoveType);
+                Link.send_int((int) instruction.MoveType);
                 Link.send_int(instruction.IsJointTarget ? 1 : 0);
                 Link.send_pose(instruction.Target);
                 Link.send_array(instruction.Joints);
             }
+
             Link.check_status();
         }
 
@@ -1564,7 +1615,9 @@ namespace RoboDk.API
             {
                 throw new Exception("Item Update failed.");
             }
+
             Link.check_status();
+
             //var validInstructions = values[0];
             //var program_time = values[1]
             //var program_distance = values[2]
@@ -1583,15 +1636,16 @@ namespace RoboDk.API
         /// <param name="linStepMm">Maximum step in millimeters for linear movements (millimeters). Set to -1 to use the default, as specified in Tools-Options-Motion.</param>
         /// <param name="jointStepDeg">Maximum step for joint movements (degrees). Set to -1 to use the default, as specified in Tools-Options-Motion.</param>
         /// <returns>1.0 if there are no problems with the path or less than 1.0 if there is a problem in the path (ratio of problem)</returns>
-        public UpdateResult Update(CollisionCheckOptions collisionCheck, /* = CollisionCheckOptions.CollisionCheckOff, */
-            int timeoutSec = 3600, 
-            double linStepMm = -1, 
+        public UpdateResult Update(
+            CollisionCheckOptions collisionCheck, /* = CollisionCheckOptions.CollisionCheckOff, */
+            int timeoutSec = 3600,
+            double linStepMm = -1,
             double jointStepDeg = -1)
         {
             Link.check_connection();
             Link.send_line("Update2");
             Link.send_item(this);
-            double[] values = { (double)collisionCheck, linStepMm, jointStepDeg };
+            double[] values = {(double) collisionCheck, linStepMm, jointStepDeg};
             Link.send_array(values);
             Link.ReceiveTimeout = timeoutSec * 1000;
             double[] result = Link.rec_array();
@@ -1680,20 +1734,21 @@ namespace RoboDk.API
         /// <param name="flags">Reserved for future compatibility</param>
         /// <param name="timeoutSec"></param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-        public int InstructionListJoints(out string errorMsg, 
-            out Mat jointList, 
-            double mmStep = 10.0, 
-            double degStep = 5.0, 
-            string saveToFile = "", 
-            CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff, 
+        public int InstructionListJoints(out string errorMsg,
+            out Mat jointList,
+            double mmStep = 10.0,
+            double degStep = 5.0,
+            string saveToFile = "",
+            CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
             int flags = 0,
             int timeoutSec = 3600)
         {
             Link.check_connection();
             Link.send_line("G_ProgJointList");
             Link.send_item(this);
-            double[] parameter = { mmStep, degStep, (double)collisionCheck, flags };
+            double[] parameter = {mmStep, degStep, (double) collisionCheck, flags};
             Link.send_array(parameter);
+
             //joint_list = save_to_file;
             Link.ReceiveTimeout = timeoutSec * 1000;
             if (string.IsNullOrEmpty(saveToFile))
