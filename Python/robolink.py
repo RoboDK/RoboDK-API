@@ -188,6 +188,23 @@ FLAG_ITEM_USERTRISTATE = 256
 FLAG_ITEM_NONE = 0
 FLAG_ITEM_ALL = 64+32+8+4+2+1
 
+# Robot types
+MAKE_ROBOT_1R=1
+MAKE_ROBOT_2R=2
+MAKE_ROBOT_3R=3
+MAKE_ROBOT_1T=4
+MAKE_ROBOT_2T=5
+MAKE_ROBOT_3T=6
+MAKE_ROBOT_6DOF=7
+MAKE_ROBOT_7DOF=8
+MAKE_ROBOT_SCARA=9
+
+# Path Error bit mask
+ERROR_KINEMATIC = 0b001          # One or more points is not reachable
+ERROR_PATH_LIMIT = 0b010         # The path reaches the limit of joint axes
+ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
+ERROR_COLLISION = 0b100000       # Collision detected
+
 class Robolink:
     """The Robolink class is the link to to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
     Any interaction is made through \"items\" (Item() objects). An item is an object in the
@@ -1191,15 +1208,19 @@ class Robolink:
         :return: New program item
         :rtype: :class:`.Item`
         
-        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveL`
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.waitDI`, :func:`~robolink.Item.Pause`        :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.ShowInstructions`, :func:`~robolink.Item.ShowTargets`, :func:`~robolink.Item.Update`
         
-        Example:
+        
+        Example 1 - Generic program with movements:
         
         .. code-block:: python
             
             # Turn off rendering (faster)
             RDK.Render(False)
             prog = RDK.AddProgram('AutoProgram')
+            
+            # Hide program instructions (optional, but faster)
+            prog.ShowInstructions(False)
             
             # Retrieve the current robot position:
             pose_ref = robot.Pose()
@@ -1218,11 +1239,81 @@ class Robolink:
 
                 # Add the target as a Linear/Joint move in the new program
                 prog.MoveL(ti)
+                
+            # Hide the target items from the tree: it each movement still keeps its own target. 
+            # Right click the movement instruction and select "Select Target" to see the target in the tree
+            program.ShowTargets(False) 
 
             # Turn rendering ON before starting the simulation (automatic if we are done)
             RDK.Render(True)
             
-        More examples: :ref:`lbl-move-through-points`. or the macro MoveRobotThroughLine.py
+            #--------------------------------------
+            # Update the program path to display the yellow path in RoboDK. 
+            # Set collision checking ON or OFF
+            check_collisions = COLLISION_OFF
+            # Update the path (can take some time if collision checking is active)
+            update_result = program.Update(check_collisions)
+            # Retrieve the result
+            n_insok = update_result[0]
+            time = update_result[1]
+            distance = update_result[2]
+            percent_ok = update_result[3]*100
+            str_problems = update_result[4]
+            if percent_ok < 100.0:
+                msg_str = "WARNING! Problems with <strong>%s</strong> (%.1f):<br>%s" % (program_name, percent_ok, str_problems)                
+            else:
+                msg_str = "No problems found for program %s" % program_name
+            
+            # Notify the user:
+            print(msg_str)
+            RDK.ShowMessage(msg_str)
+            
+        Example 2 - Program flow, manage inputs/outputs and program calls:
+                
+        .. code-block:: python
+        
+            # Add a pause (in miliseconds)
+            program.Pause(1000) # pause motion 1 second
+
+            # Stop the program so that it can be resumed
+            # It provokes a STOP (pause until the operator desires to resume)
+            program.Pause() 
+
+            # Add a program call or specific code in the program:
+            program.RunCodeCustom('ChangeTool(2)',INSTRUCTION_CALL_PROGRAM)
+            program.RunCodeCustom('ChangeTool(2);',INSTRUCTION_INSERT_CODE)
+
+            # Set a digital output
+            program.setDO('DO_NAME', 1)
+            # Wait for a digital input:
+            program.waitDI('DI_NAME', 1)
+
+        Example 3 - Add movements with external axes:
+                
+        .. code-block:: python
+        
+            # Add a new movement involving external axes:
+
+            # First: create a new target
+            target = RDK.AddTarget("T1", reference)
+
+            # Set the target as Cartesian (default)
+            target.setAsCartesianTarget()
+
+            # Specify the position of the external axes:
+            external_axes = [10, 20]
+            # The robot joints are calculated to reach the target
+            # given the position of the external axes
+            target.setJoints([0,0,0,0,0,0] + external_axes)
+
+            # Specify the pose (position with respect to the reference frame):
+            target.setPose(KUKA_2_Pose([x,y,z,w,p,r]))
+
+            # Add a new movement instruction linked to that target:
+            program.MoveJ(target)       
+            
+        More examples to generate programs directly from your script or move the robot directly from your program here: 
+        :ref:`lbl-move-through-points`. or the macro available in RoboDK/Library/Macros/MoveRobotThroughLine.py
         """
         self._check_connection()
         command = 'Add_PROG'
@@ -1545,6 +1636,47 @@ class Robolink:
         self._send_line(str(param))
         self._send_line(str(value).replace('\n',' '))
         self._check_status()
+        
+    def getOpenStations(self):
+        """Returns the list of open stations in RoboDK
+        
+        .. seealso:: :func:`~robolink.Robolink.setActiveStation`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Item.Save`, :func:`~robolink.Robolink.AddStation`
+        """    
+        self._check_connection()
+        command = 'G_AllStn'
+        self._send_line(command)
+        nstn = self._rec_int()
+        list_stn = []
+        for i in range(nstn):
+            list_stn.append(self._rec_item())
+        self._check_status()
+        return list_stn
+        
+    def ActiveStation(self):
+        """Returns the active station item (station currently visible)
+        
+        .. seealso:: :func:`~robolink.Robolink.setActiveStation`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Item.Save`, :func:`~robolink.Robolink.AddStation`
+        """    
+        self._check_connection()
+        command = 'G_ActiveStn'
+        self._send_line(command)
+        stn = self._rec_item()
+        self._check_status()
+        return stn
+        
+    def setActiveStation(self, stn):
+        """Set the active station (project currently visible)
+        
+        :param stn: station item, it can be previously loaded as an RDK file
+        :type stn: :class:`.Item`
+        
+        .. seealso:: :func:`~robolink.Robolink.ActiveStation`, :func:`~robolink.Robolink.getOpenStations`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Robolink.AddFile`, :func:`~robolink.Robolink.AddStation`
+        """    
+        self._check_connection()
+        command = 'S_ActiveStn'
+        self._send_line(command)
+        self._send_item(stn)
+        self._check_status()
 
     def ShowSequence(self, matrix):
         """Display a sequence of joints given a list of joints as a matrix.
@@ -1811,6 +1943,39 @@ class Robolink:
         self._check_status()
         return errors
         
+        
+    def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=eye(4), tool=eye(4), name="New robot", robot=None):
+        """Create a new robot or mechanism.
+        
+        :param int type: Type of the mechanism
+        :param list list_obj: list of object items that build the robot
+        :param list parameters: robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot
+        :param list_joints_build: current state of the robot (joint axes) to build the robot
+        :param list joints_home: joints for the home position (it can be changed later)        
+        :param robot: existing robot in the station to replace it (optional)
+        :type robot: :class:`.Item`
+        :param str name: robot name"""
+        
+        # calculate the number of degrees of freedom
+        ndofs = len(list_obj) - 1
+        self._check_connection()
+        command = 'BuildMechanism'
+        self._send_line(command)
+        self._send_item(robot)
+        self._send_line(name)
+        self._send_int(type)
+        self._send_int(ndofs)
+        for i in range(ndofs+1):
+            self._send_item(list_obj[i])
+        self._send_pose(base)
+        self._send_pose(tool)
+        self._send_array(parameters)
+        joints_data = Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
+        self._send_matrix(joints_data)
+        robot = self._rec_item()
+        self._check_status()
+        return robot
+        
     #------------------------------------------------------------------
     #----------------------- CAMERA VIEWS ----------------------------
     def Cam2D_Add(self, item_object, cam_params=""):
@@ -2058,6 +2223,24 @@ class Robolink:
             item_list.append(self._rec_item())
         self._check_status()
         return item_list
+        
+    def CursorXYZ(self, x_coord=-1, y_coord=-1):
+        """Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
+        The XYZ coordinates returned are given with respect to the RoboDK station (absolute reference).
+        If no coordinates are provided, the current position of the cursor is retrieved.
+        
+        :param int x_coord: X coordinate in pixels
+        :param int y_coord: Y coordinate in pixels"""
+        self._check_connection()
+        command = 'Proj2d3d'
+        self._send_line(command)
+        self._send_int(x_coord)
+        self._send_int(y_coord)
+        selection = self._rec_int()
+        item = self._rec_item()
+        xyz = self._rec_xyz()
+        self._check_status()
+        return xyz, item
         
         
     
@@ -2671,11 +2854,12 @@ class Item():
         return points.tr().rows, feature_name
    
     def setMillingParameters(self, ncfile='', part=0, params=''):
-        """Adds a new robot machining project. Machining projects can also be used for 3D printing, curve following and point following.
-        It returns the new project item created and the status.
+        """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+        Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
+        Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
         
-        :param str ncfile: path to the NC file to loaded
-        :param part: object holding curves or points to automatically set up a curve/point follow project
+        :param str ncfile: path to the NC file (G-code or APT) to be loaded (optional)
+        :param part: object holding curves or points to automatically set up a curve/point follow project (optional)
         :type part: :class:`.Item`
         :param params: Additional options
         
@@ -2709,7 +2893,7 @@ class Item():
     def setAsCartesianTarget(self):
         """Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
         
-        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.setPose`, :func:`~robolink.Robolink.setAsJointTarget`
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setAsJointTarget`
         """
         self.link._check_connection()
         command = 'S_Target_As_RT'
@@ -2720,7 +2904,7 @@ class Item():
     def setAsJointTarget(self):
         """Sets a target as a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
         
-        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.setPose`, :func:`~robolink.Robolink.setAsCartesianTarget`
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setAsCartesianTarget`
         """
         self.link._check_connection()
         command = 'S_Target_As_JT'
@@ -3303,28 +3487,42 @@ class Item():
         return status
     
     def MoveJ(self, target, blocking=True):
-        """Move a robot to a specific target ("Move Joint" mode). This function waits (blocks) until the robot finishes its movements.
+        """Move a robot to a specific target ("Move Joint" mode). This function waits (blocks) until the robot finishes its movements. 
+        If this is used with a program item, a new joint movement instruction will be added to the program. 
+        Important note when adding new movement instructions to programs: only target items supported, not poses.
         
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
         :type target: :class:`.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
-        .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`
+        .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        self.link._moveX(target, self, 1, blocking)
+        if self.type == ITEM_TYPE_PROGRAM:
+            if type(target) != Item:
+                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
+            self.addMoveJ(target)
+        else:
+            self.link._moveX(target, self, 1, blocking)
     
     def MoveL(self, target, blocking=True):
-        """Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements.
+        """Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements. This function can also be called on Programs and a new movement instruction will be added at the end of the program.
+        If this is used with a program item, a new linear movement instruction will be added to the program. 
+        Important note when adding new movement instructions to programs: only target items supported, not poses.
         
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
         :type target: :class:`.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
-        .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`
+        .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        self.link._moveX(target, self, 2, blocking)
+        if self.type == ITEM_TYPE_PROGRAM:
+            if type(target) != Item:
+                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
+            self.addMoveL(target)
+        else:
+            self.link._moveX(target, self, 2, blocking)
         
     def SearchL(self, target, blocking=True):
         """Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode). This function waits (blocks) until the robot finishes its movements.
@@ -3334,7 +3532,7 @@ class Item():
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
-        .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`
+        .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Robolink.AddTarget`
         """
         self.link._moveX(target, self, 5, blocking)
         return self.SimulatorJoints()
@@ -3349,7 +3547,7 @@ class Item():
         :param blocking: True if the instruction should wait until the robot finished the movement (default=True)
         :type blocking: bool
         
-        .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`
+        .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
         self.link.MoveC(target1, target2, self, blocking)
     
@@ -3364,7 +3562,7 @@ class Item():
         :return: returns 0 if the movement is free of collision or any other issues. Otherwise it returns the number of pairs of objects that collided if there was a collision.
         :rtype: int
 
-        .. seealso:: :func:`~robolink.Item.MoveL_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`
+        .. seealso:: :func:`~robolink.Item.MoveL_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
         """
         self.link._check_connection()
         command = 'CollisionMove'
@@ -3392,7 +3590,7 @@ class Item():
         
         If the robot can not reach the target pose it returns -2. If the robot can reach the target but it can not make a linear movement it returns -1.
         
-        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Item.setFramePose`, :func:`~robolink.Item.setToolPose`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveL`
+        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.AddTarget`
         """
         self.link._check_connection()
         command = 'CollisionMoveL'
@@ -3574,6 +3772,24 @@ class Item():
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_int(accurate)
+        self.link._check_status()
+        
+    def setParamRobotTool(self, tool_mass=5, tool_cog=None):
+        """Sets the tool mass and center of gravity. This is only used with accurate robots to improve accuracy.
+        
+        :param float tool_mass: tool weigth in Kg
+        :param list tool_cog: tool center of gravity as [x,y,z] with respect to the robot flange
+        
+        """
+        self.link._check_connection()
+        command = 'S_ParamCalibTool'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        values = []
+        values.append(tool_mass)
+        if tool_cog is not None:
+            values += tool_cog            
+        self.link._send_array(values);
         self.link._check_status()
     
     def FilterProgram(self, filestr):
@@ -3792,12 +4008,12 @@ class Item():
         self.link._check_status()
     
     def addMoveJ(self, itemtarget):
-        """Adds a new robot joint move instruction to a program.
+        """Adds a new robot joint move instruction to a program. This function is obsolete. Use MoveJ instead.
         
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveJ`
         """
         self.link._check_connection()
         command = 'Add_INSMOVE'
@@ -3808,12 +4024,12 @@ class Item():
         self.link._check_status()
     
     def addMoveL(self, itemtarget):
-        """Adds a new robot linear move instruction to a program.
+        """Adds a new robot linear move instruction to a program. This function is obsolete. Use MoveL instead.
         
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveL`
         """
         self.link._check_connection()
         command = 'Add_INSMOVE'
@@ -3829,7 +4045,7 @@ class Item():
         :param show: Set to True to show the instruction nodes, otherwise, set to False
         :type show: bool
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.ShowTargets`
         """
         self.link._check_connection()
         command = 'Prog_ShowIns'
@@ -3844,7 +4060,7 @@ class Item():
         :param show: Set to False to remove the target item (the target is not deleted as it remains inside the program), otherwise, set to True to show the targets
         :type show: bool
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.ShowInstructions`
         """
         self.link._check_connection()
         command = 'Prog_ShowTargets'
@@ -3982,7 +4198,7 @@ class Item():
         
         Out 2: Returns 0 if the program has no issues
         
-        .. seealso:: :func:`~robolink.Robolink.ShowSequence`, :func:`~robolink.Robolink.InstructionListJoints`
+        .. seealso:: :func:`~robolink.Item.ShowSequence`, :func:`~robolink.Item.InstructionListJoints`
         """
         self.link._check_connection()
         command = 'G_ProgInsList'
@@ -4006,8 +4222,20 @@ class Item():
         Returns a human readable error message (if any)
         
         It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] or the file name if a file path is provided to save the result
+        
+        The ERROR is returned as an int but it needs to be interpreted as a binary number
+        
+        .. code-block:: python
+            :caption: Error bit masks
+            
+            # If error is not 0, check the binary error using the following bit masks
+            error_bin = int(str(ERROR),2)
+            ERROR_KINEMATIC = 0b001          # One or more points in the path is not reachable
+            ERROR_PATH_LIMIT = 0b010         # The path reached a joint axis limit
+            ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
+            ERROR_COLLISION = 0b100000       # Collision detected
                 
-        .. seealso:: :func:`~robolink.Robolink.ShowSequence`, :func:`~robolink.Robolink.InstructionListJoints`
+        .. seealso:: :func:`~robolink.Item.ShowSequence`
         """
         self.link._check_connection()
         command = 'G_ProgJointList'

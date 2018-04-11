@@ -2217,7 +2217,9 @@ public class RoboDK
         _send_Matrix2D(triangle_points);
         _send_Item(add_to);
         _send_Int(shape_override ? 1 : 0);
+        _COM.ReceiveTimeout = 3600 * 1000;
         Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
         _check_status();
         return newitem;
     }
@@ -2239,7 +2241,9 @@ public class RoboDK
         _send_Item(reference_object);
         _send_Int(add_to_ref ? 1 : 0);
         _send_Int(projection_type);
+        _COM.ReceiveTimeout = 3600 * 1000;
         Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
         _check_status();
         return newitem;
     }
@@ -2260,7 +2264,9 @@ public class RoboDK
         _send_Item(reference_object);
         _send_Int(add_to_ref ? 1 : 0);
         _send_Int(projection_type);
+        _COM.ReceiveTimeout = 3600 * 1000;
         Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
         _check_status();
         return newitem;
     }
@@ -2279,7 +2285,9 @@ public class RoboDK
         _send_Matrix2D(points);
         _send_Item(object_project);
         _send_Int(projection_type);
+        _COM.ReceiveTimeout = 3600 * 1000;
         Mat projected_points = _recv_Matrix2D();
+        _COM.ReceiveTimeout = _TIMEOUT;
         _check_status();
         return projected_points;
     }
@@ -2635,6 +2643,24 @@ public class RoboDK
         _check_status();
     }
 
+    /// <summary>
+    /// Returns the list of open stations in RoboDK
+    /// </summary>
+    /// <returns></returns>
+    public List<Item> GetOpenStations()
+    {
+        _check_connection();
+        _send_Line("G_AllStn");
+        int nstn = _recv_Int();
+        List<Item> list_stn = new List<Item>();
+        for (int i = 0; i < nstn; i++)
+        {
+            Item station = _recv_Item();
+            list_stn.Add(station);
+        }
+        _check_status();
+        return list_stn;
+    }
 
     /// <summary>
     /// Returns the active station item (station currently visible)
@@ -2979,6 +3005,7 @@ public class RoboDK
     }
 
 
+
     //------------------------------------------------------------------
     //----------------------- CAMERA VIEWS -----------------------------
     /// <summary>
@@ -3086,6 +3113,32 @@ public class RoboDK
         return list_items;
     }
 
+    /// <summary>
+    /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
+    /// The XYZ coordinates returned are given with respect to the RoboDK station(absolute reference).
+    /// If no coordinates are provided, the current position of the cursor is retrieved.
+    /// </summary>
+    /// <param name="x_coord">X coordinate in pixels</param>
+    /// <param name="y_coord">Y coordinate in pixels</param>
+    /// <param name="xyz_station"></param>
+    /// <returns></returns>
+    public Item Selection(int x_coord=-1, int y_coord = -1, List<double> xyz_station=null)
+    {
+        _check_connection();
+        _send_Line("Proj2d3d");
+        _send_Int(x_coord);
+        _send_Int(y_coord);
+        int selection = _recv_Int();
+        double[] xyz = new double[3];
+        Item selected_item = _recv_Item();
+        _recv_XYZ(xyz);
+        _check_status();
+        if (xyz != null)
+        {
+            xyz_station.Add(xyz[0]); xyz_station.Add(xyz[1]); xyz_station.Add(xyz[2]);
+        }
+        return selected_item;
+    }
 
     /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
