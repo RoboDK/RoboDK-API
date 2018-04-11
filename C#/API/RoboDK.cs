@@ -643,7 +643,9 @@ namespace RoboDk.API
             send_matrix(trianglePoints);
             send_item(addTo);
             send_int(shapeOverride ? 1 : 0);
+            ReceiveTimeout = 3600 * 1000;
             var newitem = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return newitem;
         }
@@ -659,7 +661,9 @@ namespace RoboDk.API
             send_item(referenceObject);
             send_int(addToRef ? 1 : 0);
             send_int((int) projectionType);
+            ReceiveTimeout = 3600 * 1000;
             var newitem = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return newitem;
         }
@@ -673,7 +677,9 @@ namespace RoboDk.API
             send_item(reference_object);
             send_int(add_to_ref ? 1 : 0);
             send_int((int) projection_type);
+            ReceiveTimeout = 3600 * 1000;
             Item newitem = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return newitem;
         }
@@ -688,7 +694,9 @@ namespace RoboDk.API
             send_matrix(points);
             send_item(objectProject);
             send_int((int) projectionType);
+            ReceiveTimeout = 3600 * 1000;
             var projectedPoints = rec_matrix();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return projectedPoints;
         }
@@ -899,6 +907,22 @@ namespace RoboDk.API
             send_line(parameter);
             send_line(value);
             check_status();
+        }
+
+        /// <inheritdoc />
+        public List<Item> GetOpenStation()
+        {
+            check_connection();
+            send_line("G_AllStn");
+            int nstn = rec_int();
+            List < Item > list_stn = new List<Item>();
+            for (int i = 0; i < nstn; i++)
+            {
+                Item station = rec_item();
+                list_stn.Add(station);
+            }
+            check_status();
+            return list_stn;
         }
 
         /// <inheritdoc />
@@ -1225,7 +1249,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<Item> GetSelectedItemList()
+        public List<Item> GetSelectedItems()
         {
             check_connection();
             var command = "G_Selection";
@@ -1241,6 +1265,27 @@ namespace RoboDk.API
             check_status();
             return listItems;
         }
+
+        /// <inheritdoc />
+        public Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null)
+        {
+            check_connection();
+            send_line("Proj2d3d");
+            send_int(x_coord);
+            send_int(y_coord);
+            int selection = rec_int();
+            double[] xyz = new double[3];
+            Item selected_item = rec_item();
+            rec_xyz(xyz);
+            check_status();
+            if (xyz != null)
+            {
+                xyz_station.Add(xyz[0]); xyz_station.Add(xyz[1]); xyz_station.Add(xyz[2]);
+            }
+            return selected_item;
+        }
+
+
 
         public void AddTargetJ(Item pgm, string targetName, double[] joints, Item robotBase = null, Item robot = null)
         {

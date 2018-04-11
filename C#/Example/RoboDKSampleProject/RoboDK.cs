@@ -3099,7 +3099,7 @@ public class RoboDK
     /// Returns the list of items selected (it can be one or more items)
     /// </summary>
     /// <returns></returns>
-    public List<Item> Selection()
+    public List<Item> GetSelectedItems()
     {
         _check_connection();
         _send_Line("G_Selection");
@@ -3122,7 +3122,7 @@ public class RoboDK
     /// <param name="y_coord">Y coordinate in pixels</param>
     /// <param name="xyz_station"></param>
     /// <returns></returns>
-    public Item Selection(int x_coord=-1, int y_coord = -1, List<double> xyz_station=null)
+    public Item GetCursorXYZ(int x_coord=-1, int y_coord = -1, List<double> xyz_station=null)
     {
         _check_connection();
         _send_Line("Proj2d3d");

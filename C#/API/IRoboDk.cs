@@ -144,6 +144,11 @@ namespace RoboDk.API
         /// <returns></returns>
         Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null);
 
+        /// <summary>
+        /// Returns the list of open stations in RoboDK
+        /// </summary>
+        /// <returns></returns>
+        List<Item> GetOpenStation();
 
         /// <summary>
         /// Set the active station (project currently visible)
@@ -629,7 +634,18 @@ namespace RoboDk.API
         /// Returns the list of items selected (it can be one or more items)
         /// </summary>
         /// <returns>Returns the list of selected items.</returns>
-        List<Item> GetSelectedItemList();
+        List<Item> GetSelectedItems();
+
+        /// <summary>
+        /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
+        /// The XYZ coordinates returned are given with respect to the RoboDK station(absolute reference).
+        /// If no coordinates are provided, the current position of the cursor is retrieved.
+        /// </summary>
+        /// <param name="x_coord">X coordinate in pixels</param>
+        /// <param name="y_coord">Y coordinate in pixels</param>
+        /// <param name="xyz_station"></param>
+        /// <returns></returns>
+        Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null);
 
         /// <summary>
         /// 
