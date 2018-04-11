@@ -133,6 +133,7 @@ namespace RoboDk.API
         /// <param name="name">Name of the station</param>
         /// <returns>Newly created station Item</returns>
         Item AddStation(string name);
+
         /// <summary>
         /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
         /// It returns the newly created :class:`.Item` containing the project settings.
@@ -239,12 +240,6 @@ namespace RoboDk.API
         /// <param name="filename">absolute path to save the file</param>
         /// <param name="itemsave">object or station to save. Leave empty to automatically save the current station.</param>
         void Save(string filename, Item itemsave = null);
-
-        /// <summary>
-        /// Add a new empty station. It returns the station created.
-        /// </summary>
-        /// <param name="name"></param>
-        Item AddStation(string name = "New Station");
 
         /// <summary>
         ///     Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can

@@ -301,8 +301,10 @@ namespace RoboDk.API
             return connected;
         }
 
-        public void StartNewRoboDKProcess(int port)
+        public bool StartNewRoboDKProcess(int port)
         {
+            bool started = false;
+
             var arguments = string.Format($"/PORT={port}");
 
             if (StartHidden)
@@ -347,15 +349,18 @@ namespace RoboDk.API
 
             // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
             string line = "";
-                while (line != null && !line.Contains("RoboDK is Running"))
+            while (line != null && !line.Contains("RoboDK is Running"))
             {
                 line = Process.StandardOutput.ReadLine();
             }
-                if (line == null)
-                {
-                    connected = false;
-                }
+
+            if (line != null)
+            {
+                started = true;
             }
+
+            return started;
+        }
 
         /// <inheritdoc />
         public void CloseRoboDK()
@@ -418,18 +423,6 @@ namespace RoboDk.API
             send_line(command);
             send_line(name);
             send_item(robot);
-            var newitem = rec_item();
-            check_status();
-            return newitem;
-        }
-
-        /// <inheritdoc />
-        public Item AddStation(string name)
-        {
-            check_connection();
-            var command = "NewStation";
-            send_line(command);
-            send_line(name);
             var newitem = rec_item();
             check_status();
             return newitem;

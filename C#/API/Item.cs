@@ -653,7 +653,7 @@ namespace RoboDk.API
             Link.send_line("NO_UPDATE " + options);
             Link.ReceiveTimeout = 3600 * 1000;
             Item program = Link.rec_item();
-            Link.ReceiveTimeout = Link.TIMEOUT;
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             double status = Link.rec_int() / 1000.0;
             Link.check_status();
             return program;
@@ -1254,7 +1254,7 @@ namespace RoboDk.API
             Link.send_int((int) run_mode);
             Link.ReceiveTimeout = 3600 * 1000;
             int prog_status = Link.rec_int();
-            Link.ReceiveTimeout = Link.TIMEOUT;
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             string prog_log_str = Link.rec_line();
             int transfer_status = Link.rec_int();
             Link.check_status();
