@@ -1,4 +1,44 @@
-﻿#region Namespaces
+﻿// ----------------------------------------------------------------------------------------------------------
+// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------------
+// This file (RoboDK.cs) implements the RoboDK API for C#
+// This file defines the following classes:
+//     Mat: Matrix class, useful pose operations
+//     RoboDK: API to interact with RoboDK
+//     RoboDK.Item: Any item in the RoboDK station tree
+//
+// These classes are the objects used to interact with RoboDK and create macros.
+// An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+// Items can be retrieved from the RoboDK station using the RoboDK() object (such as RoboDK.GetItem() method) 
+//
+// In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
+//
+// More information about the RoboDK API for Python here:
+//     https://robodk.com/doc/en/RoboDK-API.html
+//     https://robodk.com/doc/en/PythonAPI/index.html
+//
+// More information about RoboDK post processors here:
+//     https://robodk.com/help#PostProcessor
+//
+// Visit the Matrix and Quaternions FAQ for more information about pose/homogeneous transformations
+//     http://www.j3d.org/matrix_faq/matrfaq_latest.html
+//
+// This library includes the mathematics to operate with homogeneous matrices for robotics.
+// ----------------------------------------------------------------------------------------------------------
+
+
+#region Namespaces
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -88,6 +128,13 @@ namespace RoboDk.API
         Item AddProgram(string name, Item robot = null);
 
         /// <summary>
+        /// Add a new empty station.
+        /// </summary>
+        /// <param name="name">Name of the station</param>
+        /// <returns>Newly created station Item</returns>
+        Item AddStation(string name);
+
+        /// <summary>
         /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
         /// It returns the newly created :class:`.Item` containing the project settings.
         /// Tip: Use the macro /RoboDK/Library/Macros/MoveRobotThroughLine.py to see an example that creates a new "curve follow project" given a list of points to follow(Option 4).
@@ -97,6 +144,18 @@ namespace RoboDk.API
         /// <returns></returns>
         Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null);
 
+
+        /// <summary>
+        /// Set the active station (project currently visible)
+        /// </summary>
+        /// <param name="station">station item, it can be previously loaded as an RDK file</param>
+        void SetActiveStation(Item station);
+
+        /// <summary>
+        /// Returns the active station item (station currently visible)
+        /// </summary>
+        /// <returns></returns>
+        Item GetActiveStation();
 
         /// <summary>
         /// Display/render the scene: update the display. 
@@ -181,12 +240,6 @@ namespace RoboDk.API
         /// <param name="filename">absolute path to save the file</param>
         /// <param name="itemsave">object or station to save. Leave empty to automatically save the current station.</param>
         void Save(string filename, Item itemsave = null);
-
-        /// <summary>
-        /// Add a new empty station. It returns the station created.
-        /// </summary>
-        /// <param name="name"></param>
-        Item AddStation(string name = "New Station");
 
         /// <summary>
         ///     Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can
@@ -396,18 +449,6 @@ namespace RoboDk.API
         /// <param name="parameter">RoboDK parameter name</param>
         /// <param name="value">parameter value</param>
         void SetParameter(string parameter, string value);
-
-        /// <summary>
-        /// Set the active station (project currently visible)
-        /// </summary>
-        /// <param name="station">station item, it can be previously loaded as an RDK file</param>
-        void SetActiveStation(Item station);
-
-        /// <summary>
-        /// Returns the active station item (station currently visible)
-        /// </summary>
-        /// <returns></returns>
-        Item GetActiveStation();
 
         /// <summary>
         /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the

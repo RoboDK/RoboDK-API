@@ -1,11 +1,53 @@
-﻿#region Namespaces
+﻿// ----------------------------------------------------------------------------------------------------------
+// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------------
+// This file (RoboDK.cs) implements the RoboDK API for C#
+// This file defines the following classes:
+//     Mat: Matrix class, useful pose operations
+//     RoboDK: API to interact with RoboDK
+//     RoboDK.Item: Any item in the RoboDK station tree
+//
+// These classes are the objects used to interact with RoboDK and create macros.
+// An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+// Items can be retrieved from the RoboDK station using the RoboDK() object (such as RoboDK.GetItem() method) 
+//
+// In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
+//
+// More information about the RoboDK API for Python here:
+//     https://robodk.com/doc/en/RoboDK-API.html
+//     https://robodk.com/doc/en/PythonAPI/index.html
+//
+// More information about RoboDK post processors here:
+//     https://robodk.com/help#PostProcessor
+//
+// Visit the Matrix and Quaternions FAQ for more information about pose/homogeneous transformations
+//     http://www.j3d.org/matrix_faq/matrfaq_latest.html
+//
+// This library includes the mathematics to operate with homogeneous matrices for robotics.
+// ----------------------------------------------------------------------------------------------------------
+
+#region Namespaces
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -40,33 +82,23 @@ namespace RoboDk.API
 
         #region Constructors
 
-        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
-
         /// <summary>
-        ///     Creates a link with RoboDK
+        /// Creates a link with RoboDK
         /// </summary>
-        /// <param name="robodk_ip"></param>
-        /// <param name="start_hidden"></param>
-        /// <param name="com_port"></param>
-        public RoboDK(string robodk_ip = "localhost", bool start_hidden = false, int com_port = -1, string args = "",
-            string path = "")
+        public RoboDK()
         {
-            //A connection is attempted upon creation of the object"""
-            if (robodk_ip != "")
-                IP = robodk_ip;
-            START_HIDDEN = start_hidden;
-            if (com_port > 0)
-            {
-                PORT_FORCED = com_port;
-                PORT_START = com_port;
-                PORT_END = com_port;
-            }
+            CommandLineOptions = "";
+            ApplicationDir = "";
 
-            if (path != "")
-                ApplicationDir = path;
-            if (args != "")
-                ARGUMENTS = args;
-            Connect();
+            DefaultSocketTimeoutMilliseconds = 10 * 1000;
+
+            SafeMode = true;
+            AutoUpdate = false;
+            StartHidden = false;
+
+            RoboDKServerIpAdress = "localhost";
+            RoboDKServerStartPort = 20500;
+            RoboDKServerEndPort = RoboDKServerStartPort;
         }
 
         #endregion
@@ -74,67 +106,71 @@ namespace RoboDk.API
         #region Properties
 
         /// <summary>
-        ///     timeout for communication, in miliseconds
+        /// Default Socket send / receive timeout in miliseconds: 10 seconds
         /// </summary>
-        internal int TIMEOUT { get; private set; } = 10 * 1000;
+        public int DefaultSocketTimeoutMilliseconds { get; set; }
 
         /// <summary>
-        ///     arguments to provide to RoboDK on startup
+        /// Command line arguments to provide to RoboDK on startup
+        /// See https://robodk.com/doc/en/RoboDK-API.html#CommandLine
         /// </summary>
-        private string ARGUMENTS { get; } = "";
+        public string CommandLineOptions { get; set; }
 
         /// <summary>
-        ///     checks that provided items exist in memory
+        /// True: checks that provided items exist in memory
         /// </summary>
-        private int SAFE_MODE { get; set; } = 1;
+        public bool SafeMode { get; set; }
 
         /// <summary>
-        ///     if AUTO_UPDATE is zero, the scene is rendered after every function call
+        ///     if AutoUpdate is false, the scene is rendered after every function call
         /// </summary>
-        private int AUTO_UPDATE { get; set; }
+        public bool AutoUpdate { get; set; }
 
         /// <summary>
-        ///     IP address of the simulator (localhost if it is the same computer),
-        ///     otherwise, use RL = Robolink('yourip') to set to a different IP
+        /// Defines the RoboDK Simulator IP Address.
+        /// Default: localhost (Client and RoboDK Server runs on same computer)
         /// </summary>
-        private string IP { get; } = "localhost";
+        public string RoboDKServerIpAdress { get; set; }
 
         /// <summary>
-        ///     port to start looking for app connection
+        /// Port to start looking for a RoboDK connection.
         /// </summary>
-        private int PORT_START { get; } = 20500;
+        public int RoboDKServerStartPort { get; set; }
 
         /// <summary>
-        ///     port to stop looking for app connection
+        /// Port to stop looking for a RoboDK connection.
         /// </summary>
-        private int PORT_END { get; } = 20500;
+        public int RoboDKServerEndPort { get; set; }
 
         /// <summary>
-        ///     forces to start hidden. ShowRoboDK must be used to show the window
+        /// Forces to start RoboDK in hidden mode. 
+        /// ShowRoboDK must be used to show the window.
         /// </summary>
-        private bool START_HIDDEN { get; }
+        public bool StartHidden { get; set; }
 
         /// <summary>
-        ///     port where connection succeeded
+        /// TCP Port to which RoboDK is connected.
         /// </summary>
-        private int PORT { get; set; } = -1;
+        public int RoboDKServerPort { get; private set; }
 
-        /// <summary>
-        ///     port to force RoboDK to start listening
-        /// </summary>
-        private int PORT_FORCED { get; } = -1;
-
-        public int ReceiveTimeout
+        internal int ReceiveTimeout
         {
             get { return _socket.ReceiveTimeout; }
             set { _socket.ReceiveTimeout = value; }
         }
 
-        public Process Process { get; private set; } // pointer to the process
+        /// <summary>
+        /// RoboDK.exe process.
+        /// </summary>
+        public Process Process { get; private set; }
         public string LastStatusMessage { get; set; } // Last status message
 
-        public string ApplicationDir { get; private set; } =
-            ""; // file path to the robodk program (executable), typically C:/RoboDK/bin/RoboDK.exe. Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
+        /// <summary>
+        /// Filepath to the RoboDK.exe.
+        /// Typically C:/RoboDK/bin/RoboDK.exe. 
+        /// Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
+        /// </summary>
+        public string ApplicationDir { get; set; }
 
         #endregion
 
@@ -145,7 +181,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="extension_filter"></param>
         /// <returns>List of files (string)</returns>
-        static public List<string> RecentFiles(string extension_filter = "")
+        public static List<string> RecentFiles(string extension_filter = "")
         {
             string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
             string str = "";
@@ -204,12 +240,9 @@ namespace RoboDk.API
             // if both are true:
             //  - there is no data available to read so connection is not active
 
-            if (part1 && part2)
-            {
-                return false;
-            }
+            var rtc = !(part1 && part2);
 
-            return true;
+            return rtc;
         }
 
         /// <inheritdoc />
@@ -229,96 +262,104 @@ namespace RoboDk.API
             var connected = false;
             for (var i = 0; i < 2; i++)
             {
-                int port;
-                for (port = PORT_START; port <= PORT_END; port++)
+                if (RoboDKServerEndPort < RoboDKServerStartPort)
                 {
-                    _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+                    RoboDKServerEndPort = RoboDKServerStartPort;
+                }
+
+                int port;
+                for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
+                {
+                    _socket = ConnectToRoboDK(RoboDKServerIpAdress, port);
+                    if (_socket != null)
                     {
-                        SendTimeout = 1000,
-                        ReceiveTimeout = 1000
-                    };
-                    //_socket = new Socket(SocketType.Stream, ProtocolType.IPv4);
-                    try
-                    {
-                        _socket.Connect(IP, port);
-                        connected = is_connected();
-                        if (connected)
-                        {
-                            _socket.SendTimeout = TIMEOUT;
-                            _socket.ReceiveTimeout = TIMEOUT;
-                            break;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        var s = e.Message;
-                        //connected = false;
+                        connected = true;
+                        break;
                     }
                 }
 
                 if (connected)
                 {
-                    PORT = port;
+                    RoboDKServerPort = port;
                     break;
                 }
 
-                if (IP != "localhost")
+                if (RoboDKServerIpAdress != "localhost")
+                {
                     break;
-                var arguments = "";
-                if (PORT_FORCED > 0)
-                    arguments = "/PORT=" + PORT_FORCED + " " + arguments;
-                if (START_HIDDEN)
-                    arguments = "/NOSPLASH /NOSHOW /HIDDEN " + arguments;
-                if (ARGUMENTS != "")
-                    arguments = arguments + ARGUMENTS;
-                if (ApplicationDir == "")
-                {
-                    using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-                    using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
-                    {
-                        // key now points to the 64-bit key
-                        var installPath = regKey?.GetValue("INSTDIR").ToString();
-                        if (!string.IsNullOrEmpty(installPath))
-                        {
-                            ApplicationDir = installPath + "\\bin\\RoboDK.exe";
-                        }
-                    }
                 }
 
-                if (ApplicationDir == "")
-                {
-                    ApplicationDir = "C:/RoboDK/bin/RoboDK.exe";
-                }
-
-                var processStartInfo = new ProcessStartInfo
-                {
-                    FileName = ApplicationDir,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false
-                };
-                Process = Process.Start(processStartInfo);
-                // wait for the process to get started
-                // Process.WaitForInputIdle(10000);
-                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
-                string line = "";
-                while (line != null && !line.Contains("RoboDK is Running"))
-                {
-                    line = Process.StandardOutput.ReadLine();
-                }
-                if (line == null)
-                {
-                    connected = false;
-                }
+                StartNewRoboDKProcess(RoboDKServerStartPort);
             }
 
-            if (connected && !Set_connection_params())
+            if (connected && !SetConnectionParameter())
             {
                 connected = false;
                 Process = null;
             }
 
             return connected;
+        }
+
+        public bool StartNewRoboDKProcess(int port)
+        {
+            bool started = false;
+
+            var arguments = string.Format($"/PORT={port}");
+
+            if (StartHidden)
+            {
+                arguments = string.Format($"/NOSPLASH /NOSHOW /HIDDEN {arguments}");
+            }
+
+            if (!string.IsNullOrEmpty(CommandLineOptions))
+            {
+                arguments = string.Format($"{arguments} {CommandLineOptions}");
+            }
+
+            // No application path is given. Check the registry.
+            if (string.IsNullOrEmpty(ApplicationDir))
+            {
+                using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
+                {
+                    // key now points to the 64-bit key
+                    var installPath = regKey?.GetValue("INSTDIR").ToString();
+                    if (!string.IsNullOrEmpty(installPath))
+                    {
+                        ApplicationDir = installPath + "\\bin\\RoboDK.exe";
+                    }
+                }
+            }
+
+            // Still no application path. User Default installation directory
+            if (string.IsNullOrEmpty(ApplicationDir))
+            {
+                ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
+            }
+
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = ApplicationDir,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            Process = Process.Start(processStartInfo);
+
+            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+            string line = "";
+            while (line != null && !line.Contains("RoboDK is Running"))
+            {
+                line = Process.StandardOutput.ReadLine();
+            }
+
+            if (line != null)
+            {
+                started = true;
+            }
+
+            return started;
         }
 
         /// <inheritdoc />
@@ -409,6 +450,7 @@ namespace RoboDk.API
             send_int(autoRender ? 1 : 0);
             check_status();
         }
+
         /// <summary>
         ///    Update the screen. This updates the position of all robots and internal links according to previously set values.
         /// </summary>
@@ -460,7 +502,7 @@ namespace RoboDk.API
             {
                 command = "G_List_Items_Type";
                 send_line(command);
-                send_int((int)itemType);
+                send_int((int) itemType);
             }
 
             var numitems = rec_int();
@@ -489,7 +531,7 @@ namespace RoboDk.API
             {
                 command = "G_List_Items_Type_ptr";
                 send_line(command);
-                send_int((int)itemType);
+                send_int((int) itemType);
             }
 
             var numitems = rec_int();
@@ -511,11 +553,12 @@ namespace RoboDk.API
             var command = "PickItem";
             send_line(command);
             send_line(message);
-            send_int((int)itemType);
+            send_int((int) itemType);
+
             // wait up to 1 hour for user input
             _socket.ReceiveTimeout = 3600 * 1000;
             var item = rec_item();
-            _socket.ReceiveTimeout = TIMEOUT;
+            _socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return item;
         }
@@ -559,7 +602,7 @@ namespace RoboDk.API
                 send_line(message);
                 _socket.ReceiveTimeout = 3600 * 1000;
                 check_status();
-                _socket.ReceiveTimeout = TIMEOUT;
+                _socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             }
             else
             {
@@ -825,6 +868,7 @@ namespace RoboDk.API
                 var paramValue = new KeyValuePair<string, string>(param, value);
                 paramlist.Add(paramValue);
             }
+
             check_status();
             return paramlist;
         }
@@ -841,11 +885,12 @@ namespace RoboDk.API
             {
                 value = null;
             }
+
             check_status();
             return value;
         }
 
-        
+
         public void SetParameter(string parameter, string value)
         {
             check_connection();
@@ -872,7 +917,7 @@ namespace RoboDk.API
             check_connection();
             send_line("S_ActiveStn");
             send_item(station);
-            check_status();            
+            check_status();
         }
 
         /// <inheritdoc />
@@ -935,7 +980,7 @@ namespace RoboDk.API
             int nrobots = robotItemList.Count;
             send_int(nrobots);
             var jointsList = new List<double[]>();
-            foreach(var robot in robotItemList)
+            foreach (var robot in robotItemList)
             {
                 send_item(robot);
                 var joints = rec_array();
@@ -998,6 +1043,7 @@ namespace RoboDk.API
             var referencePose = rec_pose();
             var errorStats = rec_array();
             check_status();
+
             //errors = errors[:, 1].tolist()
             return referencePose;
         }
@@ -1112,9 +1158,6 @@ namespace RoboDk.API
             return new_robot;
         }
 
-
-        #region CAMERA VIEWS 
-
         /// <inheritdoc />
         public ulong Cam2DAdd(Item item, string cameraParameters = "")
         {
@@ -1169,8 +1212,6 @@ namespace RoboDk.API
             check_status();
             return success > 0;
         }
-
-        #endregion
 
         /// <inheritdoc />
         public string GetLicense()
@@ -1240,6 +1281,47 @@ namespace RoboDk.API
 
         #endregion
 
+        #region Private Methods
+
+        private Socket ConnectToRoboDK(string ipAdress, int port)
+        {
+            bool connected = false;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+            {
+                SendTimeout = 1000,
+                ReceiveTimeout = 1000
+            };
+
+            try
+            {
+                socket.Connect(ipAdress, port);
+                if (socket.Connected)
+                {
+                    socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
+                    socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                    connected = true;
+                }
+            }
+            catch (Exception e)
+            {
+                var s = e.Message;
+
+                //connected = false;
+            }
+
+            if (!connected)
+            {
+                socket.Dispose();
+                socket = null;
+            }
+
+            return socket;
+        }
+
+        #endregion
+
+        #region Internal Methods
+
         //Returns 1 if connection is valid, returns 0 if connection is invalid
         internal bool is_connected()
         {
@@ -1252,7 +1334,9 @@ namespace RoboDk.API
         internal void check_connection()
         {
             if (!is_connected() && !Connect())
+            {
                 throw new RdkException("Can't connect to RoboDK API");
+            }
         }
 
         /// <summary>
@@ -1275,6 +1359,7 @@ namespace RoboDk.API
                 {
                     //output warning
                     LastStatusMessage = rec_line();
+
                     //TODO chu: Implement warning
                     //print("WARNING: " + strproblems);
                     //#warn(strproblems)# does not show where is the problem...
@@ -1292,6 +1377,7 @@ namespace RoboDk.API
                     throw new RdkException(LastStatusMessage);
                 }
                 default:
+
                     //raise Exception('Problems running function');
                     LastStatusMessage = "Unknown problem running RoboDK API function";
                     throw new RdkException(LastStatusMessage);
@@ -1306,7 +1392,10 @@ namespace RoboDk.API
         internal bool check_color(double[] color)
         {
             if (color.Length < 4)
+            {
                 throw new RdkException("Invalid color. A color must be a 4-size double array [r,g,b,a]");
+            }
+
             return true;
         }
 
@@ -1324,6 +1413,7 @@ namespace RoboDk.API
                 throw new RdkException("Send line failed.");
             }
         }
+
         internal string rec_line()
         {
             //Receives a string. It reads until if finds LF (\\n)
@@ -1344,11 +1434,19 @@ namespace RoboDk.API
         {
             byte[] bytes;
             if (item == null)
+            {
                 bytes = BitConverter.GetBytes((ulong) 0);
+            }
             else
+            {
                 bytes = BitConverter.GetBytes(item.get_item());
+            }
+
             if (bytes.Length != 8)
+            {
                 throw new RdkException("API error");
+            }
+
             Array.Reverse(bytes);
             try
             {
@@ -1369,10 +1467,14 @@ namespace RoboDk.API
             var read1 = _socket.Receive(buffer1, 8, SocketFlags.None);
             var read2 = _socket.Receive(buffer2, 4, SocketFlags.None);
             if (read1 != 8 || read2 != 4)
+            {
                 return null;
+            }
+
             Array.Reverse(buffer1);
             Array.Reverse(buffer2);
             var item = BitConverter.ToUInt64(buffer1, 0);
+
             //Console.WriteLine("Received item: " + item.ToString());
             var type = (ItemType) BitConverter.ToInt32(buffer2, 0);
             return new Item(this, item, type);
@@ -1383,7 +1485,10 @@ namespace RoboDk.API
         {
             var bytes = BitConverter.GetBytes(ptr);
             if (bytes.Length != 8)
+            {
                 throw new RdkException("RoboDK API error");
+            }
+
             Array.Reverse(bytes);
             _socket.Send(bytes);
         }
@@ -1397,7 +1502,10 @@ namespace RoboDk.API
             var bytes = new byte[8];
             var read = _socket.Receive(bytes, 8, SocketFlags.None);
             if (read != 8)
+            {
                 throw new Exception("Something went wrong");
+            }
+
             Array.Reverse(bytes);
             var ptrH = BitConverter.ToUInt64(bytes, 0);
             return ptrH;
@@ -1406,7 +1514,10 @@ namespace RoboDk.API
         internal void send_pose(Mat pose)
         {
             if (!pose.IsHomogeneous())
+            {
                 throw new Exception($"Matrix not Homogenous: {pose.Cols}x{pose.Rows}");
+            }
+
             const int nvalues = 16;
             var bytesarray = new byte[8 * nvalues];
             var cnt = 0;
@@ -1428,7 +1539,10 @@ namespace RoboDk.API
             var bytes = new byte[16 * 8];
             var nbytes = _socket.Receive(bytes, 16 * 8, SocketFlags.None);
             if (nbytes != 16 * 8)
+            {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
+            }
+
             var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
             for (var i = 0; i < pose.Rows; i++)
@@ -1458,7 +1572,10 @@ namespace RoboDk.API
             var bytes = new byte[3 * 8];
             var nbytes = _socket.Receive(bytes, 3 * 8, SocketFlags.None);
             if (nbytes != 3 * 8)
+            {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
+            }
+
             for (var i = 0; i < 3; i++)
             {
                 var onedouble = new byte[8];
@@ -1487,7 +1604,10 @@ namespace RoboDk.API
             var bytes = new byte[4];
             var read = _socket.Receive(bytes, 4, SocketFlags.None);
             if (read < 4)
+            {
                 return 0;
+            }
+
             Array.Reverse(bytes); // convert from little endian to big endian
             return BitConverter.ToInt32(bytes, 0);
         }
@@ -1578,8 +1698,11 @@ namespace RoboDk.API
                 {
                     var nbytesok = _socket.Receive(bytes, received, to_receive, SocketFlags.None);
                     if (nbytesok <= 0)
+                    {
                         throw new RdkException(
                             "Can't receive matrix properly"); //raise Exception('Problems running function');
+                    }
+
                     received = received + nbytesok;
                     to_receive = Math.Min(recvsize - received, BUFFER_SIZE);
                 }
@@ -1633,7 +1756,9 @@ namespace RoboDk.API
             send_item(itemrobot);
             check_status();
             if (blocking)
+            {
                 itemrobot.WaitMove();
+            }
         }
 
         // private move type, to be used by public methods (MoveJ  and MoveL)
@@ -1695,7 +1820,9 @@ namespace RoboDk.API
             send_item(itemrobot);
             check_status();
             if (blocking)
+            {
                 itemrobot.WaitMove();
+            }
         }
 
         /// <summary>
@@ -1707,19 +1834,21 @@ namespace RoboDk.API
             Disconnect();
         }
 
-        internal bool Set_connection_params(int safe_mode = 1, int auto_update = 0, int timeout = -1)
+        internal bool SetConnectionParameter()
         {
-            //Sets some behavior parameters: SAFE_MODE, AUTO_UPDATE and TIMEOUT.
-            SAFE_MODE = safe_mode;
-            AUTO_UPDATE = auto_update;
-            if (timeout >= 0)
-                TIMEOUT = timeout;
             send_line("CMD_START");
-            send_line(Convert.ToString(SAFE_MODE) + " " + Convert.ToString(AUTO_UPDATE));
+            var startParameter = string.Format($"{Convert.ToInt32(SafeMode)} {Convert.ToInt32(AutoUpdate)}");
+            send_line(startParameter);
             var response = rec_line();
             if (response == "READY")
+            {
                 return true;
+            }
+
             return false;
         }
+
+
+        #endregion
     }
 }
