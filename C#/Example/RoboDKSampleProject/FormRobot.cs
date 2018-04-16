@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace ProjectRoboDK
 {
@@ -929,26 +930,6 @@ namespace ProjectRoboDK
         {
             if (!Check_ROBOT()) { return; }
 
-
-            RoboDK.Item[] references = RDK.getItemList(RoboDK.ITEM_TYPE_FRAME);
-            UInt64[] cam_list = new UInt64[references.Length];
-            for (int i=0; i<references.Length; i++){
-                cam_list[i] = RDK.Cam2D_Add(references[i], "FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480");
-            }
-
-            System.Threading.Thread.Sleep(2000);
-
-            for (int i = 0; i < references.Length; i++)
-            {
-                 RDK.Cam2D_SetParams(references[i].Name(), cam_list[i]);
-            }
-
-            System.Threading.Thread.Sleep(2000);
-            
-            // close all cameras
-            RDK.Cam2D_Close();
-
-            return;
             /* if (RDK.Connected())
              {
                  RDK.CloseRoboDK();
@@ -993,6 +974,35 @@ namespace ProjectRoboDK
             }
 
             return;
+
+            //--------------------------------------------------
+            // Other tests used for debugging...
+
+            //RDK.SetInteractiveMode(RoboDK.SELECT_MOVE, RoboDK.DISPLAY_REF_TX | RoboDK.DISPLAY_REF_TY | RoboDK.DISPLAY_REF_PXY | RoboDK.DISPLAY_REF_RZ, new List<RoboDK.Item>() { ROBOT }, new List<int>() { RoboDK.DISPLAY_REF_ALL });
+            //return;
+
+
+            RoboDK.Item[] references = RDK.getItemList(RoboDK.ITEM_TYPE_FRAME);
+            UInt64[] cam_list = new UInt64[references.Length];
+            for (int i = 0; i < references.Length; i++)
+            {
+                cam_list[i] = RDK.Cam2D_Add(references[i], "FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480");
+            }
+
+            System.Threading.Thread.Sleep(2000);
+
+            for (int i = 0; i < references.Length; i++)
+            {
+                RDK.Cam2D_SetParams(references[i].Name(), cam_list[i]);
+            }
+
+            System.Threading.Thread.Sleep(2000);
+
+            // close all cameras
+            RDK.Cam2D_Close();
+
+            return;
+
             // Example to change the robot parameters (DHM parameters as defined by Craig 1986)
             // for joints 1 to 6, index i changes from 0 to 5:
             // dhm[i][] = [alpha, a, theta, d];

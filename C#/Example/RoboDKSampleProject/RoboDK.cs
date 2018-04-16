@@ -1204,6 +1204,46 @@ public class RoboDK
     public const int FLAG_ITEM_NONE = 0;
     public const int FLAG_ITEM_ALL = 64 + 32 + 8 + 4 + 2 + 1;
 
+    // Robot types
+    public const int MAKE_ROBOT_1R=1;
+    public const int MAKE_ROBOT_2R=2;
+    public const int MAKE_ROBOT_3R=3;
+    public const int MAKE_ROBOT_1T=4;
+    public const int MAKE_ROBOT_2T=5;
+    public const int MAKE_ROBOT_3T=6;
+    public const int MAKE_ROBOT_6DOF=7;
+    public const int MAKE_ROBOT_7DOF=8;
+    public const int MAKE_ROBOT_SCARA = 9;
+
+    // Path Error bit mask
+    public const int ERROR_KINEMATIC = 0b001;          // One or more points is not reachable
+    public const int ERROR_PATH_LIMIT = 0b010;         // The path reaches the limit of joint axes
+    public const int ERROR_PATH_SINGULARITY = 0b100;   // The robot reached a singularity point
+    public const int ERROR_COLLISION = 0b100000;       // Collision detected
+
+    // Interactive selection option (for 3D mouse behavior and setInteractiveMode)
+    public const int SELECT_NONE     =0;
+    public const int SELECT_RECTANGLE=1;
+    public const int SELECT_ROTATE   =2;
+    public const int SELECT_ZOOM     =3;
+    public const int SELECT_PAN      =4;
+    public const int SELECT_MOVE     =5;
+    public const int SELECT_MOVE_SHIFT = 6;
+
+    // Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
+    public const int DISPLAY_REF_DEFAULT =     -1;
+    public const int DISPLAY_REF_NONE    =      0;
+    public const int DISPLAY_REF_TX  =       0b001;
+    public const int DISPLAY_REF_TY  =       0b010;
+    public const int DISPLAY_REF_TZ  =       0b100;
+    public const int DISPLAY_REF_RX  =    0b001000;
+    public const int DISPLAY_REF_RY  =    0b010000;
+    public const int DISPLAY_REF_RZ  =    0b100000;
+    public const int DISPLAY_REF_PXY = 0b001000000;
+    public const int DISPLAY_REF_PXZ = 0b010000000;
+    public const int DISPLAY_REF_PYZ = 0b100000000;
+    public const int DISPLAY_REF_ALL = 0b111111111;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -1708,7 +1748,7 @@ public class RoboDK
         string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
         string str = "";
         if (File.Exists(ini_file)) {
-            foreach (string line in File.ReadAllLines(ini_file))
+            foreach (string line in File.ReadLines(ini_file))
             {
                 if (line.Contains("RecentFileList="))
                 {
@@ -1722,7 +1762,7 @@ public class RoboDK
         foreach (string st in read_list)
         {
             string st2 = st.Trim();
-            if (extension_filter.Length > 0 && st2.ToLower().EndsWith(extension_filter.ToLower()))
+            if (extension_filter.Length == 0 || st2.ToLower().EndsWith(extension_filter.ToLower()))
             {
                 rdk_list.Add(st2);
             }
@@ -3111,6 +3151,35 @@ public class RoboDK
         }
         _check_status();
         return list_items;
+    }
+
+    /// <summary>
+    /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
+    /// </summary>
+    /// <param name="mode_type">The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)</param>
+    /// <param name="default_ref_flags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
+    /// <param name="custom_items">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
+    /// <param name="custom_ref_flags">Provide a matching list of flags to customize the movement behavior for specific items</param>
+    public void SetInteractiveMode(int mode_type=SELECT_MOVE, int default_ref_flags = DISPLAY_REF_DEFAULT, List<Item> custom_items=null, List<int> custom_ref_flags=null)
+    {
+        _check_connection();
+        _send_Line("S_InteractiveMode");
+        _send_Int(mode_type);
+        _send_Int(default_ref_flags);
+        if (custom_items == null || custom_ref_flags == null)
+        {
+            _send_Int(-1);
+        } else
+        {
+            int n_custom = Math.Min(custom_items.Count, custom_ref_flags.Count);
+            _send_Int(n_custom);
+            for (int i=0; i<n_custom; i++)
+            {
+                _send_Item(custom_items[i]);
+                _send_Int(custom_ref_flags[i]);
+            }
+        }
+        _check_status();
     }
 
     /// <summary>

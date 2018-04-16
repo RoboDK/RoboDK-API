@@ -205,6 +205,28 @@ ERROR_PATH_LIMIT = 0b010         # The path reaches the limit of joint axes
 ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
 ERROR_COLLISION = 0b100000       # Collision detected
 
+# Interactive selection option (for 3D mouse behavior and setInteractiveMode)
+SELECT_NONE     =0
+SELECT_RECTANGLE=1
+SELECT_ROTATE   =2
+SELECT_ZOOM     =3
+SELECT_PAN      =4
+SELECT_MOVE     =5
+SELECT_MOVE_SHIFT=6
+
+# Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
+DISPLAY_REF_DEFAULT =     -1
+DISPLAY_REF_NONE    =      0
+DISPLAY_REF_TX =       0b001
+DISPLAY_REF_TY =       0b010
+DISPLAY_REF_TZ =       0b100
+DISPLAY_REF_RX =    0b001000
+DISPLAY_REF_RY =    0b010000
+DISPLAY_REF_RZ =    0b100000
+DISPLAY_REF_PXY= 0b001000000
+DISPLAY_REF_PXZ= 0b010000000
+DISPLAY_REF_PYZ= 0b100000000
+
 class Robolink:
     """The Robolink class is the link to to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
     Any interaction is made through \"items\" (Item() objects). An item is an object in the
@@ -2224,6 +2246,31 @@ class Robolink:
         self._check_status()
         return item_list
         
+       
+    def setInteractiveMode(self, mode_type=SELECT_MOVE, default_ref_flags=DISPLAY_REF_DEFAULT, custom_objects=None, custom_ref_flags=None):
+        """Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
+        
+        :param int mode_type: The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)
+        :param int default_ref_flags: When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)
+        :param list custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)
+        :param list custom_ref_flags: Provide a matching list of flags to customize the movement behavior for specific items
+        """
+        self._check_connection()
+        command = 'S_InteractiveMode'
+        self._send_line(command)
+        self._send_int(mode_type)
+        self._send_int(default_ref_flags)
+        if custom_objects is None or custom_ref_flags is None:
+            self._send_int(-1)
+        else:
+            nitems = min(len(custom_objects),len(custom_ref_flags))
+            self._send_int(nitems)
+            for i in range(nitems):
+                self._send_item(custom_objects[i])
+                self._send_int(custom_ref_flags[i])
+
+        self._check_status()        
+        
     def CursorXYZ(self, x_coord=-1, y_coord=-1):
         """Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
         The XYZ coordinates returned are given with respect to the RoboDK station (absolute reference).
@@ -3629,7 +3676,7 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setSpeedJoints`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        self.setSpeed(-1,accel_linear,-1,-1)
+        self.setSpeed(-1,-1,accel_linear,-1)
     
     def setSpeedJoints(self, speed_joints):
         """Sets the joint speed of a robot in deg/s for rotary joints and mm/s for linear joints
@@ -3638,7 +3685,7 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        self.setSpeed(-1,-1,speed_joints,-1)
+        self.setSpeed(-1,speed_joints,-1,-1)
     
     def setAccelerationJoints(self, accel_joints):
         """Sets the joint acceleration of a robot

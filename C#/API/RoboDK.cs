@@ -180,8 +180,8 @@ namespace RoboDk.API
         /// Return the list of recently opened files
         /// </summary>
         /// <param name="extension_filter"></param>
-        /// <returns>List of files (string)</returns>
-        public static List<string> RecentFiles(string extension_filter = "")
+        /// <returns></returns>
+        static public List<string> RecentFiles(string extension_filter = "")
         {
             string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
             string str = "";
@@ -200,7 +200,7 @@ namespace RoboDk.API
             foreach (string st in read_list)
             {
                 string st2 = st.Trim();
-                if (extension_filter.Length > 0 && st2.ToLower().EndsWith(extension_filter.ToLower()))
+                if (extension_filter.Length == 0 || st2.ToLower().EndsWith(extension_filter.ToLower()))
                 {
                     rdk_list.Add(st2);
                 }
@@ -1264,6 +1264,30 @@ namespace RoboDk.API
 
             check_status();
             return listItems;
+        }
+
+        /// <inheritdoc />
+        public void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<Item> custom_items = null, List<InteractiveType> custom_ref_flags = null)
+        {
+            check_connection();
+            send_line("S_InteractiveMode");
+            send_int((int) mode_type);
+            send_int((int) default_ref_flags);
+            if (custom_items == null || custom_ref_flags == null)
+            {
+                send_int(-1);
+            }
+            else
+            {
+                int n_custom = Math.Min(custom_items.Count, custom_ref_flags.Count);
+                send_int(n_custom);
+                for (int i = 0; i < n_custom; i++)
+                {
+                    send_item(custom_items[i]);
+                    send_int((int) custom_ref_flags[i]);
+                }
+            }
+            check_status();
         }
 
         /// <inheritdoc />

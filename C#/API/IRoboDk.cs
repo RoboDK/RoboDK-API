@@ -637,6 +637,15 @@ namespace RoboDk.API
         List<Item> GetSelectedItems();
 
         /// <summary>
+        /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
+        /// </summary>
+        /// <param name="mode_type">The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)</param>
+        /// <param name="default_ref_flags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
+        /// <param name="custom_items">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
+        /// <param name="custom_ref_flags">Provide a matching list of flags to customize the movement behavior for specific items</param>
+        void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<Item> custom_items = null, List<InteractiveType> custom_ref_flags = null);
+
+        /// <summary>
         /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
         /// The XYZ coordinates returned are given with respect to the RoboDK station(absolute reference).
         /// If no coordinates are provided, the current position of the cursor is retrieved.
