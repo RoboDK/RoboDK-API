@@ -1,2 +1,1 @@
-
-# Add your introductions here!
+# More help coming soon!

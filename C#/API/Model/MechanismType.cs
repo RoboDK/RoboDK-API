@@ -38,55 +38,53 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-
-
-
 namespace RoboDk.API.Model
 {
-    /// <summary>
-    /// Euler type
-    /// </summary>
-    public enum EulerType
+    public enum MechanismType
     {
         /// <summary>
-        /// joints 
+        /// 1R mechanism (1 rotational axis)
         /// </summary>
-        JointFormat = -1,
+        T_1R = 1,
 
         /// <summary>
-        /// generic
+        /// 2R mechanism (2 rotational axes)
         /// </summary>
-        EulerRxRypRzpp = 0,
+        T_2R = 2,
 
         /// <summary>
-        /// ABB RobotStudio
+        /// 3R mechanism (3 rotational axes)
         /// </summary>
-        EulerRzRypRxpp = 1,
+        T_3R = 3,
 
         /// <summary>
-        /// Kawasaki, Adept, Staubli
+        /// 1T mechanism (1 translational axis)
         /// </summary>
-        EulerRzRypRzpp = 2,
+        T_1T = 4,
 
         /// <summary>
-        /// CATIA, SolidWorks
+        /// 2T mechanism (2 translational axes) - T-bot
         /// </summary>
-        EulerRzRxpRzpp = 3,
+        T_2T = 5,
 
         /// <summary>
-        /// Fanuc, Kuka, Motoman, Nachi
+        /// 3T mechanism (3 translational axes) - H-bot
         /// </summary>
-        EulerRxRyRz = 4, 
+        T_3T = 6,
 
         /// <summary>
-        /// CRS
+        /// 6 axis robot
         /// </summary>
-        EulerRzRyRx = 5,
+        T_6DOF = 7,
 
         /// <summary>
-        /// ABB Rapid
+        /// 7-axis robot
         /// </summary>
-        EulerQueaternion = 6
+        T_7DOF = 8,
+
+        /// <summary>
+        /// Scara robot (4 axes)
+        /// </summary>
+        T_SCARA = 9
     }
 }
-

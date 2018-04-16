@@ -25,6 +25,7 @@
 // In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
 //
 // More information about the RoboDK API for Python here:
+//     https://robodk.com/doc/en/CsAPI/index.html
 //     https://robodk.com/doc/en/RoboDK-API.html
 //     https://robodk.com/doc/en/PythonAPI/index.html
 //
@@ -46,8 +47,15 @@ namespace RoboDk.API.Model
     /// </summary>
     public enum ProgramExecutionType
     {
-        RunOnSimulator = 1, // Set the program to run on the simulator
-        RunOnRobot = 2 // Set the program to run on the robot
+        /// <summary>
+        /// Set the program to run on the simulator
+        /// </summary>
+        RunOnSimulator = 1,
+
+        /// <summary>
+        /// Set the program to run on the robot
+        /// </summary>
+        RunOnRobot = 2
     }
 }
 

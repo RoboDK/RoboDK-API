@@ -25,6 +25,7 @@
 // In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
 //
 // More information about the RoboDK API for Python here:
+//     https://robodk.com/doc/en/CsAPI/index.html
 //     https://robodk.com/doc/en/RoboDK-API.html
 //     https://robodk.com/doc/en/PythonAPI/index.html
 //
@@ -337,29 +338,34 @@ namespace RoboDk.API
             {
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
-
-            var processStartInfo = new ProcessStartInfo
-            {
-                FileName = ApplicationDir,
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            };
-            Process = Process.Start(processStartInfo);
-
-            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
-            string line = "";
-            while (line != null && !line.Contains("RoboDK is Running"))
-            {
-                line = Process.StandardOutput.ReadLine();
-            }
-
-            if (line != null)
-            {
-                started = true;
-            }
-
+            Process = System.Diagnostics.Process.Start(ApplicationDir, arguments);
+            started = WaitForTcpServerPort(port, 10000);
             return started;
+        }
+
+        private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
+        {
+            int sleepTime = 100;
+            bool serverPortIsOpen = false;
+            while ((serverPortIsOpen == false) && (millisecondsTimeout > 0))
+            {
+                //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
+                IPEndPoint[] objEndPoints = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+                foreach (var tcpEndPoint in objEndPoints)
+                {
+                    if (tcpEndPoint.Port == serverPort)
+                    {
+                        serverPortIsOpen = true;
+                        break;
+                    }
+                }
+                if (serverPortIsOpen == false)
+                {
+                    Thread.Sleep(sleepTime);
+                    millisecondsTimeout -= sleepTime;
+                }
+            }
+            return serverPortIsOpen;
         }
 
         /// <inheritdoc />

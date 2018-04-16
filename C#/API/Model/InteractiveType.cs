@@ -38,55 +38,46 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-
-
-
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// Euler type
+    /// Modes to use for SetInteractiveMode
     /// </summary>
-    public enum EulerType
+    public enum InteractiveType
     {
         /// <summary>
-        /// joints 
+        /// Default. Same as if we selected Escap and the user is ready to select his own choice.
         /// </summary>
-        JointFormat = -1,
+        NONE = 0,
 
         /// <summary>
-        /// generic
+        /// Select one or more items
         /// </summary>
-        EulerRxRypRzpp = 0,
+        RECTANGLE = 1,
 
         /// <summary>
-        /// ABB RobotStudio
+        /// Set to rotate the view on click
         /// </summary>
-        EulerRzRypRxpp = 1,
+        ROTATE = 2,
 
         /// <summary>
-        /// Kawasaki, Adept, Staubli
+        /// Set Zoom mode
         /// </summary>
-        EulerRzRypRzpp = 2,
+        ZOOM = 3,
 
         /// <summary>
-        /// CATIA, SolidWorks
+        /// Set Pan mode
         /// </summary>
-        EulerRzRxpRzpp = 3,
+        PAN = 4,
 
         /// <summary>
-        /// Fanuc, Kuka, Motoman, Nachi
+        /// Set to move objects (same behavior as holding Alt)
         /// </summary>
-        EulerRxRyRz = 4, 
+        MOVE = 5,
 
         /// <summary>
-        /// CRS
+        /// Set to move objects or tools chaing the TCP definition or withoug changing the absolute position of nested references (same behavior as holding Alt+Shift)
         /// </summary>
-        EulerRzRyRx = 5,
-
-        /// <summary>
-        /// ABB Rapid
-        /// </summary>
-        EulerQueaternion = 6
+        MOVE_SHIFT = 6
     }
 }
-

@@ -45,10 +45,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DisplayRefType.cs" />
-    <Compile Include="ErrorPathType.cs" />
-    <Compile Include="InteractiveType.cs" />
-    <Compile Include="MechanismType.cs" />
+    <Compile Include="Model\DisplayRefType.cs" />
+    <Compile Include="Model\ErrorPathType.cs" />
+    <Compile Include="Model\InteractiveType.cs" />
+    <Compile Include="Model\MechanismType.cs" />
     <Compile Include="Model\CollisionCheckOptions.cs" />
     <Compile Include="Model\EulerType.cs" />
     <Compile Include="Exceptions\MatException.cs" />

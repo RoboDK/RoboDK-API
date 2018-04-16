@@ -39,54 +39,34 @@
 // ----------------------------------------------------------------------------------------------------------
 
 
-
+using System;
 
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// Euler type
+    /// Flags used as Error code for the returned values from InstructionJointsList()
     /// </summary>
-    public enum EulerType
+    [Flags]
+    public enum ErrorPathType
     {
         /// <summary>
-        /// joints 
+        /// One or more points is not reachable
         /// </summary>
-        JointFormat = -1,
+        KINEMATIC = 0b001,
 
         /// <summary>
-        /// generic
+        /// The path reaches the limit of joint axes
         /// </summary>
-        EulerRxRypRzpp = 0,
+        PATH_LIMIT = 0b010,
 
         /// <summary>
-        /// ABB RobotStudio
+        /// The robot reached a singularity point
         /// </summary>
-        EulerRzRypRxpp = 1,
+        PATH_SINGULARITY = 0b100,
 
         /// <summary>
-        /// Kawasaki, Adept, Staubli
+        /// Collision detected
         /// </summary>
-        EulerRzRypRzpp = 2,
-
-        /// <summary>
-        /// CATIA, SolidWorks
-        /// </summary>
-        EulerRzRxpRzpp = 3,
-
-        /// <summary>
-        /// Fanuc, Kuka, Motoman, Nachi
-        /// </summary>
-        EulerRxRyRz = 4, 
-
-        /// <summary>
-        /// CRS
-        /// </summary>
-        EulerRzRyRx = 5,
-
-        /// <summary>
-        /// ABB Rapid
-        /// </summary>
-        EulerQueaternion = 6
+        COLLISION = 0b100000
     }
 }
-

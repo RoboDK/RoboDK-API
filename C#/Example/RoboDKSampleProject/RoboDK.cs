@@ -28,6 +28,8 @@ using System.Diagnostics;
 using System.Net.Sockets;       // For Socket communication
 using Microsoft.Win32;          // For registry keys
 using System.IO;
+using System.Net;
+using System.Threading;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -1893,6 +1895,7 @@ public class RoboDK
                 string arguments = "";
                 if (PORT_FORCED > 0)
                 {
+                    PORT_START = PORT_FORCED;
                     arguments = arguments + "/PORT=" + PORT_FORCED.ToString() + " ";
                 }
                 if (START_HIDDEN)
@@ -1909,7 +1912,7 @@ public class RoboDK
                     string install_path = null;
 
                     // retrieve install path from the registry:
-                    /*RegistryKey localKey = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+                    RegistryKey localKey = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
                     localKey = localKey.OpenSubKey(@"SOFTWARE\RoboDK");
                     if (localKey != null)
                     {
@@ -1918,7 +1921,9 @@ public class RoboDK
                         {
                             APPLICATION_DIR = install_path + "\\bin\\RoboDK.exe";
                         }
-                    }*/
+                    }
+                    /*
+                    // .Net 2.0
                     RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RoboDK", false);
                     if (regKey is RegistryKey) // check if the registry was opened
                     {
@@ -1928,23 +1933,31 @@ public class RoboDK
                         {
                             APPLICATION_DIR = install_path + "\\bin\\RoboDK.exe";
                         }
-                    }
+                    }*/
                 }
                 if (APPLICATION_DIR == "")
                 {
                     APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe";
                 }
-                var processStartInfo = new ProcessStartInfo
+
+                PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
+                connected = WaitForTcpServerPort(PORT_START, 10000);
+
+                //PROCESS.WaitForInputIdle(); // only works if RoboDK is displayed
+
+                /*var processStartInfo = new ProcessStartInfo
                 {
                     FileName = APPLICATION_DIR,
                     Arguments = arguments,
-                    RedirectStandardOutput = true,
+                    RedirectStandardOutput = false,
                     UseShellExecute = false
                 };
                 PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
-                //PROCESS.WaitForInputIdle(10000);
-                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+                //
+                
+                // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0. Warning! This poses some issues when reading STEP files. 
+                // They generate a lot of STDOUT and the buffer may have to be emptied.
                 string line = "";
                 while (line != null && !line.Contains("RoboDK is Running"))
                 {
@@ -1953,7 +1966,10 @@ public class RoboDK
                 if (line == null)
                 {
                     connected = false;
-                }
+                } else
+                {
+                    //System.Threading.Thread.Sleep(1000);
+                }*/
             }
         }
         if (connected && !Set_connection_params())
@@ -1962,6 +1978,31 @@ public class RoboDK
             PROCESS = null;
         }
         return connected;
+    }
+
+    private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
+    {
+        int sleepTime = 100;
+        bool serverPortIsOpen = false;
+        while ((serverPortIsOpen == false) && (millisecondsTimeout > 0))
+        {
+            //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
+            IPEndPoint[] objEndPoints = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+            foreach (var tcpEndPoint in objEndPoints)
+            {
+                if (tcpEndPoint.Port == serverPort)
+                {
+                    serverPortIsOpen = true;
+                    break;
+                }
+            }
+            if (serverPortIsOpen == false)
+            {
+                Thread.Sleep(sleepTime);
+                millisecondsTimeout -= sleepTime;
+            }
+        }
+        return serverPortIsOpen;
     }
 
 
