@@ -338,11 +338,31 @@ namespace RoboDk.API
             {
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
-            Process = System.Diagnostics.Process.Start(ApplicationDir, arguments);
-            started = WaitForTcpServerPort(port, 10000);
+
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = ApplicationDir,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            Process = Process.Start(processStartInfo);
+
+            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+            string line = "";
+            while (line != null && !line.Contains("RoboDK is Running"))
+            {
+                line = Process.StandardOutput.ReadLine();
+            }
+
+            Process.StandardOutput.Close();
+            if (line != null)
+            {
+                started = true;
+            }
+
             return started;
         }
-
         private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
         {
             int sleepTime = 100;

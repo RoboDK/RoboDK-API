@@ -1,0 +1,30 @@
+RoboDK Api Changelog-History
+
+11.4.2018
+
+	New Api Functions:
+
+	IRoboDK.cs
+		RecentFiles()
+		AddPoints()
+		AddMachiningProject()
+		BuildMechanism()
+
+
+	Item.cs:
+		SetParent()
+		setMachiningParameters()
+		ObjectLink()
+		GetLink()
+
+	Behaviour Change of MoveJ() and MoveL()
+	
+	
+17.04.2018 (RoboDK Build 4871)
+
+	New Api Functions:
+
+	IRoboDK.cs
+		GetOpenStation()
+		SetInteractiveMode()
+		
