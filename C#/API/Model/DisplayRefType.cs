@@ -22,57 +22,57 @@ namespace RoboDk.API.Model
         /// <summary>
         /// Display all reference frames
         /// </summary>
-        ALL = 0b111111111,
+        ALL = 0x1FF, /*0b111111111,*/
         
         /// <summary>
         /// Display the translation/rotation along the XY plane (holds Z axis the same)
         /// </summary>
-        TXY_RZ = 0b001100011,
+        TXY_RZ = 0x63, /*0b001100011,*/
 
         /// <summary>
         /// Display the translation X axis
         /// </summary>
-        TX = 0b001,
+        TX = 0x1, /*0b001,*/
 
         /// <summary>
         /// Display the translation Y axis
         /// </summary>
-        TY = 0b010,
+        TY = 0x2, /*0b010,*/
 
         /// <summary>
         /// Display the translation Z axis
         /// </summary>
-        TZ = 0b100,
+        TZ = 0x4, /*0b100,*/
 
         /// <summary>
         /// Display the rotation X axis
         /// </summary>
-        RX = 0b001000,
+        RX = 0x8, /*0b001000,*/
 
         /// <summary>
         /// Display the rotation Y axis
         /// </summary>
-        RY = 0b010000,
+        RY = 0x10, /*0b010000,*/
 
         /// <summary>
         /// Display the rotation Z axis
         /// </summary>
-        RZ = 0b100000,
+        RZ = 0x20, /*0b100000,*/
 
         /// <summary>
         /// Display the plane translation along XY plane
         /// </summary>
-        PXY = 0b001000000,
+        PXY = 0x40, /*0b001000000,*/
 
         /// <summary>
         /// Display the plane translation along XZ plane
         /// </summary>
-        PXZ = 0b010000000,
+        PXZ = 0x80, /*0b010000000,*/
 
         /// <summary>
         /// Display the plane translation along YZ plane
         /// </summary>
-        PYZ = 0b100000000
+        PYZ = 0x100, /*0b100000000*/
 
     }
 }
