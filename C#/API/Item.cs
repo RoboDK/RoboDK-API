@@ -1146,7 +1146,9 @@ namespace RoboDk.API
             Link.send_array(j1);
             Link.send_array(j2);
             Link.send_int((int) (minstep_deg * 1000.0));
+            Link.ReceiveTimeout = 3600 * 1000;
             var collision = Link.rec_int();
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             Link.check_status();
             return collision;
         }
@@ -1170,7 +1172,9 @@ namespace RoboDk.API
             Link.send_array(j1);
             Link.send_array(j2);
             Link.send_int((int) (minstep_deg * 1000.0));
+            Link.ReceiveTimeout = 3600 * 1000;
             var collision = Link.rec_int();
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             Link.check_status();
             return collision;
         }

@@ -422,7 +422,9 @@ namespace RoboDk.API
             send_line(command);
             send_line(filename);
             send_item(parent);
+            ReceiveTimeout = 3600 * 1000;
             var newitem = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return newitem;
         }
