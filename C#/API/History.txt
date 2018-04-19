@@ -10,7 +10,7 @@ RoboDK Api Changelog-History
 		AddPoints()
 		AddMachiningProject()
 		BuildMechanism()
-
+		GetCursorXYZ()
 
 	Item.cs:
 		SetParent()
