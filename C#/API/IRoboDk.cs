@@ -41,6 +41,7 @@
 
 #region Namespaces
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using RoboDk.API.Model;
@@ -596,7 +597,7 @@ namespace RoboDk.API
         /// <param name="item">Reference frame or other object to attach the camera</param>
         /// <param name="cameraParameters">Camera parameters as a string. Refer to the documentation for more information.</param>
         /// <returns>Camera pointer/handle. Keep the handle if more than 1 simulated camera is used</returns>
-        ulong Cam2DAdd(Item item, string cameraParameters = "");
+        long Cam2DAdd(Item item, string cameraParameters = "");
 
         /// <summary>
         /// Take a snapshot from a simulated camera view and save it to a file. 
@@ -604,7 +605,7 @@ namespace RoboDk.API
         /// <param name="fileSaveImg">file path to save.Formats supported include PNG, JPEG, TIFF, ...</param>
         /// <param name="camHandle">Camera handle(pointer returned by Cam2DAdd)</param>
         /// <returns>Return true if image has been saved successfully.</returns>
-        bool Cam2DSnapshot(string fileSaveImg, ulong camHandle = 0);
+        bool Cam2DSnapshot(string fileSaveImg, long camHandle = 0);
 
         /// <summary>
         /// Closes all camera windows or one specific camera if the camera handle is provided. 
@@ -614,7 +615,7 @@ namespace RoboDk.API
         /// Leave to 0 to close all simulated views.
         /// </param>
         /// <returns>Returns true if success, false otherwise.</returns>
-        bool Cam2DClose(ulong camHandle = 0);
+        bool Cam2DClose(long camHandle = 0);
 
         /// <summary>
         /// Set the parameters of the simulated camera.
@@ -622,7 +623,7 @@ namespace RoboDk.API
         /// <param name="cameraParameters">parameter settings according to the parameters supported by Cam2D_Add</param>
         /// <param name="camHandle">camera handle (optional)</param>
         /// <returns>Returns true if success, false otherwise.</returns>
-        bool Cam2DSetParameters(string cameraParameters, ulong camHandle = 0);
+        bool Cam2DSetParameters(string cameraParameters, long camHandle = 0);
 
 
         /// <summary>
