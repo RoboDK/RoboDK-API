@@ -1,5 +1,6 @@
 RoboDK Api Changelog-History
 
+-----------------------------------------------------
 11.4.2018
 
 	New Api Functions:
@@ -18,8 +19,8 @@ RoboDK Api Changelog-History
 		GetLink()
 
 	Behaviour Change of MoveJ() and MoveL()
-	
-	
+
+-----------------------------------------------------	
 17.04.2018 (RoboDK Build 4871)
 
 	New Api Functions:
@@ -28,3 +29,15 @@ RoboDK Api Changelog-History
 		GetOpenStation()
 		SetInteractiveMode()
 		
+-----------------------------------------------------
+19.04.2018
+	New Api Functions:
+
+	Item.cs
+	    Replaced all anonymous double[] arrays with System.Windows.Media.Color 
+			ReColor()
+			GetColor()
+			SetColor()
+
+	New class RDKColorExtension.cs
+		Extension methods to convert Color to double[] array and vice versa

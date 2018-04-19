@@ -1211,7 +1211,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public ulong Cam2DAdd(Item item, string cameraParameters = "")
+        public long Cam2DAdd(Item item, string cameraParameters = "")
         {
             check_connection();
             send_line("Cam2D_Add");
@@ -1223,7 +1223,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Cam2DSnapshot(string fileSaveImg, ulong camHandle = 0)
+        public bool Cam2DSnapshot(string fileSaveImg, long camHandle = 0)
         {
             check_connection();
             send_line("Cam2D_Snapshot");
@@ -1235,7 +1235,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Cam2DClose(ulong camHandle = 0)
+        public bool Cam2DClose(long camHandle = 0)
         {
             check_connection();
             if (camHandle == 0)
@@ -1254,7 +1254,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Cam2DSetParameters(string cameraParameters, ulong camHandle = 0)
+        public bool Cam2DSetParameters(string cameraParameters, long camHandle = 0)
         {
             check_connection();
             send_line("Cam2D_SetParams");
@@ -1558,7 +1558,6 @@ namespace RoboDk.API
         //Receives an item pointer
         internal Item rec_item()
         {
-            //TODO CHU 32/64bit?
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
             var read1 = _socket.Receive(buffer1, 8, SocketFlags.None);
@@ -1570,7 +1569,7 @@ namespace RoboDk.API
 
             Array.Reverse(buffer1);
             Array.Reverse(buffer2);
-            var item = BitConverter.ToUInt64(buffer1, 0);
+            var item = BitConverter.ToInt64(buffer1, 0);
 
             //Console.WriteLine("Received item: " + item.ToString());
             var type = (ItemType) BitConverter.ToInt32(buffer2, 0);
@@ -1578,7 +1577,7 @@ namespace RoboDk.API
         }
 
         //Sends an item pointer
-        internal void send_ptr(ulong ptr = 0)
+        internal void send_ptr(long ptr = 0)
         {
             var bytes = BitConverter.GetBytes(ptr);
             if (bytes.Length != 8)
@@ -1591,11 +1590,8 @@ namespace RoboDk.API
         }
 
         ///Receives a generic pointer
-        internal ulong rec_ptr()
+        internal long rec_ptr()
         {
-            //TODO CHU 32/64bit?
-
-
             var bytes = new byte[8];
             var read = _socket.Receive(bytes, 8, SocketFlags.None);
             if (read != 8)
@@ -1604,7 +1600,7 @@ namespace RoboDk.API
             }
 
             Array.Reverse(bytes);
-            var ptrH = BitConverter.ToUInt64(bytes, 0);
+            var ptrH = BitConverter.ToInt64(bytes, 0);
             return ptrH;
         }
 

@@ -41,6 +41,7 @@
 #region Namespaces
 
 using System;
+using System.Windows.Media;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
 
@@ -59,7 +60,7 @@ namespace RoboDk.API
     {
         #region Fields
 
-        private ulong _item;
+        private long _item;
         private readonly ItemType _type;
         private string _name;
 
@@ -67,7 +68,7 @@ namespace RoboDk.API
 
         #region Constructors
 
-        public Item(RoboDK connectionLink, ulong itemPtr = 0, ItemType itemType = ItemType.Any)
+        public Item(RoboDK connectionLink, long itemPtr = 0, ItemType itemType = ItemType.Any)
         {
             _item = itemPtr;
             Link = connectionLink;
@@ -84,7 +85,7 @@ namespace RoboDk.API
 
         #region Public Methods
 
-        public ulong get_item()
+        public long get_item()
         {
             return _item;
         }
@@ -575,12 +576,13 @@ namespace RoboDk.API
         /// <param name="tocolor">color to change to</param>
         /// <param name="fromcolor">filter by this color</param>
         /// <param name="tolerance">optional tolerance to use if a color filter is used (defaults to 0.1)</param>
+        [Obsolete("Deprecated, please use new Recolor mehod which uses the new RoboDK Color class.")]
         public void Recolor(double[] tocolor, double[] fromcolor = null, double tolerance = 0.1)
         {
             Link.check_connection();
             if (fromcolor == null)
             {
-                fromcolor = new double[] {0, 0, 0, 0};
+                fromcolor = new double[] { 0, 0, 0, 0 };
                 tolerance = 2;
             }
 
@@ -598,8 +600,76 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Apply a scale to an object to make it bigger or smaller.
-        ///     The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
+        ///     Changes the color of a robot/object/tool. A color must must in the format COLOR=[R,G,B,(A=1)] where all values
+        ///     range from 0 to 1.
+        ///     Alpha (A) defaults to 1 (100% opaque). Set A to 0 to make an object transparent.
+        /// </summary>
+        /// <param name="tocolor">color to change to</param>
+        /// <param name="fromcolor">filter by this color</param>
+        /// <param name="tolerance">optional tolerance to use if a color filter is used (defaults to 0.1)</param>
+        public void Recolor(Color tocolor, Color? fromcolor = null, double tolerance = 0.1)
+        {
+            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_connection();
+            if (fromcolor.HasValue == false)
+            {
+                fromcolor = new Color() {A=0, R=0, G=0, B=0};
+                tolerance = 2;
+            }
+            double[] fromcolorArray = fromcolor.Value.ToRoboDKColorArray();
+
+            Link.check_color(tocolorArray);
+            Link.check_color(fromcolorArray);
+            var command = "Recolor";
+            Link.send_line(command);
+            Link.send_item(this);
+            var combined = new double[9];
+            combined[0] = tolerance;
+            Array.Copy(fromcolorArray, 0, combined, 1, 4);
+            Array.Copy(tocolorArray, 0, combined, 5, 4);
+            Link.send_array(combined);
+            Link.check_status();
+        }
+
+        /// <summary>
+        /// Set the color of an object, tool or robot. 
+        /// A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>
+        /// <seealso cref="GetColor"/>
+        /// <seealso cref="Recolor(Color, Color?, double)"/>
+        public void SetColor(Color tocolor)
+        {
+            Link.check_connection();
+            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_color(tocolorArray);
+            Link.send_line("S_Color");
+            Link.send_item(this);
+            Link.send_array(tocolorArray);
+            Link.check_status();
+        }
+
+        /// <summary>
+        /// Return the color of an Item (object, tool or robot). If the item has multiple colors it returns the first color available). 
+        /// A color is in the format COLOR = [R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <returns>Color [R, G, B, A]</returns>
+        /// <seealso cref="SetColor(Color)"/>
+        /// <seealso cref="Recolor(Color, Color?, double)"/>
+        public Color GetColor()
+        {
+            Link.check_connection();
+            Link.send_line("G_Color");
+            Link.send_item(this);
+            var colorArray = Link.rec_array();
+            Link.check_status();
+            Color c = colorArray.FromRoboDKColorArray();
+            return c;
+        }
+
+        /// <summary>
+        /// Apply a scale to an object to make it bigger or smaller.
+        /// The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
         /// </summary>
         /// <param name="scale">scale to apply as [scale_x, scale_y, scale_z]</param>
         public void Scale(double[] scale)
