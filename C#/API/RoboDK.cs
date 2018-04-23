@@ -601,6 +601,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void FitAll()
+        {
+            check_connection();
+            send_line("FitAll");
+            check_status();
+        }
+
+        /// <inheritdoc />
         public void HideRoboDK()
         {
             check_connection();

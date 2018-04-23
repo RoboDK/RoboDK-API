@@ -1940,21 +1940,20 @@ public class RoboDK
                     APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe";
                 }
 
-                PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
-                connected = WaitForTcpServerPort(PORT_START, 10000);
+                //PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
+                //connected = WaitForTcpServerPort(PORT_START, 10000);
 
                 //PROCESS.WaitForInputIdle(); // only works if RoboDK is displayed
 
-                /*var processStartInfo = new ProcessStartInfo
+                var processStartInfo = new ProcessStartInfo
                 {
                     FileName = APPLICATION_DIR,
                     Arguments = arguments,
-                    RedirectStandardOutput = false,
+                    RedirectStandardOutput = true,
                     UseShellExecute = false
                 };
                 PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
-                //
                 
                 // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0. Warning! This poses some issues when reading STEP files. 
                 // They generate a lot of STDOUT and the buffer may have to be emptied.
@@ -1966,10 +1965,8 @@ public class RoboDK
                 if (line == null)
                 {
                     connected = false;
-                } else
-                {
-                    //System.Threading.Thread.Sleep(1000);
-                }*/
+                }
+                PROCESS.StandardOutput.Close();
             }
         }
         if (connected && !Set_connection_params())
@@ -1978,6 +1975,47 @@ public class RoboDK
             PROCESS = null;
         }
         return connected;
+    }
+
+    /// <summary>
+    /// Check if RoboDK was installed from RoboDK's official installer
+    /// </summary>
+    /// <returns></returns>
+    public static bool RoboDKInstallFound()
+    {
+        return RoboDKInstallPath() != null;
+    }
+
+    /// <summary>
+    /// Return the RoboDK install path according to the registry (saved by RoboDK installer)
+    /// </summary>
+    /// <returns></returns>
+    public static string RoboDKInstallPath()
+    {
+        // retrieve install path from the registry:
+        RegistryKey localKey = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+        localKey = localKey.OpenSubKey(@"SOFTWARE\RoboDK");
+        if (localKey != null)
+        {
+            string install_path = localKey.GetValue("INSTDIR").ToString();
+            if (install_path != null)
+            {
+                return install_path + "\\bin\\RoboDK.exe";
+            }
+        }
+        /*
+        // .Net 2.0
+        RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RoboDK", false);
+        if (regKey is RegistryKey) // check if the registry was opened
+        {
+            install_path = regKey.GetValue("INSTDIR").ToString();
+            regKey.Close();
+            if (install_path != null)
+            {
+                return = install_path + "\\bin\\RoboDK.exe";
+            }
+        }*/
+        return null;
     }
 
     private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
@@ -2127,6 +2165,16 @@ public class RoboDK
     {
         _check_connection();
         _send_Line("RAISE");
+        _check_status();
+    }
+
+    /// <summary>
+    /// Fit all
+    /// </summary>
+    public void FitAll()
+    {
+        _check_connection();
+        _send_Line("FitAll");
         _check_status();
     }
 
