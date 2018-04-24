@@ -222,6 +222,11 @@ namespace RoboDk.API
         void ShowRoboDK();
 
         /// <summary>
+        /// Fit all
+        /// </summary>
+        void FitAll();
+
+        /// <summary>
         /// Hides the RoboDK window.
         /// </summary>
         void HideRoboDK();
