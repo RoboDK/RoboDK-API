@@ -41,6 +41,7 @@
 #region Namespaces
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Media;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -1796,6 +1797,66 @@ namespace RoboDk.API
         //    return error_code;
         //}
 
+        /// <summary>
+        /// Returns a list of joints. 
+        /// Linear moves are rounded according to the smoothing parameter set inside the program.
+        /// </summary>
+        /// <param name="mmStep">Maximum step in millimeters for linear movements (millimeters)</param>
+        /// <param name="degStep">Maximum step for joint movements (degrees)</param>
+        /// <param name="saveToFile">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
+        /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
+        /// <param name="flags">Reserved for future compatibility</param>
+        /// <param name="timeoutSec"></param>
+        /// <returns>List of InstructionListJointsResult.</returns>
+        public InstructionListJointsResult GetInstructionListJoints(
+            double mmStep = 10.0,
+            double degStep = 5.0,
+            string saveToFile = "",
+            CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
+            int flags = 0,
+            int timeoutSec = 3600)
+        {
+            InstructionListJointsResult result =
+                new InstructionListJointsResult {JointList = new List<InstructionListJointsResult.JointsResult>()};
+
+            string errorMessage;
+            Mat jointList;
+            result.ErrorCode = InstructionListJoints(out errorMessage, out jointList, mmStep, degStep, saveToFile, collisionCheck,
+                flags, timeoutSec);
+            result.ErrorMessage = errorMessage;
+
+            int numberOfJoints = jointList.Rows - 4;
+            for (var colId = 0; colId < jointList.Cols; colId++)
+            {
+                var joints = new double[numberOfJoints]; 
+                for (var rowId = 0; rowId < numberOfJoints; rowId++)
+                {
+                    joints[rowId] = jointList[rowId, colId];
+                }
+
+                var hasCollision = (int)jointList[numberOfJoints, colId] > 0;
+                if (hasCollision)
+                {
+                    hasCollision = true;
+                }
+                int jointError = (int)jointList[numberOfJoints, colId];
+                ErrorPathType errorType = (ErrorPathType)Convert.ToUInt32(jointError.ToString(), 2);
+                var maxLinearStep = jointList[numberOfJoints + 1, colId];
+                var maxJointStep = jointList[numberOfJoints + 2, colId];
+                var moveId = (int)jointList[numberOfJoints + 3, colId];
+                result.JointList.Add(
+                    new InstructionListJointsResult.JointsResult()
+                    {
+                        Joints = joints,
+                        Error = errorType,
+                        MaxLinearStep = maxLinearStep,
+                        MaxJointStep = maxJointStep,
+                        MoveId = moveId
+                    }
+                );
+            }
+            return result;
+        }
 
         /// <summary>
         /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
