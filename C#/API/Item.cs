@@ -1834,11 +1834,6 @@ namespace RoboDk.API
                     joints[rowId] = jointList[rowId, colId];
                 }
 
-                var hasCollision = (int)jointList[numberOfJoints, colId] > 0;
-                if (hasCollision)
-                {
-                    hasCollision = true;
-                }
                 int jointError = (int)jointList[numberOfJoints, colId];
                 ErrorPathType errorType = (ErrorPathType)Convert.ToUInt32(jointError.ToString(), 2);
                 var maxLinearStep = jointList[numberOfJoints + 1, colId];

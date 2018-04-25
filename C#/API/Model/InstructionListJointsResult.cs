@@ -6,6 +6,9 @@ using System.Collections.Generic;
 
 namespace RoboDk.API.Model
 {
+    /// <summary>
+    /// Encapsulates the InstructionListJoints() result.
+    /// </summary>
     public class InstructionListJointsResult
     {
         #region Properties
@@ -56,6 +59,9 @@ namespace RoboDk.API.Model
             /// </summary>
             public double MaxJointStep { get; set; }
 
+            /// <summary>
+            /// Identifies the Target (Frame) to which the position belongs too.
+            /// </summary>
             public int MoveId { get; set; }
 
             #endregion
