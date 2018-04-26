@@ -1457,7 +1457,7 @@ namespace RoboDk.API
                     //output warning
                     LastStatusMessage = rec_line();
 
-                    //TODO chu: Implement warning
+                    //TODO Implement warning
                     //print("WARNING: " + strproblems);
                     //#warn(strproblems)# does not show where is the problem...
                     return;

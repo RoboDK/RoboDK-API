@@ -1753,50 +1753,6 @@ namespace RoboDk.API
         }
 
 
-        // CHU: Old Version
-        ///// <summary>
-        /////     Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are
-        /////     rounded according to the smoothing parameter set inside the program.
-        ///// </summary>
-        ///// <param name="error_msg">Returns a human readable error message (if any)</param>
-        ///// <param name="joint_list">
-        /////     Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file
-        /////     name is not specified
-        ///// </param>
-        ///// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
-        ///// <param name="deg_step">Maximum step for joint movements (degrees)</param>
-        ///// <param name="save_to_file">
-        /////     Provide a file name to directly save the output to a file. If the file name is not provided
-        /////     it will return the matrix. If step values are very small, the returned matrix can be very large.
-        ///// </param>
-        ///// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-        //public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0,
-        //    double deg_step = 5.0, string save_to_file = "")
-        //{
-        //    Link.check_connection();
-        //    var command = "G_ProgJointList";
-        //    Link.send_line(command);
-        //    Link.send_item(this);
-        //    double[] ste_mm_deg = {mm_step, deg_step};
-        //    Link.send_array(ste_mm_deg);
-        //    //joint_list = save_to_file;
-        //    if (save_to_file.Length <= 0)
-        //    {
-        //        Link.send_line("");
-        //        joint_list = Link.rec_matrix();
-        //    }
-        //    else
-        //    {
-        //        Link.send_line(save_to_file);
-        //        joint_list = null;
-        //    }
-        //    var error_code = Link.rec_int();
-        //    error_msg = Link.rec_line();
-        //    Link.check_status();
-        //    return error_code;
-        //}
-
-
         /// <summary>
         /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         /// </summary>
