@@ -1356,6 +1356,16 @@ public class RoboDK
         }
         return true;
     }
+    //Formats the color in a vector of size 4x1 and ranges [0,1]
+    bool check_color(List<double> color)
+    {
+        if (color.Count < 4)
+        {
+            throw new RDKException("Invalid color. A color must be a 4-size double array [r,g,b,a]"); //raise Exception('Problems running function');
+            //return false;
+        }
+        return true;
+    }
 
     //Sends a string of characters with a \\n
     void _send_Line(string line)
@@ -1585,6 +1595,16 @@ public class RoboDK
             return values;
         }
         return null;
+    }
+    // Receives an array of doubles
+    List<double> _recv_ArrayList()
+    {
+        double[] arraydbl = _recv_Array();
+        List<double> listdbl = new List<double>();
+        foreach (double dbl in arraydbl) {
+            listdbl.Add(dbl);
+        }
+        return listdbl;
     }
 
     // sends a 2 dimensional matrix
@@ -3755,6 +3775,36 @@ public class RoboDK
             Array.Copy(tocolor, 0, combined, 5, 4);
             link._send_Array(combined);
             link._check_status();
+        }
+
+        /// <summary>
+        /// Set the color of an object, tool or robot. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// Optionally set the RBG to -1 to modify the Alpha channel (transparency)
+        /// </summary>
+        /// <param name="tocolor">color to set</param>
+        public void SetColor(List<double> tocolor)
+        {
+            link._check_connection();
+            link.check_color(tocolor);
+            link._send_Line("S_Color");
+            link._send_Item(this);
+            link._send_ArrayList(tocolor);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
+        /// A color is in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <returns></returns>
+        public List<double> Color()
+        {
+            link._check_connection();
+            link._send_Line("G_Color");
+            link._send_Item(this);
+            List<double> color = link._recv_ArrayList();
+            link._check_status();
+            return color;
         }
 
         /// <summary>
