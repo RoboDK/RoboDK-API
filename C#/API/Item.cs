@@ -860,7 +860,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="lower_limits"></param>
         /// <param name="upper_limits"></param>
-        public void JointLimits(double[] lower_limits, double[] upper_limits)
+        public void JointLimits(out double[] lower_limits, out double[] upper_limits)
         {
             Link.check_connection();
             var command = "G_RobLimits";
