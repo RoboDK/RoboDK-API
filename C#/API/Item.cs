@@ -651,6 +651,24 @@ namespace RoboDk.API
         }
 
         /// <summary>
+        /// Set the alpha channel of an object, tool or robot. The alpha channel must remain between 0 and 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>
+        /// <seealso cref="GetColor"/>
+        /// <seealso cref="Recolor(Color, Color?, double)"/>
+        public void SetColorA(double alpha)
+        {
+            // saturate the alpha channel so it remains between 0 and 1.
+            alpha = Math.Min(1, Math.Max(0, alpha));
+            Link.check_connection();
+            double[] tocolorArray = { -1,-1,-1, alpha};
+            Link.send_line("S_Color");
+            Link.send_item(this);
+            Link.send_array(tocolorArray);
+            Link.check_status();
+        }
+
+        /// <summary>
         /// Return the color of an Item (object, tool or robot). If the item has multiple colors it returns the first color available). 
         /// A color is in the format COLOR = [R, G, B,(A = 1)] where all values range from 0 to 1.
         /// </summary>
