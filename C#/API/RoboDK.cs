@@ -601,6 +601,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void FitAll()
+        {
+            check_connection();
+            send_line("FitAll");
+            check_status();
+        }
+
+        /// <inheritdoc />
         public void HideRoboDK()
         {
             check_connection();
@@ -736,7 +744,9 @@ namespace RoboDk.API
             var command = "Remove";
             send_line(command);
             send_item(new Item(this));
+            ReceiveTimeout = 3600 * 1000;
             check_status();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
         }
 
         /// <inheritdoc />

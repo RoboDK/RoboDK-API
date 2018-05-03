@@ -357,9 +357,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.notifybar});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 309);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 387);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(654, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(698, 22);
             this.statusStrip1.TabIndex = 44;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -573,7 +573,7 @@
             this.panel_rdk.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.panel_rdk.Location = new System.Drawing.Point(0, 274);
             this.panel_rdk.Name = "panel_rdk";
-            this.panel_rdk.Size = new System.Drawing.Size(654, 32);
+            this.panel_rdk.Size = new System.Drawing.Size(698, 110);
             this.panel_rdk.TabIndex = 52;
             this.panel_rdk.Resize += new System.EventHandler(this.panel_Resized);
             // 
@@ -582,7 +582,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(654, 331);
+            this.ClientSize = new System.Drawing.Size(698, 409);
             this.Controls.Add(this.btnMoveRobotHome);
             this.Controls.Add(this.groupRunMode);
             this.Controls.Add(this.groupIncrementalMove);

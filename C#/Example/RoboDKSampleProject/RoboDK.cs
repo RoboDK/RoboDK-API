@@ -1356,6 +1356,16 @@ public class RoboDK
         }
         return true;
     }
+    //Formats the color in a vector of size 4x1 and ranges [0,1]
+    bool check_color(List<double> color)
+    {
+        if (color.Count < 4)
+        {
+            throw new RDKException("Invalid color. A color must be a 4-size double array [r,g,b,a]"); //raise Exception('Problems running function');
+            //return false;
+        }
+        return true;
+    }
 
     //Sends a string of characters with a \\n
     void _send_Line(string line)
@@ -1585,6 +1595,16 @@ public class RoboDK
             return values;
         }
         return null;
+    }
+    // Receives an array of doubles
+    List<double> _recv_ArrayList()
+    {
+        double[] arraydbl = _recv_Array();
+        List<double> listdbl = new List<double>();
+        foreach (double dbl in arraydbl) {
+            listdbl.Add(dbl);
+        }
+        return listdbl;
     }
 
     // sends a 2 dimensional matrix
@@ -1940,21 +1960,20 @@ public class RoboDK
                     APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe";
                 }
 
-                PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
-                connected = WaitForTcpServerPort(PORT_START, 10000);
+                //PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
+                //connected = WaitForTcpServerPort(PORT_START, 10000);
 
                 //PROCESS.WaitForInputIdle(); // only works if RoboDK is displayed
 
-                /*var processStartInfo = new ProcessStartInfo
+                var processStartInfo = new ProcessStartInfo
                 {
                     FileName = APPLICATION_DIR,
                     Arguments = arguments,
-                    RedirectStandardOutput = false,
+                    RedirectStandardOutput = true,
                     UseShellExecute = false
                 };
                 PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
-                //
                 
                 // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0. Warning! This poses some issues when reading STEP files. 
                 // They generate a lot of STDOUT and the buffer may have to be emptied.
@@ -1966,10 +1985,8 @@ public class RoboDK
                 if (line == null)
                 {
                     connected = false;
-                } else
-                {
-                    //System.Threading.Thread.Sleep(1000);
-                }*/
+                }
+                PROCESS.StandardOutput.Close();
             }
         }
         if (connected && !Set_connection_params())
@@ -1978,6 +1995,47 @@ public class RoboDK
             PROCESS = null;
         }
         return connected;
+    }
+
+    /// <summary>
+    /// Check if RoboDK was installed from RoboDK's official installer
+    /// </summary>
+    /// <returns></returns>
+    public static bool RoboDKInstallFound()
+    {
+        return RoboDKInstallPath() != null;
+    }
+
+    /// <summary>
+    /// Return the RoboDK install path according to the registry (saved by RoboDK installer)
+    /// </summary>
+    /// <returns></returns>
+    public static string RoboDKInstallPath()
+    {
+        // retrieve install path from the registry:
+        RegistryKey localKey = RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, RegistryView.Registry64);
+        localKey = localKey.OpenSubKey(@"SOFTWARE\RoboDK");
+        if (localKey != null)
+        {
+            string install_path = localKey.GetValue("INSTDIR").ToString();
+            if (install_path != null)
+            {
+                return install_path + "\\bin\\RoboDK.exe";
+            }
+        }
+        /*
+        // .Net 2.0
+        RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RoboDK", false);
+        if (regKey is RegistryKey) // check if the registry was opened
+        {
+            install_path = regKey.GetValue("INSTDIR").ToString();
+            regKey.Close();
+            if (install_path != null)
+            {
+                return = install_path + "\\bin\\RoboDK.exe";
+            }
+        }*/
+        return null;
     }
 
     private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
@@ -2127,6 +2185,16 @@ public class RoboDK
     {
         _check_connection();
         _send_Line("RAISE");
+        _check_status();
+    }
+
+    /// <summary>
+    /// Fit all
+    /// </summary>
+    public void FitAll()
+    {
+        _check_connection();
+        _send_Line("FitAll");
         _check_status();
     }
 
@@ -3707,6 +3775,36 @@ public class RoboDK
             Array.Copy(tocolor, 0, combined, 5, 4);
             link._send_Array(combined);
             link._check_status();
+        }
+
+        /// <summary>
+        /// Set the color of an object, tool or robot. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// Optionally set the RBG to -1 to modify the Alpha channel (transparency)
+        /// </summary>
+        /// <param name="tocolor">color to set</param>
+        public void SetColor(List<double> tocolor)
+        {
+            link._check_connection();
+            link.check_color(tocolor);
+            link._send_Line("S_Color");
+            link._send_Item(this);
+            link._send_ArrayList(tocolor);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
+        /// A color is in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <returns></returns>
+        public List<double> Color()
+        {
+            link._check_connection();
+            link._send_Line("G_Color");
+            link._send_Item(this);
+            List<double> color = link._recv_ArrayList();
+            link._check_status();
+            return color;
         }
 
         /// <summary>
