@@ -651,12 +651,14 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        /// Set the alpha channel of an object, tool or robot. The alpha channel must remain between 0 and 1.
+        /// Set the alpha channel of an object, tool or robot. 
+        /// The alpha channel must remain between 0 and 1.
         /// </summary>
-        /// <param name="tocolor">color to set</param>
+        /// <param name="alpha">transparency level</param>
         /// <seealso cref="GetColor"/>
+        /// <seealso cref="SetColor"/>
         /// <seealso cref="Recolor(Color, Color?, double)"/>
-        public void SetColorA(double alpha)
+        public void SetTransparency(double alpha)
         {
             // saturate the alpha channel so it remains between 0 and 1.
             alpha = Math.Min(1, Math.Max(0, alpha));

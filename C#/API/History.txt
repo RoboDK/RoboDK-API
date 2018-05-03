@@ -52,3 +52,8 @@ RoboDK Api Changelog-History
 	Item.cs
 		GetInstructionListJoints()
 		
+-----------------------------------------------------
+03.05.2018
+	New Api Function:
+	Item.cs
+		SetTransparency()
