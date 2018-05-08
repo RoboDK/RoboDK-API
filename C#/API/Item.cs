@@ -69,6 +69,9 @@ namespace RoboDk.API
 
         #region Constructors
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
         public Item(RoboDK connectionLink, long itemPtr = 0, ItemType itemType = ItemType.Any)
         {
             _item = itemPtr;
