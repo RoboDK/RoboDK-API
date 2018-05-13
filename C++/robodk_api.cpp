@@ -2367,7 +2367,7 @@ Item RoboDK::_recv_Item(){//Item *item){
     if (_COM->bytesAvailable() < sizeof(quint64)){
         _COM->waitForReadyRead(_TIMEOUT);
         if (_COM->bytesAvailable() < sizeof(quint64)){
-            return false;
+            return item;
         }
     }
     QDataStream ds(_COM);
