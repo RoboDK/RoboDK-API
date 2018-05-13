@@ -141,6 +141,7 @@ INSTRUCTION_CALL_PROGRAM = 0
 INSTRUCTION_INSERT_CODE = 1
 INSTRUCTION_START_THREAD = 2
 INSTRUCTION_COMMENT = 3
+INSTRUCTION_SHOW_MESSAGE = 4
 
 # Object selection features
 FEATURE_NONE=0
@@ -200,10 +201,11 @@ MAKE_ROBOT_7DOF=8
 MAKE_ROBOT_SCARA=9
 
 # Path Error bit mask
-ERROR_KINEMATIC = 0b001          # One or more points is not reachable
-ERROR_PATH_LIMIT = 0b010         # The path reaches the limit of joint axes
-ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
-ERROR_COLLISION = 0b100000       # Collision detected
+ERROR_KINEMATIC = 0b001             # One or more points is not reachable
+ERROR_PATH_LIMIT = 0b010            # The path reaches the limit of joint axes
+ERROR_PATH_SINGULARITY = 0b100      # The robot reached a singularity point
+ERROR_PATH_NEARSINGULARITY = 0b1000 # The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
+ERROR_COLLISION = 0b100000          # Collision detected
 
 # Interactive selection option (for 3D mouse behavior and setInteractiveMode)
 SELECT_NONE     =0
@@ -1230,7 +1232,7 @@ class Robolink:
         :return: New program item
         :rtype: :class:`.Item`
         
-        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.waitDI`, :func:`~robolink.Item.Pause`        :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.ShowInstructions`, :func:`~robolink.Item.ShowTargets`, :func:`~robolink.Item.Update`
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.waitDI`, :func:`~robolink.Item.Pause`, :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.RunInstruction`, :func:`~robolink.Item.ShowInstructions`, :func:`~robolink.Item.ShowTargets`, :func:`~robolink.Item.Update`
         
         
         Example 1 - Generic program with movements:
@@ -1302,8 +1304,8 @@ class Robolink:
             program.Pause() 
 
             # Add a program call or specific code in the program:
-            program.RunCodeCustom('ChangeTool(2)',INSTRUCTION_CALL_PROGRAM)
-            program.RunCodeCustom('ChangeTool(2);',INSTRUCTION_INSERT_CODE)
+            program.RunInstruction('ChangeTool(2)',INSTRUCTION_CALL_PROGRAM)
+            program.RunInstruction('ChangeTool(2);',INSTRUCTION_INSERT_CODE)
 
             # Set a digital output
             program.setDO('DO_NAME', 1)
@@ -1497,7 +1499,7 @@ class Robolink:
     def Collisions(self):
         """Return the number of pairs of objects that are currently in a collision state.
         
-        .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
         self._check_connection()
         command = 'Collisions'
@@ -1509,7 +1511,7 @@ class Robolink:
     def Collision(self, item1, item2):
         """Returns 1 if item1 and item2 collided. Otherwise returns 0.
         
-        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
         self._check_connection()
         command = 'Collided'
@@ -1519,7 +1521,25 @@ class Robolink:
         ncollisions = self._rec_int()
         self._check_status()
         return ncollisions
+        
+    def CollisionItems(self):
+        """Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+        
+        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        """
+        self._check_connection()
+        command = 'Collision_Items'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_list.append(self._rec_item())
+            link_id = self._rec_int()           # link id for robot items (ignored)
+            collision_times = self._rec_int()   # number of objects it is in collisions with
 
+        self._check_status()
+        return item_list
+        
     def setSimulationSpeed(self, speed):
         """Set the simulation speed. 
         A simulation speed of 5 (default) means that 1 second of simulation time equals to 5 seconds in a real application.
@@ -2225,11 +2245,12 @@ class Robolink:
     def License(self):
         """Get the license string"""
         self._check_connection()
-        command = 'G_License'
+        command = 'G_License2'
         self._send_line(command)
         lic_name = self._rec_line()
+        lic_cid = self._rec_line()        
         self._check_status()
-        return lic_name
+        return lic_name, lic_cid
         
     def Selection(self):
         """Return the list of currently selected items
@@ -3733,7 +3754,7 @@ class Item():
         """Checks if a robot or program is currently running (busy or moving).
         Returns a busy status (1=moving, 0=stopped)
         
-        .. seealso:: :func:`~robolink.Item.WaitMove`, :func:`~robolink.Item.RunProgram`, :func:`~robolink.Item.RunCodeCustom`
+        .. seealso:: :func:`~robolink.Item.WaitMove`, :func:`~robolink.Item.RunProgram`, :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.RunInstruction`
         
         Example:
         
@@ -3940,6 +3961,13 @@ class Item():
         return prog_status
         
     def RunCodeCustom(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
+        """Obsolete, use RunInstruction instead. Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
+        
+        .. seealso:: :func:`~robolink.Item.RunInstruction`        
+        """
+        return self.RunInstruction(code, run_type)
+        
+    def RunInstruction(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
         """Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
         
         :param str code: The code to insert, program to run, or comment to add.
@@ -3952,6 +3980,7 @@ class Item():
             INSTRUCTION_INSERT_CODE = 1         # Insert raw code in the generated program
             INSTRUCTION_START_THREAD = 2        # Start a new process
             INSTRUCTION_COMMENT = 3             # Add a comment in the code
+            INSTRUCTION_SHOW_MESSAGE = 4        # Add a message
         
         .. seealso:: :func:`~robolink.Item.RunCode`, :func:`~robolink.Robolink.AddProgram`
         
@@ -3959,9 +3988,10 @@ class Item():
         
         .. code-block:: python
             
-            program.RunCodeCustom('Setting the spindle speed', INSTRUCTION_COMMENT)
-            program.RunCodeCustom('SetRPM(25000)', INSTRUCTION_INSERT_CODE)
-            program.RunCodeCustom('Program1', INSTRUCTION_CALL_PROGRAM)      
+            program.RunInstruction('Setting the spindle speed', INSTRUCTION_COMMENT)
+            program.RunInstruction('SetRPM(25000)', INSTRUCTION_INSERT_CODE)
+            program.RunInstruction('Done setting the spindle speed. Ready to start!', INSTRUCTION_SHOW_MESSAGE)
+            program.RunInstruction('Program1', INSTRUCTION_CALL_PROGRAM)      
         
         """
         self.link._check_connection()
@@ -4277,10 +4307,11 @@ class Item():
             
             # If error is not 0, check the binary error using the following bit masks
             error_bin = int(str(ERROR),2)
-            ERROR_KINEMATIC = 0b001          # One or more points in the path is not reachable
-            ERROR_PATH_LIMIT = 0b010         # The path reached a joint axis limit
-            ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
-            ERROR_COLLISION = 0b100000       # Collision detected
+            ERROR_KINEMATIC = 0b001             # One or more points in the path is not reachable
+            ERROR_PATH_LIMIT = 0b010            # The path reached a joint axis limit
+            ERROR_PATH_NEARSINGULARITY = 0b1000 # The robot is too close to a wrist singularity (J5). Lower the singularity tolerance to allow the robot to continue.
+            ERROR_PATH_SINGULARITY = 0b100      # The robot reached a singularity point
+            ERROR_COLLISION = 0b100000          # Collision detected
                 
         .. seealso:: :func:`~robolink.Item.ShowSequence`
         """

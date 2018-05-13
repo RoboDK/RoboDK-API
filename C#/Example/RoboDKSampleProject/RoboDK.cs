@@ -1221,6 +1221,7 @@ public class RoboDK
     public const int ERROR_KINEMATIC = 0b001;          // One or more points is not reachable
     public const int ERROR_PATH_LIMIT = 0b010;         // The path reaches the limit of joint axes
     public const int ERROR_PATH_SINGULARITY = 0b100;   // The robot reached a singularity point
+    public const int ERROR_PATH_NEARSINGULARITY = 0b1000;// The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
     public const int ERROR_COLLISION = 0b100000;       // Collision detected
 
     // Interactive selection option (for 3D mouse behavior and setInteractiveMode)
@@ -2667,6 +2668,26 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+    /// </summary>
+    /// <returns>List of items that are in a collision state</returns>
+    public List<Item> CollisionItems()
+    {
+        _check_connection();
+        _send_Line("Collision_Items");
+        int nitems = _recv_Int();
+        List<Item> item_list = new List<Item>();
+        for (int i=0; i<nitems; i++)
+        {
+            item_list.Add(_recv_Item());
+            int link_id = _recv_Int();//link id for robot items (ignored)
+            int collision_times = _recv_Int();//number of objects it is in collisions with
+        }
+        _check_status();
+        return item_list;
+    }
+
+    /// <summary>
     /// Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed. Set to a high value (>100) for fast simulation results.
     /// </summary>
     /// <param name="speed"></param>
@@ -3238,8 +3259,9 @@ public class RoboDK
     public string License()
     {
         _check_connection();
-        _send_Line("G_License");
+        _send_Line("G_License2");
         string license = _recv_Line();
+        string cid = _recv_Line();
         _check_status();
         return license;
     }

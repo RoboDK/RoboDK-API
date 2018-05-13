@@ -403,6 +403,12 @@ namespace RoboDk.API
         bool Collision(Item item1, Item item2);
 
         /// <summary>
+        /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+        /// </summary>
+        /// <returns>List of items that are in a collision state</returns>
+        List<Item> GetCollisionItems();
+
+        /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 
         /// time equals to 5 seconds in a real application. The slowest speed ratio allowed is 0.001. 
         /// Set a large simmulation ratio (>100) for fast simulation results.

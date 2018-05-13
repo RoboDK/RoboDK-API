@@ -856,6 +856,23 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public List<Item> GetCollisionItems()
+        {
+            check_connection();
+            send_line("Collision_Items");
+            int nitems = rec_int();
+            List<Item> item_list = new List<Item>();
+            for (int i = 0; i < nitems; i++)
+            {
+                item_list.Add(rec_item());
+                int link_id = rec_int();//link id for robot items (ignored)
+                int collision_times = rec_int();//number of objects it is in collisions with
+            }
+            check_status();
+            return item_list;
+        }
+
+        /// <inheritdoc />
         public void SetSimulationSpeed(double speed)
         {
             check_connection();
@@ -1277,9 +1294,10 @@ namespace RoboDk.API
         public string GetLicense()
         {
             check_connection();
-            var command = "G_License";
+            var command = "G_License2";
             send_line(command);
             var license = rec_line();
+            var cid = rec_line();
             check_status();
             return license;
         }
