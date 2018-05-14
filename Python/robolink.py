@@ -239,12 +239,12 @@ class Robolink:
     :param int port: Port of the RoboDK API server (default=None, it will use the default values)
     :param str args: Command line arguments to pass to RoboDK on startup (such as '/NOSPLASH /NOSHOW), to not display RoboDK. It has no effect if RoboDK is already running.\n
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
-    :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe)
+    :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
     
     .. seealso:: :func:`~robolink.Robolink.Item`
     
     """
-    APPLICATION_DIR = 'C:/RoboDK/bin/RoboDK.exe'    # file path to the robodk program (executable)
+    APPLICATION_DIR = ''    # file path to the robodk program (executable). On as an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     SAFE_MODE = 1           # checks that provided items exist in memory
     AUTO_UPDATE = 0         # if AUTO_UPDATE is zero, the scene is rendered after every function call
     TIMEOUT = 10             # timeout for communication, in seconds
@@ -556,6 +556,14 @@ class Robolink:
         self.ARGUMENTS = args
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
+        else:
+            from sys import platform as _platform
+            if _platform == "linux" or _platform == "linux2":
+                self.APPLICATION_DIR = os.path.expanduser("~/RoboDK/bin/RoboDK")
+            elif _platform == "darwin":
+                self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+            else:
+                self.APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe"
             
         if port is not None:
             self.PORT_START = port
