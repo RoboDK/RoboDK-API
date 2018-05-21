@@ -3275,10 +3275,10 @@ public class RoboDK
         _check_connection();
         _send_Line("G_Selection");
         int nitems = _recv_Int();
-        List<Item> list_items = new List<Item>(nitems);
+        List<Item> list_items = new List<Item>();
         for (int i = 0; i < nitems; i++)
         {
-            list_items[i] = _recv_Item();
+            list_items.Add(_recv_Item());
         }
         _check_status();
         return list_items;
