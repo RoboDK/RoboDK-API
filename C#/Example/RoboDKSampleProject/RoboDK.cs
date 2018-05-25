@@ -1264,6 +1264,7 @@ public class RoboDK
     bool START_HIDDEN = false;              // forces to start hidden. ShowRoboDK must be used to show the window
     int PORT = -1;                          // port where connection succeeded
     int PORT_FORCED = -1;                   // port to force RoboDK to start listening
+    int BUILD = 0;                          // This variable holds the build id and is used for version checking
 
 
     //Returns 1 if connection is valid, returns 0 if connection is invalid
@@ -1850,23 +1851,50 @@ public class RoboDK
         return Disconnect();
     }
 
-    private bool Set_connection_params(int safe_mode = 1, int auto_update = 0, int timeout = -1)
+    /// <summary>
+    /// Make sure we are connected to RoboDK
+    /// </summary>
+    /// <returns></returns>
+    private bool verify_connection()
     {
-        //Sets some behavior parameters: SAFE_MODE, AUTO_UPDATE and _TIMEOUT.
-        SAFE_MODE = safe_mode;
-        AUTO_UPDATE = auto_update;
-        if (timeout >= 0)
+        bool use_new_version = false;
+
+        if (use_new_version)
         {
-            _TIMEOUT = timeout;
+            _send_Line("RDK_API");
+            _send_Int(0);
+            string response = _recv_Line();
+            int ver_api = _recv_Int();
+            BUILD = _recv_Int();
+            _check_status();
+            return response == "RDK_API";
         }
-        _send_Line("CMD_START");
-        _send_Line(Convert.ToString(SAFE_MODE) + " " + Convert.ToString(AUTO_UPDATE));
-        string response = _recv_Line();
-        if (response == "READY")
+        else
         {
+            _send_Line("CMD_START");
+            _send_Line(Convert.ToString(SAFE_MODE) + " " + Convert.ToString(AUTO_UPDATE));
+            string response = _recv_Line();
+            if (response == "READY")
+            {
+                return true;
+            }
+            return false;
+        }
+
+    }
+    /// <summary>
+    /// Check if the build of RoboDK is equal or greater than the build of the API call
+    /// </summary>
+    /// <returns></returns>
+    private bool _require_build(int build_required)
+    {
+        if (BUILD == 0)
             return true;
-        }
-        return false;
+
+        if (BUILD < build_required)
+            throw new RDKException("This function is unavailable. Update RoboDK to use this function through the API");
+
+        return true;
     }
 
     /// <summary>
@@ -1990,7 +2018,7 @@ public class RoboDK
                 PROCESS.StandardOutput.Close();
             }
         }
-        if (connected && !Set_connection_params())
+        if (connected && !verify_connection())
         {
             connected = false;
             PROCESS = null;
@@ -2220,8 +2248,20 @@ public class RoboDK
         _COM.Disconnect(false);
         PROCESS = null;
     }
-
-
+    /// <summary>
+    /// Return the vesion of RoboDK as a 4 digit string: Major.Minor.Revision.Build
+    /// </summary>
+    public string Version()
+    {
+        _check_connection();
+        _send_Line("Version");
+        string app_name = _recv_Line();
+        int bit_arch = _recv_Int();
+        string ver4 = _recv_Line();
+        string date_build = _recv_Line();
+        _check_status();
+        return ver4;
+    }
 
     /// <summary>
     /// Set the state of the RoboDK window
@@ -3283,6 +3323,20 @@ public class RoboDK
         _check_status();
         return list_items;
     }
+
+    public Item Popup_ISO9283_CubeProgram(Item robot = null)
+    {
+        _require_build(5177);
+        _check_connection();
+        _send_Line("Popup_ProgISO9283");
+        _send_Item(robot);
+        _COM.ReceiveTimeout = 3600 * 1000;
+        Item iso_program = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return iso_program;
+    }
+
 
     /// <summary>
     /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.

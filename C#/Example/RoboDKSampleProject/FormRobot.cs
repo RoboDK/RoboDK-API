@@ -441,9 +441,11 @@ namespace ProjectRoboDK
             string progname = txtRunProgram.Text;
 
             // Retrieve the program item program
-            RoboDK.Item prog = RDK.getItem(progname, RoboDK.ITEM_TYPE_PROGRAM);
-            if (prog.Valid())
+            RoboDK.Item prog = RDK.getItem(progname);
+            if (prog.Valid() && (prog.Type() == RoboDK.ITEM_TYPE_PROGRAM_PYTHON || prog.Type() == RoboDK.ITEM_TYPE_PROGRAM))
             {
+                prog.RunProgram();
+                return;
 
                 //double percent_OK = prog.Update(RoboDK.COLLISION_ON, 3600, null, 4, 4) * 100.0;
                 //notifybar.Text = "Program check: " + percent_OK.ToString("0.0") + " % " + (percent_OK == 100.0 ? " OK " : " WARNING!!");

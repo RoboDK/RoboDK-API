@@ -254,6 +254,7 @@ class Robolink:
     PORT_START = 20500      # port to start looking for app connection
     PORT_END = 20500        # port to stop looking for app connection
     PORT = -1
+    BUILD = 0              # This variable holds the build id and is used for version checking
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     def _is_connected(self):
@@ -582,31 +583,39 @@ class Robolink:
                 
         self.Connect()
 
-    def _set_connection_params(self, safe_mode=1, auto_update=0, timeout=None):
-        """Sets some behavior parameters: SAFE_MODE, AUTO_UPDATE and TIMEOUT.
-        SAFE_MODE checks that item pointers provided by the user are valid.
-        AUTO_UPDATE checks that item pointers provided by the user are valid.
-        TIMEOUT is the timeout to wait for a response. Increase if you experience problems loading big files.
-        If connection failed returns 0.
-        In  1 (optional) : int -> SAFE_MODE (1=yes, 0=no)
-        In  2 (optional) : int -> AUTO_UPDATE (1=yes, 0=no)
-        In  3 (optional) : int -> TIMEOUT (1=yes, 0=no)
-        Out 1 : int -> connection status (1=ok, 0=problems)
-        Example:
-            _set_connection_params(0,0); # Use for speed. Render() must be called to refresh the window.
-            _set_connection_params(1,1); # Default behavior. Updates every time."""
-        self.SAFE_MODE = safe_mode
-        self.AUTO_UPDATE = auto_update
-        self.TIMEOUT = timeout or self.TIMEOUT
-        self._send_line('CMD_START')
-        self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
-        #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
-        response = self._rec_line()
-        if response == 'READY':
-            ok = 1
+    def _verify_connection(self):
+        """Verify that we are connected to the RoboDK API server"""
+        
+        use_new_version = False
+        if use_new_version:
+            self._send_line('RDK_API')
+            self._send_array([])
+            response = self._rec_line()
+            ver_api = self._rec_int()
+            self.BUILD = self._rec_int()
+            self._check_status()
+            return response == 'RDK_API'
+            
         else:
-            ok = 0
-        return ok
+            self._send_line('CMD_START')
+            self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
+            #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
+            response = self._rec_line()
+            if response == 'READY':
+                ok = 1
+            else:
+                ok = 0
+            return ok
+            
+    def _require_build(self, build_required):
+        if self.BUILD == 0:
+            # unknown build number. Use new API hello command
+            return True
+            
+        if self.BUILD < build_required:
+            raise Exception("This function is unavailable. Update RoboDK to use this function through the API")
+        return True
+            
     
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
@@ -628,7 +637,7 @@ class Robolink:
             self.COM.connect((self.IP, self.PORT))                
             connected = self._is_connected()
             if connected > 0:
-                self._set_connection_params()
+                self._verify_connection()
                 self.COM.settimeout(self.TIMEOUT)
             else:
                 print("Failed to reconnect (1)")
@@ -691,7 +700,7 @@ class Robolink:
                 except:
                     raise Exception('Application path is not correct or could not start: ' + self.APPLICATION_DIR)
 
-        if connected > 0 and not self._set_connection_params():
+        if connected > 0 and not self._verify_connection():
             connected = 0
         return connected
 
@@ -830,6 +839,18 @@ class Robolink:
         command = 'QUIT'
         self._send_line(command)
         self._check_status()
+        
+    def Version(self):
+        """Close RoboDK window and finish RoboDK's execution."""
+        self._check_connection()
+        command = 'Version'
+        self._send_line(command)
+        app_name = self._rec_line()
+        bit_arch = self._rec_int()
+        ver4 = self._rec_line()
+        date_build = self._rec_line()
+        self._check_status()
+        return ver4
         
     def setWindowState(self, windowstate=WINDOWSTATE_NORMAL):
         """Set the state of the RoboDK window
@@ -2275,6 +2296,21 @@ class Robolink:
         self._check_status()
         return item_list
         
+    def Popup_ISO9283_CubeProgram(self, robot=0):
+        """Popup the menu to create the ISO9283 cube program (Utilities-Create Cube ISO)
+        
+        :return: Created program. The program is invalid.
+        :rtype: :class:`.Item`"""
+        self._require_build(5177)
+        self._check_connection()
+        command = 'Popup_ProgISO9283'
+        self._send_line(command)
+        self._send_item(robot)
+        self.COM.settimeout(3600)
+        iso_program = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)        
+        self._check_status()
+        return iso_program       
        
     def setInteractiveMode(self, mode_type=SELECT_MOVE, default_ref_flags=DISPLAY_REF_DEFAULT, custom_objects=None, custom_ref_flags=None):
         """Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
