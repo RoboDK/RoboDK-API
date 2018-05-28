@@ -4743,6 +4743,33 @@ public class RoboDK
         }
 
         ////////// ADD MORE METHODS
+
+        /// <summary>
+        /// Show or hide instruction items of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowInstructions(bool show = true)
+        {
+            link._check_connection();
+            link._send_Line("Prog_ShowIns");
+            link._send_Item(this);
+            link._send_Int(show ? 1 : 0);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Show or hide targets of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowTargets(bool show = true)
+        {
+            link._check_connection();
+            link._send_Line("Prog_ShowTargets");
+            link._send_Item(this);
+            link._send_Int(show ? 1 : 0);
+            link._check_status();
+        }
+
         /// <summary>
         /// Returns the number of instructions of a program.
         /// </summary>
