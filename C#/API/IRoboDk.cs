@@ -92,6 +92,11 @@ namespace RoboDk.API
         void CloseRoboDK();
 
         /// <summary>
+        /// Return the vesion of RoboDK as a 4 digit string: Major.Minor.Revision.Build
+        /// </summary>
+        string Version();
+
+        /// <summary>
         /// Set the state of the RoboDK window
         /// </summary>
         /// <param name="windowState">Window state to be set.</param>
@@ -648,6 +653,12 @@ namespace RoboDk.API
         /// </summary>
         /// <returns>Returns the list of selected items.</returns>
         List<Item> GetSelectedItems();
+
+        /// <summary>
+        /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
+        /// </summary>
+        /// <returns>IS9283 Program</returns>
+        Item Popup_ISO9283_CubeProgram(Item robot = null);
 
         /// <summary>
         /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.

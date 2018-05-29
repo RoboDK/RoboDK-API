@@ -1374,7 +1374,7 @@ public class RoboDK
     {
         line.Replace('\n', ' ');// one new line at the end only!
         byte[] data = System.Text.Encoding.UTF8.GetBytes(line + "\n");
-        _COM.Send(data);
+        _COM.Send(data);        
     }
 
     string _recv_Line()
@@ -3324,6 +3324,10 @@ public class RoboDK
         return list_items;
     }
 
+    /// <summary>
+    /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
+    /// </summary>
+    /// <returns>IS9283 Program</returns>
     public Item Popup_ISO9283_CubeProgram(Item robot = null)
     {
         _require_build(5177);
