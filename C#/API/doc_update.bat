@@ -1,6 +1,5 @@
 :: install miktex.org/download
 SET PATH=C:\Docfx\;%PATH%
-::SET PYTHONPATH=C:\Users\albert\Desktop\Dropbox\Python-DOC\original-EN
 
 :top
 

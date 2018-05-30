@@ -141,6 +141,7 @@ INSTRUCTION_CALL_PROGRAM = 0
 INSTRUCTION_INSERT_CODE = 1
 INSTRUCTION_START_THREAD = 2
 INSTRUCTION_COMMENT = 3
+INSTRUCTION_SHOW_MESSAGE = 4
 
 # Object selection features
 FEATURE_NONE=0
@@ -200,10 +201,11 @@ MAKE_ROBOT_7DOF=8
 MAKE_ROBOT_SCARA=9
 
 # Path Error bit mask
-ERROR_KINEMATIC = 0b001          # One or more points is not reachable
-ERROR_PATH_LIMIT = 0b010         # The path reaches the limit of joint axes
-ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
-ERROR_COLLISION = 0b100000       # Collision detected
+ERROR_KINEMATIC = 0b001             # One or more points is not reachable
+ERROR_PATH_LIMIT = 0b010            # The path reaches the limit of joint axes
+ERROR_PATH_SINGULARITY = 0b100      # The robot reached a singularity point
+ERROR_PATH_NEARSINGULARITY = 0b1000 # The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
+ERROR_COLLISION = 0b100000          # Collision detected
 
 # Interactive selection option (for 3D mouse behavior and setInteractiveMode)
 SELECT_NONE     =0
@@ -237,12 +239,12 @@ class Robolink:
     :param int port: Port of the RoboDK API server (default=None, it will use the default values)
     :param str args: Command line arguments to pass to RoboDK on startup (such as '/NOSPLASH /NOSHOW), to not display RoboDK. It has no effect if RoboDK is already running.\n
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
-    :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe)
+    :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
     
     .. seealso:: :func:`~robolink.Robolink.Item`
     
     """
-    APPLICATION_DIR = 'C:/RoboDK/bin/RoboDK.exe'    # file path to the robodk program (executable)
+    APPLICATION_DIR = ''    # file path to the robodk program (executable). On as an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     SAFE_MODE = 1           # checks that provided items exist in memory
     AUTO_UPDATE = 0         # if AUTO_UPDATE is zero, the scene is rendered after every function call
     TIMEOUT = 10             # timeout for communication, in seconds
@@ -252,6 +254,7 @@ class Robolink:
     PORT_START = 20500      # port to start looking for app connection
     PORT_END = 20500        # port to stop looking for app connection
     PORT = -1
+    BUILD = 0              # This variable holds the build id and is used for version checking
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     def _is_connected(self):
@@ -554,6 +557,14 @@ class Robolink:
         self.ARGUMENTS = args
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
+        else:
+            from sys import platform as _platform
+            if _platform == "linux" or _platform == "linux2":
+                self.APPLICATION_DIR = os.path.expanduser("~/RoboDK/bin/RoboDK")
+            elif _platform == "darwin":
+                self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+            else:
+                self.APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe"
             
         if port is not None:
             self.PORT_START = port
@@ -572,31 +583,39 @@ class Robolink:
                 
         self.Connect()
 
-    def _set_connection_params(self, safe_mode=1, auto_update=0, timeout=None):
-        """Sets some behavior parameters: SAFE_MODE, AUTO_UPDATE and TIMEOUT.
-        SAFE_MODE checks that item pointers provided by the user are valid.
-        AUTO_UPDATE checks that item pointers provided by the user are valid.
-        TIMEOUT is the timeout to wait for a response. Increase if you experience problems loading big files.
-        If connection failed returns 0.
-        In  1 (optional) : int -> SAFE_MODE (1=yes, 0=no)
-        In  2 (optional) : int -> AUTO_UPDATE (1=yes, 0=no)
-        In  3 (optional) : int -> TIMEOUT (1=yes, 0=no)
-        Out 1 : int -> connection status (1=ok, 0=problems)
-        Example:
-            _set_connection_params(0,0); # Use for speed. Render() must be called to refresh the window.
-            _set_connection_params(1,1); # Default behavior. Updates every time."""
-        self.SAFE_MODE = safe_mode
-        self.AUTO_UPDATE = auto_update
-        self.TIMEOUT = timeout or self.TIMEOUT
-        self._send_line('CMD_START')
-        self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
-        #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
-        response = self._rec_line()
-        if response == 'READY':
-            ok = 1
+    def _verify_connection(self):
+        """Verify that we are connected to the RoboDK API server"""
+        
+        use_new_version = False
+        if use_new_version:
+            self._send_line('RDK_API')
+            self._send_array([])
+            response = self._rec_line()
+            ver_api = self._rec_int()
+            self.BUILD = self._rec_int()
+            self._check_status()
+            return response == 'RDK_API'
+            
         else:
-            ok = 0
-        return ok
+            self._send_line('CMD_START')
+            self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
+            #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
+            response = self._rec_line()
+            if response == 'READY':
+                ok = 1
+            else:
+                ok = 0
+            return ok
+            
+    def _require_build(self, build_required):
+        if self.BUILD == 0:
+            # unknown build number. Use new API hello command
+            return True
+            
+        if self.BUILD < build_required:
+            raise Exception("This function is unavailable. Update RoboDK to use this function through the API")
+        return True
+            
     
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
@@ -618,7 +637,7 @@ class Robolink:
             self.COM.connect((self.IP, self.PORT))                
             connected = self._is_connected()
             if connected > 0:
-                self._set_connection_params()
+                self._verify_connection()
                 self.COM.settimeout(self.TIMEOUT)
             else:
                 print("Failed to reconnect (1)")
@@ -681,7 +700,7 @@ class Robolink:
                 except:
                     raise Exception('Application path is not correct or could not start: ' + self.APPLICATION_DIR)
 
-        if connected > 0 and not self._set_connection_params():
+        if connected > 0 and not self._verify_connection():
             connected = 0
         return connected
 
@@ -820,6 +839,18 @@ class Robolink:
         command = 'QUIT'
         self._send_line(command)
         self._check_status()
+        
+    def Version(self):
+        """Close RoboDK window and finish RoboDK's execution."""
+        self._check_connection()
+        command = 'Version'
+        self._send_line(command)
+        app_name = self._rec_line()
+        bit_arch = self._rec_int()
+        ver4 = self._rec_line()
+        date_build = self._rec_line()
+        self._check_status()
+        return ver4
         
     def setWindowState(self, windowstate=WINDOWSTATE_NORMAL):
         """Set the state of the RoboDK window
@@ -1230,7 +1261,7 @@ class Robolink:
         :return: New program item
         :rtype: :class:`.Item`
         
-        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.waitDI`, :func:`~robolink.Item.Pause`        :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.ShowInstructions`, :func:`~robolink.Item.ShowTargets`, :func:`~robolink.Item.Update`
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.waitDI`, :func:`~robolink.Item.Pause`, :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.RunInstruction`, :func:`~robolink.Item.ShowInstructions`, :func:`~robolink.Item.ShowTargets`, :func:`~robolink.Item.Update`
         
         
         Example 1 - Generic program with movements:
@@ -1302,8 +1333,8 @@ class Robolink:
             program.Pause() 
 
             # Add a program call or specific code in the program:
-            program.RunCodeCustom('ChangeTool(2)',INSTRUCTION_CALL_PROGRAM)
-            program.RunCodeCustom('ChangeTool(2);',INSTRUCTION_INSERT_CODE)
+            program.RunInstruction('ChangeTool(2)',INSTRUCTION_CALL_PROGRAM)
+            program.RunInstruction('ChangeTool(2);',INSTRUCTION_INSERT_CODE)
 
             # Set a digital output
             program.setDO('DO_NAME', 1)
@@ -1497,7 +1528,7 @@ class Robolink:
     def Collisions(self):
         """Return the number of pairs of objects that are currently in a collision state.
         
-        .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
         self._check_connection()
         command = 'Collisions'
@@ -1509,7 +1540,7 @@ class Robolink:
     def Collision(self, item1, item2):
         """Returns 1 if item1 and item2 collided. Otherwise returns 0.
         
-        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
         self._check_connection()
         command = 'Collided'
@@ -1519,7 +1550,25 @@ class Robolink:
         ncollisions = self._rec_int()
         self._check_status()
         return ncollisions
+        
+    def CollisionItems(self):
+        """Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+        
+        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        """
+        self._check_connection()
+        command = 'Collision_Items'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_list.append(self._rec_item())
+            link_id = self._rec_int()           # link id for robot items (ignored)
+            collision_times = self._rec_int()   # number of objects it is in collisions with
 
+        self._check_status()
+        return item_list
+        
     def setSimulationSpeed(self, speed):
         """Set the simulation speed. 
         A simulation speed of 5 (default) means that 1 second of simulation time equals to 5 seconds in a real application.
@@ -2225,11 +2274,12 @@ class Robolink:
     def License(self):
         """Get the license string"""
         self._check_connection()
-        command = 'G_License'
+        command = 'G_License2'
         self._send_line(command)
         lic_name = self._rec_line()
+        lic_cid = self._rec_line()        
         self._check_status()
-        return lic_name
+        return lic_name, lic_cid
         
     def Selection(self):
         """Return the list of currently selected items
@@ -2246,6 +2296,21 @@ class Robolink:
         self._check_status()
         return item_list
         
+    def Popup_ISO9283_CubeProgram(self, robot=0):
+        """Popup the menu to create the ISO9283 cube program (Utilities-Create Cube ISO)
+        
+        :return: Created program. The program is invalid.
+        :rtype: :class:`.Item`"""
+        self._require_build(5177)
+        self._check_connection()
+        command = 'Popup_ProgISO9283'
+        self._send_line(command)
+        self._send_item(robot)
+        self.COM.settimeout(3600)
+        iso_program = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)        
+        self._check_status()
+        return iso_program       
        
     def setInteractiveMode(self, mode_type=SELECT_MOVE, default_ref_flags=DISPLAY_REF_DEFAULT, custom_objects=None, custom_ref_flags=None):
         """Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
@@ -3733,7 +3798,7 @@ class Item():
         """Checks if a robot or program is currently running (busy or moving).
         Returns a busy status (1=moving, 0=stopped)
         
-        .. seealso:: :func:`~robolink.Item.WaitMove`, :func:`~robolink.Item.RunProgram`, :func:`~robolink.Item.RunCodeCustom`
+        .. seealso:: :func:`~robolink.Item.WaitMove`, :func:`~robolink.Item.RunProgram`, :func:`~robolink.Item.RunCodeCustom`, :func:`~robolink.Item.RunInstruction`
         
         Example:
         
@@ -3940,6 +4005,13 @@ class Item():
         return prog_status
         
     def RunCodeCustom(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
+        """Obsolete, use RunInstruction instead. Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
+        
+        .. seealso:: :func:`~robolink.Item.RunInstruction`        
+        """
+        return self.RunInstruction(code, run_type)
+        
+    def RunInstruction(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
         """Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
         
         :param str code: The code to insert, program to run, or comment to add.
@@ -3952,6 +4024,7 @@ class Item():
             INSTRUCTION_INSERT_CODE = 1         # Insert raw code in the generated program
             INSTRUCTION_START_THREAD = 2        # Start a new process
             INSTRUCTION_COMMENT = 3             # Add a comment in the code
+            INSTRUCTION_SHOW_MESSAGE = 4        # Add a message
         
         .. seealso:: :func:`~robolink.Item.RunCode`, :func:`~robolink.Robolink.AddProgram`
         
@@ -3959,9 +4032,10 @@ class Item():
         
         .. code-block:: python
             
-            program.RunCodeCustom('Setting the spindle speed', INSTRUCTION_COMMENT)
-            program.RunCodeCustom('SetRPM(25000)', INSTRUCTION_INSERT_CODE)
-            program.RunCodeCustom('Program1', INSTRUCTION_CALL_PROGRAM)      
+            program.RunInstruction('Setting the spindle speed', INSTRUCTION_COMMENT)
+            program.RunInstruction('SetRPM(25000)', INSTRUCTION_INSERT_CODE)
+            program.RunInstruction('Done setting the spindle speed. Ready to start!', INSTRUCTION_SHOW_MESSAGE)
+            program.RunInstruction('Program1', INSTRUCTION_CALL_PROGRAM)      
         
         """
         self.link._check_connection()
@@ -4277,10 +4351,11 @@ class Item():
             
             # If error is not 0, check the binary error using the following bit masks
             error_bin = int(str(ERROR),2)
-            ERROR_KINEMATIC = 0b001          # One or more points in the path is not reachable
-            ERROR_PATH_LIMIT = 0b010         # The path reached a joint axis limit
-            ERROR_PATH_SINGULARITY = 0b100   # The robot reached a singularity point
-            ERROR_COLLISION = 0b100000       # Collision detected
+            ERROR_KINEMATIC = 0b001             # One or more points in the path is not reachable
+            ERROR_PATH_LIMIT = 0b010            # The path reached a joint axis limit
+            ERROR_PATH_NEARSINGULARITY = 0b1000 # The robot is too close to a wrist singularity (J5). Lower the singularity tolerance to allow the robot to continue.
+            ERROR_PATH_SINGULARITY = 0b100      # The robot reached a singularity point
+            ERROR_COLLISION = 0b100000          # Collision detected
                 
         .. seealso:: :func:`~robolink.Item.ShowSequence`
         """

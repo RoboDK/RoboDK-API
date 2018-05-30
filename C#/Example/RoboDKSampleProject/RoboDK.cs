@@ -1221,6 +1221,7 @@ public class RoboDK
     public const int ERROR_KINEMATIC = 0b001;          // One or more points is not reachable
     public const int ERROR_PATH_LIMIT = 0b010;         // The path reaches the limit of joint axes
     public const int ERROR_PATH_SINGULARITY = 0b100;   // The robot reached a singularity point
+    public const int ERROR_PATH_NEARSINGULARITY = 0b1000;// The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
     public const int ERROR_COLLISION = 0b100000;       // Collision detected
 
     // Interactive selection option (for 3D mouse behavior and setInteractiveMode)
@@ -1263,6 +1264,7 @@ public class RoboDK
     bool START_HIDDEN = false;              // forces to start hidden. ShowRoboDK must be used to show the window
     int PORT = -1;                          // port where connection succeeded
     int PORT_FORCED = -1;                   // port to force RoboDK to start listening
+    int BUILD = 0;                          // This variable holds the build id and is used for version checking
 
 
     //Returns 1 if connection is valid, returns 0 if connection is invalid
@@ -1372,7 +1374,7 @@ public class RoboDK
     {
         line.Replace('\n', ' ');// one new line at the end only!
         byte[] data = System.Text.Encoding.UTF8.GetBytes(line + "\n");
-        _COM.Send(data);
+        _COM.Send(data);        
     }
 
     string _recv_Line()
@@ -1849,23 +1851,50 @@ public class RoboDK
         return Disconnect();
     }
 
-    private bool Set_connection_params(int safe_mode = 1, int auto_update = 0, int timeout = -1)
+    /// <summary>
+    /// Make sure we are connected to RoboDK
+    /// </summary>
+    /// <returns></returns>
+    private bool verify_connection()
     {
-        //Sets some behavior parameters: SAFE_MODE, AUTO_UPDATE and _TIMEOUT.
-        SAFE_MODE = safe_mode;
-        AUTO_UPDATE = auto_update;
-        if (timeout >= 0)
+        bool use_new_version = false;
+
+        if (use_new_version)
         {
-            _TIMEOUT = timeout;
+            _send_Line("RDK_API");
+            _send_Int(0);
+            string response = _recv_Line();
+            int ver_api = _recv_Int();
+            BUILD = _recv_Int();
+            _check_status();
+            return response == "RDK_API";
         }
-        _send_Line("CMD_START");
-        _send_Line(Convert.ToString(SAFE_MODE) + " " + Convert.ToString(AUTO_UPDATE));
-        string response = _recv_Line();
-        if (response == "READY")
+        else
         {
+            _send_Line("CMD_START");
+            _send_Line(Convert.ToString(SAFE_MODE) + " " + Convert.ToString(AUTO_UPDATE));
+            string response = _recv_Line();
+            if (response == "READY")
+            {
+                return true;
+            }
+            return false;
+        }
+
+    }
+    /// <summary>
+    /// Check if the build of RoboDK is equal or greater than the build of the API call
+    /// </summary>
+    /// <returns></returns>
+    private bool _require_build(int build_required)
+    {
+        if (BUILD == 0)
             return true;
-        }
-        return false;
+
+        if (BUILD < build_required)
+            throw new RDKException("This function is unavailable. Update RoboDK to use this function through the API");
+
+        return true;
     }
 
     /// <summary>
@@ -1989,7 +2018,7 @@ public class RoboDK
                 PROCESS.StandardOutput.Close();
             }
         }
-        if (connected && !Set_connection_params())
+        if (connected && !verify_connection())
         {
             connected = false;
             PROCESS = null;
@@ -2219,8 +2248,20 @@ public class RoboDK
         _COM.Disconnect(false);
         PROCESS = null;
     }
-
-
+    /// <summary>
+    /// Return the vesion of RoboDK as a 4 digit string: Major.Minor.Revision.Build
+    /// </summary>
+    public string Version()
+    {
+        _check_connection();
+        _send_Line("Version");
+        string app_name = _recv_Line();
+        int bit_arch = _recv_Int();
+        string ver4 = _recv_Line();
+        string date_build = _recv_Line();
+        _check_status();
+        return ver4;
+    }
 
     /// <summary>
     /// Set the state of the RoboDK window
@@ -2664,6 +2705,26 @@ public class RoboDK
         int ncollisions = _recv_Int();
         _check_status();
         return ncollisions;
+    }
+
+    /// <summary>
+    /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+    /// </summary>
+    /// <returns>List of items that are in a collision state</returns>
+    public List<Item> CollisionItems()
+    {
+        _check_connection();
+        _send_Line("Collision_Items");
+        int nitems = _recv_Int();
+        List<Item> item_list = new List<Item>();
+        for (int i=0; i<nitems; i++)
+        {
+            item_list.Add(_recv_Item());
+            int link_id = _recv_Int();//link id for robot items (ignored)
+            int collision_times = _recv_Int();//number of objects it is in collisions with
+        }
+        _check_status();
+        return item_list;
     }
 
     /// <summary>
@@ -3238,8 +3299,9 @@ public class RoboDK
     public string License()
     {
         _check_connection();
-        _send_Line("G_License");
+        _send_Line("G_License2");
         string license = _recv_Line();
+        string cid = _recv_Line();
         _check_status();
         return license;
     }
@@ -3253,14 +3315,32 @@ public class RoboDK
         _check_connection();
         _send_Line("G_Selection");
         int nitems = _recv_Int();
-        List<Item> list_items = new List<Item>(nitems);
+        List<Item> list_items = new List<Item>();
         for (int i = 0; i < nitems; i++)
         {
-            list_items[i] = _recv_Item();
+            list_items.Add(_recv_Item());
         }
         _check_status();
         return list_items;
     }
+
+    /// <summary>
+    /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
+    /// </summary>
+    /// <returns>IS9283 Program</returns>
+    public Item Popup_ISO9283_CubeProgram(Item robot = null)
+    {
+        _require_build(5177);
+        _check_connection();
+        _send_Line("Popup_ProgISO9283");
+        _send_Item(robot);
+        _COM.ReceiveTimeout = 3600 * 1000;
+        Item iso_program = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return iso_program;
+    }
+
 
     /// <summary>
     /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
@@ -4667,6 +4747,33 @@ public class RoboDK
         }
 
         ////////// ADD MORE METHODS
+
+        /// <summary>
+        /// Show or hide instruction items of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowInstructions(bool show = true)
+        {
+            link._check_connection();
+            link._send_Line("Prog_ShowIns");
+            link._send_Item(this);
+            link._send_Int(show ? 1 : 0);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Show or hide targets of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowTargets(bool show = true)
+        {
+            link._check_connection();
+            link._send_Line("Prog_ShowTargets");
+            link._send_Item(this);
+            link._send_Int(show ? 1 : 0);
+            link._check_status();
+        }
+
         /// <summary>
         /// Returns the number of instructions of a program.
         /// </summary>

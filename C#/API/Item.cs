@@ -1610,6 +1610,31 @@ namespace RoboDk.API
             Link.send_int(2);
             Link.check_status();
         }
+        /// <summary>
+        /// Show or hide instruction items of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowInstructions(bool show = true)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_ShowIns");
+            Link.send_item(this);
+            Link.send_int(show ? 1 : 0);
+            Link.check_status();
+        }
+
+        /// <summary>
+        /// Show or hide targets of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        public void ShowTargets(bool show = true)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_ShowTargets");
+            Link.send_item(this);
+            Link.send_int(show ? 1 : 0);
+            Link.check_status();
+        }
 
         ////////// ADD MORE METHODS
         /// <summary>

@@ -100,6 +100,8 @@ namespace RoboDk.API
             RoboDKServerIpAdress = "localhost";
             RoboDKServerStartPort = 20500;
             RoboDKServerEndPort = RoboDKServerStartPort;
+
+            RoboDKBuild = 0;
         }
 
         #endregion
@@ -142,6 +144,13 @@ namespace RoboDk.API
         /// Port to stop looking for a RoboDK connection.
         /// </summary>
         public int RoboDKServerEndPort { get; set; }
+
+        /// <summary>
+        /// The RoboDK build id and is used for version checking. This value always increases with new versions
+        /// </summary>
+        public int RoboDKBuild { get; set; }
+
+
 
         /// <summary>
         /// Forces to start RoboDK in hidden mode. 
@@ -293,7 +302,7 @@ namespace RoboDk.API
                 StartNewRoboDKProcess(RoboDKServerStartPort);
             }
 
-            if (connected && !SetConnectionParameter())
+            if (connected && !VerifyConnection())
             {
                 connected = false;
                 Process = null;
@@ -400,12 +409,25 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public string Version()
+        {
+            check_connection();
+            send_line("Version");
+            string app_name = rec_line();
+            int bit_arch = rec_int();
+            string ver4 = rec_line();
+            string date_build = rec_line();
+            check_status();
+            return ver4;
+        }
+
+        /// <inheritdoc />
         public void SetWindowState(WindowState windowState = WindowState.Normal)
         {
             check_connection();
             var command = "S_WindowState";
             send_line(command);
-            send_int((int) windowState);
+            send_int((int)windowState);
             check_status();
         }
 
@@ -504,7 +526,7 @@ namespace RoboDk.API
             }
             else
             {
-                var type = (int) itemType;
+                var type = (int)itemType;
                 command = "G_Item2";
                 send_line(command);
                 send_line(name);
@@ -530,7 +552,7 @@ namespace RoboDk.API
             {
                 command = "G_List_Items_Type";
                 send_line(command);
-                send_int((int) itemType);
+                send_int((int)itemType);
             }
 
             var numitems = rec_int();
@@ -559,7 +581,7 @@ namespace RoboDk.API
             {
                 command = "G_List_Items_Type_ptr";
                 send_line(command);
-                send_int((int) itemType);
+                send_int((int)itemType);
             }
 
             var numitems = rec_int();
@@ -581,7 +603,7 @@ namespace RoboDk.API
             var command = "PickItem";
             send_line(command);
             send_line(message);
-            send_int((int) itemType);
+            send_int((int)itemType);
 
             // wait up to 1 hour for user input
             _socket.ReceiveTimeout = 3600 * 1000;
@@ -623,7 +645,7 @@ namespace RoboDk.API
             check_connection();
             var command = "S_RoboDK_Rights";
             send_line(command);
-            send_int((int) flags);
+            send_int((int)flags);
             check_status();
         }
 
@@ -696,7 +718,7 @@ namespace RoboDk.API
             send_matrix(curvePoints);
             send_item(referenceObject);
             send_int(addToRef ? 1 : 0);
-            send_int((int) projectionType);
+            send_int((int)projectionType);
             ReceiveTimeout = 3600 * 1000;
             var newitem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
@@ -712,7 +734,7 @@ namespace RoboDk.API
             send_matrix(points);
             send_item(reference_object);
             send_int(add_to_ref ? 1 : 0);
-            send_int((int) projection_type);
+            send_int((int)projection_type);
             ReceiveTimeout = 3600 * 1000;
             Item newitem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
@@ -729,7 +751,7 @@ namespace RoboDk.API
             send_line(command);
             send_matrix(points);
             send_item(objectProject);
-            send_int((int) projectionType);
+            send_int((int)projectionType);
             ReceiveTimeout = 3600 * 1000;
             var projectedPoints = rec_matrix();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
@@ -810,7 +832,7 @@ namespace RoboDk.API
         {
             check_connection();
             send_line("Collision_SetState");
-            send_int((int) collisionCheck);
+            send_int((int)collisionCheck);
             var ncollisions = rec_int();
             check_status();
             return ncollisions;
@@ -827,7 +849,7 @@ namespace RoboDk.API
             send_item(item2);
             send_int(id1);
             send_int(id2);
-            send_int((int) collisionCheck);
+            send_int((int)collisionCheck);
             var success = rec_int();
             check_status();
             return success > 0;
@@ -858,12 +880,29 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public List<Item> GetCollisionItems()
+        {
+            check_connection();
+            send_line("Collision_Items");
+            int nitems = rec_int();
+            List<Item> item_list = new List<Item>();
+            for (int i = 0; i < nitems; i++)
+            {
+                item_list.Add(rec_item());
+                int link_id = rec_int();//link id for robot items (ignored)
+                int collision_times = rec_int();//number of objects it is in collisions with
+            }
+            check_status();
+            return item_list;
+        }
+
+        /// <inheritdoc />
         public void SetSimulationSpeed(double speed)
         {
             check_connection();
             var command = "SimulateSpeed";
             send_line(command);
-            send_int((int) (speed * 1000.0));
+            send_int((int)(speed * 1000.0));
             check_status();
         }
 
@@ -884,7 +923,7 @@ namespace RoboDk.API
             check_connection();
             var command = "S_RunMode";
             send_line(command);
-            send_int((int) runMode);
+            send_int((int)runMode);
             check_status();
         }
 
@@ -894,7 +933,7 @@ namespace RoboDk.API
             check_connection();
             var command = "G_RunMode";
             send_line(command);
-            var runMode = (RunMode) rec_int();
+            var runMode = (RunMode)rec_int();
             check_status();
             return runMode;
         }
@@ -953,7 +992,7 @@ namespace RoboDk.API
             check_connection();
             send_line("G_AllStn");
             int nstn = rec_int();
-            List < Item > list_stn = new List<Item>();
+            List<Item> list_stn = new List<Item>();
             for (int i = 0; i < nstn; i++)
             {
                 Item station = rec_item();
@@ -1026,7 +1065,7 @@ namespace RoboDk.API
             send_xyz(p1);
             send_xyz(p2);
             var item = rec_item();
-            var xyz = new double[] {0, 0, 0};
+            var xyz = new double[] { 0, 0, 0 };
             rec_xyz(xyz);
             var collision = item.Valid();
             check_status();
@@ -1080,8 +1119,8 @@ namespace RoboDk.API
             var command = "CalibTCP2";
             send_line(command);
             send_matrix(posesJoints);
-            send_int((int) format);
-            send_int((int) algorithm);
+            send_int((int)format);
+            send_int((int)algorithm);
             send_item(robot);
             var tcp = rec_array();
             errorStats = rec_array();
@@ -1100,7 +1139,7 @@ namespace RoboDk.API
             send_line(command);
             send_matrix(joints);
             send_int(useJoints ? -1 : 0);
-            send_int((int) method);
+            send_int((int)method);
             send_item(robot);
             var referencePose = rec_pose();
             var errorStats = rec_array();
@@ -1179,7 +1218,7 @@ namespace RoboDk.API
             check_status();
             return true;
         }
-        
+
         /// <inheritdoc />
         public Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null)
         {
@@ -1279,9 +1318,10 @@ namespace RoboDk.API
         public string GetLicense()
         {
             check_connection();
-            var command = "G_License";
+            var command = "G_License2";
             send_line(command);
             var license = rec_line();
+            var cid = rec_line();
             check_status();
             return license;
         }
@@ -1304,13 +1344,26 @@ namespace RoboDk.API
             return listItems;
         }
 
+        public Item Popup_ISO9283_CubeProgram(Item robot = null)
+        {
+            RequireBuild(5177);
+            check_connection();
+            send_line("Popup_ProgISO9283");
+            send_item(robot);
+            ReceiveTimeout = 3600 * 1000;
+            Item iso_program = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+            check_status();
+            return iso_program;
+        }
+
         /// <inheritdoc />
         public void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<Item> custom_items = null, List<InteractiveType> custom_ref_flags = null)
         {
             check_connection();
             send_line("S_InteractiveMode");
-            send_int((int) mode_type);
-            send_int((int) default_ref_flags);
+            send_int((int)mode_type);
+            send_int((int)default_ref_flags);
             if (custom_items == null || custom_ref_flags == null)
             {
                 send_int(-1);
@@ -1322,7 +1375,7 @@ namespace RoboDk.API
                 for (int i = 0; i < n_custom; i++)
                 {
                     send_item(custom_items[i]);
-                    send_int((int) custom_ref_flags[i]);
+                    send_int((int)custom_ref_flags[i]);
                 }
             }
             check_status();
@@ -1463,26 +1516,26 @@ namespace RoboDk.API
                     throw new RdkException(LastStatusMessage);
 
                 case 2:
-                {
-                    //output warning
-                    LastStatusMessage = rec_line();
+                    {
+                        //output warning
+                        LastStatusMessage = rec_line();
 
-                    //TODO Implement warning
-                    //print("WARNING: " + strproblems);
-                    //#warn(strproblems)# does not show where is the problem...
-                    return;
-                }
+                        //TODO chu: Implement warning
+                        //print("WARNING: " + strproblems);
+                        //#warn(strproblems)# does not show where is the problem...
+                        return;
+                    }
                 case 3:
-                {
-                    // output error
-                    LastStatusMessage = rec_line();
-                    throw new RdkException(LastStatusMessage);
-                }
+                    {
+                        // output error
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
                 case 9:
-                {
-                    LastStatusMessage = "Invalid license. Contact us at: info@robodk.com";
-                    throw new RdkException(LastStatusMessage);
-                }
+                    {
+                        LastStatusMessage = "Invalid license. Contact us at: info@robodk.com";
+                        throw new RdkException(LastStatusMessage);
+                    }
                 default:
 
                     //raise Exception('Problems running function');
@@ -1542,7 +1595,7 @@ namespace RoboDk.API
             byte[] bytes;
             if (item == null)
             {
-                bytes = BitConverter.GetBytes((ulong) 0);
+                bytes = BitConverter.GetBytes((ulong)0);
             }
             else
             {
@@ -1582,7 +1635,7 @@ namespace RoboDk.API
             var item = BitConverter.ToInt64(buffer1, 0);
 
             //Console.WriteLine("Received item: " + item.ToString());
-            var type = (ItemType) BitConverter.ToInt32(buffer2, 0);
+            var type = (ItemType)BitConverter.ToInt32(buffer2, 0);
             return new Item(this, item, type);
         }
 
@@ -1625,13 +1678,13 @@ namespace RoboDk.API
             var bytesarray = new byte[8 * nvalues];
             var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
-            for (var i = 0; i < pose.Rows; i++)
-            {
-                var onedouble = BitConverter.GetBytes(pose[i, j]);
-                Array.Reverse(onedouble);
-                Array.Copy(onedouble, 0, bytesarray, cnt * 8, 8);
-                cnt = cnt + 1;
-            }
+                for (var i = 0; i < pose.Rows; i++)
+                {
+                    var onedouble = BitConverter.GetBytes(pose[i, j]);
+                    Array.Reverse(onedouble);
+                    Array.Copy(onedouble, 0, bytesarray, cnt * 8, 8);
+                    cnt = cnt + 1;
+                }
 
             _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
         }
@@ -1648,14 +1701,14 @@ namespace RoboDk.API
 
             var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
-            for (var i = 0; i < pose.Rows; i++)
-            {
-                var onedouble = new byte[8];
-                Array.Copy(bytes, cnt, onedouble, 0, 8);
-                Array.Reverse(onedouble);
-                pose[i, j] = BitConverter.ToDouble(onedouble, 0);
-                cnt = cnt + 8;
-            }
+                for (var i = 0; i < pose.Rows; i++)
+                {
+                    var onedouble = new byte[8];
+                    Array.Copy(bytes, cnt, onedouble, 0, 8);
+                    Array.Reverse(onedouble);
+                    pose[i, j] = BitConverter.ToDouble(onedouble, 0);
+                    cnt = cnt + 8;
+                }
 
             return pose;
         }
@@ -1740,7 +1793,7 @@ namespace RoboDk.API
         internal void send_arrayList(List<double> values)
         {
             double[] values2 = new double[values.Count];
-            for (int i = 0; i<values.Count; i++)
+            for (int i = 0; i < values.Count; i++)
             {
                 values2[i] = values[i];
             }
@@ -1776,12 +1829,12 @@ namespace RoboDk.API
             send_int(mat.Rows);
             send_int(mat.Cols);
             for (var j = 0; j < mat.Cols; j++)
-            for (var i = 0; i < mat.Rows; i++)
-            {
-                var bytes = BitConverter.GetBytes(mat[i, j]);
-                Array.Reverse(bytes);
-                _socket.Send(bytes, 8, SocketFlags.None);
-            }
+                for (var i = 0; i < mat.Rows; i++)
+                {
+                    var bytes = BitConverter.GetBytes(mat[i, j]);
+                    Array.Reverse(bytes);
+                    _socket.Send(bytes, 8, SocketFlags.None);
+                }
         }
 
         // receives a 2 dimensional matrix (nxm)
@@ -1813,14 +1866,14 @@ namespace RoboDk.API
 
             var cnt = 0;
             for (var j = 0; j < mat.Cols; j++)
-            for (var i = 0; i < mat.Rows; i++)
-            {
-                var onedouble = new byte[8];
-                Array.Copy(bytes, cnt, onedouble, 0, 8);
-                Array.Reverse(onedouble);
-                mat[i, j] = BitConverter.ToDouble(onedouble, 0);
-                cnt = cnt + 8;
-            }
+                for (var i = 0; i < mat.Rows; i++)
+                {
+                    var onedouble = new byte[8];
+                    Array.Copy(bytes, cnt, onedouble, 0, 8);
+                    Array.Reverse(onedouble);
+                    mat[i, j] = BitConverter.ToDouble(onedouble, 0);
+                    cnt = cnt + 8;
+                }
 
             return mat;
         }
@@ -1937,18 +1990,40 @@ namespace RoboDk.API
             Disconnect();
         }
 
-        internal bool SetConnectionParameter()
+        internal bool VerifyConnection()
         {
-            send_line("CMD_START");
-            var startParameter = string.Format($"{Convert.ToInt32(SafeMode)} {Convert.ToInt32(AutoUpdate)}");
-            send_line(startParameter);
-            var response = rec_line();
-            if (response == "READY")
+            bool UseNewVersion = false; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
+            if (UseNewVersion)
             {
-                return true;
+                send_line("RDK_API");
+                send_int(0);
+                string response = rec_line();
+                int ver_api = rec_int();
+                RoboDKBuild = rec_int();
+                check_status();
+                return response == "RDK_API";
+            } else {
+                send_line("CMD_START");
+                var startParameter = string.Format($"{Convert.ToInt32(SafeMode)} {Convert.ToInt32(AutoUpdate)}");
+                send_line(startParameter);
+                var response = rec_line();
+                if (response == "READY")
+                {
+                    return true;
+                }
             }
-
             return false;
+        }
+
+        internal bool RequireBuild(int build_required)
+        {
+            if (RoboDKBuild == 0)
+                return true;
+        
+            if (RoboDKBuild < build_required)
+                throw new Exception("This function is unavailable. Update RoboDK to use this function through the API.");
+    
+            return true;
         }
 
 
