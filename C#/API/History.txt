@@ -10,7 +10,7 @@ RoboDK Api Changelog-History
 		AddPoints()
 		AddMachiningProject()
 		BuildMechanism()
-
+		GetCursorXYZ()
 
 	Item.cs:
 		SetParent()
@@ -41,3 +41,37 @@ RoboDK Api Changelog-History
 
 	New class RDKColorExtension.cs
 		Extension methods to convert Color to double[] array and vice versa
+
+-----------------------------------------------------
+25.04.2018
+	New Api Functions:
+
+	IRoboDK.cs
+		FitAll()
+
+	Item.cs
+		GetInstructionListJoints()
+
+-----------------------------------------------------	
+03.05.2018
+	New Api Function:
+	Item.cs
+		SetTransparency()
+
+-----------------------------------------------------
+
+30.05.2018
+	New Api Functions:
+
+	IRoboDK.cs
+		RoboDKBuild
+		RequireBuild() (internal)
+		Version()
+		GetCollisionItems()
+		Popup_ISO9283_CubeProgram()
+
+	Item.cs
+		ShowInstructions()
+		ShowTargets()
+
+	Changes in GetLicense() and renaming of internal SetConnectionParameter() -> VerifyConnection()

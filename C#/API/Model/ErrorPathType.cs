@@ -52,21 +52,21 @@ namespace RoboDk.API.Model
         /// <summary>
         /// One or more points is not reachable
         /// </summary>
-        KINEMATIC = 0x1, /*0b001,*/
+        Kinematic = 0x1, /*0b001,*/
 
         /// <summary>
         /// The path reaches the limit of joint axes
         /// </summary>
-        PATH_LIMIT = 0x2, /*0b010,*/
+        PathLimit = 0x2, /*0b010,*/
 
         /// <summary>
         /// The robot reached a singularity point
         /// </summary>
-        PATH_SINGULARITY = 0x4, /*0b100,*/
+        PathSingularity = 0x4, /*0b100,*/
 
         /// <summary>
         /// Collision detected
         /// </summary>
-        COLLISION = 0x20, /*0b100000*/
+        Collision = 0x20, /*0b100000*/
     }
 }
