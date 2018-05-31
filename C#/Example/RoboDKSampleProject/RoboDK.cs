@@ -272,6 +272,70 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
+    /// Calculates the pose from the position and euler angles ([x,y,z,rz,ry,rz] vector)
+    //  The result is the same as calling: H = transl(x,y,z)*rotz(rz*pi/180)*roty(ry*pi/180)*rotz(rz2*pi/180)
+    /// </summary>
+    /// <param name="xyzwpr"></param>
+    /// <returns>Homogeneous matrix (4x4)</returns>
+    static public Mat FromComau(double[] xyzzyz)
+    {
+        if (xyzzyz.Length < 6)
+        {
+            return null;
+        }
+        return transl(xyzzyz[0], xyzzyz[1], xyzzyz[2]) * rotz(xyzzyz[3]*Math.PI / 180.0) * roty(xyzzyz[4] * Math.PI / 180.0) * rotz(xyzzyz[5] * Math.PI / 180.0);
+    }
+    /// <summary>
+    /// Calculates the equivalent position and euler angles ([x,y,z,rx,ry,rz] array) of a pose 
+    /// Note: Pose = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+    /// See also: FromTxyzRxyz()
+    /// </summary>
+    /// <returns>XYZWPR translation and rotation in mm and degrees</returns>
+    public double[] ToComau()
+    {
+        double[] xyzwpr = new double[6];
+        double x = mat[0, 3];
+        double y = mat[1, 3];
+        double z = mat[2, 3];
+        double rz1 = 0;
+        double ry1 = 0;
+        double rzz = 0;
+
+        if (mat[2, 2] > (1.0 - 1e-6))
+        {
+            rz1 = 0;
+            ry1 = 0;
+            rzz = Math.Atan2(mat[1, 0], mat[0, 0]);
+        }
+        else if (mat[2, 2] < (-1.0 + 1e-6))
+        {
+            rz1 = 0;
+            ry1 = Math.PI / 2;
+            rzz = Math.Atan2(mat[1, 0], mat[1, 1]);
+        }
+        else
+        {
+            double cb = mat[2, 2];
+            double sb = +Math.Sqrt(1 - cb * cb);
+            double sc = mat[2, 1] / sb;
+            double cc = -mat[2, 0] / sb;
+            double sa = mat[1, 2] / sb;
+            double ca = mat[0, 2] / sb;
+            rz1 = Math.Atan2(sa, ca);
+            ry1 = Math.Atan2(sb, cb);
+            rzz = Math.Atan2(sc, cc);
+        }
+
+        xyzwpr[0] = x;
+        xyzwpr[1] = y;
+        xyzwpr[2] = z;
+        xyzwpr[3] = rz1 * 180.0 / Math.PI;
+        xyzwpr[4] = ry1 * 180.0 / Math.PI;
+        xyzwpr[5] = rzz * 180.0 / Math.PI;
+        return xyzwpr;
+    }
+
+    /// <summary>
     /// Calculates the pose from the position and euler angles ([x,y,z,rx,ry,rz] array)
     /// The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     /// </summary>
