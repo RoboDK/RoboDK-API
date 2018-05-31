@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoboDk.API</RootNamespace>
     <AssemblyName>RoboDkApi</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\InstructionListJointsResult.cs" />
     <Compile Include="Model\RDKColorExtension.cs" />
     <Compile Include="Model\DisplayRefType.cs" />
     <Compile Include="Model\ErrorPathType.cs" />
