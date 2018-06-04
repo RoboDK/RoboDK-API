@@ -16,7 +16,7 @@
 // This file defines the following classes:
 //     Mat: Matrix class, useful pose operations
 //     RoboDK: API to interact with RoboDK
-//     RoboDK.Item: Any item in the RoboDK station tree
+//     RoboDK.IItem: Any item in the RoboDK station tree
 //
 // These classes are the objects used to interact with RoboDK and create macros.
 // An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
@@ -98,17 +98,17 @@ namespace RoboDk.API
         void SetWindowState(WindowState windowState = WindowState.Normal);
 
         /// <summary>
-        /// Load a file and attaches it to parent and returns the newly added Item. 
+        /// Load a file and attaches it to parent and returns the newly added IItem. 
         /// </summary>
         /// <param name="filename">
-        /// Any file to load, supported by RoboDK. 
-        /// Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... 
-        /// It is also possible to load supported robot programs, such as SRC (KUKA), 
-        /// SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        ///     Any file to load, supported by RoboDK. 
+        ///     Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... 
+        ///     It is also possible to load supported robot programs, such as SRC (KUKA), 
+        ///     SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
         /// </param>
         /// <param name="parent">item to attach the newly added object (optional)</param>
         /// <returns></returns>
-        Item AddFile(string filename, Item parent = null);
+        IItem AddFile(string filename, IItem parent = null);
 
         /// <summary>
         /// Add a new target that can be reached with a robot.
@@ -117,7 +117,7 @@ namespace RoboDk.API
         /// <param name="parent">Reference frame to attach the target</param>
         /// <param name="robot">Robot that will be used to go to target (optional)</param>
         /// <returns>Newly created target item.</returns>
-        Item AddTarget(string name, Item parent = null, Item robot = null);
+        IItem AddTarget(string name, IItem parent = null, IItem robot = null);
 
         /// <summary>
         /// Add a new program to the RoboDK station. 
@@ -126,43 +126,43 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="name">Name of the program</param>
         /// <param name="robot">Robot that will be used for this program. It is not required to specify the robot if the station has only one robot or mechanism.</param>
-        /// <returns>Newly created Program Item</returns>
-        Item AddProgram(string name, Item robot = null);
+        /// <returns>Newly created Program IItem</returns>
+        IItem AddProgram(string name, IItem robot = null);
 
         /// <summary>
         /// Add a new empty station.
         /// </summary>
         /// <param name="name">Name of the station</param>
-        /// <returns>Newly created station Item</returns>
-        Item AddStation(string name);
+        /// <returns>Newly created station IItem</returns>
+        IItem AddStation(string name);
 
         /// <summary>
         /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
-        /// It returns the newly created :class:`.Item` containing the project settings.
+        /// It returns the newly created :class:`.IItem` containing the project settings.
         /// Tip: Use the macro /RoboDK/Library/Macros/MoveRobotThroughLine.py to see an example that creates a new "curve follow project" given a list of points to follow(Option 4).
         /// </summary>
         /// <param name="name">Name of the project settings</param>
         /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
         /// <returns></returns>
-        Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null);
+        IItem AddMachiningProject(string name = "Curve follow settings", IItem itemrobot = null);
 
         /// <summary>
         /// Returns the list of open stations in RoboDK
         /// </summary>
         /// <returns></returns>
-        List<Item> GetOpenStation();
+        List<IItem> GetOpenStation();
 
         /// <summary>
         /// Set the active station (project currently visible)
         /// </summary>
         /// <param name="station">station item, it can be previously loaded as an RDK file</param>
-        void SetActiveStation(Item station);
+        void SetActiveStation(IItem station);
 
         /// <summary>
         /// Returns the active station item (station currently visible)
         /// </summary>
         /// <returns></returns>
-        Item GetActiveStation();
+        IItem GetActiveStation();
 
         /// <summary>
         /// Display/render the scene: update the display. 
@@ -187,7 +187,7 @@ namespace RoboDk.API
         /// <param name="name">name of the item (name of the item shown in the RoboDK station tree)</param>
         /// <param name="itemType">type of the item to be retrieved (avoids confusion if there are similar name matches).</param>
         /// <returns>Returns an item by its name.</returns>
-        Item GetItemByName(string name, ItemType itemType = ItemType.Any);
+        IItem GetItemByName(string name, ItemType itemType = ItemType.Any);
 
         /// <summary>
         ///     Returns a list of items (list of names) of all available items in the currently open station in robodk.
@@ -203,18 +203,18 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="itemType">Only return items of this type</param>
         /// <returns>List of Items (optionally filtered by ItemType).</returns>
-        List<Item> GetItemList(ItemType itemType = ItemType.Any);
+        List<IItem> GetItemList(ItemType itemType = ItemType.Any);
 
         /// <summary>
         /// Shows a RoboDK popup to select one object from the open station.
         /// An item type can be specified to filter desired items. If no type is specified, all items are selectable.
-        /// The method always returns an Item. Use item.Valid() to check if the selected item is a valid item.
+        /// The method always returns an IItem. Use item.Valid() to check if the selected item is a valid item.
         /// E.g. if the user exits the dialog without selecting an item, the method still returns an item object, but item.Valid() will return False.
         /// </summary>
         /// <param name="message">Message to pop up</param>
         /// <param name="itemType">optionally filter by ItemType</param>
         /// <returns>User selected item. Use item.Valid() to check if the item is valid</returns>
-        Item ItemUserPick(string message = "Pick one item", ItemType itemType = ItemType.Any);
+        IItem ItemUserPick(string message = "Pick one item", ItemType itemType = ItemType.Any);
 
         /// <summary>
         /// Shows or raises the RoboDK window.
@@ -251,7 +251,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="filename">absolute path to save the file</param>
         /// <param name="itemsave">object or station to save. Leave empty to automatically save the current station.</param>
-        void Save(string filename, Item itemsave = null);
+        void Save(string filename, IItem itemsave = null);
 
         /// <summary>
         ///     Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can
@@ -264,7 +264,7 @@ namespace RoboDk.API
         /// <param name="addTo">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
         /// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
         /// <returns>added object/shape (use item.Valid() to check if item is valid.)</returns>
-        Item AddShape(Mat trianglePoints, Item addTo = null, bool shapeOverride = false);
+        IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false);
 
         /// <summary>
         /// Adds a curve provided point coordinates.
@@ -282,7 +282,7 @@ namespace RoboDk.API
         ///     point normal and recalculate the normal vector on the surface projected.
         /// </param>
         /// <returns>added object/curve (use item.Valid() to check if item is valid.)</returns>
-        Item AddCurve(Mat curvePoints, Item referenceObject = null, bool addToRef = false,
+        IItem AddCurve(Mat curvePoints, IItem referenceObject = null, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
@@ -293,7 +293,7 @@ namespace RoboDk.API
         /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
         /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
         /// <returns>added object/shape (0 if failed)</returns>
-        Item AddPoints(Mat points, Item reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc);
+        IItem AddPoints(Mat points, IItem reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
         /// Projects a point given its coordinates.
@@ -309,7 +309,7 @@ namespace RoboDk.API
         /// <returns>
         ///     It returns the projected points as a list of points (empty matrix if failed).
         /// </returns>
-        Mat ProjectPoints(Mat points, Item objectProject,
+        Mat ProjectPoints(Mat points, IItem objectProject,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
@@ -323,7 +323,7 @@ namespace RoboDk.API
         /// <param name="name">name of the reference frame</param>
         /// <param name="parent">parent to attach to (such as the robot base frame)</param>
         /// <returns>The new reference frame created</returns>
-        Item AddFrame(string name, Item parent = null);
+        IItem AddFrame(string name, IItem parent = null);
 
         /// <summary>
         ///     Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific
@@ -364,7 +364,7 @@ namespace RoboDk.API
         /// <param name="objectInside"></param>
         /// <param name="objectParent"></param>
         /// <returns>Returns true if objectInside is inside the objectParent</returns>
-        bool IsInside(Item objectInside, Item objectParent);
+        bool IsInside(IItem objectInside, IItem objectParent);
 
         /// <summary>
         /// Set collision checking ON or OFF (CollisionCheckOff/CollisionCheckOn) according to the collision map. 
@@ -380,12 +380,12 @@ namespace RoboDk.API
         ///     Specify the link id for robots or moving mechanisms (id 0 is the base).
         /// </summary>
         /// <param name="collisionCheck">Set to COLLISION_ON or COLLISION_OFF</param>
-        /// <param name="item1">Item 1</param>
-        /// <param name="item2">Item 2</param>
-        /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
-        /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
+        /// <param name="item1">IItem 1</param>
+        /// <param name="item2">IItem 2</param>
+        /// <param name="id1">Joint id for IItem 1 (if IItem 1 is a robot or a mechanism)</param>
+        /// <param name="id2">Joint id for IItem 2 (if IItem 2 is a robot or a mechanism)</param>
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
-        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, Item item1, Item item2, int id1 = 0,
+        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0,
             int id2 = 0);
 
         /// <summary>
@@ -400,7 +400,7 @@ namespace RoboDk.API
         /// <param name="item1"></param>
         /// <param name="item2"></param>
         /// <returns>Returns true if item1 collides with item2; false otherwise.</returns>
-        bool Collision(Item item1, Item item2);
+        bool Collision(IItem item1, IItem item2);
 
         /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 
@@ -500,14 +500,14 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="robotItemList">list of robot items</param>
         /// <returns>list of robot joints (double x nDOF)</returns>
-        List<double[]> Joints(List<Item> robotItemList);
+        List<double[]> Joints(List<IItem> robotItemList);
 
         /// <summary>
         /// Sets the current robot joints for a list of robot items and a list of a set of joints.
         /// </summary>
         /// <param name="robotItemList">list of robot items.</param>
         /// <param name="jointsList">list of robot joints (double x nDOF).</param>
-        void SetJoints(List<Item> robotItemList, List<double[]> jointsList);
+        void SetJoints(List<IItem> robotItemList, List<double[]> jointsList);
 
 
         /// <summary>
@@ -523,7 +523,7 @@ namespace RoboDk.API
         double[] CalibrateTool(Mat posesJoints, out double[] errorStats,
             EulerType format = EulerType.EulerRxRyRz,
             TcpCalibrationType algorithm = TcpCalibrationType.CalibrateTcpByPoint,
-            Item robot = null);
+            IItem robot = null);
 
         /// <summary>
         ///     Calibrate a Reference Frame given a list of points or joint values. Important: If the robot is calibrated, provide
@@ -536,7 +536,7 @@ namespace RoboDk.API
         /// <returns>TODO: Document return value.</returns>
         Mat CalibrateReference(Mat joints,
             ReferenceCalibrationType method = ReferenceCalibrationType.Frame3P_P1OnX,
-            bool useJoints = false, Item robot = null);
+            bool useJoints = false, IItem robot = null);
 
 
         /// <summary>
@@ -553,7 +553,7 @@ namespace RoboDk.API
         /// <param name="robot">Robot to link</param>
         /// <returns>TODO: Document return value.</returns>
         int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "",
-            Item robot = null);
+            IItem robot = null);
 
         /// <summary>
         /// Set the pose of the wold reference frame with respect to the view (camera/screen).
@@ -575,7 +575,7 @@ namespace RoboDk.API
         /// <param name="poseBase"></param>
         /// <param name="poseTool"></param>
         /// <returns></returns>
-        bool SetRobotParams(Item robot, double[][] dhm, Mat poseBase, Mat poseTool);
+        bool SetRobotParams(IItem robot, double[][] dhm, Mat poseBase, Mat poseTool);
 
         /// <summary>
         /// Create a new robot or mechanism.
@@ -593,7 +593,7 @@ namespace RoboDk.API
         /// <param name="name"></param>
         /// <param name="robot">existing robot in the station to replace it(optional)</param>
         /// <returns></returns>
-        Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null);
+        IItem BuildMechanism(int type, List<IItem> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", IItem robot = null);
 
         /// <summary>
         /// Open a simulated 2D camera view. 
@@ -602,7 +602,7 @@ namespace RoboDk.API
         /// <param name="item">Reference frame or other object to attach the camera</param>
         /// <param name="cameraParameters">Camera parameters as a string. Refer to the documentation for more information.</param>
         /// <returns>Camera pointer/handle. Keep the handle if more than 1 simulated camera is used</returns>
-        long Cam2DAdd(Item item, string cameraParameters = "");
+        long Cam2DAdd(IItem item, string cameraParameters = "");
 
         /// <summary>
         /// Take a snapshot from a simulated camera view and save it to a file. 
@@ -641,7 +641,7 @@ namespace RoboDk.API
         /// Returns the list of items selected (it can be one or more items)
         /// </summary>
         /// <returns>Returns the list of selected items.</returns>
-        List<Item> GetSelectedItems();
+        List<IItem> GetSelectedItems();
 
         /// <summary>
         /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
@@ -650,7 +650,7 @@ namespace RoboDk.API
         /// <param name="default_ref_flags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
         /// <param name="custom_items">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
         /// <param name="custom_ref_flags">Provide a matching list of flags to customize the movement behavior for specific items</param>
-        void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<Item> custom_items = null, List<InteractiveType> custom_ref_flags = null);
+        void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<IItem> custom_items = null, List<InteractiveType> custom_ref_flags = null);
 
         /// <summary>
         /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
@@ -661,7 +661,7 @@ namespace RoboDk.API
         /// <param name="y_coord">Y coordinate in pixels</param>
         /// <param name="xyz_station"></param>
         /// <returns></returns>
-        Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null);
+        IItem GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null);
 
         /// <summary>
         /// 
@@ -671,7 +671,7 @@ namespace RoboDk.API
         /// <param name="joints"></param>
         /// <param name="robotBase"></param>
         /// <param name="robot"></param>
-        void AddTargetJ(Item pgm, string targetName, double[] joints, Item robotBase = null, Item robot = null);
+        void AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null);
 
         #endregion
     }

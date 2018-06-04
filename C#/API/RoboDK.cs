@@ -16,7 +16,7 @@
 // This file defines the following classes:
 //     Mat: Matrix class, useful pose operations
 //     RoboDK: API to interact with RoboDK
-//     RoboDK.Item: Any item in the RoboDK station tree
+//     RoboDK.IItem: Any item in the RoboDK station tree
 //
 // These classes are the objects used to interact with RoboDK and create macros.
 // An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
@@ -59,7 +59,7 @@ namespace RoboDk.API
 {
     /// <summary>
     ///     This class is the link to allows to create macros and automate Robodk.
-    ///     Any interaction is made through \"items\" (Item() objects). An item is an object in the
+    ///     Any interaction is made through \"items\" (IItem() objects). An item is an object in the
     ///     robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
     /// </summary>
     public class RoboDK : IRoboDK, IDisposable
@@ -410,7 +410,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddFile(string filename, Item parent = null)
+        public IItem AddFile(string filename, IItem parent = null)
         {
             if (!File.Exists(filename))
             {
@@ -430,7 +430,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddTarget(string name, Item parent = null, Item robot = null)
+        public IItem AddTarget(string name, IItem parent = null, IItem robot = null)
         {
             check_connection();
             var command = "Add_TARGET";
@@ -444,7 +444,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddProgram(string name, Item robot = null)
+        public IItem AddProgram(string name, IItem robot = null)
         {
             check_connection();
             var command = "Add_PROG";
@@ -457,13 +457,13 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddMachiningProject(string name = "Curve follow settings", Item itemrobot = null)
+        public IItem AddMachiningProject(string name = "Curve follow settings", IItem itemrobot = null)
         {
             check_connection();
             send_line("Add_MACHINING");
             send_line(name);
             send_item(itemrobot);
-            Item newitem = rec_item();
+            IItem newitem = rec_item();
             check_status();
             return newitem;
         }
@@ -492,7 +492,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item GetItemByName(string name, ItemType itemType = ItemType.Any)
+        public IItem GetItemByName(string name, ItemType itemType = ItemType.Any)
         {
             check_connection();
             string command;
@@ -546,7 +546,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<Item> GetItemList(ItemType itemType = ItemType.Any)
+        public List<IItem> GetItemList(ItemType itemType = ItemType.Any)
         {
             check_connection();
             string command;
@@ -563,7 +563,7 @@ namespace RoboDk.API
             }
 
             var numitems = rec_int();
-            var listitems = new List<Item>(numitems);
+            var listitems = new List<IItem>(numitems);
             for (var i = 0; i < numitems; i++)
             {
                 var item = rec_item();
@@ -575,7 +575,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item ItemUserPick(string message = "Pick one item", ItemType itemType = ItemType.Any)
+        public IItem ItemUserPick(string message = "Pick one item", ItemType itemType = ItemType.Any)
         {
             check_connection();
             var command = "PickItem";
@@ -650,7 +650,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void Save(string filename, Item itemsave = null)
+        public void Save(string filename, IItem itemsave = null)
         {
             check_connection();
             var command = "Save";
@@ -661,18 +661,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddStation(string name = "New Station")
+        public IItem AddStation(string name)
         {
             check_connection();
             send_line("NewStation");
             send_line(name);
-            Item newitem = rec_item();
+            IItem newitem = rec_item();
             check_status();
             return newitem;
         }
 
         /// <inheritdoc />
-        public Item AddShape(Mat trianglePoints, Item addTo = null, bool shapeOverride = false)
+        public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false)
         {
             check_connection();
             send_line("AddShape2");
@@ -687,7 +687,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddCurve(Mat curvePoints, Item referenceObject = null, bool addToRef = false,
+        public IItem AddCurve(Mat curvePoints, IItem referenceObject = null, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
             check_connection();
@@ -705,7 +705,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddPoints(Mat points, Item reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc)
+        public IItem AddPoints(Mat points, IItem reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc)
         {
             check_connection();
             send_line("AddPoints");
@@ -714,14 +714,14 @@ namespace RoboDk.API
             send_int(add_to_ref ? 1 : 0);
             send_int((int) projection_type);
             ReceiveTimeout = 3600 * 1000;
-            Item newitem = rec_item();
+            IItem newitem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return newitem;
         }
 
         /// <inheritdoc />
-        public Mat ProjectPoints(Mat points, Item objectProject,
+        public Mat ProjectPoints(Mat points, IItem objectProject,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
             check_connection();
@@ -750,7 +750,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item AddFrame(string name, Item parent = null)
+        public IItem AddFrame(string name, IItem parent = null)
         {
             check_connection();
             var command = "Add_FRAME";
@@ -793,7 +793,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool IsInside(Item objectInside, Item objectParent)
+        public bool IsInside(IItem objectInside, IItem objectParent)
         {
             check_connection();
             var command = "IsInside";
@@ -817,7 +817,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, Item item1, Item item2, int id1 = 0,
+        public bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0,
             int id2 = 0)
         {
             check_connection();
@@ -845,7 +845,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Collision(Item item1, Item item2)
+        public bool Collision(IItem item1, IItem item2)
         {
             check_connection();
             var command = "Collided";
@@ -948,15 +948,15 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<Item> GetOpenStation()
+        public List<IItem> GetOpenStation()
         {
             check_connection();
             send_line("G_AllStn");
             int nstn = rec_int();
-            List < Item > list_stn = new List<Item>();
+            List < IItem > list_stn = new List<IItem>();
             for (int i = 0; i < nstn; i++)
             {
-                Item station = rec_item();
+                IItem station = rec_item();
                 list_stn.Add(station);
             }
             check_status();
@@ -964,17 +964,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item GetActiveStation()
+        public IItem GetActiveStation()
         {
             check_connection();
             send_line("G_ActiveStn");
-            Item station = rec_item();
+            IItem station = rec_item();
             check_status();
             return station;
         }
 
         /// <inheritdoc />
-        public void SetActiveStation(Item station)
+        public void SetActiveStation(IItem station)
         {
             check_connection();
             send_line("S_ActiveStn");
@@ -1034,7 +1034,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<double[]> Joints(List<Item> robotItemList)
+        public List<double[]> Joints(List<IItem> robotItemList)
         {
             check_connection();
             var command = "G_ThetasList";
@@ -1054,7 +1054,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetJoints(List<Item> robotItemList, List<double[]> jointsList)
+        public void SetJoints(List<IItem> robotItemList, List<double[]> jointsList)
         {
             var nrobs = Math.Min(robotItemList.Count, jointsList.Count);
             check_connection();
@@ -1074,7 +1074,7 @@ namespace RoboDk.API
         public double[] CalibrateTool(Mat posesJoints, out double[] errorStats,
             EulerType format = EulerType.EulerRxRyRz,
             TcpCalibrationType algorithm = TcpCalibrationType.CalibrateTcpByPoint,
-            Item robot = null)
+            IItem robot = null)
         {
             check_connection();
             var command = "CalibTCP2";
@@ -1093,7 +1093,7 @@ namespace RoboDk.API
         /// <inheritdoc />
         public Mat CalibrateReference(Mat joints,
             ReferenceCalibrationType method = ReferenceCalibrationType.Frame3P_P1OnX,
-            bool useJoints = false, Item robot = null)
+            bool useJoints = false, IItem robot = null)
         {
             check_connection();
             var command = "CalibFrame";
@@ -1112,7 +1112,7 @@ namespace RoboDk.API
 
         /// <inheritdoc />
         public int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "",
-            Item robot = null)
+            IItem robot = null)
         {
             check_connection();
             var command = "ProgramStart";
@@ -1148,7 +1148,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool SetRobotParams(Item robot, double[][] dhm, Mat poseBase, Mat poseTool)
+        public bool SetRobotParams(IItem robot, double[][] dhm, Mat poseBase, Mat poseTool)
         {
             check_connection();
             send_line("S_AbsAccParam");
@@ -1181,7 +1181,7 @@ namespace RoboDk.API
         }
         
         /// <inheritdoc />
-        public Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null)
+        public IItem BuildMechanism(int type, List<IItem> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", IItem robot = null)
         {
             if (tool == null)
             {
@@ -1215,13 +1215,13 @@ namespace RoboDk.API
                 joints_data[i, 4] = joints_lim_high[i];
             }
             send_matrix(joints_data);
-            Item new_robot = rec_item();
+            IItem new_robot = rec_item();
             check_status();
             return new_robot;
         }
 
         /// <inheritdoc />
-        public long Cam2DAdd(Item item, string cameraParameters = "")
+        public long Cam2DAdd(IItem item, string cameraParameters = "")
         {
             check_connection();
             send_line("Cam2D_Add");
@@ -1287,13 +1287,13 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<Item> GetSelectedItems()
+        public List<IItem> GetSelectedItems()
         {
             check_connection();
             var command = "G_Selection";
             send_line(command);
             var nitems = rec_int();
-            var listItems = new List<Item>(nitems);
+            var listItems = new List<IItem>(nitems);
             for (var i = 0; i < nitems; i++)
             {
                 var item = rec_item();
@@ -1305,7 +1305,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<Item> custom_items = null, List<InteractiveType> custom_ref_flags = null)
+        public void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<IItem> custom_items = null, List<InteractiveType> custom_ref_flags = null)
         {
             check_connection();
             send_line("S_InteractiveMode");
@@ -1329,7 +1329,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null)
+        public IItem GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null)
         {
             check_connection();
             send_line("Proj2d3d");
@@ -1337,7 +1337,7 @@ namespace RoboDk.API
             send_int(y_coord);
             int selection = rec_int();
             double[] xyz = new double[3];
-            Item selected_item = rec_item();
+            IItem selected_item = rec_item();
             rec_xyz(xyz);
             check_status();
             if (xyz != null)
@@ -1349,7 +1349,7 @@ namespace RoboDk.API
 
 
 
-        public void AddTargetJ(Item pgm, string targetName, double[] joints, Item robotBase = null, Item robot = null)
+        public void AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
             var target = AddTarget(targetName, robotBase);
             if (target == null)
@@ -1358,15 +1358,15 @@ namespace RoboDk.API
             }
 
             target.setVisible(false);
-            target.setAsJointTarget();
-            target.setJoints(joints);
+            target.SetAsJointTarget();
+            target.SetJoints(joints);
             if (robot != null)
             {
-                target.setRobot(robot);
+                target.SetRobot(robot);
             }
 
             //target
-            pgm.addMoveJ(target);
+            pgm.AddMoveJ(target);
         }
 
         #endregion
@@ -1537,7 +1537,7 @@ namespace RoboDk.API
         }
 
         //Sends an item pointer
-        internal void send_item(Item item)
+        internal void send_item(IItem item)
         {
             byte[] bytes;
             if (item == null)
@@ -1546,7 +1546,7 @@ namespace RoboDk.API
             }
             else
             {
-                bytes = BitConverter.GetBytes(item.get_item());
+                bytes = BitConverter.GetBytes(item.ItemId);
             }
 
             if (bytes.Length != 8)
@@ -1566,7 +1566,7 @@ namespace RoboDk.API
         }
 
         //Receives an item pointer
-        internal Item rec_item()
+        internal IItem rec_item()
         {
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
@@ -1826,7 +1826,7 @@ namespace RoboDk.API
         }
 
         // private move type, to be used by public methods (MoveJ  and MoveL)
-        internal void moveX(Item target, double[] joints, Mat mat_target, Item itemrobot, int movetype,
+        internal void moveX(IItem target, double[] joints, Mat mat_target, IItem itemrobot, int movetype,
             bool blocking = true)
         {
             itemrobot.WaitMove();
@@ -1865,8 +1865,8 @@ namespace RoboDk.API
         }
 
         // private move type, to be used by public methods (MoveJ  and MoveL)
-        internal void moveC_private(Item target1, double[] joints1, Mat mat_target1, Item target2, double[] joints2,
-            Mat mat_target2, Item itemrobot, bool blocking = true)
+        internal void moveC_private(IItem target1, double[] joints1, Mat mat_target1, IItem target2, double[] joints2,
+            Mat mat_target2, IItem itemrobot, bool blocking = true)
         {
             itemrobot.WaitMove();
             var command = "MoveC";
