@@ -411,7 +411,7 @@ namespace RoboDk.API
         /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
         /// </summary>
         /// <returns>List of items that are in a collision state</returns>
-        List<Item> GetCollisionItems();
+        List<IItem> GetCollisionItems();
 
         /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 
@@ -658,7 +658,7 @@ namespace RoboDk.API
         /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
         /// </summary>
         /// <returns>IS9283 Program</returns>
-        Item Popup_ISO9283_CubeProgram(Item robot = null);
+        IItem Popup_ISO9283_CubeProgram(IItem robot = null);
 
         /// <summary>
         /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.

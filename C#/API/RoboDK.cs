@@ -880,20 +880,20 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<Item> GetCollisionItems()
+        public List<IItem> GetCollisionItems()
         {
             check_connection();
             send_line("Collision_Items");
             int nitems = rec_int();
-            List<Item> item_list = new List<Item>();
+            List<IItem> itemList = new List<IItem>(nitems);
             for (int i = 0; i < nitems; i++)
             {
-                item_list.Add(rec_item());
-                int link_id = rec_int();//link id for robot items (ignored)
-                int collision_times = rec_int();//number of objects it is in collisions with
+                itemList.Add(rec_item());
+                int linkId = rec_int();//link id for robot items (ignored)
+                int collisionTimes = rec_int();//number of objects it is in collisions with
             }
             check_status();
-            return item_list;
+            return itemList;
         }
 
         /// <inheritdoc />
@@ -1344,17 +1344,17 @@ namespace RoboDk.API
             return listItems;
         }
 
-        public Item Popup_ISO9283_CubeProgram(Item robot = null)
+        public IItem Popup_ISO9283_CubeProgram(IItem robot = null)
         {
             RequireBuild(5177);
             check_connection();
             send_line("Popup_ProgISO9283");
             send_item(robot);
             ReceiveTimeout = 3600 * 1000;
-            Item iso_program = rec_item();
+            IItem isoProgram = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
-            return iso_program;
+            return isoProgram;
         }
 
         /// <inheritdoc />
