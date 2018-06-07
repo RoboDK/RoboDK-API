@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RoboDk.API</RootNamespace>
     <AssemblyName>RoboDkApi</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
@@ -67,6 +67,7 @@
     <Compile Include="Model\ProgramInstruction.cs" />
     <Compile Include="Model\InstructionType.cs" />
     <Compile Include="Model\ProjectionType.cs" />
+    <Compile Include="Model\EventType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\RdkException.cs" />
     <Compile Include="Model\ReferenceCalibrationType.cs" />

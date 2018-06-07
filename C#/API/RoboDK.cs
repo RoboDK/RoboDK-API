@@ -78,6 +78,7 @@ namespace RoboDk.API
         private bool _disposed;
 
         private Socket _socket; // tcpip com
+        private Socket _socketEvents; // tcpip com for events
 
         #endregion
 
@@ -395,6 +396,91 @@ namespace RoboDk.API
                 }
             }
             return serverPortIsOpen;
+        }
+
+        /// <inheritdoc />
+        public bool EventsListen()
+        {
+            _socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+            _socketEvents.SendTimeout = 1000;
+            _socketEvents.ReceiveTimeout = 1000;
+            try
+            {
+                _socketEvents.Connect(RoboDKServerIpAdress, RoboDKServerPort);
+                if (_socketEvents.Connected)
+                {
+                    _socketEvents.SendTimeout = DefaultSocketTimeoutMilliseconds;
+                    _socketEvents.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                }
+            }
+            catch //Exception e)
+            {
+                return false;
+            }
+            send_line("RDK_EVT", _socketEvents);
+            send_int(0, _socketEvents);
+            string response = rec_line(_socketEvents);
+            int ver_evt = rec_int(_socketEvents);
+            int status = rec_int(_socketEvents);
+            if (response != "RDK_EVT" || status != 0)
+            {
+                return false;
+            }
+            _socketEvents.ReceiveTimeout = 3600 * 1000;
+            //return EventsLoop();
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool WaitForEvent(out EventType evt, out Item itm)
+        {
+            evt = (EventType) rec_int(_socketEvents);
+            itm = rec_item(_socketEvents);
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool SampleRoboDkEvent(EventType evt, Item itm)
+        {
+            switch (evt)
+            {
+                case EventType.SelectionChanged:
+                    Console.WriteLine("Event: Selection changed");
+                    if (itm.Valid())
+                        Console.WriteLine("  -> Selected: " + itm.Name());
+                    else
+                        Console.WriteLine("  -> Nothing selected");
+
+                    break;
+                case EventType.ItemMoved:
+                    Console.WriteLine("Event: Item Moved");
+                    if (itm.Valid())
+                        Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
+                    else
+                        Console.WriteLine("  -> This should never happen");
+
+                    break;
+                default:
+                    Console.WriteLine("Unknown event " + evt.ToString());
+                    return false;
+                    break;
+            }
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool EventsLoop()
+        {
+            Console.WriteLine("Events loop started");
+            while (_socketEvents.Connected)
+            {
+                EventType evt;
+                Item itm;
+                WaitForEvent(out evt, out itm);
+                SampleRoboDkEvent(evt, itm);
+            }
+            Console.WriteLine("Event loop finished");
+            return true;
         }
 
         /// <inheritdoc />
@@ -1560,13 +1646,16 @@ namespace RoboDk.API
         }
 
         //Sends a string of characters with a \\n
-        internal void send_line(string line)
+        internal void send_line(string line, Socket sckt=null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             line = line.Replace('\n', ' '); // one new line at the end only!
             var data = Encoding.UTF8.GetBytes(line + "\n");
             try
             {
-                _socket.Send(data);
+                sckt.Send(data);
             }
             catch
             {
@@ -1574,16 +1663,19 @@ namespace RoboDk.API
             }
         }
 
-        internal string rec_line()
+        internal string rec_line(Socket sckt = null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             //Receives a string. It reads until if finds LF (\\n)
             var buffer = new byte[1];
-            var bytesread = _socket.Receive(buffer, 1, SocketFlags.None);
+            var bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
             var line = "";
             while (bytesread > 0 && buffer[0] != '\n')
             {
                 line = line + Encoding.UTF8.GetString(buffer);
-                bytesread = _socket.Receive(buffer, 1, SocketFlags.None);
+                bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
             }
 
             return line;
@@ -1619,12 +1711,15 @@ namespace RoboDk.API
         }
 
         //Receives an item pointer
-        internal Item rec_item()
+        internal Item rec_item(Socket sckt=null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
-            var read1 = _socket.Receive(buffer1, 8, SocketFlags.None);
-            var read2 = _socket.Receive(buffer2, 4, SocketFlags.None);
+            var read1 = sckt.Receive(buffer1, 8, SocketFlags.None);
+            var read2 = sckt.Receive(buffer2, 4, SocketFlags.None);
             if (read1 != 8 || read2 != 4)
             {
                 return null;
@@ -1741,13 +1836,16 @@ namespace RoboDk.API
             }
         }
 
-        internal void send_int(int number)
+        internal void send_int(int number, Socket sckt = null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             var bytes = BitConverter.GetBytes(number);
             Array.Reverse(bytes); // convert from big endian to little endian
             try
             {
-                _socket.Send(bytes);
+                sckt.Send(bytes);
             }
             catch
             {
@@ -1755,10 +1853,13 @@ namespace RoboDk.API
             }
         }
 
-        internal int rec_int()
+        internal int rec_int(Socket sckt=null)
         {
+            if (sckt == null)
+                sckt = _socket;
+            
             var bytes = new byte[4];
-            var read = _socket.Receive(bytes, 4, SocketFlags.None);
+            var read = sckt.Receive(bytes, 4, SocketFlags.None);
             if (read < 4)
             {
                 return 0;

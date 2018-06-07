@@ -2177,6 +2177,10 @@ public class RoboDK
         return serverPortIsOpen;
     }
 
+    /// <summary>
+    /// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
+    /// </summary>
+    /// <returns></returns>
     public bool EventsListen()
     {
         _COM_EVT = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
