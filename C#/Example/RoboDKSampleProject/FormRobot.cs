@@ -930,7 +930,19 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
+            RDK.EventsListen();
+            RDK.EventsLoop();
+
+
+            RDK.WaitForEvent(out int evt, out RoboDK.Item itm);
+            RDK.SampleRoboDkEvent(evt, itm);
+            return;
+
+
             if (!Check_ROBOT()) { return; }
+
+            //RDK.EventsListen();
+            //return;
             
              /* if (RDK.Connected())
              {

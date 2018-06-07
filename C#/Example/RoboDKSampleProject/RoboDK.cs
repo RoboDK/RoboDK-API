@@ -1311,6 +1311,9 @@ public class RoboDK
     public const int DISPLAY_REF_PYZ = 0b100000000;
     public const int DISPLAY_REF_ALL = 0b111111111;
 
+    public const int EVENT_SELECTION_CHANGED = 1;
+    public const int EVENT_ITEM_MOVED = 2;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -1322,6 +1325,7 @@ public class RoboDK
     int AUTO_UPDATE = 0;                    // if AUTO_UPDATE is zero, the scene is rendered after every function call  
     int _TIMEOUT = 10 * 1000;               // timeout for communication, in seconds
     Socket _COM = null;                     // tcpip com
+    Socket _COM_EVT = null;                 // tcpip com for events (separate channel)
     string IP = "localhost";                // IP address of the simulator (localhost if it is the same computer), otherwise, use RL = Robolink('yourip') to set to a different IP
     int PORT_START = 20500;                 // port to start looking for app connection
     int PORT_END = 20500;                   // port to stop looking for app connection
@@ -1434,23 +1438,29 @@ public class RoboDK
     }
 
     //Sends a string of characters with a \\n
-    void _send_Line(string line)
+    void _send_Line(string line, Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         line.Replace('\n', ' ');// one new line at the end only!
         byte[] data = System.Text.Encoding.UTF8.GetBytes(line + "\n");
-        _COM.Send(data);        
+        com.Send(data);        
     }
 
-    string _recv_Line()
-    {
+    string _recv_Line(Socket com = null)
+    {   
+        if (com == null)
+            com = _COM;
+
         //Receives a string. It reads until if finds LF (\\n)
         byte[] buffer = new byte[1];
-        int bytesread = _COM.Receive(buffer, 1, SocketFlags.None);
+        int bytesread = com.Receive(buffer, 1, SocketFlags.None);
         string line = "";
         while (bytesread > 0 && buffer[0] != '\n')
         {
             line = line + System.Text.Encoding.UTF8.GetString(buffer);
-            bytesread = _COM.Receive(buffer, 1, SocketFlags.None);
+            bytesread = com.Receive(buffer, 1, SocketFlags.None);
         }
         return line;
     }
@@ -1476,12 +1486,15 @@ public class RoboDK
     }
 
     //Receives an item pointer
-    Item _recv_Item()
+    Item _recv_Item(Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         byte[] buffer1 = new byte[8];
         byte[] buffer2 = new byte[4];
-        int read1 = _COM.Receive(buffer1, 8, SocketFlags.None);
-        int read2 = _COM.Receive(buffer2, 4, SocketFlags.None);
+        int read1 = com.Receive(buffer1, 8, SocketFlags.None);
+        int read2 = com.Receive(buffer2, 4, SocketFlags.None);
         if (read1 != 8 || read2 != 4)
         {
             return null;
@@ -1592,17 +1605,23 @@ public class RoboDK
         }
     }
 
-    void _send_Int(Int32 number)
+    void _send_Int(Int32 number, Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         byte[] bytes = BitConverter.GetBytes(number);
         Array.Reverse(bytes); // convert from big endian to little endian
-        _COM.Send(bytes);
+        com.Send(bytes);
     }
 
-    Int32 _recv_Int()
+    Int32 _recv_Int(Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         byte[] bytes = new byte[4];
-        int read = _COM.Receive(bytes, 4, SocketFlags.None);
+        int read = com.Receive(bytes, 4, SocketFlags.None);
         if (read < 4)
         {
             return 0;
@@ -1910,6 +1929,7 @@ public class RoboDK
     /// Disconnect from the RoboDK API. This flushes any pending program generation.
     /// </summary>
     /// <returns></returns>
+    /// 
     public bool Finish()
     {
         return Disconnect();
@@ -2090,6 +2110,7 @@ public class RoboDK
         return connected;
     }
 
+
     /// <summary>
     /// Check if RoboDK was installed from RoboDK's official installer
     /// </summary>
@@ -2154,6 +2175,105 @@ public class RoboDK
             }
         }
         return serverPortIsOpen;
+    }
+
+    /// <summary>
+    /// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
+    /// </summary>
+    /// <returns></returns>
+    public bool EventsListen()
+    {
+        _COM_EVT = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+        _COM_EVT.SendTimeout = 1000;
+        _COM_EVT.ReceiveTimeout = 1000;
+        try
+        {
+            _COM_EVT.Connect(IP, PORT);
+            if (_COM_EVT.Connected)
+            {
+                _COM_EVT.SendTimeout = _TIMEOUT;
+                _COM_EVT.ReceiveTimeout = _TIMEOUT;
+            }
+        }
+        catch //Exception e)
+        {
+            return false;
+        }
+        _send_Line("RDK_EVT", _COM_EVT);
+        _send_Int(0, _COM_EVT);
+        string response = _recv_Line(_COM_EVT);
+        int ver_evt = _recv_Int(_COM_EVT);
+        int status = _recv_Int(_COM_EVT);
+        if (response != "RDK_EVT" || status != 0)
+        {
+            return false;
+        }
+        _COM_EVT.ReceiveTimeout = 3600 * 1000;
+        //return EventsLoop();
+        return true;
+    }
+
+    /// <summary>
+    /// Wait for a new RoboDK event. This function blocks until a new RoboDK event occurs.
+    /// </summary>
+    /// <param name="evt">Event ID</param>
+    /// <param name="itm">Item that provoked the event (Invalid item if not applicable)</param>
+    /// <returns></returns>
+    public bool WaitForEvent(out int evt, out Item itm)
+    {
+        evt = _recv_Int(_COM_EVT);
+        itm = _recv_Item(_COM_EVT);
+        return true;
+    }
+
+    /// <summary>
+    /// This is a sample function that is executed when a new RoboDK Event occurs.
+    /// </summary>
+    /// <param name="evt"></param>
+    /// <param name="itm"></param>
+    /// <returns></returns>
+    public bool SampleRoboDkEvent(int evt, Item itm)
+    {
+        switch (evt)
+        {
+            case EVENT_SELECTION_CHANGED:
+                Console.WriteLine("Event: Selection changed");
+                if (itm.Valid())
+                    Console.WriteLine("  -> Selected: " + itm.Name());
+                else
+                    Console.WriteLine("  -> Nothing selected");
+
+                break;
+            case EVENT_ITEM_MOVED:
+                Console.WriteLine("Event: Item Moved");
+                if (itm.Valid())
+                    Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
+                else
+                    Console.WriteLine("  -> This should never happen");
+
+                break;
+            default:
+                Console.WriteLine("Unknown event " + evt.ToString());
+                return false;
+                break;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Run the RoboDK event loop. This is loop blocks until RoboDK finishes execution. Run this loop as a separate thread or create a similar loop to customize the event loop behavior.
+    /// </summary>
+    /// <returns></returns>
+    public bool EventsLoop()
+    {
+        Console.WriteLine("Events loop started");
+        while (_COM_EVT.Connected)
+        {
+            WaitForEvent(out int evt, out Item itm);
+            SampleRoboDkEvent(evt, itm);
+        }
+        Console.WriteLine("Event loop finished");
+        return true;
     }
 
 
@@ -4973,7 +5093,7 @@ public class RoboDK
         /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
         /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
         /// <param name="collision_check">Check for collisions: will set to 1 or 0</param>
-        /// <param name="flags">Reserved for future compatibility</param>
+        /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations</param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
         public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600)
         {

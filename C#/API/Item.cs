@@ -1801,14 +1801,15 @@ namespace RoboDk.API
 
 
         /// <summary>
-        /// Returns a list of joints. 
+        /// Returns a list of joints representing the movements for a specific program. 
         /// Linear moves are rounded according to the smoothing parameter set inside the program.
+        /// The default units used are mm, seconds and degrees
         /// </summary>
         /// <param name="mmStep">Maximum step in millimeters for linear movements (millimeters)</param>
         /// <param name="degStep">Maximum step for joint movements (degrees)</param>
         /// <param name="saveToFile">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
         /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
-        /// <param name="flags">Reserved for future compatibility</param>
+        /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations</param>
         /// <param name="timeoutSec"></param>
         /// <returns>List of InstructionListJointsResult.</returns>
         public InstructionListJointsResult GetInstructionListJoints(
