@@ -1311,6 +1311,9 @@ public class RoboDK
     public const int DISPLAY_REF_PYZ = 0b100000000;
     public const int DISPLAY_REF_ALL = 0b111111111;
 
+    public const int EVENT_SELECTION_CHANGED = 1;
+    public const int EVENT_ITEM_MOVED = 2;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -2107,69 +2110,6 @@ public class RoboDK
         return connected;
     }
 
-    public bool EventsListen()
-    {
-        _COM_EVT = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-        _COM_EVT.SendTimeout = 1000;
-        _COM_EVT.ReceiveTimeout = 1000;
-        try
-        {
-            _COM_EVT.Connect(IP, PORT);
-            if (_COM_EVT.Connected)
-            {
-                _COM_EVT.SendTimeout = _TIMEOUT;
-                _COM_EVT.ReceiveTimeout = _TIMEOUT;
-            }
-        }
-        catch //Exception e)
-        {
-            return false;
-        }
-        _send_Line("RDK_EVT", _COM_EVT);
-        _send_Int(0, _COM_EVT);
-        string response = _recv_Line(_COM_EVT);
-        int ver_evt = _recv_Int(_COM_EVT);
-        int status = _recv_Int(_COM_EVT);
-        if (response != "RDK_EVT" || status != 0){
-            return false;
-        }
-        return EventsLoop();
-        //return true;
-    }
-    public bool EventsLoop()
-    {
-        Console.WriteLine("Events loop started");
-        _COM_EVT.ReceiveTimeout = 3600 * 1000;
-        while (_COM_EVT.Connected)
-        {
-            int evt = _recv_Int(_COM_EVT);
-            Item itm = _recv_Item(_COM_EVT);
-            //case enum { EVENT_SELECTION_CHANGED = 1, EVENT_ITEM_MOVED = 2 };
-            switch (evt)
-            {
-                case 1:
-                    Console.WriteLine("Selection changed");
-                    if (itm.Valid())
-                        Console.WriteLine("  Selected: " + itm.Name());
-                    else
-                        Console.WriteLine("  Nothing selected");
-
-                    break;
-                case 2:
-                    Console.WriteLine("Item Moved");
-                    if (itm.Valid())
-                        Console.WriteLine("  Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
-                    else
-                        Console.WriteLine("  This should never happen");
-
-                    break;
-                default:
-                    break;
-            }
-        }
-        Console.WriteLine("Event loop finished");
-        return true;
-    }
 
     /// <summary>
     /// Check if RoboDK was installed from RoboDK's official installer
@@ -2235,6 +2175,101 @@ public class RoboDK
             }
         }
         return serverPortIsOpen;
+    }
+
+    public bool EventsListen()
+    {
+        _COM_EVT = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+        _COM_EVT.SendTimeout = 1000;
+        _COM_EVT.ReceiveTimeout = 1000;
+        try
+        {
+            _COM_EVT.Connect(IP, PORT);
+            if (_COM_EVT.Connected)
+            {
+                _COM_EVT.SendTimeout = _TIMEOUT;
+                _COM_EVT.ReceiveTimeout = _TIMEOUT;
+            }
+        }
+        catch //Exception e)
+        {
+            return false;
+        }
+        _send_Line("RDK_EVT", _COM_EVT);
+        _send_Int(0, _COM_EVT);
+        string response = _recv_Line(_COM_EVT);
+        int ver_evt = _recv_Int(_COM_EVT);
+        int status = _recv_Int(_COM_EVT);
+        if (response != "RDK_EVT" || status != 0)
+        {
+            return false;
+        }
+        _COM_EVT.ReceiveTimeout = 3600 * 1000;
+        //return EventsLoop();
+        return true;
+    }
+
+    /// <summary>
+    /// Wait for a new RoboDK event. This function blocks until a new RoboDK event occurs.
+    /// </summary>
+    /// <param name="evt">Event ID</param>
+    /// <param name="itm">Item that provoked the event (Invalid item if not applicable)</param>
+    /// <returns></returns>
+    public bool WaitForEvent(out int evt, out Item itm)
+    {
+        evt = _recv_Int(_COM_EVT);
+        itm = _recv_Item(_COM_EVT);
+        return true;
+    }
+
+    /// <summary>
+    /// This is a sample function that is executed when a new RoboDK Event occurs.
+    /// </summary>
+    /// <param name="evt"></param>
+    /// <param name="itm"></param>
+    /// <returns></returns>
+    public bool SampleRoboDkEvent(int evt, Item itm)
+    {
+        switch (evt)
+        {
+            case EVENT_SELECTION_CHANGED:
+                Console.WriteLine("Event: Selection changed");
+                if (itm.Valid())
+                    Console.WriteLine("  -> Selected: " + itm.Name());
+                else
+                    Console.WriteLine("  -> Nothing selected");
+
+                break;
+            case EVENT_ITEM_MOVED:
+                Console.WriteLine("Event: Item Moved");
+                if (itm.Valid())
+                    Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
+                else
+                    Console.WriteLine("  -> This should never happen");
+
+                break;
+            default:
+                Console.WriteLine("Unknown event " + evt.ToString());
+                return false;
+                break;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Run the RoboDK event loop. This is loop blocks until RoboDK finishes execution. Run this loop as a separate thread or create a similar loop to customize the event loop behavior.
+    /// </summary>
+    /// <returns></returns>
+    public bool EventsLoop()
+    {
+        Console.WriteLine("Events loop started");
+        while (_COM_EVT.Connected)
+        {
+            WaitForEvent(out int evt, out Item itm);
+            SampleRoboDkEvent(evt, itm);
+        }
+        Console.WriteLine("Event loop finished");
+        return true;
     }
 
 
