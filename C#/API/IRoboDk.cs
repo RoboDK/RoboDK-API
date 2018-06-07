@@ -408,9 +408,9 @@ namespace RoboDk.API
         int SetCollisionActive(CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOn);
 
         /// <summary>
-        ///     Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. This allows altering
-        ///     the collision map for Collision checking.
-        ///     Specify the link id for robots or moving mechanisms (id 0 is the base).
+        /// Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. This allows altering
+        /// the collision map for Collision checking.
+        /// Specify the link id for robots or moving mechanisms (id 0 is the base).
         /// </summary>
         /// <param name="collisionCheck">Set to COLLISION_ON or COLLISION_OFF</param>
         /// <param name="item1">Item 1</param>
@@ -418,8 +418,7 @@ namespace RoboDk.API
         /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
         /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
-        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, Item item1, Item item2, int id1 = 0,
-            int id2 = 0);
+        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, Item item1, Item item2, int id1 = 0, int id2 = 0);
 
         /// <summary>
         /// Returns the number of pairs of objects that are currently in a collision state.
@@ -669,7 +668,6 @@ namespace RoboDk.API
         /// <returns>Returns true if success, false otherwise.</returns>
         bool Cam2DSetParameters(string cameraParameters, long camHandle = 0);
 
-
         /// <summary>
         /// Returns the license string (as shown in the RoboDK main window)
         /// </summary>
@@ -704,12 +702,12 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="x_coord">X coordinate in pixels</param>
         /// <param name="y_coord">Y coordinate in pixels</param>
-        /// <param name="xyz_station"></param>
+        /// <param name="xyz_station">XYZ coordinates in mm (absolute coordinates)</param>
         /// <returns></returns>
         Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null);
 
         /// <summary>
-        /// 
+        /// Add a joint movement to a program
         /// </summary>
         /// <param name="pgm"></param>
         /// <param name="targetName"></param>

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ProjectRoboDK
 {
@@ -930,6 +931,32 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
+
+
+            var stopwatch = new Stopwatch();
+            int ntests = 1000;
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            for (var i = 0; i < ntests; i++)
+            {
+                var robot_name = ROBOT.Name();
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Calling .Name() took {stopwatch.ElapsedMilliseconds*1000/ntests} micro seconds on average");
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            for (var i = 0; i < ntests; i++)
+            {
+                var joints = ROBOT.Joints();
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Calling .Joints() took {stopwatch.ElapsedMilliseconds * 1000 / ntests} micro seconds on average");
+            return;
+
+
+
             RDK.EventsListen();
             RDK.EventsLoop();
 
