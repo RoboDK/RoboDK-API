@@ -85,27 +85,18 @@ namespace RoboDk.API
         /// any programs pending will be generated.
         /// </summary>
         void Disconnect();
-        
+
         /// <summary>
         /// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
         /// </summary>
         /// <returns>True of event connection to RoboDK could be established.</returns>
-        bool EventsListen();
+        IRoboDKEventSource EventsListen();
 
         /// <summary>
         /// Close RoboDK Event channel.
         /// <seealso cref="EventsListen"/>
         /// </summary>
         void EventsListenClose();
-
-        /// <summary>
-        /// Wait for a new RoboDK event. This function blocks until a new RoboDK event occurs.
-        /// </summary>
-        /// <param name="evt">Event ID</param>
-        /// <param name="itm">Item that provoked the event (Invalid item if not applicable)</param>
-        /// <param name="timeout"></param>
-        /// <returns></returns>
-        bool WaitForEvent(out EventType evt, out IItem itm, int timeout = 1000);
 
         /// <summary>
         /// This is a sample function that is executed when a new RoboDK Event occurs.

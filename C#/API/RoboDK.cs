@@ -45,7 +45,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -78,7 +77,7 @@ namespace RoboDk.API
         private bool _disposed;
 
         private Socket _socket; // tcpip com
-        private Socket _socketEvents; // tcpip com for events
+        private RoboDKEventSource _roboDkEventSource;
 
         #endregion
 
@@ -348,7 +347,7 @@ namespace RoboDk.API
             {
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
-
+            
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = ApplicationDir,
@@ -373,6 +372,7 @@ namespace RoboDk.API
 
             return started;
         }
+
         private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
         {
             int sleepTime = 100;
@@ -400,70 +400,49 @@ namespace RoboDk.API
 
         public void EventsListenClose()
         {
-            if (_socketEvents != null)
+            if (_roboDkEventSource != null)
             {
-                _socketEvents.Close();
-                _socketEvents.Dispose();
-                _socketEvents = null;
+                _roboDkEventSource.Close();
+                _roboDkEventSource = null;
             }
         }
 
         /// <inheritdoc />
-        public bool EventsListen()
+        public IRoboDKEventSource EventsListen()
         {
-            if (_socketEvents != null)
+            if (_roboDkEventSource != null)
             {
                 throw new RdkException("event socket already open.");
             }
 
-            _socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-            _socketEvents.SendTimeout = 1000;
-            _socketEvents.ReceiveTimeout = 1000;
+            var socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+            socketEvents.SendTimeout = 1000;
+            socketEvents.ReceiveTimeout = 1000;
             try
             {
-                _socketEvents.Connect(RoboDKServerIpAdress, RoboDKServerPort);
-                if (_socketEvents.Connected)
+                socketEvents.Connect(RoboDKServerIpAdress, RoboDKServerPort);
+                if (socketEvents.Connected)
                 {
-                    _socketEvents.SendTimeout = DefaultSocketTimeoutMilliseconds;
-                    _socketEvents.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                    socketEvents.SendTimeout = DefaultSocketTimeoutMilliseconds;
+                    socketEvents.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
                 }
             }
             catch //Exception e)
             {
-                return false;
+                return null;
             }
-            send_line("RDK_EVT", _socketEvents);
-            send_int(0, _socketEvents);
-            string response = rec_line(_socketEvents);
-            int ver_evt = rec_int(_socketEvents);
-            int status = rec_int(_socketEvents);
+            send_line("RDK_EVT", socketEvents);
+            send_int(0, socketEvents);
+            string response = rec_line(socketEvents);
+            int ver_evt = rec_int(socketEvents);
+            int status = rec_int(socketEvents);
             if (response != "RDK_EVT" || status != 0)
             {
-                return false;
+                return null;
             }
-            _socketEvents.ReceiveTimeout = 3600 * 1000;
-            //return EventsLoop();
-            return true;
-        }
+            socketEvents.ReceiveTimeout = 3600 * 1000;
 
-        /// <inheritdoc />
-        public bool WaitForEvent(out EventType evt, out IItem itm, int timeout)
-        {
-            try
-            {
-                _socketEvents.ReceiveTimeout = timeout;
-                evt = (EventType) rec_int(_socketEvents);
-                itm = rec_item(_socketEvents);
-                return true;
-            }
-            catch (Exception e)
-            {
-                // ignored
-            }
-
-            evt = EventType.ItemMoved;
-            itm = null;
-            return false;
+            return _roboDkEventSource = new RoboDKEventSource(this, socketEvents);
         }
 
         /// <inheritdoc />
@@ -498,15 +477,15 @@ namespace RoboDk.API
         /// <inheritdoc />
         public bool EventsLoop()
         {
-            Console.WriteLine("Events loop started");
-            while (_socketEvents.Connected)
-            {
-                EventType evt;
-                IItem itm;
-                WaitForEvent(out evt, out itm, timeout: 3600 * 1000);
-                SampleRoboDkEvent(evt, itm);
-            }
-            Console.WriteLine("Event loop finished");
+//            Console.WriteLine("Events loop started");
+//            while (_socketEvents.Connected)
+//            {
+//                EventType evt;
+//                IItem itm;
+//                WaitForEvent(out evt, out itm, timeout: 3600 * 1000);
+//                SampleRoboDkEvent(evt, itm);
+//            }
+//            Console.WriteLine("Event loop finished");
             return true;
         }
 
@@ -2156,5 +2135,48 @@ namespace RoboDk.API
 
 
         #endregion
+
+        private sealed class RoboDKEventSource : IRoboDKEventSource
+        {
+            private readonly RoboDK _roboDK;
+            private Socket _socketEvents;
+
+            public RoboDKEventSource(RoboDK roboDK, Socket socketEvents)
+            {
+                _roboDK = roboDK;
+                _socketEvents = socketEvents;
+            }
+
+            public EventResult WaitForEvent(int timeout = 1000)
+            {
+                if (_socketEvents == null)
+                {
+                    throw new RdkException("Event channel has already been closed");
+                }
+
+                try
+                {
+                    _socketEvents.ReceiveTimeout = timeout;
+                    var eventType = (EventType)_roboDK.rec_int(_socketEvents);
+                    var item = _roboDK.rec_item(_socketEvents);
+                    return EventResult.Create(eventType, item);
+                }
+                catch (Exception)
+                {
+                    // Todo: ignored
+                }
+
+                return EventResult.None;
+            }
+
+            public void Close()
+            {
+                if (_socketEvents != null)
+                {
+                    _socketEvents.Close();
+                    _socketEvents = null;
+                }
+            }
+        }
     }
 }
