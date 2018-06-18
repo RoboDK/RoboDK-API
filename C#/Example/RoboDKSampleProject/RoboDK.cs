@@ -4113,8 +4113,45 @@ public class RoboDK
         }
 
 
+        /// <summary>
+        /// Retrieve the currently selected feature for this object (surface, point, line, ...)
+        /// </summary>
+        /// <param name="feature_type">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
+        /// <param name="feature_id">The internal ID to retrieve the raw geometry (use GetPoints)</param>
+        /// <returns>True if the object is selected</returns>
+        public bool SelectedFeature(out int feature_type, out int feature_id)
+        {
+            link._check_connection();
+            link._send_Line("G_ObjSelection");
+            link._send_Item(this);
+            int is_selected = link._recv_Int();
+            feature_type = link._recv_Int();
+            feature_id = link._recv_Int();
+            link._check_status();
+            return is_selected > 0;
+        }
 
         /// <summary>
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// </summary>
+        /// <param name="feature_type">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
+        /// <param name="feature_id">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
+        /// <param name="point_list">The point or a list of points as XYZijk, coordinates are relative to the object (ijk is the normal to the surface)</param>
+        /// <returns>The name of the selected geometry (if applicable)</returns>
+        public string GetPoints(int feature_type, int feature_id, out Mat point_list)
+        {
+            link._check_connection();
+            link._send_Line("G_ObjPoint");
+            link._send_Item(this);
+            link._send_Int(feature_type);
+            link._send_Int(feature_id);
+            point_list = link._recv_Matrix2D();
+            string name = link._recv_Line();
+            link._check_status();
+            return name;
+        }
+
+       /// <summary>
         /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
         /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
@@ -4138,7 +4175,7 @@ public class RoboDK
             link._check_status();
             return program;
         }
-
+        
         //"""Target item calls"""
 
         /// <summary>

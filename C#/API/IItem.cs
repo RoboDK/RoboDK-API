@@ -350,6 +350,23 @@ namespace RoboDk.API
         Mat ProjectPoints(Mat points, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
+        /// Retrieve the currently selected feature for this object (surface, point, line, ...)
+        /// </summary>
+        /// <param name="featureType">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
+        /// <param name="featureId">The internal ID to retrieve the raw geometry (use GetPoints)</param>
+        /// <returns>True if the object is selected</returns>
+        bool SelectedFeature(out ObjectSelectionType featureType, out int featureId);
+
+        /// <summary>
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// </summary>
+        /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
+        /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
+        /// <param name="pointList">The point or a list of points as XYZijk, coordinates are relative to the object (ijk is the normal to the surface)</param>
+        /// <returns>The name of the selected geometry (if applicable)</returns>
+        string GetPoints(ObjectSelectionType featureType, int featureId, out Mat pointList);
+
+        /// <summary>
         /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
         /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.

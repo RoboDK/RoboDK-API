@@ -741,6 +741,51 @@ namespace RoboDk.API
             return Link.ProjectPoints(points, this, projectionType);
         }
 
+
+        /// <summary>
+        /// Retrieve the currently selected feature for this object (surface, point, line, ...)
+        /// </summary>
+        /// <param name="featureType">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
+        /// <param name="featureId">The internal ID to retrieve the raw geometry (use GetPoints)</param>
+        /// <returns>True if the object is selected</returns>
+        public bool SelectedFeature(out ObjectSelectionType featureType, out int featureId)
+        {
+            Link.check_connection();
+            Link.send_line("G_ObjSelection");
+            Link.send_item(this);
+            int isSelected = Link.rec_int();
+            featureType = (ObjectSelectionType)Link.rec_int();
+            featureId = Link.rec_int();
+            Link.check_status();
+            return isSelected > 0;
+        }
+
+        /// <summary>
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// </summary>
+        /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
+        /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
+        /// <param name="pointList">The point or a list of points as XYZijk, coordinates are relative to the object (ijk is the normal to the surface)</param>
+        /// <returns>The name of the selected geometry (if applicable)</returns>
+        public string GetPoints(ObjectSelectionType featureType, int featureId, out Mat pointList)
+        {
+            Link.check_connection();
+            Link.send_line("G_ObjPoint");
+            Link.send_item(this);
+            Link.send_int((int)featureType);
+            Link.send_int(featureId);
+            pointList = Link.rec_matrix();
+            string name = Link.rec_line();
+            Link.check_status();
+            return name;
+        }
+
+
+
+
+
+
+
         /// <summary>
         /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
@@ -1862,13 +1907,13 @@ namespace RoboDk.API
         /// <summary>
         /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         /// </summary>
-        /// <param name="errorMsg">Returns a human readable error message (if any)</param>
-        /// <param name="jointList">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified</param>
-        /// <param name="mmStep">Maximum step in millimeters for linear movements (millimeters)</param>
-        /// <param name="degStep">Maximum step for joint movements (degrees)</param>
-        /// <param name="saveToFile">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
-        /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
-        /// <param name="flags">Reserved for future compatibility</param>
+        /// <param name="error_msg">Returns a human readable error message (if any)</param>
+        /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified</param>
+        /// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
+        /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
+        /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
+        /// <param name="collision_check">Check for collisions: will set to 1 or 0</param>
+        /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations</param>
         /// <param name="timeoutSec"></param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
         public int InstructionListJoints(out string errorMsg,
