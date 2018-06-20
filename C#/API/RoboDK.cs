@@ -1933,15 +1933,29 @@ namespace RoboDk.API
         // sends a 2 dimensional matrix
         internal void send_matrix(Mat mat)
         {
+            var sendBuffer = new byte[mat.Cols * mat.Rows * sizeof(double) /*8*/];
             send_int(mat.Rows);
             send_int(mat.Cols);
+            var index = 0;
             for (var j = 0; j < mat.Cols; j++)
+            {
                 for (var i = 0; i < mat.Rows; i++)
                 {
                     var bytes = BitConverter.GetBytes(mat[i, j]);
-                    Array.Reverse(bytes);
-                    _socket.Send(bytes, 8, SocketFlags.None);
+                    // Convert to big Endian.
+                    // Factor 2 performance gain compared to Array.Reverse(onedouble);
+                    sendBuffer[index++] = bytes[7];
+                    sendBuffer[index++] = bytes[6];
+                    sendBuffer[index++] = bytes[5];
+                    sendBuffer[index++] = bytes[4];
+                    sendBuffer[index++] = bytes[3];
+                    sendBuffer[index++] = bytes[2];
+                    sendBuffer[index++] = bytes[1];
+                    sendBuffer[index++] = bytes[0];
                 }
+            }
+
+            _socket.Send(sendBuffer, sendBuffer.Length, SocketFlags.None);
         }
 
         // receives a 2 dimensional matrix (nxm)
