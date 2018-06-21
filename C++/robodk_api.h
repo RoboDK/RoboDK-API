@@ -143,7 +143,7 @@ class ROBODK Mat : public QMatrix4x4 {
 public:
     Mat();
     Mat(const QMatrix4x4 &matrix);
-    Mat(double nx, double ny, double nz, double ox, double oy, double oz, double ax, double ay, double az, double tx, double ty, double tz);
+    Mat(double nx, double ox, double ax, double tx, double ny, double oy, double ay, double ty, double nz, double oz, double az, double tz);
     ~Mat();
 
     void setVX(double x, double y, double z);
@@ -234,6 +234,7 @@ public:
     Mat ViewPose();
     QString License();
     QList<Item> Selection();
+    Item Popup_ISO9283_CubeProgram(Item *robot);
 
 
 
