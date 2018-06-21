@@ -184,7 +184,6 @@ namespace RoboDk.API
 
         #endregion
 
-
         #region Static Methods
         /// <summary>
         /// Return the list of recently opened files
@@ -218,8 +217,6 @@ namespace RoboDk.API
             return rdk_list;
         }
         #endregion
-
-
 
         #region Public Methods
 
@@ -347,7 +344,13 @@ namespace RoboDk.API
             {
                 ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
             }
-            
+
+            // Validate if executable exists
+            if (!File.Exists(ApplicationDir))
+            {
+                throw new FileNotFoundException(ApplicationDir);
+            }
+
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = ApplicationDir,
@@ -448,6 +451,8 @@ namespace RoboDk.API
         /// <inheritdoc />
         public bool SampleRoboDkEvent(EventType evt, IItem itm)
         {
+            bool eventReceived = true;
+
             switch (evt)
             {
                 case EventType.SelectionChanged:
@@ -458,6 +463,7 @@ namespace RoboDk.API
                         Console.WriteLine("  -> Nothing selected");
 
                     break;
+
                 case EventType.ItemMoved:
                     Console.WriteLine("Event: Item Moved");
                     if (itm.Valid())
@@ -466,26 +472,26 @@ namespace RoboDk.API
                         Console.WriteLine("  -> This should never happen");
 
                     break;
+
                 default:
                     Console.WriteLine("Unknown event " + evt.ToString());
-                    return false;
+                    eventReceived = false;
                     break;
             }
-            return true;
+            return eventReceived;
         }
 
         /// <inheritdoc />
         public bool EventsLoop()
         {
-//            Console.WriteLine("Events loop started");
-//            while (_socketEvents.Connected)
-//            {
-//                EventType evt;
-//                IItem itm;
-//                WaitForEvent(out evt, out itm, timeout: 3600 * 1000);
-//                SampleRoboDkEvent(evt, itm);
-//            }
-//            Console.WriteLine("Event loop finished");
+            Console.WriteLine("Events loop started");
+            var eventSource = EventsListen();
+            while (eventSource.Connected)
+            {
+                EventResult eventResult = eventSource.WaitForEvent(timeout: 3600 * 1000);
+                SampleRoboDkEvent(eventResult.EventType, eventResult.Item);
+            }
+            Console.WriteLine("Event loop finished");
             return true;
         }
 
@@ -2160,6 +2166,8 @@ namespace RoboDk.API
                 _roboDK = roboDK;
                 _socketEvents = socketEvents;
             }
+
+            public bool Connected => _socketEvents.Connected;
 
             public EventResult WaitForEvent(int timeout = 1000)
             {

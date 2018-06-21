@@ -10,6 +10,8 @@ namespace RoboDk.API
     {
         #region Public Methods
 
+        bool Connected { get; }
+
         /// <summary>
         /// Wait for a new RoboDK event. This function blocks until a new RoboDK event occurs.
         /// </summary>
