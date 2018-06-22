@@ -39,26 +39,76 @@
 // ----------------------------------------------------------------------------------------------------------
 
 
+using System;
+using System.Threading;
+using RoboDk.API.Model;
 
-namespace RoboDk.API.Model
+
+namespace RoboDk.API
 {
-    /// <summary>
-    /// Script execution Mode 
-    /// </summary>
-    public enum EventType
+    public class RoboDKEventArgs : EventArgs
     {
-        NoEvent = 0,
+        public EventType RoboDKEvent { get; set; }
+        public IItem RoboDKItem { get; set; }
+    }
 
-        /// <summary>
-        /// One object (Item) has been selected or deselected from the tree or from the screen
-        /// </summary>
-        SelectionChanged = 1,
+    public delegate void RoboDKEventHandler(object sender, RoboDKEventArgs e);
 
-        /// <summary>
-        /// The location of an object, robot or reference frame was moved
-        /// </summary>
-        ItemMoved = 2,
+    public class RoboDKEventListener : IDisposable
+    {
+        public event RoboDKEventHandler RoboDKEventHandler;
 
+        private readonly IRoboDK _rdk;
+        private bool _stopListener;
+        private readonly Thread _eventListenerThread;
+        private readonly ManualResetEvent _syncEvent = new ManualResetEvent(false);
+
+        public RoboDKEventListener(IRoboDK rdk)
+        {
+            _rdk = rdk;
+            _rdk.EventsListen();
+
+            _stopListener = false;
+            _eventListenerThread = new Thread(EventListenerThread);
+            _eventListenerThread.Start();
+        }
+
+        private void EventListenerThread()
+        {
+            while (_stopListener == false)
+            {
+                EventType evt;
+                IItem item;
+                if (_rdk.WaitForEvent(out evt, out item, 1000) == true)
+                {
+                    var eventArgs = new RoboDKEventArgs
+                    {
+                        RoboDKEvent = evt,
+                        RoboDKItem = item
+                    };
+
+                    RoboDKEventHandler?.Invoke(this, eventArgs);
+                }
+            }
+
+            _syncEvent.Set();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _stopListener = true;
+                _syncEvent.WaitOne(1000);
+                _eventListenerThread.Abort();
+                _rdk.EventsListenClose();
+            }
+        }
     }
 }
-

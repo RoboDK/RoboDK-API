@@ -4183,6 +4183,30 @@ public class RoboDK
             return name;
         }
 
+       /// <summary>
+        /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+        /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
+        /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
+        /// </summary>
+        /// <param name="ncfile">path to the NC (G-code/APT/Point cloud) file to load (optional)</param>
+        /// <param name="part_obj">object holding curves or points to automatically set up a curve/point follow project (optional)</param>
+        /// <param name="options">Additional options (optional)</param>
+        /// <returns>Program (null). Use Update() to retrieve the result</returns>
+        public Item setMachiningParameters(string ncfile = "", Item part_obj = null, string options = "")
+        {
+            link._check_connection();
+            link._send_Line("S_MachiningParams");
+            link._send_Item(this);
+            link._send_Line(ncfile);
+            link._send_Item(part_obj);
+            link._send_Line("NO_UPDATE " + options);
+            link._COM.ReceiveTimeout = 3600 * 1000;
+            Item program = link._recv_Item();
+            link._COM.ReceiveTimeout = link._TIMEOUT;
+            double status = link._recv_Int() / 1000.0;
+            link._check_status();
+            return program;
+        }
         
         //"""Target item calls"""
 

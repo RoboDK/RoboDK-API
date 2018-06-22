@@ -57,11 +57,10 @@ namespace RoboDk.API
     ///     Every item has one parent item/node and can have one or more child items/nodes
     ///     RoboLinkItem is a "friend" class of RoboLink.
     /// </summary>
-    public class Item
+    internal class Item : IItem
     {
         #region Fields
 
-        private long _item;
         private readonly ItemType _type;
         private string _name;
 
@@ -69,12 +68,12 @@ namespace RoboDk.API
 
         #region Constructors
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-        public Item(RoboDK connectionLink, long itemPtr = 0, ItemType itemType = ItemType.Any)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public Item(RoboDK connectionLink, long itemId = 0, ItemType itemType = ItemType.Any)
         {
-            _item = itemPtr;
+            ItemId = itemId;
             Link = connectionLink;
             _type = itemType;
         }
@@ -83,22 +82,19 @@ namespace RoboDk.API
 
         #region Properties
 
-        public RoboDK Link { get; private set; }
+        internal RoboDK Link { get; private set; }
+
+        public long ItemId { get; private set; }
 
         #endregion
 
         #region Public Methods
 
-        public long get_item()
-        {
-            return _item;
-        }
-
-        public string ToString2()
+        public override string ToString()
         {
             if (Valid())
             {
-                return $"RoboDK item {_item} of type {_type}";
+                return $"RoboDK item(name:{_name}, id:{ItemId}, type:{_type})";
             }
 
             return "RoboDK item (INVALID)";
@@ -138,14 +134,14 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        ///     Returns an integer that represents the type of the item (robot, object, tool, frame, ...)
-        ///     Compare the returned value to ITEM_CASE_* variables
+        /// Compare this item with other item.
+        /// Return true if they are the same; False otherwise.
         /// </summary>
-        /// <param name="item_other"></param>
-        /// <returns></returns>
-        public bool Equals(Item item_other)
+        /// <param name="otherItem"></param>
+        /// <returns>True if this item and other item is the same RoboDK item.</returns>
+        public bool Equals(IItem otherItem)
         {
-            return _item == item_other._item;
+            return ItemId == otherItem.ItemId;
         }
 
         /// <summary>
@@ -216,7 +212,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             Link.check_status();
-            _item = 0;
+            ItemId = 0;
         }
 
         /// <summary>
@@ -225,7 +221,7 @@ namespace RoboDk.API
         /// <returns>true if valid, false if invalid</returns>
         public bool Valid()
         {
-            if (_item == 0)
+            if (ItemId == 0)
             {
                 return false;
             }
@@ -237,7 +233,7 @@ namespace RoboDk.API
         /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
         /// </summary>
         /// <param name="parent"></param>
-        public void SetParent(Item parent)
+        public void SetParent(IItem parent)
         {
             Link.check_connection();
             Link.send_line("S_Parent");
@@ -251,17 +247,17 @@ namespace RoboDk.API
         ///     Returns a list of the item childs that are attached to the provided item.
         /// </summary>
         /// <returns>item x n -> list of child items</returns>
-        public Item[] Childs()
+        public List<IItem> Childs()
         {
             Link.check_connection();
             var command = "G_Childs";
             Link.send_line(command);
             Link.send_item(this);
             var nitems = Link.rec_int();
-            var itemlist = new Item[nitems];
+            var itemlist = new List<IItem>(nitems);
             for (var i = 0; i < nitems; i++)
             {
-                itemlist[i] = Link.rec_item();
+                itemlist.Add(Link.rec_item());
             }
 
             Link.check_status();
@@ -271,7 +267,7 @@ namespace RoboDk.API
         /// <summary>
         ///     Returns the parent item of this item.
         /// </summary>
-        public Item Parent()
+        public IItem Parent()
         {
             Link.check_connection();
             var command = "G_Parent";
@@ -482,13 +478,13 @@ namespace RoboDk.API
         ///     If "frame" is an item, it links the robot to the frame item. If frame is a pose, it updates the linked pose of the
         ///     robot frame (with respect to the robot reference frame).
         /// </summary>
-        /// <param name="frame_pose">4x4 homogeneous matrix (pose)</param>
-        public void setPoseFrame(Mat frame_pose)
+        /// <param name="framePose"></param>
+        public void SetPoseFrame(Mat framePose)
         {
             Link.check_connection();
             var command = "S_Frame";
             Link.send_line(command);
-            Link.send_pose(frame_pose);
+            Link.send_pose(framePose);
             Link.send_item(this);
             Link.check_status();
         }
@@ -498,13 +494,14 @@ namespace RoboDk.API
         ///     Matrix.
         ///     If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
         /// </summary>
+        /// <param name="frameItem"></param>
         /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-        public void setPoseFrame(Item frame_item)
+        public void SetPoseFrame(IItem frameItem)
         {
             Link.check_connection();
             var command = "S_Frame_ptr";
             Link.send_line(command);
-            Link.send_item(frame_item);
+            Link.send_item(frameItem);
             Link.send_item(this);
             Link.check_status();
         }
@@ -514,13 +511,13 @@ namespace RoboDk.API
         ///     Matrix.
         ///     If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
         /// </summary>
-        /// <param name="tool_pose">4x4 homogeneous matrix (pose)</param>
-        public void setPoseTool(Mat tool_pose)
+        /// <param name="toolPose"></param>
+        public void SetPoseTool(Mat toolPose)
         {
             Link.check_connection();
             var command = "S_Tool";
             Link.send_line(command);
-            Link.send_pose(tool_pose);
+            Link.send_pose(toolPose);
             Link.send_item(this);
             Link.check_status();
         }
@@ -530,13 +527,13 @@ namespace RoboDk.API
         ///     Matrix.
         ///     If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
         /// </summary>
-        /// <param name="tool_item">Tool item</param>
-        public void setPoseTool(Item tool_item)
+        /// <param name="toolItem"></param>
+        public void SetPoseTool(IItem toolItem)
         {
             Link.check_connection();
             var command = "S_Tool_ptr";
             Link.send_line(command);
-            Link.send_item(tool_item);
+            Link.send_item(toolItem);
             Link.send_item(this);
             Link.check_status();
         }
@@ -546,7 +543,7 @@ namespace RoboDk.API
         ///     station origin.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-        public void setPoseAbs(Mat pose)
+        public void SetPoseAbs(Mat pose)
         {
             Link.check_connection();
             var command = "S_Hlocal_Abs";
@@ -586,7 +583,7 @@ namespace RoboDk.API
             Link.check_connection();
             if (fromcolor == null)
             {
-                fromcolor = new double[] { 0, 0, 0, 0 };
+                fromcolor = new double[] {0, 0, 0, 0};
                 tolerance = 2;
             }
 
@@ -617,9 +614,10 @@ namespace RoboDk.API
             Link.check_connection();
             if (fromcolor.HasValue == false)
             {
-                fromcolor = new Color() {A=0, R=0, G=0, B=0};
+                fromcolor = new Color {A = 0, R = 0, G = 0, B = 0};
                 tolerance = 2;
             }
+
             double[] fromcolorArray = fromcolor.Value.ToRoboDKColorArray();
 
             Link.check_color(tocolorArray);
@@ -666,7 +664,7 @@ namespace RoboDk.API
             // saturate the alpha channel so it remains between 0 and 1.
             alpha = Math.Min(1, Math.Max(0, alpha));
             Link.check_connection();
-            double[] tocolorArray = { -1,-1,-1, alpha};
+            double[] tocolorArray = {-1, -1, -1, alpha};
             Link.send_line("S_Color");
             Link.send_item(this);
             Link.send_array(tocolorArray);
@@ -722,7 +720,7 @@ namespace RoboDk.API
         ///     point normal and recalculate the normal vector on the surface projected.
         /// </param>
         /// <returns>returns the object where the curve was added or null if failed</returns>
-        public Item AddCurve(Mat curvePoints, bool addToRef = false,
+        public IItem AddCurve(Mat curvePoints, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
             return Link.AddCurve(curvePoints, this, addToRef, projectionType);
@@ -747,36 +745,36 @@ namespace RoboDk.API
         /// <summary>
         /// Retrieve the currently selected feature for this object (surface, point, line, ...)
         /// </summary>
-        /// <param name="feature_type">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
-        /// <param name="feature_id">The internal ID to retrieve the raw geometry (use GetPoints)</param>
+        /// <param name="featureType">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
+        /// <param name="featureId">The internal ID to retrieve the raw geometry (use GetPoints)</param>
         /// <returns>True if the object is selected</returns>
-        public bool SelectedFeature(out int feature_type, out int feature_id)
+        public bool SelectedFeature(out ObjectSelectionType featureType, out int featureId)
         {
             Link.check_connection();
             Link.send_line("G_ObjSelection");
             Link.send_item(this);
-            int is_selected = Link.rec_int();
-            feature_type = Link.rec_int();
-            feature_id = Link.rec_int();
+            int isSelected = Link.rec_int();
+            featureType = (ObjectSelectionType)Link.rec_int();
+            featureId = Link.rec_int();
             Link.check_status();
-            return is_selected > 0;
+            return isSelected > 0;
         }
 
         /// <summary>
         /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
         /// </summary>
-        /// <param name="feature_type">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
-        /// <param name="feature_id">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
-        /// <param name="point_list">The point or a list of points as XYZijk, coordinates are relative to the object (ijk is the normal to the surface)</param>
+        /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
+        /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
+        /// <param name="pointList">The point or a list of points as XYZijk, coordinates are relative to the object (ijk is the normal to the surface)</param>
         /// <returns>The name of the selected geometry (if applicable)</returns>
-        public string GetPoints(int feature_type, int feature_id, out Mat point_list)
+        public string GetPoints(ObjectSelectionType featureType, int featureId, out Mat pointList)
         {
             Link.check_connection();
             Link.send_line("G_ObjPoint");
             Link.send_item(this);
-            Link.send_int(feature_type);
-            Link.send_int(feature_id);
-            point_list = Link.rec_matrix();
+            Link.send_int((int)featureType);
+            Link.send_int(featureId);
+            pointList = Link.rec_matrix();
             string name = Link.rec_line();
             Link.check_status();
             return name;
@@ -794,19 +792,19 @@ namespace RoboDk.API
         /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
         /// </summary>
         /// <param name="ncfile">path to the NC (G-code/APT/Point cloud) file to load (optional)</param>
-        /// <param name="part_obj">object holding curves or points to automatically set up a curve/point follow project (optional)</param>
+        /// <param name="partObj"></param>
         /// <param name="options">Additional options (optional)</param>
         /// <returns>Program (null). Use Update() to retrieve the result</returns>
-        public Item setMachiningParameters(string ncfile = "", Item part_obj = null, string options = "")
+        public IItem SetMachiningParameters(string ncfile = "", IItem partObj = null, string options = "")
         {
             Link.check_connection();
             Link.send_line("S_MachiningParams");
             Link.send_item(this);
             Link.send_line(ncfile);
-            Link.send_item(part_obj);
+            Link.send_item(partObj);
             Link.send_line("NO_UPDATE " + options);
             Link.ReceiveTimeout = 3600 * 1000;
-            Item program = Link.rec_item();
+            IItem program = Link.rec_item();
             Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             double status = Link.rec_int() / 1000.0;
             Link.check_status();
@@ -818,7 +816,7 @@ namespace RoboDk.API
         /// <summary>
         ///     Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
         /// </summary>
-        public void setAsCartesianTarget()
+        public void SetAsCartesianTarget()
         {
             Link.check_connection();
             var command = "S_Target_As_RT";
@@ -831,7 +829,7 @@ namespace RoboDk.API
         ///     Sets a target as a joint target. A joint target moves to a joints position without regarding the cartesian
         ///     coordinates.
         /// </summary>
-        public void setAsJointTarget()
+        public void SetAsJointTarget()
         {
             Link.check_connection();
             var command = "S_Target_As_JT";
@@ -881,13 +879,13 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="linkId">link index(0 for the robot base, 1 for the first link, ...)</param>
         /// <returns></returns>
-        public Item ObjectLink(int linkId = 0)
+        public IItem ObjectLink(int linkId = 0)
         {
             Link.check_connection();
             Link.send_line("G_LinkObjId");
             Link.send_item(this);
             Link.send_int(linkId);
-            Item item = Link.rec_item();
+            IItem item = Link.rec_item();
             Link.check_status();
             return item;
         }
@@ -897,13 +895,13 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="typeLinked">type of linked object to retrieve</param>
         /// <returns></returns>
-        public Item GetLink(ItemType typeLinked = ItemType.Robot)
+        public IItem GetLink(ItemType typeLinked = ItemType.Robot)
         {
             Link.check_connection();
             Link.send_line("G_LinkType");
             Link.send_item(this);
             Link.send_int((int) typeLinked);
-            Item item = Link.rec_item();
+            IItem item = Link.rec_item();
             Link.check_status();
             return item;
         }
@@ -913,7 +911,7 @@ namespace RoboDk.API
         ///     preferred joints (configuration) to go to that cartesian position.
         /// </summary>
         /// <param name="joints"></param>
-        public void setJoints(double[] joints)
+        public void SetJoints(double[] joints)
         {
             Link.check_connection();
             var command = "S_Thetas";
@@ -926,16 +924,16 @@ namespace RoboDk.API
         /// <summary>
         ///     Returns the joint limits of a robot
         /// </summary>
-        /// <param name="lower_limits"></param>
-        /// <param name="upper_limits"></param>
-        public void JointLimits(out double[] lower_limits, out double[] upper_limits)
+        /// <param name="lowerLlimits"></param>
+        /// <param name="upperLimits"></param>
+        public void JointLimits(out double[] lowerLlimits, out double[] upperLimits)
         {
             Link.check_connection();
             var command = "G_RobLimits";
             Link.send_line(command);
             Link.send_item(this);
-            lower_limits = Link.rec_array();
-            upper_limits = Link.rec_array();
+            lowerLlimits = Link.rec_array();
+            upperLimits = Link.rec_array();
             var joints_type = Link.rec_int() / 1000.0;
             Link.check_status();
         }
@@ -946,7 +944,7 @@ namespace RoboDk.API
         ///     If the robot is not provided, the first available robot will be chosen automatically.
         /// </summary>
         /// <param name="robot">Robot item</param>
-        public void setRobot(Item robot = null)
+        public void SetRobot(IItem robot = null)
         {
             Link.check_connection();
             var command = "S_Robot";
@@ -963,9 +961,9 @@ namespace RoboDk.API
         ///     of the robot frame.
         /// </summary>
         /// <param name="frame">item/pose -> frame item or 4x4 Matrix (pose of the reference frame)</param>
-        public void setFrame(Item frame)
+        public void SetFrame(IItem frame)
         {
-            setPoseFrame(frame);
+            SetPoseFrame(frame);
         }
 
         /// <summary>
@@ -975,9 +973,9 @@ namespace RoboDk.API
         ///     of the robot frame.
         /// </summary>
         /// <param name="frame">item/pose -> frame item or 4x4 Matrix (pose of the reference frame)</param>
-        public void setFrame(Mat frame)
+        public void SetFrame(Mat frame)
         {
-            setPoseFrame(frame);
+            SetPoseFrame(frame);
         }
 
         /// <summary>
@@ -987,9 +985,9 @@ namespace RoboDk.API
         ///     the robot tool.
         /// </summary>
         /// <param name="tool">item/pose -> tool item or 4x4 Matrix (pose of the tool frame)</param>
-        public void setTool(Item tool)
+        public void SetTool(IItem tool)
         {
-            setPoseTool(tool);
+            SetPoseTool(tool);
         }
 
         /// <summary>
@@ -999,25 +997,25 @@ namespace RoboDk.API
         ///     the robot tool.
         /// </summary>
         /// <param name="tool">item/pose -> tool item or 4x4 Matrix (pose of the tool frame)</param>
-        public void setTool(Mat tool)
+        public void SetTool(Mat tool)
         {
-            setPoseTool(tool);
+            SetPoseTool(tool);
         }
 
         /// <summary>
         ///     Adds an empty tool to the robot provided the tool pose (4x4 Matrix) and the tool name.
         /// </summary>
-        /// <param name="tool_pose">pose -> TCP as a 4x4 Matrix (pose of the tool frame)</param>
-        /// <param name="tool_name">New tool name</param>
+        /// <param name="toolPose"></param>
+        /// <param name="toolName"></param>
         /// <returns>new item created</returns>
-        public Item AddTool(Mat tool_pose, string tool_name = "New TCP")
+        public IItem AddTool(Mat toolPose, string toolName = "New TCP")
         {
             Link.check_connection();
             var command = "AddToolEmpty";
             Link.send_line(command);
             Link.send_item(this);
-            Link.send_pose(tool_pose);
-            Link.send_line(tool_name);
+            Link.send_pose(toolPose);
+            Link.send_line(toolName);
             var newtool = Link.rec_item();
             Link.check_status();
             return newtool;
@@ -1097,15 +1095,15 @@ namespace RoboDk.API
         /// <summary>
         ///     Connect to a real robot using the robot driver.
         /// </summary>
-        /// <param name="robot_ip">IP of the robot to connect. Leave empty to use the one defined in RoboDK</param>
+        /// <param name="robotIp">IP of the robot to connect. Leave empty to use the one defined in RoboDK</param>
         /// <returns>status -> true if connected successfully, false if connection failed</returns>
-        public bool Connect(string robot_ip = "")
+        public bool Connect(string robotIp = "")
         {
             Link.check_connection();
             var command = "Connect";
             Link.send_line(command);
             Link.send_item(this);
-            Link.send_line(robot_ip);
+            Link.send_line(robotIp);
             var status = Link.rec_int();
             Link.check_status();
             return status != 0;
@@ -1135,11 +1133,11 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
         /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
-        public void MoveJ(Item itemtarget, bool blocking = true)
+        public void MoveJ(IItem itemtarget, bool blocking = true)
         {
             if (itemtarget.GetItemType() == ItemType.Program)
             {
-                addMoveJ(itemtarget);
+                AddMoveJ(itemtarget);
             }
             else
             {
@@ -1181,11 +1179,11 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
         /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
-        public void MoveL(Item itemtarget, bool blocking = true)
+        public void MoveL(IItem itemtarget, bool blocking = true)
         {
             if (itemtarget.GetItemType() == ItemType.Program)
             {
-                addMoveL(itemtarget);
+                AddMoveL(itemtarget);
             }
             else
             {
@@ -1231,7 +1229,7 @@ namespace RoboDk.API
         ///     blocking -> True if we want the instruction to block until the robot finished the movement
         ///     (default=true)
         /// </param>
-        public void MoveC(Item itemtarget1, Item itemtarget2, bool blocking = true)
+        public void MoveC(IItem itemtarget1, IItem itemtarget2, bool blocking = true)
         {
             Link.moveC_private(itemtarget1, null, null, itemtarget2, null, null, this, blocking);
         }
@@ -1611,7 +1609,7 @@ namespace RoboDk.API
         /// <param name="blocking">True if blocking, 0 if it is a non blocking executable trigger</param>
         /// <param name="cmd_run_on_robot">Command to run through the driver when connected to the robot</param>
         /// :param name: digital input (string or number)
-        public void customInstruction(string name, string path_run, string path_icon = "", bool blocking = true,
+        public void AddCustomInstruction(string name, string path_run, string path_icon = "", bool blocking = true,
             string cmd_run_on_robot = "")
         {
             Link.check_connection();
@@ -1630,7 +1628,7 @@ namespace RoboDk.API
         ///     Adds a new robot move joint instruction to a program. Obsolete. Use MoveJ instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
-        public void addMoveJ(Item itemtarget)
+        public void AddMoveJ(IItem itemtarget)
         {
             Link.check_connection();
             var command = "Add_INSMOVE";
@@ -1645,7 +1643,7 @@ namespace RoboDk.API
         ///     Adds a new robot move linear instruction to a program. Obsolete. Use MoveL instead.
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
-        public void addMoveL(Item itemtarget)
+        public void AddMoveL(IItem itemtarget)
         {
             Link.check_connection();
             var command = "Add_INSMOVE";
@@ -1847,7 +1845,6 @@ namespace RoboDk.API
         }
 
 
-
         /// <summary>
         /// Returns a list of joints representing the movements for a specific program. 
         /// Linear moves are rounded according to the smoothing parameter set inside the program.
@@ -1873,26 +1870,27 @@ namespace RoboDk.API
 
             string errorMessage;
             Mat jointList;
-            result.ErrorCode = InstructionListJoints(out errorMessage, out jointList, mmStep, degStep, saveToFile, collisionCheck,
+            result.ErrorCode = InstructionListJoints(out errorMessage, out jointList, mmStep, degStep, saveToFile,
+                collisionCheck,
                 flags, timeoutSec);
             result.ErrorMessage = errorMessage;
 
             int numberOfJoints = jointList.Rows - 4;
             for (var colId = 0; colId < jointList.Cols; colId++)
             {
-                var joints = new double[numberOfJoints]; 
+                var joints = new double[numberOfJoints];
                 for (var rowId = 0; rowId < numberOfJoints; rowId++)
                 {
                     joints[rowId] = jointList[rowId, colId];
                 }
 
-                int jointError = (int)jointList[numberOfJoints, colId];
-                ErrorPathType errorType = (ErrorPathType)Convert.ToUInt32(jointError.ToString(), 2);
+                int jointError = (int) jointList[numberOfJoints, colId];
+                ErrorPathType errorType = (ErrorPathType) Convert.ToUInt32(jointError.ToString(), 2);
                 var maxLinearStep = jointList[numberOfJoints + 1, colId];
                 var maxJointStep = jointList[numberOfJoints + 2, colId];
-                var moveId = (int)jointList[numberOfJoints + 3, colId];
+                var moveId = (int) jointList[numberOfJoints + 3, colId];
                 result.JointList.Add(
-                    new InstructionListJointsResult.JointsResult()
+                    new InstructionListJointsResult.JointsResult
                     {
                         Joints = joints,
                         Error = errorType,
@@ -1902,6 +1900,7 @@ namespace RoboDk.API
                     }
                 );
             }
+
             return result;
         }
 

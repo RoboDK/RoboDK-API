@@ -75,3 +75,13 @@ RoboDK Api Changelog-History
 		ShowTargets()
 
 	Changes in GetLicense() and renaming of internal SetConnectionParameter() -> VerifyConnection()
+	
+-----------------------------------------------------
+
+18.6.2018
+    New Api Functions:
+	
+	Item.cs
+        bool SelectedFeature(out ObjectSelectionType featureType, out int featureId);
+        string GetPoints(ObjectSelectionType featureType, int featureId, out Mat pointList);
+
