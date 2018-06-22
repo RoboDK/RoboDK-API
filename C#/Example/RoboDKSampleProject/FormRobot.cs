@@ -932,7 +932,12 @@ namespace ProjectRoboDK
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
 
+            RDK.EventsListen();
+            RDK.EventsLoop();
+            return;
 
+
+            // API communication speed tests
             var stopwatch = new Stopwatch();
             int ntests = 1000;
 
