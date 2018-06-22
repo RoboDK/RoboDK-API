@@ -4891,7 +4891,7 @@ public class RoboDK
         /// </summary>
         /// <param name="code"><string of the code or program to run/param>
         /// <param name="run_type">INSTRUCTION_* variable to specify if the code is a progra</param>
-        public int RunCodeCustom(string code, int run_type = INSTRUCTION_CALL_PROGRAM)
+        public int RunInstruction(string code, int run_type = INSTRUCTION_CALL_PROGRAM)
         {
             link._check_connection();
             link._send_Line("RunCode2");
@@ -4901,6 +4901,16 @@ public class RoboDK
             int progstatus = link._recv_Int();
             link._check_status();
             return progstatus;
+        }
+
+        /// <summary>
+        /// (obsolete, use RunInstruction instead). Adds a program call, code, message or comment inside a program
+        /// </summary>
+        /// <param name="code"><string of the code or program to run/param>
+        /// <param name="run_type">INSTRUCTION_* variable to specify if the code is a progra</param>
+        public int RunCodeCustom(string code, int run_type = INSTRUCTION_CALL_PROGRAM)
+        {
+            return RunInstruction(code, run_type);
         }
 
         /// <summary>

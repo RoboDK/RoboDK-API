@@ -558,14 +558,12 @@ namespace ProjectRoboDK
             // hook window pointer to the integrated panel
             SetParent(RDK.PROCESS.MainWindowHandle, panel_rdk.Handle);
 
-            //RDK.setWindowState(RoboDK.WINDOWSTATE_SHOW); // shows if it was hidden
-            RDK.setWindowState(RoboDK.WINDOWSTATE_CINEMA); // sets cinema mode (no toolbar, no title bar)
-            RDK.setWindowState(RoboDK.WINDOWSTATE_MAXIMIZED); // maximizes the screen
+            //RDK.setWindowState(RoboDK.WINDOWSTATE_SHOW); // show RoboDK window if it was hidden
+            RDK.setWindowState(RoboDK.WINDOWSTATE_CINEMA); // sets cinema mode (remove the menu, the toolbar, the title bar and the status bar)
+            RDK.setWindowState(RoboDK.WINDOWSTATE_MAXIMIZED); // maximizes the screen            
 
             // make form height larger
-            this.Size = new Size(this.Size.Width, 700); 
-                   
-            // Alternatively: RDK.setWindowState(RoboDK.WINDOWSTATE_SHOW);
+            this.Size = new Size(this.Size.Width, 700);
         }
 
 
@@ -931,66 +929,18 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
-
-            RDK.EventsListen();
-            RDK.EventsLoop();
-            return;
-
-
-            // API communication speed tests
-            var stopwatch = new Stopwatch();
-            int ntests = 1000;
-
-            stopwatch.Reset();
-            stopwatch.Start();
-            for (var i = 0; i < ntests; i++)
-            {
-                var robot_name = ROBOT.Name();
-            }
-            stopwatch.Stop();
-            Console.WriteLine($"Calling .Name() took {stopwatch.ElapsedMilliseconds*1000/ntests} micro seconds on average");
-
-            stopwatch.Reset();
-            stopwatch.Start();
-            for (var i = 0; i < ntests; i++)
-            {
-                var joints = ROBOT.Joints();
-            }
-            stopwatch.Stop();
-            Console.WriteLine($"Calling .Joints() took {stopwatch.ElapsedMilliseconds * 1000 / ntests} micro seconds on average");
-            return;
-
-
-
-            RDK.EventsListen();
-            RDK.EventsLoop();
-
-
-            RDK.WaitForEvent(out int evt, out RoboDK.Item itm);
-            RDK.SampleRoboDkEvent(evt, itm);
-            return;
-
-
             if (!Check_ROBOT()) { return; }
-
-            //RDK.EventsListen();
-            //return;
-            
-             /* if (RDK.Connected())
-             {
-                 RDK.CloseRoboDK();
-             }*/
 
             int n_sides = 6;
 
             Mat pose_ref = ROBOT.Pose();
 
             // Set the simulation speed (ratio = real time / simulated time)
-            RDK.setSimulationSpeed(5); // 1 second of the simulator equals 1 second in real time
+            // 1 second of the simulator equals 5 second in real time
+            RDK.setSimulationSpeed(5); 
 
             try
             {
-
                 // retrieve the reference frame and the tool frame (TCP)
                 Mat frame = ROBOT.PoseFrame();
                 Mat tool = ROBOT.PoseTool();
@@ -1019,6 +969,48 @@ namespace ProjectRoboDK
                 notifybar.Text = "Failed to complete the movement: " + rdkex.Message;
             }
 
+            return;
+
+
+
+
+
+            RDK.EventsListen();
+            RDK.EventsLoop();
+            return;
+
+
+            // API communication speed tests
+            var stopwatch = new Stopwatch();
+            int ntests = 1000;
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            for (var i = 0; i < ntests; i++)
+            {
+                var robot_name = ROBOT.Name();
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Calling .Name() took {stopwatch.ElapsedMilliseconds * 1000 / ntests} micro seconds on average");
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            for (var i = 0; i < ntests; i++)
+            {
+                var joints = ROBOT.Joints();
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Calling .Joints() took {stopwatch.ElapsedMilliseconds * 1000 / ntests} micro seconds on average");
+            return;
+
+
+
+            RDK.EventsListen();
+            RDK.EventsLoop();
+
+
+            RDK.WaitForEvent(out int evt, out RoboDK.Item itm);
+            RDK.SampleRoboDkEvent(evt, itm);
             return;
 
             //--------------------------------------------------
