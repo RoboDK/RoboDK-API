@@ -283,7 +283,7 @@ public class Mat // simple matrix class for homogeneous operations
         {
             return null;
         }
-        return transl(xyzzyz[0], xyzzyz[1], xyzzyz[2]) * rotz(xyzzyz[3]*Math.PI / 180.0) * roty(xyzzyz[4] * Math.PI / 180.0) * rotz(xyzzyz[5] * Math.PI / 180.0);
+        return transl(xyzzyz[0], xyzzyz[1], xyzzyz[2]) * rotz(xyzzyz[3] * Math.PI / 180.0) * roty(xyzzyz[4] * Math.PI / 180.0) * rotz(xyzzyz[5] * Math.PI / 180.0);
     }
     /// <summary>
     /// Calculates the equivalent position and euler angles ([x,y,z,rx,ry,rz] array) of a pose 
@@ -1271,45 +1271,45 @@ public class RoboDK
     public const int FLAG_ITEM_ALL = 64 + 32 + 8 + 4 + 2 + 1;
 
     // Robot types
-    public const int MAKE_ROBOT_1R=1;
-    public const int MAKE_ROBOT_2R=2;
-    public const int MAKE_ROBOT_3R=3;
-    public const int MAKE_ROBOT_1T=4;
-    public const int MAKE_ROBOT_2T=5;
-    public const int MAKE_ROBOT_3T=6;
-    public const int MAKE_ROBOT_6DOF=7;
-    public const int MAKE_ROBOT_7DOF=8;
+    public const int MAKE_ROBOT_1R = 1;
+    public const int MAKE_ROBOT_2R = 2;
+    public const int MAKE_ROBOT_3R = 3;
+    public const int MAKE_ROBOT_1T = 4;
+    public const int MAKE_ROBOT_2T = 5;
+    public const int MAKE_ROBOT_3T = 6;
+    public const int MAKE_ROBOT_6DOF = 7;
+    public const int MAKE_ROBOT_7DOF = 8;
     public const int MAKE_ROBOT_SCARA = 9;
 
     // Path Error bit mask
-    public const int ERROR_KINEMATIC = 0b001;          // One or more points is not reachable
-    public const int ERROR_PATH_LIMIT = 0b010;         // The path reaches the limit of joint axes
-    public const int ERROR_PATH_SINGULARITY = 0b100;   // The robot reached a singularity point
-    public const int ERROR_PATH_NEARSINGULARITY = 0b1000;// The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
-    public const int ERROR_COLLISION = 0b100000;       // Collision detected
+    public const int ERROR_KINEMATIC = 1;          // One or more points is not reachable
+    public const int ERROR_PATH_LIMIT = 10;         // The path reaches the limit of joint axes
+    public const int ERROR_PATH_SINGULARITY = 100;   // The robot reached a singularity point
+    public const int ERROR_PATH_NEARSINGULARITY = 1000;// The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
+    public const int ERROR_COLLISION = 100000;       // Collision detected
 
     // Interactive selection option (for 3D mouse behavior and setInteractiveMode)
-    public const int SELECT_NONE     =0;
-    public const int SELECT_RECTANGLE=1;
-    public const int SELECT_ROTATE   =2;
-    public const int SELECT_ZOOM     =3;
-    public const int SELECT_PAN      =4;
-    public const int SELECT_MOVE     =5;
+    public const int SELECT_NONE = 0;
+    public const int SELECT_RECTANGLE = 1;
+    public const int SELECT_ROTATE = 2;
+    public const int SELECT_ZOOM = 3;
+    public const int SELECT_PAN = 4;
+    public const int SELECT_MOVE = 5;
     public const int SELECT_MOVE_SHIFT = 6;
 
     // Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
-    public const int DISPLAY_REF_DEFAULT =     -1;
-    public const int DISPLAY_REF_NONE    =      0;
-    public const int DISPLAY_REF_TX  =       0b001;
-    public const int DISPLAY_REF_TY  =       0b010;
-    public const int DISPLAY_REF_TZ  =       0b100;
-    public const int DISPLAY_REF_RX  =    0b001000;
-    public const int DISPLAY_REF_RY  =    0b010000;
-    public const int DISPLAY_REF_RZ  =    0b100000;
-    public const int DISPLAY_REF_PXY = 0b001000000;
-    public const int DISPLAY_REF_PXZ = 0b010000000;
-    public const int DISPLAY_REF_PYZ = 0b100000000;
-    public const int DISPLAY_REF_ALL = 0b111111111;
+    public const int DISPLAY_REF_DEFAULT = -1;
+    public const int DISPLAY_REF_NONE = 0;
+    public const int DISPLAY_REF_TX = 1;
+    public const int DISPLAY_REF_TY = 2;
+    public const int DISPLAY_REF_TZ = 4;
+    public const int DISPLAY_REF_RX = 8;
+    public const int DISPLAY_REF_RY = 16;
+    public const int DISPLAY_REF_RZ = 32;
+    public const int DISPLAY_REF_PXY = 64;
+    public const int DISPLAY_REF_PXZ = 128;
+    public const int DISPLAY_REF_PYZ = 256;
+    public const int DISPLAY_REF_ALL = 511;
 
     public const int EVENT_SELECTION_CHANGED = 1;
     public const int EVENT_ITEM_MOVED = 2;
@@ -1445,11 +1445,11 @@ public class RoboDK
 
         line.Replace('\n', ' ');// one new line at the end only!
         byte[] data = System.Text.Encoding.UTF8.GetBytes(line + "\n");
-        com.Send(data);        
+        com.Send(data);
     }
 
     string _recv_Line(Socket com = null)
-    {   
+    {
         if (com == null)
             com = _COM;
 
@@ -1686,13 +1686,15 @@ public class RoboDK
     {
         double[] arraydbl = _recv_Array();
         List<double> listdbl = new List<double>();
-        foreach (double dbl in arraydbl) {
+        foreach (double dbl in arraydbl)
+        {
             listdbl.Add(dbl);
         }
         return listdbl;
     }
 
-    // sends a 2 dimensional matrix
+    // sends a 2 dimensional matrix (old version, slow)
+    /*
     void _send_Matrix2D(Mat mat)
     {
         _send_Int(mat.rows);
@@ -1707,6 +1709,32 @@ public class RoboDK
             }
         }
 
+    }*/
+    void _send_Matrix2D(Mat mat)
+    {
+        var sendBuffer = new byte[mat.cols * mat.rows * sizeof(double)];
+        _send_Int(mat.rows);
+        _send_Int(mat.cols);
+        var index = 0;
+        for (var j = 0; j < mat.cols; j++)
+        {
+            for (var i = 0; i < mat.rows; i++)
+            {
+                var bytes = BitConverter.GetBytes(mat[i, j]);
+                // Convert to big Endian.
+                // Factor 2 performance gain compared to Array.Reverse(onedouble);
+                sendBuffer[index++] = bytes[7];
+                sendBuffer[index++] = bytes[6];
+                sendBuffer[index++] = bytes[5];
+                sendBuffer[index++] = bytes[4];
+                sendBuffer[index++] = bytes[3];
+                sendBuffer[index++] = bytes[2];
+                sendBuffer[index++] = bytes[1];
+                sendBuffer[index++] = bytes[0];
+            }
+        }
+
+        _COM.Send(sendBuffer, sendBuffer.Length, SocketFlags.None);
     }
 
     // receives a 2 dimensional matrix (nxm)
@@ -1854,7 +1882,8 @@ public class RoboDK
     {
         string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
         string str = "";
-        if (File.Exists(ini_file)) {
+        if (File.Exists(ini_file))
+        {
             foreach (string line in File.ReadLines(ini_file))
             {
                 if (line.Contains("RecentFileList="))
@@ -2087,7 +2116,7 @@ public class RoboDK
                 };
                 PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
-                
+
                 // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0. Warning! This poses some issues when reading STEP files. 
                 // They generate a lot of STDOUT and the buffer may have to be emptied.
                 string line = "";
@@ -2269,7 +2298,9 @@ public class RoboDK
         Console.WriteLine("Events loop started");
         while (_COM_EVT.Connected)
         {
-            WaitForEvent(out int evt, out Item itm);
+            int evt;
+            Item itm;
+            WaitForEvent(out evt, out itm);
             SampleRoboDkEvent(evt, itm);
         }
         Console.WriteLine("Event loop finished");
@@ -2541,8 +2572,8 @@ public class RoboDK
         _send_Line(filename);
         _send_Item(parent);
         _COM.ReceiveTimeout = 3600 * 1000;
-        Item newitem = _recv_Item();    
-        _COM.ReceiveTimeout = _TIMEOUT;        
+        Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
         _check_status();
         return newitem;
     }
@@ -2567,7 +2598,7 @@ public class RoboDK
     /// Add a new empty station. It returns the station created.
     /// </summary>
     /// <param name="name"></param>
-    public Item AddStation(string name= "New Station")
+    public Item AddStation(string name = "New Station")
     {
         _check_connection();
         _send_Line("NewStation");
@@ -2901,7 +2932,7 @@ public class RoboDK
         _send_Line("Collision_Items");
         int nitems = _recv_Int();
         List<Item> item_list = new List<Item>();
-        for (int i=0; i<nitems; i++)
+        for (int i = 0; i < nitems; i++)
         {
             item_list.Add(_recv_Item());
             int link_id = _recv_Int();//link id for robot items (ignored)
@@ -3533,7 +3564,7 @@ public class RoboDK
     /// <param name="default_ref_flags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
     /// <param name="custom_items">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
     /// <param name="custom_ref_flags">Provide a matching list of flags to customize the movement behavior for specific items</param>
-    public void SetInteractiveMode(int mode_type=SELECT_MOVE, int default_ref_flags = DISPLAY_REF_DEFAULT, List<Item> custom_items=null, List<int> custom_ref_flags=null)
+    public void SetInteractiveMode(int mode_type = SELECT_MOVE, int default_ref_flags = DISPLAY_REF_DEFAULT, List<Item> custom_items = null, List<int> custom_ref_flags = null)
     {
         _check_connection();
         _send_Line("S_InteractiveMode");
@@ -3542,11 +3573,12 @@ public class RoboDK
         if (custom_items == null || custom_ref_flags == null)
         {
             _send_Int(-1);
-        } else
+        }
+        else
         {
             int n_custom = Math.Min(custom_items.Count, custom_ref_flags.Count);
             _send_Int(n_custom);
-            for (int i=0; i<n_custom; i++)
+            for (int i = 0; i < n_custom; i++)
             {
                 _send_Item(custom_items[i]);
                 _send_Int(custom_ref_flags[i]);
@@ -3564,7 +3596,7 @@ public class RoboDK
     /// <param name="y_coord">Y coordinate in pixels</param>
     /// <param name="xyz_station"></param>
     /// <returns></returns>
-    public Item GetCursorXYZ(int x_coord=-1, int y_coord = -1, List<double> xyz_station=null)
+    public Item GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null)
     {
         _check_connection();
         _send_Line("Proj2d3d");
@@ -3719,7 +3751,7 @@ public class RoboDK
             link._send_Item(this);
             link._send_Item(parent);
             link._check_status();
-        }        
+        }
 
         ////// add more methods
 
@@ -4735,7 +4767,7 @@ public class RoboDK
         /// <param name="filename">File path of the program</param>
         /// <param name="run_mode">RUNMODE_MAKE_ROBOTPROG to generate the program file.Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.</param>
         /// <returns>Transfer succeeded is True if there was a successful program transfer (if RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START are used)</returns>
-        public bool MakeProgram(string filename="", int run_mode = RUNMODE_MAKE_ROBOTPROG)
+        public bool MakeProgram(string filename = "", int run_mode = RUNMODE_MAKE_ROBOTPROG)
         {
             link._check_connection();
             link._send_Line("MakeProg2");
