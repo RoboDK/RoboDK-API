@@ -2104,9 +2104,8 @@ public class RoboDK
 
                 //PROCESS = System.Diagnostics.Process.Start(APPLICATION_DIR, arguments);
                 //connected = WaitForTcpServerPort(PORT_START, 10000);
-
                 //PROCESS.WaitForInputIdle(); // only works if RoboDK is displayed
-
+                //ARGUMENTS = ARGUMENTS + " -platform windows:dpiawareness=2";
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = APPLICATION_DIR,
@@ -2114,6 +2113,7 @@ public class RoboDK
                     RedirectStandardOutput = true,
                     UseShellExecute = false
                 };
+                //processStartInfo.Environment["variable"] = "content";
                 PROCESS = System.Diagnostics.Process.Start(processStartInfo);
                 // wait for the process to get started
 

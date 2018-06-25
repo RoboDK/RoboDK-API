@@ -560,7 +560,7 @@ namespace ProjectRoboDK
 
             //RDK.setWindowState(RoboDK.WINDOWSTATE_SHOW); // show RoboDK window if it was hidden
             RDK.setWindowState(RoboDK.WINDOWSTATE_CINEMA); // sets cinema mode (remove the menu, the toolbar, the title bar and the status bar)
-            RDK.setWindowState(RoboDK.WINDOWSTATE_MAXIMIZED); // maximizes the screen            
+            RDK.setWindowState(RoboDK.WINDOWSTATE_FULLSCREEN); // maximizes the screen and sets cinema mode
 
             // make form height larger
             this.Size = new Size(this.Size.Width, 700);
