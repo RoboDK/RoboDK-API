@@ -339,10 +339,10 @@ namespace ProjectRoboDK
             }
             // Not supported on .NET Framework 2.0:
             //string strvalues = String.Join(" , ", dvalues.Select(p => p.ToString("0.0")).ToArray());
-            string strvalues = dvalues[0].ToString();
+            string strvalues = dvalues[0].ToString("0.0");
             for (int i=1; i<dvalues.Length; i++)
             {
-                strvalues += " , " + dvalues[i].ToString();
+                strvalues += " , " + dvalues[i].ToString("0.0");
             }
             
             return strvalues;
@@ -952,16 +952,20 @@ namespace ProjectRoboDK
                 ROBOT.setPoseTool(tool);    // set the tool frame: important for Online Programming
                 ROBOT.setSpeed(100);        // Set Speed to 100 mm/s
                 ROBOT.setZoneData(5);       // set the rounding instruction (C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
-                ROBOT.RunCodeCustom("CallOnStart");
+                ROBOT.RunInstruction("CallOnStart", RoboDK.INSTRUCTION_CALL_PROGRAM);
                 for (int i = 0; i <= n_sides; i++)
                 {
                     double angle = ((double) i / n_sides) * 2.0 * Math.PI;
+
+                    // calculate the next position
                     Mat pose_i = pose_ref * Mat.rotz(angle) * Mat.transl(100, 0, 0) * Mat.rotz(-angle);
-                    ROBOT.RunCodeCustom("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
-                    double[] xyzwpr = pose_i.ToXYZRPW();
+
+                    // Add an instruction (comment)
+                    ROBOT.RunInstruction("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
+                    double[] xyzwpr = pose_i.ToXYZRPW(); // read the target as XYZWPR
                     ROBOT.MoveL(pose_i);
                 }
-                ROBOT.RunCodeCustom("CallOnFinish");
+                ROBOT.RunInstruction("CallOnStart", RoboDK.INSTRUCTION_CALL_PROGRAM);
                 ROBOT.MoveL(pose_ref);
             }
             catch (RoboDK.RDKException rdkex)

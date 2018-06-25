@@ -85,16 +85,16 @@
             this.lblJ1.Location = new System.Drawing.Point(274, 182);
             this.lblJ1.Margin = new System.Windows.Forms.Padding(1, 0, 1, 0);
             this.lblJ1.Name = "lblJ1";
-            this.lblJ1.Size = new System.Drawing.Size(91, 13);
+            this.lblJ1.Size = new System.Drawing.Size(137, 13);
             this.lblJ1.TabIndex = 1;
-            this.lblJ1.Text = "Cartesian Position";
+            this.lblJ1.Text = "Cartesian Position (mm,deg)";
             // 
             // txtPosition
             // 
             this.txtPosition.Location = new System.Drawing.Point(277, 201);
             this.txtPosition.Margin = new System.Windows.Forms.Padding(1);
             this.txtPosition.Name = "txtPosition";
-            this.txtPosition.Size = new System.Drawing.Size(191, 20);
+            this.txtPosition.Size = new System.Drawing.Size(237, 20);
             this.txtPosition.TabIndex = 2;
             this.txtPosition.Text = "0 , -90 , 90 , 0 , 90 , 90";
             // 
@@ -111,7 +111,7 @@
             // 
             // btnMovePose
             // 
-            this.btnMovePose.Location = new System.Drawing.Point(367, 178);
+            this.btnMovePose.Location = new System.Drawing.Point(413, 178);
             this.btnMovePose.Margin = new System.Windows.Forms.Padding(1);
             this.btnMovePose.Name = "btnMovePose";
             this.btnMovePose.Size = new System.Drawing.Size(101, 21);
@@ -122,7 +122,7 @@
             // 
             // btnMoveJoints
             // 
-            this.btnMoveJoints.Location = new System.Drawing.Point(367, 127);
+            this.btnMoveJoints.Location = new System.Drawing.Point(413, 126);
             this.btnMoveJoints.Margin = new System.Windows.Forms.Padding(1);
             this.btnMoveJoints.Name = "btnMoveJoints";
             this.btnMoveJoints.Size = new System.Drawing.Size(101, 21);
@@ -136,7 +136,7 @@
             this.txtJoints.Location = new System.Drawing.Point(277, 149);
             this.txtJoints.Margin = new System.Windows.Forms.Padding(1);
             this.txtJoints.Name = "txtJoints";
-            this.txtJoints.Size = new System.Drawing.Size(191, 20);
+            this.txtJoints.Size = new System.Drawing.Size(237, 20);
             this.txtJoints.TabIndex = 10;
             this.txtJoints.Text = "90 , -90 , 90 , 90 , 90 , -90";
             // 
@@ -146,9 +146,9 @@
             this.label1.Location = new System.Drawing.Point(274, 131);
             this.label1.Margin = new System.Windows.Forms.Padding(1, 0, 1, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(64, 13);
+            this.label1.Size = new System.Drawing.Size(91, 13);
             this.label1.TabIndex = 9;
-            this.label1.Text = "Joint Values";
+            this.label1.Text = "Joint Values (deg)";
             // 
             // btnSelectRobot
             // 
@@ -357,9 +357,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.notifybar});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 387);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 309);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(698, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(699, 22);
             this.statusStrip1.TabIndex = 44;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -436,7 +436,7 @@
             this.groupIncrementalMove.Controls.Add(this.btnRXneg);
             this.groupIncrementalMove.Controls.Add(this.btnRYneg);
             this.groupIncrementalMove.Controls.Add(this.btnRXpos);
-            this.groupIncrementalMove.Location = new System.Drawing.Point(486, 8);
+            this.groupIncrementalMove.Location = new System.Drawing.Point(529, 8);
             this.groupIncrementalMove.Name = "groupIncrementalMove";
             this.groupIncrementalMove.Size = new System.Drawing.Size(161, 260);
             this.groupIncrementalMove.TabIndex = 46;
@@ -573,7 +573,7 @@
             this.panel_rdk.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.panel_rdk.Location = new System.Drawing.Point(0, 274);
             this.panel_rdk.Name = "panel_rdk";
-            this.panel_rdk.Size = new System.Drawing.Size(698, 110);
+            this.panel_rdk.Size = new System.Drawing.Size(699, 32);
             this.panel_rdk.TabIndex = 52;
             this.panel_rdk.Resize += new System.EventHandler(this.panel_Resized);
             // 
@@ -582,7 +582,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(698, 409);
+            this.ClientSize = new System.Drawing.Size(699, 331);
             this.Controls.Add(this.btnMoveRobotHome);
             this.Controls.Add(this.groupRunMode);
             this.Controls.Add(this.groupIncrementalMove);
@@ -602,7 +602,7 @@
             this.Controls.Add(this.txtPosition);
             this.Controls.Add(this.lblJ1);
             this.Controls.Add(this.panel_rdk);
-            this.MinimumSize = new System.Drawing.Size(670, 370);
+            this.MinimumSize = new System.Drawing.Size(715, 370);
             this.Name = "FormRobot";
             this.Text = "Robot Panel HMI";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormRobot_FormClosed);
