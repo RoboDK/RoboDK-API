@@ -2893,6 +2893,45 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking. 
+    /// Specify the link id for robots or moving mechanisms (id 0 is the base).
+    /// </summary>
+    /// <param name="check_state">Set to COLLISION_ON or COLLISION_OFF</param>
+    /// <param name="item1">Item 1</param>
+    /// <param name="item2">Item 2</param>
+    /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
+    /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
+    /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
+    public bool setCollisionActivePair(List<int> check_state, List<Item> item1, List<Item> item2, List<int> id1 = null, List<int> id2 = null)
+    {
+        _check_connection();
+        _send_Line("Collision_SetPairList");
+        int npairs = Math.Min(check_state.Count, Math.Min(item1.Count, item2.Count));
+        _send_Int(npairs);
+        for (int i = 0; i < npairs; i++)
+        {
+            _send_Item(item1[i]);
+            _send_Item(item2[i]);
+            int idok1 = 0;
+            int idok2 = 0;
+            if (id1 != null && id1.Count > i)
+            {
+                idok1 = id1[i];
+            }
+            if (id2 != null && id2.Count > i)
+            {
+                idok2 = id2[i];
+            }
+            _send_Int(idok1);
+            _send_Int(idok2);
+            _send_Int(check_state[i]);
+        }
+        int nok = _recv_Int();
+        _check_status();
+        return nok == npairs;
+    }
+
+    /// <summary>
     /// Returns the number of pairs of objects that are currently in a collision state.
     /// </summary>
     /// <returns></returns>
@@ -3197,6 +3236,32 @@ public class RoboDK
         bool collision = itempicked.Valid();
         _check_status();
         return itempicked;
+    }
+
+    /// <summary>
+    /// Sets the visibility for a list of items
+    /// </summary>
+    /// <param name="item_list">list of items</param>
+    /// <param name="visible_list">list visible flags (bool)</param>
+    /// <param name="visible_frames">list visible frames (optional, hidden by default)</param>
+    public void setVisible(List<Item> item_list, List<bool> visible_list, List<int> visible_frames = null)
+    {
+        int nitm = Math.Min(item_list.Count, item_list.Count);
+        _check_connection();
+        _send_Line("S_VisibleList");
+        _send_Int(nitm);
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Item(item_list[i]);
+            _send_Int(visible_list[i] ? 1 : 0);
+            int frame_vis = -1;
+            if (visible_frames != null && visible_frames.Count > i)
+            {
+                frame_vis = visible_frames[i];
+            }
+            _send_Int(frame_vis);
+        }
+        _check_status();
     }
 
     /// <summary>

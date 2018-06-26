@@ -418,6 +418,19 @@ namespace RoboDk.API
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
         bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0, int id2 = 0);
 
+
+        /// <summary>
+        /// Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking. 
+        /// Specify the link id for robots or moving mechanisms (id 0 is the base).
+        /// </summary>
+        /// <param name="check_state">Set to COLLISION_ON or COLLISION_OFF</param>
+        /// <param name="item1">Item 1</param>
+        /// <param name="item2">Item 2</param>
+        /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
+        /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
+        /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
+        bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
+
         /// <summary>
         /// Returns the number of pairs of objects that are currently in a collision state.
         /// </summary>
@@ -530,6 +543,14 @@ namespace RoboDk.API
         /// <param name="p2">End point [x,y,z] of the line</param>
         /// <returns>Return true if there is a collision; false otherwise</returns>
         bool CollisionLine(double[] p1, double[] p2);
+
+        /// <summary>
+        /// Sets the visibility for a list of items
+        /// </summary>
+        /// <param name="item_list">list of items</param>
+        /// <param name="visible_list">list visible flags (bool)</param>
+        /// <param name="visible_frames">list visible frames (optional, hidden by default)</param>
+        void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null);
 
         /// <summary>
         /// Get Joint positions of all robots defined in the robotItemList.

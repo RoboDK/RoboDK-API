@@ -954,6 +954,36 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null)
+        {
+            check_connection();
+            send_line("Collision_SetPairList");
+            int npairs = Math.Min(check_state.Count, Math.Min(item1.Count, item2.Count));
+            send_int(npairs);
+            for (int i = 0; i < npairs; i++)
+            {
+                send_item(item1[i]);
+                send_item(item2[i]);
+                int idok1 = 0;
+                int idok2 = 0;
+                if (id1 != null && id1.Count > i)
+                {
+                    idok1 = id1[i];
+                }
+                if (id2 != null && id2.Count > i)
+                {
+                    idok2 = id2[i];
+                }
+                send_int(idok1);
+                send_int(idok2);
+                send_int((int) check_state[i]);
+            }
+            int nok = rec_int();
+            check_status();
+            return nok == npairs;
+        }
+
+        /// <inheritdoc />
         public int Collisions()
         {
             check_connection();
@@ -1168,6 +1198,27 @@ namespace RoboDk.API
             var collision = item.Valid();
             check_status();
             return collision;
+        }
+
+
+        public void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null)
+        {
+            int nitm = Math.Min(item_list.Count, item_list.Count);
+            check_connection();
+            send_line("S_VisibleList");
+            send_int(nitm);
+            for (int i = 0; i < nitm; i++)
+            {
+                send_item(item_list[i]);
+                send_int(visible_list[i] ? 1 : 0);
+                int frame_vis = -1;
+                if (visible_frames != null && visible_frames.Count > i)
+                {
+                    frame_vis = visible_frames[i];
+                }
+                send_int(frame_vis);
+            }
+            check_status();
         }
 
         /// <inheritdoc />
