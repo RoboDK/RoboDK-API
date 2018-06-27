@@ -1203,7 +1203,7 @@ namespace RoboDk.API
 
         public void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null)
         {
-            int nitm = Math.Min(item_list.Count, item_list.Count);
+            int nitm = Math.Min(item_list.Count, visible_list.Count);
             check_connection();
             send_line("S_VisibleList");
             send_int(nitm);

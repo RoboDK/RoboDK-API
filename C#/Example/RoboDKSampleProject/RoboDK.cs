@@ -2904,9 +2904,9 @@ public class RoboDK
     /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
     public bool setCollisionActivePair(List<int> check_state, List<Item> item1, List<Item> item2, List<int> id1 = null, List<int> id2 = null)
     {
-        _check_connection();
-        _send_Line("Collision_SetPairList");
         int npairs = Math.Min(check_state.Count, Math.Min(item1.Count, item2.Count));
+        _check_connection();
+        _send_Line("Collision_SetPairList");        
         _send_Int(npairs);
         for (int i = 0; i < npairs; i++)
         {
@@ -3246,7 +3246,7 @@ public class RoboDK
     /// <param name="visible_frames">list visible frames (optional, hidden by default)</param>
     public void setVisible(List<Item> item_list, List<bool> visible_list, List<int> visible_frames = null)
     {
-        int nitm = Math.Min(item_list.Count, item_list.Count);
+        int nitm = Math.Min(item_list.Count, visible_list.Count);
         _check_connection();
         _send_Line("S_VisibleList");
         _send_Int(nitm);
