@@ -1898,10 +1898,15 @@ public class RoboDK
         foreach (string st in read_list)
         {
             string st2 = st.Trim();
+            if (st2.Length < 5) // file name should be name.abc
+            {
+                continue;
+            }
             if (extension_filter.Length == 0 || st2.ToLower().EndsWith(extension_filter.ToLower()))
             {
                 rdk_list.Add(st2);
             }
+
         }
         return rdk_list;
     }

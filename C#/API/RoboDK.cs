@@ -194,7 +194,8 @@ namespace RoboDk.API
         {
             string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
             string str = "";
-            if (File.Exists(ini_file)) {
+            if (File.Exists(ini_file))
+            {
                 foreach (string line in File.ReadLines(ini_file))
                 {
                     if (line.Contains("RecentFileList="))
@@ -209,10 +210,15 @@ namespace RoboDk.API
             foreach (string st in read_list)
             {
                 string st2 = st.Trim();
+                if (st2.Length < 5) // file name should be name.abc
+                {
+                    continue;
+                }
                 if (extension_filter.Length == 0 || st2.ToLower().EndsWith(extension_filter.ToLower()))
                 {
                     rdk_list.Add(st2);
                 }
+
             }
             return rdk_list;
         }
