@@ -6,8 +6,8 @@ With the RoboDK API for C# it is possible to simulate and program any industrial
 Requirements
 ============
 
- * RoboDK Software: https://robodk.com/
- * Download the RoboDK API for C#: https://github.com/RoboDK/RoboDK-API/tree/master/C%23
+ * RoboDK Software: https://robodk.com/download
+ * RoboDK API for C# (GitHub): https://github.com/RoboDK/RoboDK-API/tree/master/C%23
 
 Example
 =======
@@ -25,16 +25,16 @@ The following script shows an example that uses the RoboDK package for robot sim
     ROBOT.setPoseTool(tool);    // set the tool frame: important for Online Programming
     ROBOT.setSpeed(100);        // Set Speed to 100 mm/s
     ROBOT.setZoneData(5);       // set the rounding instruction (C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
-    ROBOT.RunCodeCustom("CallOnStart");
+    ROBOT.RunInstruction("CallOnStart");
     for (int i = 0; i <= n_sides; i++)
     {
         double angle = ((double) i / n_sides) * 2.0 * Math.PI;
         Mat pose_i = pose_ref * Mat.rotz(angle) * Mat.transl(100, 0, 0) * Mat.rotz(-angle);
-        ROBOT.RunCodeCustom("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
+        ROBOT.RunInstruction("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
         double[] xyzwpr = pose_i.ToXYZRPW();
         ROBOT.MoveL(pose_i);
     }
-    ROBOT.RunCodeCustom("CallOnFinish");
+    ROBOT.RunInstruction("CallOnFinish");
     ROBOT.MoveL(pose_ref);
 
 The same script used for simulation can be used for offline programming, which means that the appropriate program can be generated for the robot being used. RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.

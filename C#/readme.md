@@ -14,7 +14,13 @@ How to install
 The RoboDK API for C# can be installed and used in one of the following ways:
 - Simply include RoboDK.cs file to your project from the Example folder
 - Install the NuGet package from the API folder
-The NuGet package follows C# naming convention whereas the one-file RoboDK.cs API matches the Python API naming.
+The NuGet package follows the C# naming conventions and interfaces (including its own documentation) whereas the single file RoboDK.cs API follows the Python API naming.
+
+Documentation
+-------------
+Depending on what version of the API you use:
+- Python-based naming in C# (single file RoboDK.cs API): https://robodk.com/doc/en/PythonAPI/robolink.html
+- NuGet C# Package: https://robodk.com/doc/en/CsAPI/index.html
 
 Video Overview
 --------------
@@ -46,15 +52,15 @@ ROBOT.setPoseTool(tool);    // set the tool frame: important for Online Programm
 ROBOT.setSpeed(100);        // Set Speed to 100 mm/s
 ROBOT.setZoneData(5);       // set the rounding instruction 
                             // (C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
-ROBOT.RunCodeCustom("CallOnStart");
+ROBOT.RunInstruction("CallOnStart");
 for (int i = 0; i <= n_sides; i++)
 {
     double angle = ((double) i / n_sides) * 2.0 * Math.PI;
     Mat pose_i = pose_ref * Mat.rotz(angle) * Mat.transl(100, 0, 0) * Mat.rotz(-angle);
-    ROBOT.RunCodeCustom("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
+    ROBOT.RunInstruction("Moving to point " + i.ToString(), RoboDK.INSTRUCTION_COMMENT);
     double[] xyzwpr = pose_i.ToXYZRPW();
     ROBOT.MoveL(pose_i);
 }
-ROBOT.RunCodeCustom("CallOnFinish");
+ROBOT.RunInstruction("CallOnFinish");
 ROBOT.MoveL(pose_ref);
 ```
