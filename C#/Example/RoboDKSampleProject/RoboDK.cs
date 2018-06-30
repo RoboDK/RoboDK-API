@@ -1313,7 +1313,9 @@ public class RoboDK
 
     public const int EVENT_SELECTION_CHANGED = 1;
     public const int EVENT_ITEM_MOVED = 2;
-
+    public const int EVENT_REFERENCE_PICKED = 3;
+    public const int EVENT_REFERENCE_RELEASED = 4;
+    public const int EVENT_TOOL_MODIFIED = 5;
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -1633,6 +1635,11 @@ public class RoboDK
     // Sends an array of doubles
     void _send_ArrayList(List<double> values)
     {
+        if (values == null)
+        {
+            _send_Int(0);
+            return;
+        }
         double[] values2 = new double[values.Count];
         for (int i = 0; i < values.Count; i++)
         {
@@ -2272,25 +2279,28 @@ public class RoboDK
         {
             case EVENT_SELECTION_CHANGED:
                 Console.WriteLine("Event: Selection changed");
-                if (itm.Valid())
-                    Console.WriteLine("  -> Selected: " + itm.Name());
-                else
-                    Console.WriteLine("  -> Nothing selected");
-
                 break;
             case EVENT_ITEM_MOVED:
                 Console.WriteLine("Event: Item Moved");
-                if (itm.Valid())
-                    Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
-                else
-                    Console.WriteLine("  -> This should never happen");
-
+                break;
+            case EVENT_REFERENCE_PICKED:
+                Console.WriteLine("Event: Reference Picked");
+                break;
+            case EVENT_REFERENCE_RELEASED:
+                Console.WriteLine("Event: Reference Released");
+                break;
+            case EVENT_TOOL_MODIFIED:
+                Console.WriteLine("Event: Tool Modified");
                 break;
             default:
                 Console.WriteLine("Unknown event " + evt.ToString());
-                return false;
                 break;
         }
+        if (itm.Valid())
+            Console.WriteLine("  -> " + itm.Name() + " type: " + itm.Type().ToString());
+        else
+            Console.WriteLine("  Unknown item");
+
         return true;
     }
 
@@ -2619,14 +2629,17 @@ public class RoboDK
     /// <param name="triangle_points">List of vertices grouped by triangles (3xN or 6xN matrix, N must be multiple of 3 because vertices must be stacked by groups of 3)</param>
     /// <param name="add_to">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
     /// <param name="shape_override">Set to true to replace any other existing geometry</param>
+    /// <param name="color">Optionally specify the color as RGBA [0-1]</param>
     /// <returns></returns>
-    public Item AddShape(Mat triangle_points, Item add_to = null, bool shape_override = false)
+    public Item AddShape(Mat triangle_points, Item add_to = null, bool shape_override = false, List<double> color=null)
     {
+        _require_build(5449);
         _check_connection();
-        _send_Line("AddShape2");
+        _send_Line("AddShape3");
         _send_Matrix2D(triangle_points);
         _send_Item(add_to);
         _send_Int(shape_override ? 1 : 0);
+        _send_ArrayList(color);
         _COM.ReceiveTimeout = 3600 * 1000;
         Item newitem = _recv_Item();
         _COM.ReceiveTimeout = _TIMEOUT;
@@ -2955,12 +2968,14 @@ public class RoboDK
     /// <param name="item1"></param>
     /// <param name="item2"></param>
     /// <returns></returns>
-    public int Collision(Item item1, Item item2)
+    public int Collision(Item item1, Item item2, bool use_collision_map=true)
     {
+        _require_build(5449);
         _check_connection();
-        _send_Line("Collided");
+        _send_Line("Collided3");
         _send_Item(item1);
         _send_Item(item2);
+        _send_Int(use_collision_map ? 1 : 0);
         int ncollisions = _recv_Int();
         _check_status();
         return ncollisions;
@@ -3098,7 +3113,7 @@ public class RoboDK
 
     /// <summary>
     /// Sets a global parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
-    /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+    /// The parameters can also be modified by right clicking the station and selecting "shared parameters".
     /// </summary>
     /// <param name="param">RoboDK parameter</param>
     /// <param name="value">value</param>
@@ -3109,6 +3124,22 @@ public class RoboDK
         _send_Line("S_Param");
         _send_Line(param);
         _send_Line(value);
+        _check_status();
+    }
+
+    /// <summary>
+    /// Sets a global parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+    /// The parameters can also be modified by right clicking the station and selecting "shared parameters".
+    /// </summary>
+    /// <param name="param">RoboDK parameter</param>
+    /// <param name="value">value</param>
+    /// <returns></returns>
+    public void setParam(string param, double value)
+    {
+        _check_connection();
+        _send_Line("S_Param");
+        _send_Line(param);
+        _send_Line(value.ToString());
         _check_status();
     }
 
@@ -3888,6 +3919,17 @@ public class RoboDK
             link._send_Item(this);
             link._send_Int(visible ? 1 : 0);
             link._send_Int(visible_frame);
+            link._check_status();
+        }
+
+        public void ShowAsCollided(bool collided, int robot_link_id=0)
+        {
+            link._require_build(5449);
+            link._check_connection();
+            link._send_Line("ShowAsCollided");
+            link._send_Item(this);
+            link._send_Int(robot_link_id);
+            link._send_Int(collided ? 1 : 0);
             link._check_status();
         }
 
