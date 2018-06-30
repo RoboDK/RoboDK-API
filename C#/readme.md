@@ -13,6 +13,10 @@ How to install
 ------------
 Simply include RoboDK.cs file to your project
 
+Video Overview
+--------------
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=3I6OK1Kd2Eo " target="_blank"><img src="http://img.youtube.com/vi/3I6OK1Kd2Eo/0.jpg" alt="Robot programming using the RoboDK API for C#" width="360" height="240" border="10" /></a>
+
 C# Example
 ------------
 ```csharp

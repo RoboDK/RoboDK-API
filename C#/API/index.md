@@ -6,10 +6,8 @@ With the RoboDK API for C# it is possible to simulate and program any industrial
 Requirements
 ============
 
-RoboDK must be installed:
  * RoboDK Software: https://robodk.com/
-
-Install this nuget package (to complete)
+ * Download the RoboDK API for C#: https://github.com/RoboDK/RoboDK-API/tree/master/C%23
 
 Example
 =======
@@ -49,6 +47,11 @@ For more information about robot post processors:
 For more Examples:
  * https://robodk.com/doc/en/PythonAPI/examples.html
 
+ 
+Video Overview
+========
+
+[![Introduction to the RoboDK API for C#](https://img.youtube.com/vi/3I6OK1Kd2Eo/0.jpg)](https://www.youtube.com/watch?v=3I6OK1Kd2Eo)
  
 Other
 =====
