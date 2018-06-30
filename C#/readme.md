@@ -11,7 +11,10 @@ Requirements
 
 How to install
 ------------
-Simply include RoboDK.cs file to your project
+The RoboDK API for C# can be installed and used in one of the following ways:
+- Simply include RoboDK.cs file to your project from the Example folder
+- Install the NuGet package from the API folder
+The NuGet package follows C# naming convention whereas the one-file RoboDK.cs API matches the Python API naming.
 
 Video Overview
 --------------
