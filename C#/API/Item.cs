@@ -797,11 +797,6 @@ namespace RoboDk.API
         }
 
 
-
-
-
-
-
         /// <summary>
         /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
