@@ -1,8 +1,6 @@
 RoboDK API for C#
 ======================
-Read the [RoboDK API description](../README.md) for information about the RoboDK API.
-
-Full description and template available on [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=RoboDK.RoboDK-Template)
+Read the [RoboDK API description](../README.md) for general information about the RoboDK API.
 
 Requirements
 ------------
@@ -21,6 +19,8 @@ Documentation
 Depending on what version of the API you use:
 - Python-based naming in C# (single file RoboDK.cs API): https://robodk.com/doc/en/PythonAPI/robolink.html
 - NuGet C# Package: https://robodk.com/doc/en/CsAPI/index.html
+
+The single file RoboDK.cs API is available as a template on [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=RoboDK.RoboDK-Template)
 
 Video Overview
 --------------
