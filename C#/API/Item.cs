@@ -315,6 +315,22 @@ namespace RoboDk.API
         }
 
         /// <summary>
+        ///     Show an object or a robot link as collided (red)
+        /// </summary>
+        /// <param name="collided"></param>
+        /// <param name="robot_link_id"></param>
+        public void ShowAsCollided(bool collided, int robot_link_id = 0)
+        {
+            Link.RequireBuild(5449);
+            Link.check_connection();
+            Link.send_line("ShowAsCollided");
+            Link.send_item(this);
+            Link.send_int(robot_link_id);
+            Link.send_int(collided ? 1 : 0);
+            Link.check_status();
+        }
+
+        /// <summary>
         ///     Returns the name of an item. The name of the item is always displayed in the RoboDK station tree
         /// </summary>
         /// <returns>name of the item</returns>

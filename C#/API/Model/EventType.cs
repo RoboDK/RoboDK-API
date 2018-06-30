@@ -59,6 +59,21 @@ namespace RoboDk.API.Model
         /// </summary>
         ItemMoved = 2,
 
+        /// <summary>
+        /// A reference frame has been picked, or left clicked (any tool, reference frame or object)
+        /// </summary>
+        ReferencePicked = 3,
+
+        /// <summary>
+        /// A reference frame has been released (any tool or reference frame or object)
+        /// </summary>
+        ReferenceReleased = 4,
+
+        /// <summary>
+        /// A tool has changed (the TCP has been modified)
+        /// </summary>
+        ToolModified = 5
     }
 }
+
 

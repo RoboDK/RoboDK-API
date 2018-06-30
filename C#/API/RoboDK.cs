@@ -48,6 +48,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Windows.Media;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -798,13 +799,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false)
+        public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null)
         {
+            RequireBuild(5449);
+            double[] colorArray = null;
+            Color clr = color?? Color.FromRgb(127,127,127);
+            colorArray = clr.ToRoboDKColorArray();
             check_connection();
-            send_line("AddShape2");
+            send_line("AddShape3");
             send_matrix(trianglePoints);
             send_item(addTo);
             send_int(shapeOverride ? 1 : 0);
+            send_array(colorArray);
             ReceiveTimeout = 3600 * 1000;
             var newitem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
@@ -1001,13 +1007,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Collision(IItem item1, IItem item2)
+        public bool Collision(IItem item1, IItem item2, bool use_collision_map = true)
         {
+            RequireBuild(5449);
             check_connection();
-            var command = "Collided";
-            send_line(command);
+            send_line("Collided3");
             send_item(item1);
             send_item(item2);
+            send_int(use_collision_map ? 1 : 0);
             var ncollisions = rec_int();
             check_status();
             return ncollisions > 0;
@@ -1109,7 +1116,7 @@ namespace RoboDk.API
             return value;
         }
 
-
+        /// <inheritdoc />
         public void SetParameter(string parameter, string value)
         {
             check_connection();
@@ -1117,6 +1124,17 @@ namespace RoboDk.API
             send_line(command);
             send_line(parameter);
             send_line(value);
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public void SetParameter(string parameter, double value)
+        {
+            check_connection();
+            var command = "S_Param";
+            send_line(command);
+            send_line(parameter);
+            send_line(value.ToString());
             check_status();
         }
 

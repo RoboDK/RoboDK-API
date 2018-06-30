@@ -44,6 +44,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Windows.Media;
 using RoboDk.API.Model;
 
 #endregion
@@ -294,8 +295,9 @@ namespace RoboDk.API
         /// </param>
         /// <param name="addTo">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
         /// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
+        /// <param name="color">Color of the added shape</param>
         /// <returns>added object/shape (use item.Valid() to check if item is valid.)</returns>
-        IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false);
+        IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null);
 
         /// <summary>
         /// Adds a curve provided point coordinates.
@@ -442,8 +444,9 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="item1"></param>
         /// <param name="item2"></param>
+        /// <param name="item2">Turn off collision map check to force collision checking even if it is not set in the collision map</param>
         /// <returns>Returns true if item1 collides with item2; false otherwise.</returns>
-        bool Collision(IItem item1, IItem item2);
+        bool Collision(IItem item1, IItem item2, bool use_collision_map = true);
 
         /// <summary>
         /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
@@ -510,6 +513,14 @@ namespace RoboDk.API
         /// <param name="parameter">RoboDK parameter name</param>
         /// <param name="value">parameter value</param>
         void SetParameter(string parameter, string value);
+
+        /// <summary>
+        /// Sets a global parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+        /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+        /// </summary>
+        /// <param name="parameter">RoboDK parameter name</param>
+        /// <param name="value">parameter value (number)</param>
+        void SetParameter(string parameter, double value);
 
         /// <summary>
         /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the

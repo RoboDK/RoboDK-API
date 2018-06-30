@@ -3922,6 +3922,11 @@ public class RoboDK
             link._check_status();
         }
 
+        /// <summary>
+        /// Show an object or a robot link as collided (red)
+        /// </summary>
+        /// <param name="collided"></param>
+        /// <param name="robot_link_id"></param>
         public void ShowAsCollided(bool collided, int robot_link_id=0)
         {
             link._require_build(5449);
