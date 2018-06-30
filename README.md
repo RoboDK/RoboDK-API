@@ -5,7 +5,7 @@ This repository is the implementation of the RoboDK API in different programming
 
 The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
-* [C#](https://marketplace.visualstudio.com/items?itemName=RoboDK.RoboDK-Template)
+* [C#](./C#)
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
 * C++ (Using Qt libraries)
 * Visual Basic
