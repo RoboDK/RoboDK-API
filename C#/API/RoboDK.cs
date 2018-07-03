@@ -49,6 +49,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Media;
+using System.Threading.Tasks;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -802,9 +803,8 @@ namespace RoboDk.API
         public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null)
         {
             RequireBuild(5449);
-            double[] colorArray = null;
             Color clr = color?? Color.FromRgb(127,127,127);
-            colorArray = clr.ToRoboDKColorArray();
+            var colorArray = clr.ToRoboDKColorArray();
             check_connection();
             send_line("AddShape3");
             send_matrix(trianglePoints);
@@ -1007,14 +1007,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Collision(IItem item1, IItem item2, bool use_collision_map = true)
+        public bool Collision(IItem item1, IItem item2, bool useCollisionMap = true)
         {
             RequireBuild(5449);
             check_connection();
             send_line("Collided3");
             send_item(item1);
             send_item(item2);
-            send_int(use_collision_map ? 1 : 0);
+            send_int(useCollisionMap ? 1 : 0);
             var ncollisions = rec_int();
             check_status();
             return ncollisions > 0;
@@ -1742,7 +1742,7 @@ namespace RoboDk.API
             var data = Encoding.UTF8.GetBytes(line + "\n");
             try
             {
-                sckt.Send(data);
+                sckt.SendData(data);
             }
             catch
             {
@@ -1757,12 +1757,12 @@ namespace RoboDk.API
 
             //Receives a string. It reads until if finds LF (\\n)
             var buffer = new byte[1];
-            var bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
+            var bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
             var line = "";
             while (bytesread > 0 && buffer[0] != '\n')
             {
                 line = line + Encoding.UTF8.GetString(buffer);
-                bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
+                bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
             }
 
             return line;
@@ -1789,7 +1789,7 @@ namespace RoboDk.API
             Array.Reverse(bytes);
             try
             {
-                _socket.Send(bytes);
+                _socket.SendData(bytes);
             }
             catch
             {
@@ -1805,8 +1805,8 @@ namespace RoboDk.API
 
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
-            var read1 = sckt.Receive(buffer1, 8, SocketFlags.None);
-            var read2 = sckt.Receive(buffer2, 4, SocketFlags.None);
+            var read1 = sckt.ReceiveData(buffer1, 8, SocketFlags.None);
+            var read2 = sckt.ReceiveData(buffer2, 4, SocketFlags.None);
             if (read1 != 8 || read2 != 4)
             {
                 return null;
@@ -1831,14 +1831,14 @@ namespace RoboDk.API
             }
 
             Array.Reverse(bytes);
-            _socket.Send(bytes);
+            _socket.SendData(bytes);
         }
 
         ///Receives a generic pointer
         internal long rec_ptr()
         {
             var bytes = new byte[8];
-            var read = _socket.Receive(bytes, 8, SocketFlags.None);
+            var read = _socket.ReceiveData(bytes, 8, SocketFlags.None);
             if (read != 8)
             {
                 throw new Exception("Something went wrong");
@@ -1868,14 +1868,14 @@ namespace RoboDk.API
                     cnt = cnt + 1;
                 }
 
-            _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
+            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
         }
 
         internal Mat rec_pose()
         {
             var pose = new Mat(4, 4);
             var bytes = new byte[16 * 8];
-            var nbytes = _socket.Receive(bytes, 16 * 8, SocketFlags.None);
+            var nbytes = _socket.ReceiveData(bytes, 16 * 8, SocketFlags.None);
             if (nbytes != 16 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -1901,14 +1901,14 @@ namespace RoboDk.API
             {
                 var bytes = BitConverter.GetBytes(xyzpos[i]);
                 Array.Reverse(bytes);
-                _socket.Send(bytes, 8, SocketFlags.None);
+                _socket.SendData(bytes, 8, SocketFlags.None);
             }
         }
 
         internal void rec_xyz(double[] xyzpos)
         {
             var bytes = new byte[3 * 8];
-            var nbytes = _socket.Receive(bytes, 3 * 8, SocketFlags.None);
+            var nbytes = _socket.ReceiveData(bytes, 3 * 8, SocketFlags.None);
             if (nbytes != 3 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -1932,7 +1932,7 @@ namespace RoboDk.API
             Array.Reverse(bytes); // convert from big endian to little endian
             try
             {
-                sckt.Send(bytes);
+                sckt.SendData(bytes);
             }
             catch
             {
@@ -1946,7 +1946,7 @@ namespace RoboDk.API
                 sckt = _socket;
             
             var bytes = new byte[4];
-            var read = sckt.Receive(bytes, 4, SocketFlags.None);
+            var read = sckt.ReceiveData(bytes, 4, SocketFlags.None);
             if (read < 4)
             {
                 return 0;
@@ -1975,7 +1975,7 @@ namespace RoboDk.API
                 Array.Copy(onedouble, 0, bytesarray, i * 8, 8);
             }
 
-            _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
+            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
         }
         // sends a list of doubles
         internal void send_arrayList(List<double> values)
@@ -1996,7 +1996,7 @@ namespace RoboDk.API
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * 8];
-                var read = _socket.Receive(bytes, nvalues * 8, SocketFlags.None);
+                var read = _socket.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
                 for (var i = 0; i < nvalues; i++)
                 {
                     var onedouble = new byte[8];
@@ -2036,7 +2036,7 @@ namespace RoboDk.API
                 }
             }
 
-            _socket.Send(sendBuffer, sendBuffer.Length, SocketFlags.None);
+            _socket.SendData(sendBuffer, sendBuffer.Length, SocketFlags.None);
         }
 
         // receives a 2 dimensional matrix (nxm)
@@ -2054,7 +2054,7 @@ namespace RoboDk.API
                 var to_receive = Math.Min(recvsize, BUFFER_SIZE);
                 while (to_receive > 0)
                 {
-                    var nbytesok = _socket.Receive(bytes, received, to_receive, SocketFlags.None);
+                    var nbytesok = _socket.ReceiveData(bytes, received, to_receive, SocketFlags.None);
                     if (nbytesok <= 0)
                     {
                         throw new RdkException(
@@ -2274,6 +2274,58 @@ namespace RoboDk.API
                     _socketEvents = null;
                 }
             }
+        }
+    }
+
+    internal static class RoboDKAsyncSendReceive
+    {
+        internal static int SendData(this Socket s, byte[] data, int len, SocketFlags flags)
+        {
+            var n = s.Send(data, len, flags);
+            Debug.Assert(n == len);
+            return n;
+        }
+
+        internal static int SendData(this Socket s, byte[] data)
+        {
+            return s.SendData(data, data.Length, SocketFlags.None);
+        }
+
+        internal static int ReceiveDataTask(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
+        {
+            Debug.Assert((offset + len) <= data.Length);
+            var receivedBytes = 0;
+            while (receivedBytes < len)
+            {
+                var n = s.Receive(data, offset + receivedBytes, len - receivedBytes, flags);
+                Debug.Assert(n > 0);
+                receivedBytes += n;
+            }
+
+            return receivedBytes;
+        }
+
+        internal static int ReceiveData(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
+        {
+            // Only execute as Task if we run on the main UI Thread
+            if (Thread.CurrentThread == System.Windows.Application.Current?.Dispatcher?.Thread )
+            {
+                // TASK.RUN
+                var receiveTask = Task.Run(() => ReceiveDataTask(s, data, offset, len, flags));
+                receiveTask.Wait();
+                return receiveTask.Result;
+            }
+            else
+            {
+                // Any other background thread. Call receive synchronously
+                return ReceiveDataTask(s, data, offset, len, flags);
+            }
+
+        }
+
+        internal static int ReceiveData(this Socket s, byte[] data, int len, SocketFlags flags)
+        {
+            return s.ReceiveData(data, 0, len, flags);
         }
     }
 }

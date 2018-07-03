@@ -85,3 +85,24 @@ RoboDK Api Changelog-History
         bool SelectedFeature(out ObjectSelectionType featureType, out int featureId);
         string GetPoints(ObjectSelectionType featureType, int featureId, out Mat pointList);
 
+-----------------------------------------------------
+
+3.7.2018
+
+	Item.cs:
+		New Api function:
+			public void ShowAsCollided(bool collided, int robot_link_id = 0)
+			
+	RoboDK.cs
+	    Execute socket.Receive as Task to keep a GUI Application responsive.
+		
+		Changed Signature:
+			public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null)
+				new -> optional parameter color		
+			public bool Collision(IItem item1, IItem item2, bool use_collision_map = true)
+				new -> optional parameter use_collision_map
+				
+		New Api function:
+			public bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
+			public void SetParameter(string parameter, double value);
+			public void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null);

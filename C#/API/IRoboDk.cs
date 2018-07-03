@@ -444,9 +444,9 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="item1"></param>
         /// <param name="item2"></param>
-        /// <param name="item2">Turn off collision map check to force collision checking even if it is not set in the collision map</param>
+        /// <param name="useCollisionMap">Turn off collision map check to force collision checking even if it is not set in the collision map</param>
         /// <returns>Returns true if item1 collides with item2; false otherwise.</returns>
-        bool Collision(IItem item1, IItem item2, bool use_collision_map = true);
+        bool Collision(IItem item1, IItem item2, bool useCollisionMap = true);
 
         /// <summary>
         /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
