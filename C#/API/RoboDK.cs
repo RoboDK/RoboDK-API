@@ -2298,7 +2298,11 @@ namespace RoboDk.API
             while (receivedBytes < len)
             {
                 var n = s.Receive(data, offset + receivedBytes, len - receivedBytes, flags);
-                Debug.Assert(n > 0);
+                if (n <= 0)
+                {
+                    // socket closed.
+                    return 0;
+                }
                 receivedBytes += n;
             }
 
