@@ -502,16 +502,21 @@ namespace RoboDk.API
         ///     current robot configuration (see SolveIK_All())
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
+        /// <param name="joints_approx">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>array of joints</returns>
-        double[] SolveIK(Mat pose);
+        double[] SolveIK(Mat pose, double[] joints_approx = null, Mat tool = null, Mat reference = null);
 
         /// <summary>
         ///     Computes the inverse kinematics for the specified robot and pose. The function returns all available joint
         ///     solutions as a 2D matrix.
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot tool with respect to the robot frame</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>double x n x m -> joint list (2D matrix)</returns>
-        Mat SolveIK_All(Mat pose);
+        Mat SolveIK_All(Mat pose, Mat tool = null, Mat reference = null);
 
         /// <summary>
         ///     Connect to a real robot using the robot driver.

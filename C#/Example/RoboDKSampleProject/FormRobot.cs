@@ -978,8 +978,6 @@ namespace ProjectRoboDK
 
 
 
-
-
             RDK.EventsListen();
             RDK.EventsLoop();
             return;
