@@ -785,10 +785,23 @@ public class Mat // simple matrix class for homogeneous operations
     public override string ToString()                           // Function returns matrix as a string
     {
         string s = "";
-        for (int i = 0; i < rows; i++)
+        bool string_as_xyzabc = true;
+        if (string_as_xyzabc)
         {
-            for (int j = 0; j < cols; j++) s += String.Format("{0,5:0.00}", mat[i, j]) + " ";
-            s += "\r\n";
+            var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };
+            var units = new List<string>() { "mm", "mm", "mm", "deg", "deg", "deg" };
+
+            var values = this.ToTxyzRxyz();
+            for (int j = 0; j < 6; j++) s += letter[j] + String.Format("{0,6:0.000}", values[j]) + " " + units[j] + " , ";
+            s = s.Remove(s.Length - 3);
+        }
+        else
+        {            
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++) s += String.Format("{0,5:0.00}", mat[i, j]) + " ";
+                s += "\r\n";
+            }
         }
         return s;
     }
