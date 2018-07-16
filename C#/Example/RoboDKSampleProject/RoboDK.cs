@@ -785,10 +785,23 @@ public class Mat // simple matrix class for homogeneous operations
     public override string ToString()                           // Function returns matrix as a string
     {
         string s = "";
-        for (int i = 0; i < rows; i++)
+        bool string_as_xyzabc = true;
+        if (string_as_xyzabc)
         {
-            for (int j = 0; j < cols; j++) s += String.Format("{0,5:0.00}", mat[i, j]) + " ";
-            s += "\r\n";
+            var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };
+            var units = new List<string>() { "mm", "mm", "mm", "deg", "deg", "deg" };
+
+            var values = this.ToTxyzRxyz();
+            for (int j = 0; j < 6; j++) s += letter[j] + String.Format("{0,6:0.000}", values[j]) + " " + units[j] + " , ";
+            s = s.Remove(s.Length - 3);
+        }
+        else
+        {            
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++) s += String.Format("{0,5:0.00}", mat[i, j]) + " ";
+                s += "\r\n";
+            }
         }
         return s;
     }
@@ -4206,6 +4219,22 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Set the color of an object shape. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="shape_id">ID of the shape: the ID is the order in which the shape was added using AddShape()</param>
+        /// <param name="tocolor">color to set</param>
+        public void SetColor(int shape_id, List<double> tocolor)
+        {
+            link.check_color(tocolor);
+            link._check_connection();            
+            link._send_Line("S_ShapeColor");
+            link._send_Item(this);
+            link._send_Int(shape_id);
+            link._send_ArrayList(tocolor);
+            link._check_status();
+        }
+
+        /// <summary>
         /// Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
         /// A color is in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
         /// </summary>
@@ -4567,25 +4596,55 @@ public class RoboDK
         /// Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
+        /// <param name="joints_approx">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>array of joints</returns>
-        public double[] SolveIK(Mat pose)
+        public double[] SolveIK(Mat pose, double[] joints_approx = null, Mat tool = null, Mat reference = null)
         {
+            if (tool != null)
+            {
+                pose = pose * tool.inv();
+            }
+            if (reference != null)
+            {
+                pose = reference * pose;
+            }
             link._check_connection();
-            link._send_Line("G_IK");
-            link._send_Pose(pose);
+            if (joints_approx == null)
+            {
+                link._send_Line("G_IK");
+                link._send_Pose(pose);
+            }
+            else
+            {
+                link._send_Line("G_IK_jnts");
+                link._send_Pose(pose);
+                link._send_Array(joints_approx);
+            }
             link._send_Item(this);
-            double[] joints = link._recv_Array();
+            double[] joints_sol = link._recv_Array();
             link._check_status();
-            return joints;
+            return joints_sol;
         }
 
         /// <summary>
         /// Computes the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot tool with respect to the robot frame</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>double x n x m -> joint list (2D matrix)</returns>
-        public Mat SolveIK_All(Mat pose)
+        public Mat SolveIK_All(Mat pose, Mat tool = null, Mat reference = null)
         {
+            if (tool != null)
+            {
+                pose = pose * tool.inv();
+            }
+            if (reference != null)
+            {
+                pose = reference * pose;
+            }
             link._check_connection();
             link._send_Line("G_IK_cmpl");
             link._send_Pose(pose);
@@ -5284,7 +5343,9 @@ public class RoboDK
         /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         /// </summary>
         /// <param name="error_msg">Returns a human readable error message (if any)</param>
-        /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified</param>
+        /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified.
+        /// If flags == 2: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn] 
+        /// If flags == 3: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn] </param>
         /// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
         /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
         /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>

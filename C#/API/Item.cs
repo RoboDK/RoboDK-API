@@ -658,11 +658,28 @@ namespace RoboDk.API
         /// <seealso cref="Recolor(Color, Color?, double)"/>
         public void SetColor(Color tocolor)
         {
-            Link.check_connection();
             double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_connection();            
             Link.check_color(tocolorArray);
             Link.send_line("S_Color");
             Link.send_item(this);
+            Link.send_array(tocolorArray);
+            Link.check_status();
+        }
+
+        /// <summary>
+        /// Set the color of an object shape. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="shape_id">ID of the shape: the ID is the order in which the shape was added using AddShape()</param>
+        /// <param name="tocolor">color to set</param>
+        public void SetColor(int shape_id, Color tocolor)
+        {
+            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_color(tocolorArray);
+            Link.check_connection();
+            Link.send_line("S_ShapeColor");
+            Link.send_item(this);
+            Link.send_int(shape_id);
             Link.send_array(tocolorArray);
             Link.check_status();
         }
@@ -1071,17 +1088,36 @@ namespace RoboDk.API
         ///     current robot configuration (see SolveIK_All())
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
+        /// <param name="joints_approx">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>array of joints</returns>
-        public double[] SolveIK(Mat pose)
+        public double[] SolveIK(Mat pose, double[] joints_approx = null, Mat tool = null, Mat reference = null)
         {
+            if (tool != null)
+            {
+                pose = pose * tool.inv();
+            }
+            if (reference != null)
+            {
+                pose = reference * pose;
+            }
             Link.check_connection();
-            var command = "G_IK";
-            Link.send_line(command);
-            Link.send_pose(pose);
+            if (joints_approx == null)
+            {
+                Link.send_line("G_IK");
+                Link.send_pose(pose);
+            }
+            else
+            {
+                Link.send_line("G_IK_jnts");
+                Link.send_pose(pose);
+                Link.send_array(joints_approx);
+            }
             Link.send_item(this);
-            var joints = Link.rec_array();
+            var jointsok = Link.rec_array();
             Link.check_status();
-            return joints;
+            return jointsok;
         }
 
         /// <summary>
@@ -1089,9 +1125,19 @@ namespace RoboDk.API
         ///     solutions as a 2D matrix.
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot tool with respect to the robot frame</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>double x n x m -> joint list (2D matrix)</returns>
-        public Mat SolveIK_All(Mat pose)
+        public Mat SolveIK_All(Mat pose, Mat tool = null, Mat reference = null)
         {
+            if (tool != null)
+            {
+                pose = pose * tool.inv();
+            }
+            if (reference != null)
+            {
+                pose = reference * pose;
+            }
             Link.check_connection();
             var command = "G_IK_cmpl";
             Link.send_line(command);
