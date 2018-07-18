@@ -1267,6 +1267,8 @@ public class RoboDK
     public const int FLAG_ROBODK_MENUUTILITIES_ACTIVE = 1024;
     public const int FLAG_ROBODK_MENUCONNECT_ACTIVE = 2048;
     public const int FLAG_ROBODK_WINDOWKEYS_ACTIVE = 4096;
+    public const int FLAG_ROBODK_TREE_VISIBLE = 8192;
+    public const int FLAG_ROBODK_REFERENCES_VISIBLE = 16384;
     public const int FLAG_ROBODK_NONE = 0;
     public const int FLAG_ROBODK_ALL = 0xFFFF;
     public const int FLAG_ROBODK_MENU_ACTIVE_ALL = FLAG_ROBODK_MENU_ACTIVE | FLAG_ROBODK_MENUFILE_ACTIVE | FLAG_ROBODK_MENUEDIT_ACTIVE | FLAG_ROBODK_MENUPROGRAM_ACTIVE | FLAG_ROBODK_MENUTOOLS_ACTIVE | FLAG_ROBODK_MENUUTILITIES_ACTIVE | FLAG_ROBODK_MENUCONNECT_ACTIVE;
@@ -1324,11 +1326,18 @@ public class RoboDK
     public const int DISPLAY_REF_PYZ = 256;
     public const int DISPLAY_REF_ALL = 511;
 
+    // Optional returned information from InstructionListJoints
+    public const int LISTJOINTS_DEFAULT = 1; // same as 0
+    public const int LISTJOINTS_SPEED = 2;
+    public const int LISTJOINTS_ACCEL = 3;
+    
+    // Event types
     public const int EVENT_SELECTION_CHANGED = 1;
     public const int EVENT_ITEM_MOVED = 2;
     public const int EVENT_REFERENCE_PICKED = 3;
     public const int EVENT_REFERENCE_RELEASED = 4;
     public const int EVENT_TOOL_MODIFIED = 5;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -5344,8 +5353,8 @@ public class RoboDK
         /// </summary>
         /// <param name="error_msg">Returns a human readable error message (if any)</param>
         /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified.
-        /// If flags == 2: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn] 
-        /// If flags == 3: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn] </param>
+        /// If flags == LISTJOINTS_SPEED: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn] 
+        /// If flags == LISTJOINTS_ACCEL: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn] </param>
         /// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
         /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
         /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>

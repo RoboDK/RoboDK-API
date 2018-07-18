@@ -443,6 +443,7 @@ namespace ProjectRoboDK
 
             // Retrieve the program item program
             RoboDK.Item prog = RDK.getItem(progname);
+
             if (prog.Valid() && (prog.Type() == RoboDK.ITEM_TYPE_PROGRAM_PYTHON || prog.Type() == RoboDK.ITEM_TYPE_PROGRAM))
             {
                 prog.RunProgram();
