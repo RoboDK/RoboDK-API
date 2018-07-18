@@ -322,11 +322,11 @@ namespace RoboDk.API
         /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         /// </summary>
         /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
-        /// <param name="reference_object">item to attach the newly added geometry (optional)</param>
-        /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
-        /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <param name="referenceObject">item to attach the newly added geometry (optional)</param>
+        /// <param name="addToRef">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projectionType">Type of projection.Use the PROJECTION_* flags.</param>
         /// <returns>added object/shape (0 if failed)</returns>
-        IItem AddPoints(Mat points, IItem reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc);
+        IItem AddPoints(Mat points, IItem referenceObject = null, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
         /// Projects a point given its coordinates.
@@ -425,13 +425,13 @@ namespace RoboDk.API
         /// Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking. 
         /// Specify the link id for robots or moving mechanisms (id 0 is the base).
         /// </summary>
-        /// <param name="check_state">Set to COLLISION_ON or COLLISION_OFF</param>
+        /// <param name="checkState">Set to COLLISION_ON or COLLISION_OFF</param>
         /// <param name="item1">Item 1</param>
         /// <param name="item2">Item 2</param>
         /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
         /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
-        bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
+        bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
 
         /// <summary>
         /// Returns the number of pairs of objects that are currently in a collision state.
@@ -558,10 +558,10 @@ namespace RoboDk.API
         /// <summary>
         /// Sets the visibility for a list of items
         /// </summary>
-        /// <param name="item_list">list of items</param>
-        /// <param name="visible_list">list visible flags (bool)</param>
-        /// <param name="visible_frames">list visible frames (optional, hidden by default)</param>
-        void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null);
+        /// <param name="itemList">list of items</param>
+        /// <param name="visibleList">list visible flags (bool)</param>
+        /// <param name="visibleFrames">list visible frames (optional, hidden by default)</param>
+        void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null);
 
         /// <summary>
         /// Get Joint positions of all robots defined in the robotItemList.
@@ -649,19 +649,19 @@ namespace RoboDk.API
         /// Create a new robot or mechanism.
         /// </summary>
         /// <param name="type">Type of the mechanism</param>
-        /// <param name="list_obj">list of object items that build the robot</param>
+        /// <param name="listObj">list of object items that build the robot</param>
         /// <param name="param">robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot</param>
-        /// <param name="joints_build">current state of the robot(joint axes) to build the robot</param>
-        /// <param name="joints_home">joints for the home position(it can be changed later)</param>
-        /// <param name="joints_senses"></param>
-        /// <param name="joints_lim_low"></param>
-        /// <param name="joints_lim_high"></param>
-        /// <param name="base_frame"></param>
+        /// <param name="jointsBuild">current state of the robot(joint axes) to build the robot</param>
+        /// <param name="jointsHome">joints for the home position(it can be changed later)</param>
+        /// <param name="jointsSenses"></param>
+        /// <param name="jointsLimLow"></param>
+        /// <param name="jointsLimHigh"></param>
+        /// <param name="baseFrame"></param>
         /// <param name="tool"></param>
         /// <param name="name"></param>
         /// <param name="robot">existing robot in the station to replace it(optional)</param>
         /// <returns></returns>
-        IItem BuildMechanism(int type, List<IItem> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", IItem robot = null);
+        IItem BuildMechanism(int type, List<IItem> listObj, List<double> param, List<double> jointsBuild, List<double> jointsHome, List<double> jointsSenses, List<double> jointsLimLow, List<double> jointsLimHigh, Mat baseFrame = null, Mat tool = null, string name = "New robot", IItem robot = null);
 
         /// <summary>
         /// Open a simulated 2D camera view. 
@@ -719,22 +719,22 @@ namespace RoboDk.API
         /// <summary>
         /// Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
         /// </summary>
-        /// <param name="mode_type">The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)</param>
-        /// <param name="default_ref_flags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
-        /// <param name="custom_items">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
-        /// <param name="custom_ref_flags">Provide a matching list of flags to customize the movement behavior for specific items</param>
-        void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<IItem> custom_items = null, List<InteractiveType> custom_ref_flags = null);
+        /// <param name="modeType">The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)</param>
+        /// <param name="defaultRefFlags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
+        /// <param name="customItems">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
+        /// <param name="customRefFlags">Provide a matching list of flags to customize the movement behavior for specific items</param>
+        void SetInteractiveMode(InteractiveType modeType = InteractiveType.MOVE, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<InteractiveType> customRefFlags = null);
 
         /// <summary>
         /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
         /// The XYZ coordinates returned are given with respect to the RoboDK station(absolute reference).
         /// If no coordinates are provided, the current position of the cursor is retrieved.
         /// </summary>
-        /// <param name="x_coord">X coordinate in pixels</param>
-        /// <param name="y_coord">Y coordinate in pixels</param>
-        /// <param name="xyz_station">XYZ coordinates in mm (absolute coordinates)</param>
+        /// <param name="xCoord">X coordinate in pixels</param>
+        /// <param name="yCoord">Y coordinate in pixels</param>
+        /// <param name="xyzStation">XYZ coordinates in mm (absolute coordinates)</param>
         /// <returns></returns>
-        IItem GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null);
+        IItem GetCursorXYZ(int xCoord = -1, int yCoord = -1, List<double> xyzStation = null);
 
         /// <summary>
         /// Add a joint movement to a program

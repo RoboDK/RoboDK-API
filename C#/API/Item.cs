@@ -116,11 +116,7 @@ namespace RoboDk.API
             Link.check_status();
         }
 
-        /// <summary>
-        /// Retrieve current item flags. 
-        /// Item flags allow defining how much access the user has to item-specific features. 
-        /// </summary>
-        /// <returns>Current Item Flags</returns>
+        /// <inheritdoc />
         public ItemFlags GetItemFlags()
         {
             Link.check_connection();
@@ -297,12 +293,12 @@ namespace RoboDk.API
         ///     Sets the item visiblity status
         /// </summary>
         /// <param name="visible"></param>
-        /// <param name="visible_frame">srt the visible reference frame (1) or not visible (0)</param>
-        public void setVisible(bool visible, int visible_frame = -1)
+        /// <param name="visibleFrame">srt the visible reference frame (1) or not visible (0)</param>
+        public void SetVisible(bool visible, int visibleFrame = -1)
         {
-            if (visible_frame < 0)
+            if (visibleFrame < 0)
             {
-                visible_frame = visible ? 1 : 0;
+                visibleFrame = visible ? 1 : 0;
             }
 
             Link.check_connection();
@@ -310,7 +306,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             Link.send_int(visible ? 1 : 0);
-            Link.send_int(visible_frame);
+            Link.send_int(visibleFrame);
             Link.check_status();
         }
 
@@ -367,7 +363,7 @@ namespace RoboDk.API
         ///     If a robot is provided, it will set the pose of the end efector.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix</param>
-        public void setPose(Mat pose)
+        public void SetPose(Mat pose)
         {
             Link.check_connection();
             var command = "S_Hlocal";
@@ -399,7 +395,7 @@ namespace RoboDk.API
         ///     tools and objects.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix</param>
-        public void setGeometryPose(Mat pose)
+        public void SetGeometryPose(Mat pose)
         {
             Link.check_connection();
             var command = "S_Hgeom";
@@ -430,7 +426,7 @@ namespace RoboDk.API
         ///     tool pose of the active tool held by the robot.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-        public void setHtool(Mat pose)
+        public void SetHtool(Mat pose)
         {
             Link.check_connection();
             var command = "S_Htool";
@@ -1197,7 +1193,7 @@ namespace RoboDk.API
             }
             else
             {
-                Link.moveX(itemtarget, null, null, this, 1, blocking);
+                Link.MoveX(itemtarget, null, null, this, 1, blocking);
             }
         }
 
@@ -1212,7 +1208,7 @@ namespace RoboDk.API
         /// </param>
         public void MoveJ(double[] joints, bool blocking = true)
         {
-            Link.moveX(null, joints, null, this, 1, blocking);
+            Link.MoveX(null, joints, null, this, 1, blocking);
         }
 
         /// <summary>
@@ -1226,7 +1222,7 @@ namespace RoboDk.API
         /// </param>
         public void MoveJ(Mat target, bool blocking = true)
         {
-            Link.moveX(null, null, target, this, 1, blocking);
+            Link.MoveX(null, null, target, this, 1, blocking);
         }
 
         /// <summary>
@@ -1243,7 +1239,7 @@ namespace RoboDk.API
             }
             else
             {
-                Link.moveX(itemtarget, null, null, this, 2, blocking);
+                Link.MoveX(itemtarget, null, null, this, 2, blocking);
             }
         }
 
@@ -1258,7 +1254,7 @@ namespace RoboDk.API
         /// </param>
         public void MoveL(double[] joints, bool blocking = true)
         {
-            Link.moveX(null, joints, null, this, 2, blocking);
+            Link.MoveX(null, joints, null, this, 2, blocking);
         }
 
         /// <summary>
@@ -1272,7 +1268,7 @@ namespace RoboDk.API
         /// </param>
         public void MoveL(Mat target, bool blocking = true)
         {
-            Link.moveX(null, null, target, this, 2, blocking);
+            Link.MoveX(null, null, target, this, 2, blocking);
         }
 
         /// <summary>
@@ -1384,7 +1380,7 @@ namespace RoboDk.API
         /// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
         /// <param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
-        public void setSpeed(double speed_linear, double accel_linear = -1, double speed_joints = -1,
+        public void SetSpeed(double speed_linear, double accel_linear = -1, double speed_joints = -1,
             double accel_joints = -1)
         {
             Link.check_connection();
@@ -1404,7 +1400,7 @@ namespace RoboDk.API
         ///     Sets the robot movement smoothing accuracy (also known as zone data value).
         /// </summary>
         /// <param name="zonedata">zonedata value (int) (robot dependent, set to -1 for fine movements)</param>
-        public void setZoneData(double zonedata)
+        public void SetZoneData(double zonedata)
         {
             Link.check_connection();
             var command = "S_ZoneData";
