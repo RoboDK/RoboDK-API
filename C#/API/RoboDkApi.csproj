@@ -51,6 +51,7 @@
     <Compile Include="IItem.cs" />
     <Compile Include="IRoboDkEventSource.cs" />
     <Compile Include="Model\InstructionListJointsResult.cs" />
+    <Compile Include="Model\ListJointsType.cs" />
     <Compile Include="Model\RDKColorExtension.cs" />
     <Compile Include="Model\DisplayRefType.cs" />
     <Compile Include="Model\ErrorPathType.cs" />

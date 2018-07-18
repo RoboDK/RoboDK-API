@@ -886,7 +886,7 @@ namespace RoboDk.API
             double degStep = 5.0,
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
-            int flags = 0,
+            ListJointsType flags = 0,
             int timeoutSec = 3600);
 
         /// <summary>
@@ -907,7 +907,7 @@ namespace RoboDk.API
             double degStep = 5.0,
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
-            int flags = 0,
+            ListJointsType flags = 0,
             int timeoutSec = 3600);
 
         /// <summary>

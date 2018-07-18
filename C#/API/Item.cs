@@ -1403,7 +1403,7 @@ namespace RoboDk.API
             double degStep = 5.0,
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
-            int flags = 0,
+            ListJointsType flags = 0,
             int timeoutSec = 3600)
         {
             InstructionListJointsResult result =
@@ -1452,13 +1452,13 @@ namespace RoboDk.API
             double degStep = 5.0,
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
-            int flags = 0,
+            ListJointsType flags = 0,
             int timeoutSec = 3600)
         {
             Link.check_connection();
             Link.send_line("G_ProgJointList");
             Link.send_item(this);
-            double[] parameter = {mmStep, degStep, (double) collisionCheck, flags};
+            double[] parameter = {mmStep, degStep, (double) collisionCheck, (double)flags};
             Link.send_array(parameter);
 
             //joint_list = save_to_file;

@@ -38,36 +38,38 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-using System;
 
 
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// RoboDK Window Flags
+    /// Type of information returned by InstructionListJoints
     /// </summary>
-    [Flags]
-    public enum WindowFlags
+    public enum ListJointsType
     {
-        TreeActive = 1,
-        View3Dactive = 2,
-        LeftClick = 4,
-        RightClick = 8,
-        DoubleClick = 16,
-        MenuActive = 32,
-        MenuFileActive = 64,
-        MenuEditActive = 128,
-        MenuProgramActive = 256,
-        MenuToolsActive = 512,
-        MenuUtilitiesActive = 1024,
-        MenuConnectActive = 2048,
-        WindowKeysActive = 4096,
-        TreeVisible = 8192,
-        ReferencesVisible = 16384,
-        None = 0,
-        All = 0xFFFF,
-        MenuActiveAll = MenuActive | MenuFileActive | MenuEditActive | MenuProgramActive |
-                        MenuToolsActive | MenuUtilitiesActive | MenuConnectActive
+        /// <summary>
+        /// Same result as Position (fastest)
+        /// </summary>
+        Any = 0,
+
+        /// <summary>
+        /// Return the joints position. The returned columns are organized in the following way:
+        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID]
+        /// </summary>
+        Position = 1,
+
+        /// <summary>
+        /// Include the speed information (also includes the time). The returned columns are organized in the following way:
+        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn] 
+        /// </summary>
+        Speed = 2,
+
+        /// <summary>
+        /// Return the speed and acceleration information (also includes the time). The returned columns are organized in the following way:
+        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn]
+        /// </summary>
+        SpeedAndAcceleration = 3,
     }
 }
+
 
