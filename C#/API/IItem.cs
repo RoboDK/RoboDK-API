@@ -305,6 +305,13 @@ namespace RoboDk.API
         void SetColor(Color tocolor);
 
         /// <summary>
+        /// Set the color of an object shape. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="shapeId">ID of the shape: the ID is the order in which the shape was added using AddShape()</param>
+        /// <param name="tocolor">color to set</param>
+        void SetColor(int shapeId, Color tocolor);
+
+        /// <summary>
         /// Set the alpha channel of an object, tool or robot. 
         /// The alpha channel must remain between 0 and 1.
         /// </summary>
@@ -805,6 +812,18 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         void AddMoveL(IItem itemtarget);
+
+        /// <summary>
+        /// Show or hide instruction items of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        void ShowInstructions(bool show = true);
+
+        /// <summary>
+        /// Show or hide targets of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        void ShowTargets(bool show = true);
 
         /// <summary>
         ///     Returns the number of instructions of a program.
