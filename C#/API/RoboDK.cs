@@ -970,11 +970,18 @@ namespace RoboDk.API
             check_connection();
             send_line("Collision_SetPairList");
             int npairs = Math.Min(checkState.Count, Math.Min(item1.Count, item2.Count));
-            send_int(npairs);
+            // pre-allocate send buffer
+            // 4: sendIntToBuffer(npairs, buffer);
+            // (npairs * 2 * 8) : see Tag1: Send items
+            // (npairs * 3 * 4) : see Tag2: send joint id's and checkState
+            // 
+            List<byte> buffer = new List<byte>(4 + (npairs * 2 * 8) + (npairs * 3 * 4) );
+            buffer = sendIntToBuffer(npairs, buffer);
             for (int i = 0; i < npairs; i++)
             {
-                send_item(item1[i]);
-                send_item(item2[i]);
+                // Tag1: Send items
+                buffer = sendItemToBuffer(item1[i], buffer);
+                buffer = sendItemToBuffer(item2[i], buffer);
                 int idok1 = 0;
                 int idok2 = 0;
                 if (id1 != null && id1.Count > i)
@@ -985,10 +992,13 @@ namespace RoboDk.API
                 {
                     idok2 = id2[i];
                 }
-                send_int(idok1);
-                send_int(idok2);
-                send_int((int) checkState[i]);
+                // Tag2: send id's and checkState
+                buffer = sendIntToBuffer(idok1, buffer);
+                buffer = sendIntToBuffer(idok2, buffer);
+                buffer = sendIntToBuffer((int)checkState[i], buffer);
             }
+            _socket.SendData(buffer.ToArray());
+ 
             int nok = rec_int();
             check_status();
             return nok == npairs;
@@ -1796,6 +1806,31 @@ namespace RoboDk.API
             }
         }
 
+        // Same as send_item except it will add the data to the provided buffer 
+        // and return the buffer as result.
+        internal List<byte> sendItemToBuffer(IItem item, List<byte> buffer)
+        {
+            byte[] bytes;
+            if (item == null)
+            {
+                bytes = BitConverter.GetBytes((ulong)0);
+            }
+            else
+            {
+                bytes = BitConverter.GetBytes(item.ItemId);
+            }
+
+            if (bytes.Length != 8)
+            {
+                throw new RdkException("API error");
+            }
+
+            Array.Reverse(bytes);
+            buffer.AddRange(bytes);
+            return buffer;
+        }
+
+
         //Receives an item pointer
         internal IItem rec_item(Socket sckt = null)
         {
@@ -1937,6 +1972,17 @@ namespace RoboDk.API
             {
                 throw new RdkException("_socket.Send failed.");
             }
+        }
+
+        // Same as send_int except it will add the data to the provided buffer 
+        // and returns the buffer as result.
+        internal List<byte> sendIntToBuffer(int number, List<byte> buffer)
+        {
+            var bytes = BitConverter.GetBytes(number);
+            // convert from big endian to little endian
+            Array.Reverse(bytes); 
+            buffer.AddRange(bytes);
+            return buffer;
         }
 
         internal int rec_int(Socket sckt=null)
