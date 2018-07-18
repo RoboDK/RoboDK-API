@@ -41,12 +41,12 @@
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// Modes to use for SetInteractiveMode
+    /// Modes to use with SetInteractiveMode to change the behavior of the 3D navigation or screen selection.
     /// </summary>
     public enum InteractiveType
     {
         /// <summary>
-        /// Default. Same as if we selected Escap and the user is ready to select his own choice.
+        /// Default. Same as if we selected Escape and the user is ready to select his own choice.
         /// </summary>
         NONE = 0,
 
