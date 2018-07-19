@@ -106,3 +106,30 @@ RoboDK Api Changelog-History
 			public bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
 			public void SetParameter(string parameter, double value);
 			public void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null);
+			
+-----------------------------------------------------
+
+16.7.2018 (RoboDK Version 3.4.7.5517)
+
+	Item.cs:
+		New Api function:
+
+			SetColor (for shapes)
+			public void SetColor(int shape_id, List<double> tocolor)
+				You can provide the ID before the color to specify the shape. The color change will only apply to the shape.
+
+			Selection Event:
+				It should now work well for any type of selection (3D view or tree). 
+
+			SolveIK and SolveIK All accept tool and reference frames
+				As an example, to calculate the current inverse kinematics you can do:
+				var jnts=ROBOT.SolveIK(ROBOT.Pose(), null, ROBOT.PoseTool(), ROBOT.PoseFrame());
+
+			Auto Render Delay:
+				During our call last week I mentioned I would add the option to set this flag to -1 to force update
+				and render each time you modify something in the RoboDK station. 
+				This delay can be modified in the following 2 ways:
+					1- In RoboDK: Tools-Options-Other-Auto Render Delay (used to be Auto Render Lag)
+					2- Through the INI file in %APPDATA%/RoboDK/settings.ini
+						AUTO_RENDER_DELAY=100
+
