@@ -1,4 +1,5 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------
 // Copyright 2018 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,6 +50,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Media;
+using System.Threading.Tasks;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -151,8 +153,6 @@ namespace RoboDk.API
         /// </summary>
         public int RoboDKBuild { get; set; }
 
-
-
         /// <summary>
         /// Forces to start RoboDK in hidden mode. 
         /// ShowRoboDK must be used to show the window.
@@ -189,15 +189,15 @@ namespace RoboDk.API
         /// <summary>
         /// Return the list of recently opened files
         /// </summary>
-        /// <param name="extension_filter"></param>
+        /// <param name="extensionFilter"></param>
         /// <returns></returns>
-        static public List<string> RecentFiles(string extension_filter = "")
+        public static List<string> RecentFiles(string extensionFilter = "")
         {
-            string ini_file = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
+            string iniFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
             string str = "";
-            if (File.Exists(ini_file))
+            if (File.Exists(iniFile))
             {
-                foreach (string line in File.ReadLines(ini_file))
+                foreach (string line in File.ReadLines(iniFile))
                 {
                     if (line.Contains("RecentFileList="))
                     {
@@ -206,22 +206,22 @@ namespace RoboDk.API
                     }
                 }
             }
-            List<string> rdk_list = new List<string>();
-            string[] read_list = str.Split(',');
-            foreach (string st in read_list)
+            List<string> rdkList = new List<string>();
+            string[] readList = str.Split(',');
+            foreach (string st in readList)
             {
                 string st2 = st.Trim();
                 if (st2.Length < 5) // file name should be name.abc
                 {
                     continue;
                 }
-                if (extension_filter.Length == 0 || st2.ToLower().EndsWith(extension_filter.ToLower()))
+                if (extensionFilter.Length == 0 || st2.ToLower().EndsWith(extensionFilter.ToLower()))
                 {
-                    rdk_list.Add(st2);
+                    rdkList.Add(st2);
                 }
 
             }
-            return rdk_list;
+            return rdkList;
         }
         #endregion
 
@@ -444,7 +444,7 @@ namespace RoboDk.API
             send_line("RDK_EVT", socketEvents);
             send_int(0, socketEvents);
             string response = rec_line(socketEvents);
-            int ver_evt = rec_int(socketEvents);
+            int verEvt = rec_int(socketEvents);
             int status = rec_int(socketEvents);
             if (response != "RDK_EVT" || status != 0)
             {
@@ -518,10 +518,10 @@ namespace RoboDk.API
         {
             check_connection();
             send_line("Version");
-            string app_name = rec_line();
-            int bit_arch = rec_int();
+            string appName = rec_line();
+            int bitArch = rec_int();
             string ver4 = rec_line();
-            string date_build = rec_line();
+            string dateBuild = rec_line();
             check_status();
             return ver4;
         }
@@ -802,9 +802,8 @@ namespace RoboDk.API
         public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null)
         {
             RequireBuild(5449);
-            double[] colorArray = null;
             Color clr = color?? Color.FromRgb(127,127,127);
-            colorArray = clr.ToRoboDKColorArray();
+            var colorArray = clr.ToRoboDKColorArray();
             check_connection();
             send_line("AddShape3");
             send_matrix(trianglePoints);
@@ -837,14 +836,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public IItem AddPoints(Mat points, IItem reference_object = null, bool add_to_ref = false, ProjectionType projection_type = ProjectionType.AlongNormalRecalc)
+        public IItem AddPoints(Mat points, IItem referenceObject = null, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
             check_connection();
             send_line("AddPoints");
             send_matrix(points);
-            send_item(reference_object);
-            send_int(add_to_ref ? 1 : 0);
-            send_int((int)projection_type);
+            send_item(referenceObject);
+            send_int(addToRef ? 1 : 0);
+            send_int((int)projectionType);
             ReceiveTimeout = 3600 * 1000;
             IItem newitem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
@@ -966,16 +965,23 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool SetCollisionActivePair(List<CollisionCheckOptions> check_state, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null)
+        public bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null)
         {
             check_connection();
             send_line("Collision_SetPairList");
-            int npairs = Math.Min(check_state.Count, Math.Min(item1.Count, item2.Count));
-            send_int(npairs);
+            int npairs = Math.Min(checkState.Count, Math.Min(item1.Count, item2.Count));
+            // pre-allocate send buffer
+            // 4: sendIntToBuffer(npairs, buffer);
+            // (npairs * 2 * 8) : see Tag1: Send items
+            // (npairs * 3 * 4) : see Tag2: send joint id's and checkState
+            // 
+            List<byte> buffer = new List<byte>(4 + (npairs * 2 * 8) + (npairs * 3 * 4) );
+            buffer = sendIntToBuffer(npairs, buffer);
             for (int i = 0; i < npairs; i++)
             {
-                send_item(item1[i]);
-                send_item(item2[i]);
+                // Tag1: Send items
+                buffer = sendItemToBuffer(item1[i], buffer);
+                buffer = sendItemToBuffer(item2[i], buffer);
                 int idok1 = 0;
                 int idok2 = 0;
                 if (id1 != null && id1.Count > i)
@@ -986,10 +992,13 @@ namespace RoboDk.API
                 {
                     idok2 = id2[i];
                 }
-                send_int(idok1);
-                send_int(idok2);
-                send_int((int) check_state[i]);
+                // Tag2: send id's and checkState
+                buffer = sendIntToBuffer(idok1, buffer);
+                buffer = sendIntToBuffer(idok2, buffer);
+                buffer = sendIntToBuffer((int)checkState[i], buffer);
             }
+            _socket.SendData(buffer.ToArray());
+ 
             int nok = rec_int();
             check_status();
             return nok == npairs;
@@ -1007,14 +1016,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Collision(IItem item1, IItem item2, bool use_collision_map = true)
+        public bool Collision(IItem item1, IItem item2, bool useCollisionMap = true)
         {
             RequireBuild(5449);
             check_connection();
             send_line("Collided3");
             send_item(item1);
             send_item(item2);
-            send_int(use_collision_map ? 1 : 0);
+            send_int(useCollisionMap ? 1 : 0);
             var ncollisions = rec_int();
             check_status();
             return ncollisions > 0;
@@ -1144,14 +1153,14 @@ namespace RoboDk.API
             check_connection();
             send_line("G_AllStn");
             int nstn = rec_int();
-            List < IItem > list_stn = new List<IItem>(nstn);
+            List < IItem > listStn = new List<IItem>(nstn);
             for (int i = 0; i < nstn; i++)
             {
                 IItem station = rec_item();
-                list_stn.Add(station);
+                listStn.Add(station);
             }
             check_status();
-            return list_stn;
+            return listStn;
         }
 
         /// <inheritdoc />
@@ -1225,22 +1234,22 @@ namespace RoboDk.API
         }
 
 
-        public void SetVisible(List<IItem> item_list, List<bool> visible_list, List<int> visible_frames = null)
+        public void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null)
         {
-            int nitm = Math.Min(item_list.Count, visible_list.Count);
+            int nitm = Math.Min(itemList.Count, visibleList.Count);
             check_connection();
             send_line("S_VisibleList");
             send_int(nitm);
             for (int i = 0; i < nitm; i++)
             {
-                send_item(item_list[i]);
-                send_int(visible_list[i] ? 1 : 0);
-                int frame_vis = -1;
-                if (visible_frames != null && visible_frames.Count > i)
+                send_item(itemList[i]);
+                send_int(visibleList[i] ? 1 : 0);
+                int frameVis = -1;
+                if (visibleFrames != null && visibleFrames.Count > i)
                 {
-                    frame_vis = visible_frames[i];
+                    frameVis = visibleFrames[i];
                 }
-                send_int(frame_vis);
+                send_int(frameVis);
             }
             check_status();
         }
@@ -1393,17 +1402,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public IItem BuildMechanism(int type, List<IItem> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", IItem robot = null)
+        public IItem BuildMechanism(int type, List<IItem> listObj, List<double> param, List<double> jointsBuild, List<double> jointsHome, List<double> jointsSenses, List<double> jointsLimLow, List<double> jointsLimHigh, Mat baseFrame = null, Mat tool = null, string name = "New robot", IItem robot = null)
         {
             if (tool == null)
             {
                 tool = Mat.Identity4x4();
             }
-            if (base_frame == null)
+            if (baseFrame == null)
             {
-                base_frame = Mat.Identity4x4();
+                baseFrame = Mat.Identity4x4();
             }
-            int ndofs = list_obj.Count - 1;
+            int ndofs = listObj.Count - 1;
             check_connection();
             send_line("BuildMechanism");
             send_item(robot);
@@ -1412,24 +1421,24 @@ namespace RoboDk.API
             send_int(ndofs);
             for (int i = 0; i <= ndofs; i++)
             {
-                send_item(list_obj[i]);
+                send_item(listObj[i]);
             }
-            send_pose(base_frame);
+            send_pose(baseFrame);
             send_pose(tool);
             send_arrayList(param);
-            Mat joints_data = new Mat(ndofs, 5);
+            Mat jointsData = new Mat(ndofs, 5);
             for (int i = 0; i < ndofs; i++)
             {
-                joints_data[i, 0] = joints_build[i];
-                joints_data[i, 1] = joints_home[i];
-                joints_data[i, 2] = joints_senses[i];
-                joints_data[i, 3] = joints_lim_low[i];
-                joints_data[i, 4] = joints_lim_high[i];
+                jointsData[i, 0] = jointsBuild[i];
+                jointsData[i, 1] = jointsHome[i];
+                jointsData[i, 2] = jointsSenses[i];
+                jointsData[i, 3] = jointsLimLow[i];
+                jointsData[i, 4] = jointsLimHigh[i];
             }
-            send_matrix(joints_data);
-            IItem new_robot = rec_item();
+            send_matrix(jointsData);
+            IItem newRobot = rec_item();
             check_status();
-            return new_robot;
+            return newRobot;
         }
 
         /// <inheritdoc />
@@ -1531,46 +1540,46 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetInteractiveMode(InteractiveType mode_type = InteractiveType.MOVE, DisplayRefType default_ref_flags = DisplayRefType.DEFAULT, List<IItem> custom_items = null, List<InteractiveType> custom_ref_flags = null)
+        public void SetInteractiveMode(InteractiveType modeType = InteractiveType.MOVE, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<InteractiveType> customRefFlags = null)
         {
             check_connection();
             send_line("S_InteractiveMode");
-            send_int((int)mode_type);
-            send_int((int)default_ref_flags);
-            if (custom_items == null || custom_ref_flags == null)
+            send_int((int)modeType);
+            send_int((int)defaultRefFlags);
+            if (customItems == null || customRefFlags == null)
             {
                 send_int(-1);
             }
             else
             {
-                int n_custom = Math.Min(custom_items.Count, custom_ref_flags.Count);
-                send_int(n_custom);
-                for (int i = 0; i < n_custom; i++)
+                int nCustom = Math.Min(customItems.Count, customRefFlags.Count);
+                send_int(nCustom);
+                for (int i = 0; i < nCustom; i++)
                 {
-                    send_item(custom_items[i]);
-                    send_int((int)custom_ref_flags[i]);
+                    send_item(customItems[i]);
+                    send_int((int)customRefFlags[i]);
                 }
             }
             check_status();
         }
 
         /// <inheritdoc />
-        public IItem GetCursorXYZ(int x_coord = -1, int y_coord = -1, List<double> xyz_station = null)
+        public IItem GetCursorXYZ(int xCoord = -1, int yCoord = -1, List<double> xyzStation = null)
         {
             check_connection();
             send_line("Proj2d3d");
-            send_int(x_coord);
-            send_int(y_coord);
+            send_int(xCoord);
+            send_int(yCoord);
             int selection = rec_int();
             double[] xyz = new double[3];
-            IItem selected_item = rec_item();
+            IItem selectedItem = rec_item();
             rec_xyz(xyz);
             check_status();
             if (xyz != null)
             {
-                xyz_station.Add(xyz[0]); xyz_station.Add(xyz[1]); xyz_station.Add(xyz[2]);
+                xyzStation.Add(xyz[0]); xyzStation.Add(xyz[1]); xyzStation.Add(xyz[2]);
             }
-            return selected_item;
+            return selectedItem;
         }
 
 
@@ -1583,7 +1592,7 @@ namespace RoboDk.API
                 throw new Exception($"Create target '{targetName}' failed.");
             }
 
-            target.setVisible(false);
+            target.SetVisible(false);
             target.SetAsJointTarget();
             target.SetJoints(joints);
             if (robot != null)
@@ -1742,7 +1751,7 @@ namespace RoboDk.API
             var data = Encoding.UTF8.GetBytes(line + "\n");
             try
             {
-                sckt.Send(data);
+                sckt.SendData(data);
             }
             catch
             {
@@ -1757,12 +1766,12 @@ namespace RoboDk.API
 
             //Receives a string. It reads until if finds LF (\\n)
             var buffer = new byte[1];
-            var bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
+            var bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
             var line = "";
             while (bytesread > 0 && buffer[0] != '\n')
             {
                 line = line + Encoding.UTF8.GetString(buffer);
-                bytesread = sckt.Receive(buffer, 1, SocketFlags.None);
+                bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
             }
 
             return line;
@@ -1789,13 +1798,38 @@ namespace RoboDk.API
             Array.Reverse(bytes);
             try
             {
-                _socket.Send(bytes);
+                _socket.SendData(bytes);
             }
             catch
             {
                 throw new RdkException("_socket.Send failed.");
             }
         }
+
+        // Same as send_item except it will add the data to the provided buffer 
+        // and return the buffer as result.
+        internal List<byte> sendItemToBuffer(IItem item, List<byte> buffer)
+        {
+            byte[] bytes;
+            if (item == null)
+            {
+                bytes = BitConverter.GetBytes((ulong)0);
+            }
+            else
+            {
+                bytes = BitConverter.GetBytes(item.ItemId);
+            }
+
+            if (bytes.Length != 8)
+            {
+                throw new RdkException("API error");
+            }
+
+            Array.Reverse(bytes);
+            buffer.AddRange(bytes);
+            return buffer;
+        }
+
 
         //Receives an item pointer
         internal IItem rec_item(Socket sckt = null)
@@ -1805,8 +1839,8 @@ namespace RoboDk.API
 
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
-            var read1 = sckt.Receive(buffer1, 8, SocketFlags.None);
-            var read2 = sckt.Receive(buffer2, 4, SocketFlags.None);
+            var read1 = sckt.ReceiveData(buffer1, 8, SocketFlags.None);
+            var read2 = sckt.ReceiveData(buffer2, 4, SocketFlags.None);
             if (read1 != 8 || read2 != 4)
             {
                 return null;
@@ -1831,14 +1865,14 @@ namespace RoboDk.API
             }
 
             Array.Reverse(bytes);
-            _socket.Send(bytes);
+            _socket.SendData(bytes);
         }
 
         ///Receives a generic pointer
         internal long rec_ptr()
         {
             var bytes = new byte[8];
-            var read = _socket.Receive(bytes, 8, SocketFlags.None);
+            var read = _socket.ReceiveData(bytes, 8, SocketFlags.None);
             if (read != 8)
             {
                 throw new Exception("Something went wrong");
@@ -1868,14 +1902,14 @@ namespace RoboDk.API
                     cnt = cnt + 1;
                 }
 
-            _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
+            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
         }
 
         internal Mat rec_pose()
         {
             var pose = new Mat(4, 4);
             var bytes = new byte[16 * 8];
-            var nbytes = _socket.Receive(bytes, 16 * 8, SocketFlags.None);
+            var nbytes = _socket.ReceiveData(bytes, 16 * 8, SocketFlags.None);
             if (nbytes != 16 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -1901,14 +1935,14 @@ namespace RoboDk.API
             {
                 var bytes = BitConverter.GetBytes(xyzpos[i]);
                 Array.Reverse(bytes);
-                _socket.Send(bytes, 8, SocketFlags.None);
+                _socket.SendData(bytes, 8, SocketFlags.None);
             }
         }
 
         internal void rec_xyz(double[] xyzpos)
         {
             var bytes = new byte[3 * 8];
-            var nbytes = _socket.Receive(bytes, 3 * 8, SocketFlags.None);
+            var nbytes = _socket.ReceiveData(bytes, 3 * 8, SocketFlags.None);
             if (nbytes != 3 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -1932,12 +1966,23 @@ namespace RoboDk.API
             Array.Reverse(bytes); // convert from big endian to little endian
             try
             {
-                sckt.Send(bytes);
+                sckt.SendData(bytes);
             }
             catch
             {
                 throw new RdkException("_socket.Send failed.");
             }
+        }
+
+        // Same as send_int except it will add the data to the provided buffer 
+        // and returns the buffer as result.
+        internal List<byte> sendIntToBuffer(int number, List<byte> buffer)
+        {
+            var bytes = BitConverter.GetBytes(number);
+            // convert from big endian to little endian
+            Array.Reverse(bytes); 
+            buffer.AddRange(bytes);
+            return buffer;
         }
 
         internal int rec_int(Socket sckt=null)
@@ -1946,7 +1991,7 @@ namespace RoboDk.API
                 sckt = _socket;
             
             var bytes = new byte[4];
-            var read = sckt.Receive(bytes, 4, SocketFlags.None);
+            var read = sckt.ReceiveData(bytes, 4, SocketFlags.None);
             if (read < 4)
             {
                 return 0;
@@ -1975,7 +2020,7 @@ namespace RoboDk.API
                 Array.Copy(onedouble, 0, bytesarray, i * 8, 8);
             }
 
-            _socket.Send(bytesarray, 8 * nvalues, SocketFlags.None);
+            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
         }
         // sends a list of doubles
         internal void send_arrayList(List<double> values)
@@ -1996,7 +2041,7 @@ namespace RoboDk.API
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * 8];
-                var read = _socket.Receive(bytes, nvalues * 8, SocketFlags.None);
+                var read = _socket.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
                 for (var i = 0; i < nvalues; i++)
                 {
                     var onedouble = new byte[8];
@@ -2036,7 +2081,7 @@ namespace RoboDk.API
                 }
             }
 
-            _socket.Send(sendBuffer, sendBuffer.Length, SocketFlags.None);
+            _socket.SendData(sendBuffer, sendBuffer.Length, SocketFlags.None);
         }
 
         // receives a 2 dimensional matrix (nxm)
@@ -2047,14 +2092,14 @@ namespace RoboDk.API
             var recvsize = size1 * size2 * 8;
             var bytes = new byte[recvsize];
             var mat = new Mat(size1, size2);
-            var BUFFER_SIZE = 256;
+            var bufferSize = 256;
             var received = 0;
             if (recvsize > 0)
             {
-                var to_receive = Math.Min(recvsize, BUFFER_SIZE);
-                while (to_receive > 0)
+                var toReceive = Math.Min(recvsize, bufferSize);
+                while (toReceive > 0)
                 {
-                    var nbytesok = _socket.Receive(bytes, received, to_receive, SocketFlags.None);
+                    var nbytesok = _socket.ReceiveData(bytes, received, toReceive, SocketFlags.None);
                     if (nbytesok <= 0)
                     {
                         throw new RdkException(
@@ -2062,7 +2107,7 @@ namespace RoboDk.API
                     }
 
                     received = received + nbytesok;
-                    to_receive = Math.Min(recvsize - received, BUFFER_SIZE);
+                    toReceive = Math.Min(recvsize - received, bufferSize);
                 }
             }
 
@@ -2081,7 +2126,7 @@ namespace RoboDk.API
         }
 
         // private move type, to be used by public methods (MoveJ  and MoveL)
-        internal void moveX(IItem target, double[] joints, Mat mat_target, IItem itemrobot, int movetype,
+        internal void MoveX(IItem target, double[] joints, Mat matTarget, IItem itemrobot, int movetype,
             bool blocking = true)
         {
             itemrobot.WaitMove();
@@ -2100,10 +2145,10 @@ namespace RoboDk.API
                 send_array(joints);
                 send_item(null);
             }
-            else if (mat_target != null && mat_target.IsHomogeneous())
+            else if (matTarget != null && matTarget.IsHomogeneous())
             {
                 send_int(2);
-                send_array(mat_target.ToDoubles());
+                send_array(matTarget.ToDoubles());
                 send_item(null);
             }
             else
@@ -2120,8 +2165,8 @@ namespace RoboDk.API
         }
 
         // private move type, to be used by public methods (MoveJ  and MoveL)
-        internal void moveC_private(IItem target1, double[] joints1, Mat mat_target1, IItem target2, double[] joints2,
-            Mat mat_target2, IItem itemrobot, bool blocking = true)
+        internal void moveC_private(IItem target1, double[] joints1, Mat matTarget1, IItem target2, double[] joints2,
+            Mat matTarget2, IItem itemrobot, bool blocking = true)
         {
             itemrobot.WaitMove();
             var command = "MoveC";
@@ -2139,10 +2184,10 @@ namespace RoboDk.API
                 send_array(joints1);
                 send_item(null);
             }
-            else if (mat_target1 != null && mat_target1.IsHomogeneous())
+            else if (matTarget1 != null && matTarget1.IsHomogeneous())
             {
                 send_int(2);
-                send_array(mat_target1.ToDoubles());
+                send_array(matTarget1.ToDoubles());
                 send_item(null);
             }
             else
@@ -2163,10 +2208,10 @@ namespace RoboDk.API
                 send_array(joints2);
                 send_item(null);
             }
-            else if (mat_target2 != null && mat_target2.IsHomogeneous())
+            else if (matTarget2 != null && matTarget2.IsHomogeneous())
             {
                 send_int(2);
-                send_array(mat_target2.ToDoubles());
+                send_array(matTarget2.ToDoubles());
                 send_item(null);
             }
             else
@@ -2194,13 +2239,13 @@ namespace RoboDk.API
 
         internal bool VerifyConnection()
         {
-            bool UseNewVersion = false; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
-            if (UseNewVersion)
+            bool useNewVersion = false; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
+            if (useNewVersion)
             {
                 send_line("RDK_API");
                 send_int(0);
                 string response = rec_line();
-                int ver_api = rec_int();
+                int verApi = rec_int();
                 RoboDKBuild = rec_int();
                 check_status();
                 return response == "RDK_API";
@@ -2217,12 +2262,12 @@ namespace RoboDk.API
             return false;
         }
 
-        internal bool RequireBuild(int build_required)
+        internal bool RequireBuild(int buildRequired)
         {
             if (RoboDKBuild == 0)
                 return true;
         
-            if (RoboDKBuild < build_required)
+            if (RoboDKBuild < buildRequired)
                 throw new Exception("This function is unavailable. Update RoboDK to use this function through the API.");
     
             return true;
@@ -2274,6 +2319,62 @@ namespace RoboDk.API
                     _socketEvents = null;
                 }
             }
+        }
+    }
+
+    internal static class RoboDKAsyncSendReceive
+    {
+        internal static int SendData(this Socket s, byte[] data, int len, SocketFlags flags)
+        {
+            var n = s.Send(data, len, flags);
+            Debug.Assert(n == len);
+            return n;
+        }
+
+        internal static int SendData(this Socket s, byte[] data)
+        {
+            return s.SendData(data, data.Length, SocketFlags.None);
+        }
+
+        internal static int ReceiveDataTask(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
+        {
+            Debug.Assert((offset + len) <= data.Length);
+            var receivedBytes = 0;
+            while (receivedBytes < len)
+            {
+                var n = s.Receive(data, offset + receivedBytes, len - receivedBytes, flags);
+                if (n <= 0)
+                {
+                    // socket closed.
+                    return 0;
+                }
+                receivedBytes += n;
+            }
+
+            return receivedBytes;
+        }
+
+        internal static int ReceiveData(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
+        {
+            // Only execute as Task if we run on the main UI Thread
+            if (Thread.CurrentThread == System.Windows.Application.Current?.Dispatcher?.Thread )
+            {
+                // TASK.RUN
+                var receiveTask = Task.Run(() => ReceiveDataTask(s, data, offset, len, flags));
+                receiveTask.Wait();
+                return receiveTask.Result;
+            }
+            else
+            {
+                // Any other background thread. Call receive synchronously
+                return ReceiveDataTask(s, data, offset, len, flags);
+            }
+
+        }
+
+        internal static int ReceiveData(this Socket s, byte[] data, int len, SocketFlags flags)
+        {
+            return s.ReceiveData(data, 0, len, flags);
         }
     }
 }

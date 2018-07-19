@@ -148,8 +148,15 @@ namespace RoboDk.API
         ///     Sets the item visiblity status
         /// </summary>
         /// <param name="visible"></param>
-        /// <param name="visible_frame">srt the visible reference frame (1) or not visible (0)</param>
-        void setVisible(bool visible, int visible_frame = -1);
+        /// <param name="visibleFrame">srt the visible reference frame (1) or not visible (0)</param>
+        void SetVisible(bool visible, int visibleFrame = -1);
+
+        /// <summary>
+        ///     Show an object or a robot link as collided (red)
+        /// </summary>
+        /// <param name="collided"></param>
+        /// <param name="robotLinkId"></param>
+        void ShowAsCollided(bool collided, int robotLinkId = 0);
 
         /// <summary>
         ///     Returns the name of an item. The name of the item is always displayed in the RoboDK station tree
@@ -169,7 +176,7 @@ namespace RoboDk.API
         ///     If a robot is provided, it will set the pose of the end efector.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix</param>
-        void setPose(Mat pose);
+        void SetPose(Mat pose);
 
         /// <summary>
         ///     Returns the local position (pose) of an object, target or reference frame. For example, the position of an
@@ -184,7 +191,7 @@ namespace RoboDk.API
         ///     tools and objects.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix</param>
-        void setGeometryPose(Mat pose);
+        void SetGeometryPose(Mat pose);
 
         /// <summary>
         ///     Returns the position (pose) the object geometry with respect to its own reference frame. This procedure works for
@@ -198,7 +205,7 @@ namespace RoboDk.API
         ///     tool pose of the active tool held by the robot.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-        void setHtool(Mat pose);
+        void SetHtool(Mat pose);
 
         /// <summary>
         ///     Obsolete: Use PoseTool() instead.
@@ -296,6 +303,13 @@ namespace RoboDk.API
         /// <seealso cref="Item.GetColor"/>
         /// <seealso cref="Item.Recolor(System.Windows.Media.Color,System.Nullable{System.Windows.Media.Color},double)"/>
         void SetColor(Color tocolor);
+
+        /// <summary>
+        /// Set the color of an object shape. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="shapeId">ID of the shape: the ID is the order in which the shape was added using AddShape()</param>
+        /// <param name="tocolor">color to set</param>
+        void SetColor(int shapeId, Color tocolor);
 
         /// <summary>
         /// Set the alpha channel of an object, tool or robot. 
@@ -502,11 +516,11 @@ namespace RoboDk.API
         ///     current robot configuration (see SolveIK_All())
         /// </summary>
         /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
-        /// <param name="joints_approx">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
+        /// <param name="jointsApprox">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
         /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
         /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>array of joints</returns>
-        double[] SolveIK(Mat pose, double[] joints_approx = null, Mat tool = null, Mat reference = null);
+        double[] SolveIK(Mat pose, double[] jointsApprox = null, Mat tool = null, Mat reference = null);
 
         /// <summary>
         ///     Computes the inverse kinematics for the specified robot and pose. The function returns all available joint
@@ -635,24 +649,24 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="j1">joints -> start joints</param>
         /// <param name="j2">joints -> destination joints</param>
-        /// <param name="minstep_deg">(optional): maximum joint step in degrees</param>
+        /// <param name="minstepDeg">(optional): maximum joint step in degrees</param>
         /// <returns>
         ///     collision : returns 0 if the movement is free of collision. Otherwise it returns the number of pairs of
         ///     objects that collided if there was a collision.
         /// </returns>
-        int MoveJ_Test(double[] j1, double[] j2, double minstep_deg = -1);
+        int MoveJ_Test(double[] j1, double[] j2, double minstepDeg = -1);
 
         /// <summary>
         ///     Checks if a linear movement is free of collision.
         /// </summary>
         /// <param name="j1">joints -> start joints</param>
         /// <param name="j2">joints -> destination joints</param>
-        /// <param name="minstep_deg">(optional): maximum joint step in degrees</param>
+        /// <param name="minstepDeg">(optional): maximum joint step in degrees</param>
         /// <returns>
         ///     collision : returns 0 if the movement is free of collision. Otherwise it returns the number of pairs of
         ///     objects that collided if there was a collision.
         /// </returns>
-        int MoveL_Test(double[] j1, double[] j2, double minstep_deg = -1);
+        int MoveL_Test(double[] j1, double[] j2, double minstepDeg = -1);
 
         /// <summary>
         ///     Sets the speed and/or the acceleration of a robot.
@@ -662,18 +676,18 @@ namespace RoboDk.API
         /// <summary>
         ///     Sets the speed and/or the acceleration of a robot.
         /// </summary>
-        /// <param name="speed_linear">linear speed in mm/s (-1 = no change)</param>
-        /// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
-        /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
-        /// <param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
-        void setSpeed(double speed_linear, double accel_linear = -1, double speed_joints = -1,
-            double accel_joints = -1);
+        /// <param name="speedLinear">linear speed in mm/s (-1 = no change)</param>
+        /// <param name="accelLinear">linear acceleration in mm/s2 (-1 = no change)</param>
+        /// <param name="speedJoints">joint speed in deg/s (-1 = no change)</param>
+        /// <param name="accelJoints">joint acceleration in deg/s2 (-1 = no change)</param>
+        void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1,
+            double accelJoints = -1);
 
         /// <summary>
         ///     Sets the robot movement smoothing accuracy (also known as zone data value).
         /// </summary>
         /// <param name="zonedata">zonedata value (int) (robot dependent, set to -1 for fine movements)</param>
-        void setZoneData(double zonedata);
+        void SetZoneData(double zonedata);
 
         /// <summary>
         ///     Displays a sequence of joints
@@ -696,16 +710,16 @@ namespace RoboDk.API
         /// <summary>
         ///     Waits (blocks) until the robot finishes its movement.
         /// </summary>
-        /// <param name="timeout_sec">timeout -> Max time to wait for robot to finish its movement (in seconds)</param>
-        void WaitMove(double timeout_sec = 300);
+        /// <param name="timeoutSec">timeout -> Max time to wait for robot to finish its movement (in seconds)</param>
+        void WaitMove(double timeoutSec = 300);
 
         /// <summary>
         ///     Saves a program to a file.
         /// </summary>
         /// <param name="filename">File path of the program</param>
-        /// <param name="run_mode">RUNMODE_MAKE_ROBOTPROG to generate the program file.Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.</param>
+        /// <param name="runMode">RUNMODE_MAKE_ROBOTPROG to generate the program file.Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.</param>
         /// <returns>Transfer succeeded is True if there was a successful program transfer (if RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START are used)</returns>
-        bool MakeProgram(string filename = "", RunMode run_mode = RunMode.MakeRobotProgram);
+        bool MakeProgram(string filename = "", RunMode runMode = RunMode.MakeRobotProgram);
 
         /// <summary>
         ///     Sets if the program will be run in simulation mode or on the real robot.
@@ -757,35 +771,35 @@ namespace RoboDk.API
         ///     Generates a pause instruction for a robot or a program when generating code. Set it to -1 (default) if you want the
         ///     robot to stop and let the user resume the program anytime.
         /// </summary>
-        /// <param name="time_ms">Time in milliseconds</param>
-        void Pause(double time_ms = -1);
+        /// <param name="timeMs">Time in milliseconds</param>
+        void Pause(double timeMs = -1);
 
         /// <summary>
         ///     Sets a variable (output) to a given value. This can also be used to set any variables to a desired value.
         /// </summary>
-        /// <param name="io_var">io_var -> digital output (string or number)</param>
-        /// <param name="io_value">io_value -> value (string or number)</param>
-        void setDO(string io_var, string io_value);
+        /// <param name="ioVar">io_var -> digital output (string or number)</param>
+        /// <param name="ioValue">io_value -> value (string or number)</param>
+        void setDO(string ioVar, string ioValue);
 
         /// <summary>
         ///     Waits for an input io_id to attain a given value io_value. Optionally, a timeout can be provided.
         /// </summary>
-        /// <param name="io_var">io_var -> digital output (string or number)</param>
-        /// <param name="io_value">io_value -> value (string or number)</param>
-        /// <param name="timeout_ms">int (optional) -> timeout in miliseconds</param>
-        void waitDI(string io_var, string io_value, double timeout_ms = -1);
+        /// <param name="ioVar">io_var -> digital output (string or number)</param>
+        /// <param name="ioValue">io_value -> value (string or number)</param>
+        /// <param name="timeoutMs">int (optional) -> timeout in miliseconds</param>
+        void waitDI(string ioVar, string ioValue, double timeoutMs = -1);
 
         /// <summary>
         ///     Add a custom instruction. This instruction will execute a Python file or an executable file.
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="path_run">path to run(relative to RoboDK/bin folder or absolute path)</param>
-        /// <param name="path_icon">icon path(relative to RoboDK/bin folder or absolute path)</param>
+        /// <param name="pathRun">path to run(relative to RoboDK/bin folder or absolute path)</param>
+        /// <param name="pathIcon">icon path(relative to RoboDK/bin folder or absolute path)</param>
         /// <param name="blocking">True if blocking, 0 if it is a non blocking executable trigger</param>
-        /// <param name="cmd_run_on_robot">Command to run through the driver when connected to the robot</param>
+        /// <param name="cmdRunOnRobot">Command to run through the driver when connected to the robot</param>
         /// :param name: digital input (string or number)
-        void AddCustomInstruction(string name, string path_run, string path_icon = "", bool blocking = true,
-            string cmd_run_on_robot = "");
+        void AddCustomInstruction(string name, string pathRun, string pathIcon = "", bool blocking = true,
+            string cmdRunOnRobot = "");
 
         /// <summary>
         ///     Adds a new robot move joint instruction to a program. Obsolete. Use MoveJ instead.
@@ -798,6 +812,18 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="itemtarget">target to move to</param>
         void AddMoveL(IItem itemtarget);
+
+        /// <summary>
+        /// Show or hide instruction items of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        void ShowInstructions(bool show = true);
+
+        /// <summary>
+        /// Show or hide targets of a program in the RoboDK tree
+        /// </summary>
+        /// <param name="show"></param>
+        void ShowTargets(bool show = true);
 
         /// <summary>
         ///     Returns the number of instructions of a program.
