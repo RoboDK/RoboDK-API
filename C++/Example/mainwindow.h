@@ -33,8 +33,6 @@ public:
 
 private slots:
     void on_btnLoadFile_clicked();
-    void on_btnShowRoboDK_clicked();
-    void on_btnHideRoboDK_clicked();
     void on_btnSelectRobot_clicked();
     void on_btnTestButton_clicked();
     void on_btnGetPosition_clicked();
@@ -55,12 +53,27 @@ private slots:
     void on_btnRZp_clicked();
 
 
+    void on_radSimulation_clicked();
+    void on_radOfflineProgramming_clicked();
+    void on_radRunOnRobot_clicked();
+    void on_btnMakeProgram_clicked();
+
+    void on_radShowRoboDK_clicked();
+    void on_radHideRoboDK_clicked();
+    void on_radIntegrateRoboDK_clicked();
+
+
+private:
+    void robodk_window_clear();
+
 private:
     Ui::MainWindow *ui;
 
 
     RoboDK *RDK;
     Item *ROBOT;
+
+    QWindow *robodk_window;
 };
 
 #endif // MAINWINDOW_H
