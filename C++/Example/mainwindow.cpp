@@ -1,6 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
+#include <QWindow>
+
+#ifdef WIN32
+// this is used to integrate RoboDK window as a child window
+#include <windows.h>
+#pragma comment(lib,"user32.lib")
+#endif
 
 #define M_PI 3.14159265358979323846
 
@@ -8,7 +15,11 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
+    robodk_window = NULL;
     ui->setupUi(this);
+    ui->widgetRoboDK->hide();
+    adjustSize();
 
 
 
@@ -22,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 MainWindow::~MainWindow() {
+    robodk_window_clear();
+    RDK->CloseRoboDK();
     delete ui;
     delete RDK;
 }
@@ -78,17 +91,6 @@ void MainWindow::on_btnLoadFile_clicked() {
     }
 }
 
-void MainWindow::on_btnShowRoboDK_clicked(){
-    if (!Check_RoboDK()){ return; }
-
-    RDK->ShowRoboDK();
-}
-
-void MainWindow::on_btnHideRoboDK_clicked(){
-    if (!Check_RoboDK()){ return; }
-
-    RDK->HideRoboDK();
-}
 
 void MainWindow::on_btnSelectRobot_clicked(){
     Select_Robot();
@@ -301,3 +303,171 @@ void MainWindow::IncrementalMove(int id, double sense){
 
 
 
+
+void MainWindow::on_radSimulation_clicked()
+{
+    if (!Check_Robot()) { return; }
+
+    // Important: stop any previous program generation (if we selected offline programming mode)
+    ROBOT->Finish();
+
+    // Set simulation mode
+    RDK->setRunMode(RoboDK::RUNMODE_SIMULATE);
+}
+
+void MainWindow::on_radOfflineProgramming_clicked()
+{
+    if (!Check_Robot()) { return; }
+
+    // Important: stop any previous program generation (if we selected offline programming mode)
+    ROBOT->Finish();
+
+    // Set simulation mode
+    RDK->setRunMode(RoboDK::RUNMODE_MAKE_ROBOTPROG);
+
+    // specify a program name, a folder to save the program and a post processor if desired
+    RDK->ProgramStart("NewProgram");
+}
+
+void MainWindow::on_radRunOnRobot_clicked()
+{
+    if (!Check_Robot()) { return; }
+
+    // Important: stop any previous program generation (if we selected offline programming mode)
+    ROBOT->Finish();
+
+    // Connect to real robot
+    if (ROBOT->Connect())
+    {
+        // Set simulation mode
+        RDK->setRunMode(RoboDK::RUNMODE_RUN_ROBOT);
+    }
+    else
+    {
+        ui->statusBar->showMessage("Can't connect to the robot. Check connection and parameters.");
+    }
+
+}
+
+void MainWindow::on_btnMakeProgram_clicked()
+{
+    if (!Check_Robot()) { return; }
+
+    // Trigger program generation
+    ROBOT->Finish();
+
+}
+
+
+
+void MainWindow::robodk_window_clear(){
+    if (robodk_window != NULL){
+        robodk_window->setParent(NULL);
+        robodk_window->setFlags(Qt::Window);
+        //robodk_window->deleteLater();
+        robodk_window = NULL;
+        ui->widgetRoboDK->layout()->deleteLater();
+    }
+    // Make sure RoboDK widget is hidden
+    ui->widgetRoboDK->hide();
+
+    // Adjust the main window size
+    adjustSize();
+}
+
+
+void MainWindow::on_radShowRoboDK_clicked()
+{
+    if (!Check_RoboDK()){ return; }
+
+    // Hide embedded window
+    robodk_window_clear();
+
+    RDK->setWindowState(RoboDK::WINDOWSTATE_NORMAL);
+    RDK->setWindowState(RoboDK::WINDOWSTATE_SHOW);
+}
+
+void MainWindow::on_radHideRoboDK_clicked()
+{
+    if (!Check_RoboDK()){ return; }
+
+    // Hide embedded window
+    robodk_window_clear();
+
+    RDK->setWindowState(RoboDK::WINDOWSTATE_HIDDEN);
+
+}
+
+HWND FindTopWindow(DWORD pid)
+{
+    std::pair<HWND, DWORD> params = { 0, pid };
+
+    // Enumerate the windows using a lambda to process each window
+    BOOL bResult = EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL
+    {
+        auto pParams = (std::pair<HWND, DWORD>*)(lParam);
+
+        DWORD processId;
+        if (GetWindowThreadProcessId(hwnd, &processId) && processId == pParams->second)
+        {
+            // Stop enumerating
+            SetLastError(-1);
+            pParams->first = hwnd;
+            return FALSE;
+        }
+
+        // Continue enumerating
+        return TRUE;
+    }, (LPARAM)&params);
+
+    if (!bResult && GetLastError() == -1 && params.first)
+    {
+        return params.first;
+    }
+
+    return 0;
+}
+
+void MainWindow::on_radIntegrateRoboDK_clicked()
+{
+    if (!Check_RoboDK()){ return; }
+
+    qint64 procWID = RDK->ProcessID();
+    if (procWID == 0) {
+        ui->statusBar->showMessage("Invalid handle. Close RoboDK and open RoboDK with this application");
+        return;
+    }
+
+
+#ifdef WIN32
+    if (procWID != 0){
+        qDebug() << "Using parent process=" << procWID;
+        //SetParent((HWND) procWID, (HWND)widget_container->window()->winId());
+
+        // Retrieve the top level window
+        HWND wid_rdk = FindTopWindow(procWID);
+        qDebug() << "HWND RoboDK window: " << wid_rdk;
+        //SetParent((HWND) wid_rdk, (HWND)widget_container->winId());//->window()->winId());
+        if (wid_rdk == NULL){
+            ui->statusBar->showMessage("RoboDK top level window was not found...");
+            return;
+        }
+
+        // set parent widget
+        robodk_window = QWindow::fromWinId((WId)wid_rdk);
+        QWidget *new_widget = createWindowContainer(robodk_window);
+        QVBoxLayout *vl = new QVBoxLayout();
+        ui->widgetRoboDK->setLayout(vl);
+        vl->addWidget(new_widget);
+        new_widget->show();
+        this->adjustSize();
+
+        RDK->setWindowState(RoboDK::WINDOWSTATE_SHOW);
+        RDK->setWindowState(RoboDK::WINDOWSTATE_FULLSCREEN_CINEMA);
+
+        // Show the RoboDK widget (embedded screen)
+        ui->widgetRoboDK->show();
+    }
+#endif
+
+}
