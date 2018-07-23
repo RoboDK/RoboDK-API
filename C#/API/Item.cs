@@ -76,6 +76,7 @@ namespace RoboDk.API
             ItemId = itemId;
             Link = connectionLink;
             _type = itemType;
+            _name = "";
         }
 
         #endregion
@@ -89,6 +90,11 @@ namespace RoboDk.API
         #endregion
 
         #region Public Methods
+
+        public IItem Clone(IRoboDK connectionLink)
+        {
+            return new Item((RoboDK)connectionLink, this.ItemId, this._type);
+        }
 
         public override string ToString()
         {

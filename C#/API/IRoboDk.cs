@@ -65,6 +65,12 @@ namespace RoboDk.API
         #region Public Methods
 
         /// <summary>
+        /// Open a new additional RoboDK Link to the same already existing RoboDK instance.
+        /// </summary>
+        /// <returns>New RoboDK Link</returns>
+        IRoboDK NewLink();
+
+        /// <summary>
         /// Establish a connection with RoboDK. 
         /// If RoboDK is not running it will attempt to start RoboDK from the default installation path.
         /// (otherwise APPLICATION_DIR must be set properly). 

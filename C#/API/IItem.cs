@@ -59,6 +59,13 @@ namespace RoboDk.API
         #region Public Methods
 
         /// <summary>
+        /// Make a copy of the item with a new roboDK link.
+        /// </summary>
+        /// <param name="connectionLink">RoboDK link</param>
+        /// <returns>new item</returns>
+        IItem Clone(IRoboDK connectionLink);
+
+        /// <summary>
         /// Update item flags. 
         /// Item flags allow defining how much access the user has to item-specific features. 
         /// </summary>

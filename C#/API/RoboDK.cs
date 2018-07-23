@@ -227,6 +227,18 @@ namespace RoboDk.API
 
         #region Public Methods
 
+        /// <inheritdoc />
+        public IRoboDK NewLink()
+        {
+            var rdk = new RoboDK()
+            {
+                RoboDKServerStartPort = this.RoboDKServerStartPort,
+                RoboDKServerEndPort = this.RoboDKServerEndPort
+            };
+            rdk.Connect();
+            return rdk;
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -2275,6 +2287,26 @@ namespace RoboDk.API
 
 
         #endregion
+
+        public sealed class RoboDKLink : IDisposable
+        {
+            private RoboDK _roboDK;
+
+            public IRoboDK RoboDK => _roboDK;
+
+            public RoboDKLink(IRoboDK roboDK)
+            {
+                _roboDK = (RoboDK)roboDK.NewLink();
+            }
+
+            public void Dispose()
+            {
+                var tempRoboDK = _roboDK;
+                _roboDK = null;
+                tempRoboDK._socket.Close();
+                tempRoboDK._socket.Dispose();
+            }
+        }
 
         private sealed class RoboDKEventSource : IRoboDKEventSource
         {
