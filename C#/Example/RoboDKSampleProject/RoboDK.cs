@@ -2875,6 +2875,19 @@ public class RoboDK
         _send_Int(auto_render ? 1 : 0);
         _check_status();
     }
+    
+    /// <summary>
+    /// Update the screen. 
+    /// This updates the position of all robots and internal links according to previously set values.
+    /// </summary>
+    public void Update()
+    {
+        check_connection();
+        var command = "Refresh";
+        send_line(command);
+        send_int(0);
+        check_status();
+    }
 
     /// <summary>
     /// Returns (1/True) if object_inside is inside the object_parent
