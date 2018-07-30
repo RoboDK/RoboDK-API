@@ -2882,11 +2882,10 @@ public class RoboDK
     /// </summary>
     public void Update()
     {
-        check_connection();
-        var command = "Refresh";
-        send_line(command);
-        send_int(0);
-        check_status();
+        _check_connection();
+        _send_Line("Refresh");
+        _send_Int(0);
+        _check_status();
     }
 
     /// <summary>
