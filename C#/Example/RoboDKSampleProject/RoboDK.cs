@@ -3018,17 +3018,26 @@ public class RoboDK
     /// <summary>
     /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
     /// </summary>
+    /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools)</param>
     /// <returns>List of items that are in a collision state</returns>
-    public List<Item> CollisionItems()
+    public List<Item> CollisionItems(List<int> link_id_list = null)
     {
         _check_connection();
         _send_Line("Collision_Items");
         int nitems = _recv_Int();
         List<Item> item_list = new List<Item>();
+        if (link_id_list != null)
+        {
+            link_id_list.Clear();
+        }
         for (int i = 0; i < nitems; i++)
         {
             item_list.Add(_recv_Item());
             int link_id = _recv_Int();//link id for robot items (ignored)
+            if (link_id_list != null)
+            {
+                link_id_list.Add(link_id);
+            }
             int collision_times = _recv_Int();//number of objects it is in collisions with
         }
         _check_status();
@@ -3330,6 +3339,38 @@ public class RoboDK
                 frame_vis = visible_frames[i];
             }
             _send_Int(frame_vis);
+        }
+        _check_status();
+    }
+
+
+    /// <summary>
+    /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
+    /// </summary>
+    /// <param name="item_list">List of items</param>
+    /// <param name="collided_list">List of collided flags (True=show as collided)</param>
+    /// <param name="robot_link_id">Robot link ID, when applicable</param>
+    public void ShowAsCollided(List<Item> item_list, List<bool> collided_list, List<int> robot_link_id = null)
+    {
+        _require_build(5794);
+        _check_connection();
+        int nitms = Math.Min(item_list.Count, collided_list.Count);
+        if (robot_link_id != null)
+        {
+            nitms = Math.Min(nitms, robot_link_id.Count);
+        }
+        _send_Line("ShowAsCollidedList");
+        _send_Int(nitms);
+        for (int i = 0; i < nitms; i++)
+        {
+            _send_Item(item_list[i]);
+            _send_Int(collided_list[i] ? 1 : 0);
+            int link_id = 0;
+            if (robot_link_id != null)
+            {
+                link_id = robot_link_id[i];
+            }
+            _send_Int(link_id);
         }
         _check_status();
     }
@@ -3957,7 +3998,7 @@ public class RoboDK
         }
 
         /// <summary>
-        /// Show an object or a robot link as collided (red)
+        /// Show an object or a robot link as collided (red) or as not collided (normal color)
         /// </summary>
         /// <param name="collided"></param>
         /// <param name="robot_link_id"></param>
