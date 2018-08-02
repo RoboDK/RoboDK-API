@@ -127,6 +127,34 @@ namespace RoboDk.API
         /// <param name="parent"></param>
         void SetParent(IItem parent);
 
+
+        /// <summary>
+        /// Attaches the item to another parent while maintaining the current absolute position in the station.
+        /// The relationship between this item and its parent is changed to maintain the abosolute position.
+        /// </summary>
+        /// <param name="parent">parent item to attach this item</param>
+        void setParentStatic(IItem parent);
+
+        /// <summary>
+        /// Attach the closest object to the tool.
+        /// Returns the item that was attached.
+        /// Use item.Valid() to check if an object was attached to the tool.
+        /// </summary>
+        IItem AttachClosest();
+
+        /// <summary>
+        /// Detach the closest object attached to the tool (see also: setParentStatic).
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        IItem DetachClosest(IItem parent = null);
+
+        /// <summary>
+        /// Detaches any object attached to a tool.
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        void DetachAll(IItem parent = null);
+
+
         /// <summary>
         ///     Returns a list of the item childs that are attached to the provided item.
         /// </summary>

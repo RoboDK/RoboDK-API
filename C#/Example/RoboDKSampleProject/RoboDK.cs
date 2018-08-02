@@ -3929,7 +3929,63 @@ public class RoboDK
             link._check_status();
         }
 
-        ////// add more methods
+        /// <summary>
+        /// Attaches the item to another parent while maintaining the current absolute position in the station.
+        /// The relationship between this item and its parent is changed to maintain the abosolute position.
+        /// </summary>
+        /// <param name="parent">parent item to attach this item</param>
+        public void setParentStatic(Item parent)
+        {
+            link._check_connection();
+            link._send_Line("S_Parent_Static");
+            link._send_Item(this);
+            link._send_Item(parent);
+            link._check_status();
+        }
+
+
+        /// <summary>
+        /// Attach the closest object to the tool.
+        /// Returns the item that was attached.
+        /// Use item.Valid() to check if an object was attached to the tool.
+        /// </summary>
+        public Item AttachClosest()
+        {
+            link._check_connection();
+            link._send_Line("Attach_Closest");
+            link._send_Item(this);
+            Item item_attached = link._recv_Item();
+            link._check_status();
+            return item_attached;
+        }
+
+        /// <summary>
+        /// Detach the closest object attached to the tool (see also: setParentStatic).
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        public Item DetachClosest(Item parent = null)
+        {
+            link._check_connection();
+            link._send_Line("Detach_Closest");
+            link._send_Item(this);
+            link._send_Item(parent);
+            Item item_detached = link._recv_Item();
+            link._check_status();
+            return item_detached;
+        }
+
+        /// <summary>
+        /// Detaches any object attached to a tool.
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        public void DetachAll(Item parent = null)
+        {
+            link._check_connection();
+            link._send_Line("Detach_All");
+            link._send_Item(this);
+            link._send_Item(parent);
+            link._check_status();
+        }
 
         /// <summary>
         /// Return the parent item of this item (:class:`.Item`)

@@ -207,6 +207,49 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void setParentStatic(IItem parent)
+        {
+            Link.check_connection();
+            Link.send_line("S_Parent_Static");
+            Link.send_item(this);
+            Link.send_item(parent);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public IItem AttachClosest()
+        {
+            Link.check_connection();
+            Link.send_line("Attach_Closest");
+            Link.send_item(this);
+            IItem item_attached = Link.rec_item();
+            Link.check_status();
+            return item_attached;
+        }
+
+        /// <inheritdoc />
+        public IItem DetachClosest(IItem parent = null)
+        {
+            Link.check_connection();
+            Link.send_line("Detach_Closest");
+            Link.send_item(this);
+            Link.send_item(parent);
+            IItem item_detached = Link.rec_item();
+            Link.check_status();
+            return item_detached;
+        }
+        
+        /// <inheritdoc />
+        public void DetachAll(IItem parent = null)
+        {
+            Link.check_connection();
+            Link.send_line("Detach_All");
+            Link.send_item(this);
+            Link.send_item(parent);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
         public List<IItem> Childs()
         {
             Link.check_connection();
