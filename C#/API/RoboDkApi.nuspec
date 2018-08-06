@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>RoboDkApi</id>
+    <version>3.4.8</version>
+    <title>RoboDK API</title>
+    <authors>RoboDK</authors>
+    <licenseUrl>https://robodk.com/license.html</licenseUrl>
+    <projectUrl>https://robodk.com/</projectUrl>
+    <iconUrl>https://robodk.com/favicon.ico</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A package to integrate with RoboDK simulation software for industrial robots. Integrate any application with RoboDK's 3D simulation environment. Program any industrial robot arm using the same development environment.</description>
+    <copyright>Copyright 2018</copyright>
+    <tags>Robot Simulation Offline Programming ABB Fanuc KUKA Motoman Yaskawa Denso Kawasaki 3D CAD CAM Manufacturing</tags>
+  </metadata>
+</package>
