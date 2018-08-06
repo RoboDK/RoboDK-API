@@ -133,7 +133,7 @@ namespace RoboDk.API
         /// The relationship between this item and its parent is changed to maintain the abosolute position.
         /// </summary>
         /// <param name="parent">parent item to attach this item</param>
-        void setParentStatic(IItem parent);
+        void SetParentStatic(IItem parent);
 
         /// <summary>
         /// Attach the closest object to the tool.
@@ -177,7 +177,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="visible"></param>
         /// <param name="visibleFrame">srt the visible reference frame (1) or not visible (0)</param>
-        void SetVisible(bool visible, int visibleFrame = -1);
+        void SetVisible(bool visible, VisibleRefType visibleFrame = VisibleRefType.Default);
 
         /// <summary>
         ///     Show an object or a robot link as collided (red)

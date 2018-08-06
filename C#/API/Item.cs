@@ -207,7 +207,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void setParentStatic(IItem parent)
+        public void SetParentStatic(IItem parent)
         {
             Link.check_connection();
             Link.send_line("S_Parent_Static");
@@ -292,11 +292,11 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetVisible(bool visible, int visibleFrame = -1)
+        public void SetVisible(bool visible, VisibleRefType visible_reference = VisibleRefType.Default)
         {
-            if (visibleFrame < 0)
+            if (visible_reference == VisibleRefType.Default)
             {
-                visibleFrame = visible ? 1 : 0;
+                visible_reference = visible ? VisibleRefType.On : VisibleRefType.Off;
             }
 
             Link.check_connection();
@@ -304,7 +304,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             Link.send_int(visible ? 1 : 0);
-            Link.send_int(visibleFrame);
+            Link.send_int((int)visible_reference);
             Link.check_status();
         }
 

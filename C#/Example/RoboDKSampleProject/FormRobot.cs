@@ -932,7 +932,6 @@ namespace ProjectRoboDK
         {
             if (!Check_ROBOT()) { return; }
 
-
             int n_sides = 6;
 
             Mat pose_ref = ROBOT.Pose();

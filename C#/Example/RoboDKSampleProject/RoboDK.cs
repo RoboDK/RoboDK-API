@@ -1338,6 +1338,32 @@ public class RoboDK
     public const int EVENT_REFERENCE_RELEASED = 4;
     public const int EVENT_TOOL_MODIFIED = 5;
 
+    // Robot link visibility
+    public const int VISIBLE_REFERENCE_DEFAULT = -1;
+    public const int VISIBLE_REFERENCE_ON = 1;
+    public const int VISIBLE_REFERENCE_OFF = 0;
+    public const int VISIBLE_ROBOT_NONE = 0;
+    public const int VISIBLE_ROBOT_FLANGE = 0x01;
+    public const int VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1;
+    public const int VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2;
+    public const int VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3;
+    public const int VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4;
+    public const int VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5;
+    public const int VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6;
+    public const int VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7;
+    public const int VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8;
+    public const int VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9;
+    public const int VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10;
+    public const int VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11;
+    public const int VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12;
+    public const int VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13;
+    public const int VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14;
+    public const int VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15;
+    public const int VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16;
+    public const int VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB;
+    public const int VISIBLE_ROBOT_ALL = 0x7FFFFFFF;
+    public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -4038,18 +4064,18 @@ public class RoboDK
         /// Sets the item visiblity status
         /// </summary>
         /// <param name="visible"></param>
-        /// <param name="visible_frame">srt the visible reference frame (1) or not visible (0)</param>
-        public void setVisible(bool visible, int visible_frame = -1)
+        /// <param name="visible_reference">set the visible reference frame (1) or not visible (0)</param>
+        public void setVisible(bool visible, int visible_reference = -1)
         {
-            if (visible_frame < 0)
+            if (visible_reference < 0)
             {
-                visible_frame = visible ? 1 : 0;
+                visible_reference = visible ? 1 : 0;
             }
             link._check_connection();
             link._send_Line("S_Visible");
             link._send_Item(this);
             link._send_Int(visible ? 1 : 0);
-            link._send_Int(visible_frame);
+            link._send_Int(visible_reference);
             link._check_status();
         }
 

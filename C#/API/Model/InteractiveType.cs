@@ -42,42 +42,51 @@ namespace RoboDk.API.Model
 {
     /// <summary>
     /// Modes to use with SetInteractiveMode to change the behavior of the 3D navigation or screen selection.
+    /// The following groups of flags can be managed independently:
+    /// 3D View: [None, Rectangle, Rotate, Zoom, Pan]. 
+    /// Move References: [MoveNone, MoveReferences, MoveTools]
     /// </summary>
     public enum InteractiveType
     {
         /// <summary>
-        /// Default. Same as if we selected Escape and the user is ready to select his own choice.
+        /// Default 3D mouse behavior. Same as if we selected Escape and the user is ready to select his own choice.
         /// </summary>
-        NONE = 0,
+        None = 0,
 
         /// <summary>
-        /// Select one or more items
+        /// Select one or more items (3D view)
         /// </summary>
-        RECTANGLE = 1,
+        Rectangle = 1,
 
         /// <summary>
-        /// Set to rotate the view on click
+        /// Set to rotate the view on click (3D view)
         /// </summary>
-        ROTATE = 2,
+        Rotate = 2,
 
         /// <summary>
-        /// Set Zoom mode
+        /// Set Zoom mode (3D view)
         /// </summary>
-        ZOOM = 3,
+        Zoom = 3,
 
         /// <summary>
-        /// Set Pan mode
+        /// Set Pan mode (3D view)
         /// </summary>
-        PAN = 4,
+        Pan = 4,
 
         /// <summary>
         /// Set to move objects (same behavior as holding Alt)
         /// </summary>
-        MOVE = 5,
+        MoveReferences = 5,
 
         /// <summary>
-        /// Set to move objects or tools chaing the TCP definition or withoug changing the absolute position of nested references (same behavior as holding Alt+Shift)
+        /// Set to move objects or tools changing the TCP definition or withoug changing the absolute position of nested references (same behavior as holding Alt+Shift)
         /// </summary>
-        MOVE_SHIFT = 6
+        MoveTools = 6,
+
+        /// <summary>
+        /// Do not move any objects
+        /// </summary>
+        MoveNone = 7
+
     }
 }
