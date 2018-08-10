@@ -1156,6 +1156,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public string Command(string cmd, string value)
+        {
+            check_connection();
+            send_line("S_Param");
+            send_line(cmd);
+            send_line(value);
+            string response = rec_line();
+            check_status();
+            return response;
+        }
+
+        /// <inheritdoc />
         public List<IItem> GetOpenStation()
         {
             check_connection();

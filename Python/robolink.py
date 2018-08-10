@@ -1745,6 +1745,45 @@ class Robolink:
         self._send_line(str(value).replace('\n',' '))
         self._check_status()
         
+    def Command(self, cmd, value=''):
+        """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+        
+        :param str command: command
+        :param str value: command value (optional, not all commands require a value) 
+        
+        .. code-block:: python
+            :caption: Example commands
+            
+            from robolink import *
+            RDK = Robolink()      # Start the RoboDK API
+            
+            # How to change the number of threads using by the RoboDK application:
+            RDK.Command("Threads", "4")
+            
+            # How to change the default behavior of 3D view using the mouse:
+            RDK.Command("MouseClick_Left", "Select")   # Set the left mouse click to select
+            RDK.Command("MouseClick_Mid", "Pan")       # Set the mid mouse click to Pan the 3D view
+            RDK.Command("MouseClick_Right", "Rotate")  # Set the right mouse click to Rotate the 3D view
+            
+            RDK.Command("MouseClick", "Default")  # Set the default settings
+            
+            # Provoke a resize event
+            RDK.Command("Window", "Resize")
+            
+            # Reset the trace
+            RDK.Command("Trace", "Reset")
+        
+        .. seealso:: :func:`~robolink.Robolink.setParam`
+        """    
+        self._check_connection()
+        command = 'SCMD'
+        self._send_line(command)
+        self._send_line(str(cmd))
+        self._send_line(str(value).replace('\n','<br>'))
+        line = self._rec_line()
+        self._check_status()
+        return line
+        
     def getOpenStations(self):
         """Returns the list of open stations in RoboDK
         
@@ -3001,13 +3040,34 @@ class Item():
         return is_selected, feature_type, feature_id
         
     def GetPoints(self, feature_type=FEATURE_SURFACE, feature_id=0):
-        """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         
         :param int feature_type: set to FEATURE_SURFACE to retrieve the point under the mouse cursor, FEATURE_CURVE to retrieve the list of points for that wire, or FEATURE_POINT to retrieve the list of points.
         :param int feature_id:  used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
         
         :return: List of points
         
+        .. code-block:: python
+            
+            # Example to display the XYZ position of a selected object
+            from robolink import *    # Import the RoboDK API
+            RDK = Robolink()          # Start RoboDK API
+
+            # Ask the user to select an object
+            obj = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
+            
+            while True:
+                is_selected, feature_type, feature_id = OBJECT.SelectedFeature()
+                
+                if is_selected and feature_type == FEATURE_SURFACE:
+                    point_mouse, name_feature = OBJECT.GetPoints(FEATURE_SURFACE)
+                    print("Selected %i (%i): %s  %s" % (feature_id, feature_type, str(point_mouse), name_feature))
+                    
+                else:
+                    print("Object Not Selected. Select a point in the object surface...")
+                    
+                pause(0.1)
+                
         .. seealso:: :func:`~robolink.Item.SelectedFeature`
         """
         self.link._check_connection()

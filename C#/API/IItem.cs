@@ -400,7 +400,7 @@ namespace RoboDk.API
         bool SelectedFeature(out ObjectSelectionType featureType, out int featureId);
 
         /// <summary>
-        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         /// </summary>
         /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
         /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>

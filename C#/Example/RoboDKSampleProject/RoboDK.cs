@@ -3213,6 +3213,23 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+    /// </summary>
+    /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+    /// <param name="value">Comand value (optional, not all commands require a value)</param>
+    /// <returns></returns>
+    public string Command(string cmd, string value)
+    {
+        _check_connection();
+        _send_Line("S_Param");
+        _send_Line(cmd);
+        _send_Line(value);
+        string response = _recv_Line();
+        _check_status();
+        return response;
+    }
+
+    /// <summary>
     /// Returns the list of open stations in RoboDK
     /// </summary>
     /// <returns></returns>
@@ -4454,7 +4471,7 @@ public class RoboDK
         }
 
         /// <summary>
-        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         /// </summary>
         /// <param name="feature_type">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
         /// <param name="feature_id">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
