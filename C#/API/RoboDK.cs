@@ -1042,16 +1042,24 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<IItem> GetCollisionItems()
+        public List<IItem> GetCollisionItems(List<int> link_id_list = null)
         {
             check_connection();
             send_line("Collision_Items");
             int nitems = rec_int();
             List<IItem> itemList = new List<IItem>(nitems);
+            if (link_id_list != null)
+            {
+                link_id_list.Clear();
+            }
             for (int i = 0; i < nitems; i++)
             {
                 itemList.Add(rec_item());
                 int linkId = rec_int();//link id for robot items (ignored)
+                if (link_id_list != null)
+                {
+                    link_id_list.Add(linkId);
+                }
                 int collisionTimes = rec_int();//number of objects it is in collisions with
             }
             check_status();
@@ -1160,6 +1168,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public string Command(string cmd, string value)
+        {
+            check_connection();
+            send_line("S_Param");
+            send_line(cmd);
+            send_line(value);
+            string response = rec_line();
+            check_status();
+            return response;
+        }
+
+        /// <inheritdoc />
         public List<IItem> GetOpenStation()
         {
             check_connection();
@@ -1245,7 +1265,7 @@ namespace RoboDk.API
             return collision;
         }
 
-
+        /// <inheritdoc />
         public void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null)
         {
             int nitm = Math.Min(itemList.Count, visibleList.Count);
@@ -1262,6 +1282,32 @@ namespace RoboDk.API
                     frameVis = visibleFrames[i];
                 }
                 send_int(frameVis);
+            }
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public void ShowAsCollided(List<IItem> item_list, List<bool> collided_list, List<int> robot_link_id = null)
+        {
+            RequireBuild(5794);
+            check_connection();
+            int nitms = Math.Min(item_list.Count, collided_list.Count);
+            if (robot_link_id != null)
+            {
+                nitms = Math.Min(nitms, robot_link_id.Count);
+            }
+            send_line("ShowAsCollidedList");
+            send_int(nitms);
+            for (int i = 0; i < nitms; i++)
+            {
+                send_item(item_list[i]);
+                send_int(collided_list[i] ? 1 : 0);
+                int link_id = 0;
+                if (robot_link_id != null)
+                {
+                    link_id = robot_link_id[i];
+                }
+                send_int(link_id);
             }
             check_status();
         }
@@ -1552,7 +1598,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetInteractiveMode(InteractiveType modeType = InteractiveType.MOVE, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<DisplayRefType> customRefFlags = null)
+        public void SetInteractiveMode(InteractiveType modeType = InteractiveType.MoveReferences, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<InteractiveType> customRefFlags = null)
         {
             check_connection();
             send_line("S_InteractiveMode");

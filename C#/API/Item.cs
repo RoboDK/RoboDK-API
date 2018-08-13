@@ -213,6 +213,49 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void SetParentStatic(IItem parent)
+        {
+            Link.check_connection();
+            Link.send_line("S_Parent_Static");
+            Link.send_item(this);
+            Link.send_item(parent);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public IItem AttachClosest()
+        {
+            Link.check_connection();
+            Link.send_line("Attach_Closest");
+            Link.send_item(this);
+            IItem item_attached = Link.rec_item();
+            Link.check_status();
+            return item_attached;
+        }
+
+        /// <inheritdoc />
+        public IItem DetachClosest(IItem parent = null)
+        {
+            Link.check_connection();
+            Link.send_line("Detach_Closest");
+            Link.send_item(this);
+            Link.send_item(parent);
+            IItem item_detached = Link.rec_item();
+            Link.check_status();
+            return item_detached;
+        }
+        
+        /// <inheritdoc />
+        public void DetachAll(IItem parent = null)
+        {
+            Link.check_connection();
+            Link.send_line("Detach_All");
+            Link.send_item(this);
+            Link.send_item(parent);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
         public List<IItem> Childs()
         {
             Link.check_connection();
@@ -255,11 +298,11 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetVisible(bool visible, int visibleFrame = -1)
+        public void SetVisible(bool visible, VisibleRefType visible_reference = VisibleRefType.Default)
         {
-            if (visibleFrame < 0)
+            if (visible_reference == VisibleRefType.Default)
             {
-                visibleFrame = visible ? 1 : 0;
+                visible_reference = visible ? VisibleRefType.On : VisibleRefType.Off;
             }
 
             Link.check_connection();
@@ -267,7 +310,7 @@ namespace RoboDk.API
             Link.send_line(command);
             Link.send_item(this);
             Link.send_int(visible ? 1 : 0);
-            Link.send_int(visibleFrame);
+            Link.send_int((int)visible_reference);
             Link.check_status();
         }
 

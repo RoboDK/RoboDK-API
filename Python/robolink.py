@@ -1179,6 +1179,13 @@ class Robolink:
             projected_points = projected_points.tolist()
         return projected_points
         
+    def CloseStation():
+        """Closes the current RoboDK station without suggesting to save"""
+        self._check_connection()
+        self._send_line('Remove')
+        self._send_item(None)
+        self._check_status()
+        
     def Save(self, filename, itemsave=0):
         """Save an item or a station to a file (formats supported include RDK, STL, ROBOT, TOOL, ...). If no item is provided, the open station is saved.
         
@@ -1525,6 +1532,36 @@ class Robolink:
         self._check_status()
         return success
         
+        
+    def setCollisionActivePairList(self, list_check_state, list_item1, list_item2, list_id1=None, list_id2=None):
+        """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking. 
+        Specify the link id for robots or moving mechanisms (id 0 is the base).
+        
+        .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.setCollisionActivePair`
+        """
+        npairs = min(len(list_check_state), min(len(list_item1), len(list_item2)))
+        self._check_connection()
+        self._send_line("Collision_SetPairList")
+        self._send_int(npairs)
+        for i in range(npairs):        
+            self._send_item(list_item1[i])
+            self._send_item(list_item2[i])
+            id1 = 0
+            id2 = 0
+            if list_id1 is not None and len(list_id1) > i:
+                id1 = list_id1[i]
+                
+            if list_id2 is not None and len(list_id2) > i:
+                id2 = list_id2[i]
+                
+            self._send_int(id1)
+            self._send_int(id2)
+            self._send_int(list_check_state[i])
+            
+        success = self._rec_int()
+        self._check_status()
+        return success
+
     def Collisions(self):
         """Return the number of pairs of objects that are currently in a collision state.
         
@@ -1707,6 +1744,45 @@ class Robolink:
         self._send_line(str(param))
         self._send_line(str(value).replace('\n',' '))
         self._check_status()
+        
+    def Command(self, cmd, value=''):
+        """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+        
+        :param str command: command
+        :param str value: command value (optional, not all commands require a value) 
+        
+        .. code-block:: python
+            :caption: Example commands
+            
+            from robolink import *
+            RDK = Robolink()      # Start the RoboDK API
+            
+            # How to change the number of threads using by the RoboDK application:
+            RDK.Command("Threads", "4")
+            
+            # How to change the default behavior of 3D view using the mouse:
+            RDK.Command("MouseClick_Left", "Select")   # Set the left mouse click to select
+            RDK.Command("MouseClick_Mid", "Pan")       # Set the mid mouse click to Pan the 3D view
+            RDK.Command("MouseClick_Right", "Rotate")  # Set the right mouse click to Rotate the 3D view
+            
+            RDK.Command("MouseClick", "Default")  # Set the default settings
+            
+            # Provoke a resize event
+            RDK.Command("Window", "Resize")
+            
+            # Reset the trace
+            RDK.Command("Trace", "Reset")
+        
+        .. seealso:: :func:`~robolink.Robolink.setParam`
+        """    
+        self._check_connection()
+        command = 'SCMD'
+        self._send_line(command)
+        self._send_line(str(cmd))
+        self._send_line(str(value).replace('\n','<br>'))
+        line = self._rec_line()
+        self._check_status()
+        return line
         
     def getOpenStations(self):
         """Returns the list of open stations in RoboDK
@@ -2848,6 +2924,25 @@ class Item():
         self.link._send_array(tocolor)
         self.link._check_status()
         
+    def setColorShape(self, tocolor, shape_id):
+        """Set the color of an object shape. It can also be used for tools.
+        A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+        
+        :param tocolor: color to set
+        :type tocolor: list of float
+        :param int shapeid: ID of the shape: the ID is the order in which the shape was added using AddShape()
+        
+        .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
+        """
+        self.link._check_connection()            
+        tocolor = self.link._check_color(tocolor)
+        command = 'S_ShapeColor'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_int(shape_id)
+        self.link._send_array(tocolor)
+        self.link._check_status()
+        
     def Color(self):
         """Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
         A color is in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
@@ -2945,13 +3040,34 @@ class Item():
         return is_selected, feature_type, feature_id
         
     def GetPoints(self, feature_type=FEATURE_SURFACE, feature_id=0):
-        """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         
         :param int feature_type: set to FEATURE_SURFACE to retrieve the point under the mouse cursor, FEATURE_CURVE to retrieve the list of points for that wire, or FEATURE_POINT to retrieve the list of points.
         :param int feature_id:  used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
         
         :return: List of points
         
+        .. code-block:: python
+            
+            # Example to display the XYZ position of a selected object
+            from robolink import *    # Import the RoboDK API
+            RDK = Robolink()          # Start RoboDK API
+
+            # Ask the user to select an object
+            obj = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
+            
+            while True:
+                is_selected, feature_type, feature_id = OBJECT.SelectedFeature()
+                
+                if is_selected and feature_type == FEATURE_SURFACE:
+                    point_mouse, name_feature = OBJECT.GetPoints(FEATURE_SURFACE)
+                    print("Selected %i (%i): %s  %s" % (feature_id, feature_type, str(point_mouse), name_feature))
+                    
+                else:
+                    print("Object Not Selected. Select a point in the object surface...")
+                    
+                pause(0.1)
+                
         .. seealso:: :func:`~robolink.Item.SelectedFeature`
         """
         self.link._check_connection()
@@ -3381,7 +3497,7 @@ class Item():
         self.link._check_status()
         return config
     
-    def SolveIK(self, pose, joints_approx = None):
+    def SolveIK(self, pose, joints_approx = None, tool=None, reference=None):
         """Calculates the inverse kinematics for the specified pose. 
         It returns the joints solution as a list of floats which are the closest match to the current robot configuration (see SolveIK_All()).
         Optionally, specify a preferred robot position using the parameter joints_approx.
@@ -3393,6 +3509,11 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         """
+        if tool is not None:
+            pose = pose*invH(tool)
+        if reference is not None:
+            pose = reference*pose
+            
         self.link._check_connection()
         if joints_approx is None:
             command = 'G_IK'
@@ -3410,7 +3531,7 @@ class Item():
         self.link._check_status()
         return joints
     
-    def SolveIK_All(self, pose):
+    def SolveIK_All(self, pose, tool=None, reference=None):
         """Calculates the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
         Returns a list of joints as a 2D matrix (float x n x m)
         
@@ -3418,6 +3539,11 @@ class Item():
         :type pose: :class:`.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.JointsConfig`"""
+        if tool is not None:
+            pose = pose*invH(tool)
+        if reference is not None:
+            pose = reference*pose
+            
         self.link._check_connection()
         command = 'G_IK_cmpl'
         self.link._send_line(command)
@@ -4291,6 +4417,8 @@ class Item():
         valid_ratio: This is a ratio from [0.00 to 1.00] showing if the path can be fully completed without any problems (1.0 means the path 100% feasible) or 
         valid_ratio is <1.0 if there were problems along the path.
         
+        valid_ration will be < 0 if Update is called on a machining project and the machining project can't be achieved successfully.
+        
         readable_msg: a readable message as a string
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
@@ -4330,19 +4458,19 @@ class Item():
         self.link._check_status()
         return insmat, errors
           
-    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, reserved_flags = 0):
+    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0):
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         
         :param float mm_step: step in mm to split the linear movements
         :param float deg_step: step in deg to split the joint movements
         :param str save_to_file: (optional) save the result to a file as Comma Separated Values (CSV). If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.
         :param int collision_check: (optional) check for collisions
-        :param int reserved_flags: (optional) parameters reserved for future compatibility
+        :param int flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations
         :return: [message (str), list of joints, 0 if success]
         
         Returns a human readable error message (if any)
         
-        It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] or the file name if a file path is provided to save the result
+        It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG.
         
         The ERROR is returned as an int but it needs to be interpreted as a binary number
         
@@ -4363,14 +4491,16 @@ class Item():
         command = 'G_ProgJointList'
         self.link._send_line(command)
         self.link._send_item(self)
-        self.link._send_array([mm_step, deg_step, float(collision_check), float(reserved_flags)])
+        self.link._send_array([mm_step, deg_step, float(collision_check), float(flags)])
         joint_list = save_to_file   
+        self.link.COM.settimeout(3600)
         if save_to_file is None:
             self.link._send_line('')
             joint_list = self.link._rec_matrix()
         else:
-            self.link._send_line(save_to_file)
+            self.link._send_line(save_to_file)        
         error_code = self.link._rec_int()
+        self.link.COM.settimeout(self.link.TIMEOUT)
         error_msg = self.link._rec_line()
         self.link._check_status()
         return error_msg, joint_list, error_code

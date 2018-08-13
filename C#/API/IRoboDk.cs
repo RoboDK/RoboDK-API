@@ -457,8 +457,9 @@ namespace RoboDk.API
         /// <summary>
         /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
         /// </summary>
+        /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools)</param>
         /// <returns>List of items that are in a collision state</returns>
-        List<IItem> GetCollisionItems();
+        List<IItem> GetCollisionItems(List<int> link_id_list = null);
 
         /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 
@@ -529,6 +530,14 @@ namespace RoboDk.API
         void SetParameter(string parameter, double value);
 
         /// <summary>
+        /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+        /// </summary>
+        /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+        /// <param name="value">Comand value (optional, not all commands require a value)</param>
+        /// <returns></returns>
+        string Command(string cmd, string value);
+
+        /// <summary>
         /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the
         /// laser tracker will first move to those coordinates. 
         /// </summary>
@@ -568,6 +577,14 @@ namespace RoboDk.API
         /// <param name="visibleList">list visible flags (bool)</param>
         /// <param name="visibleFrames">list visible frames (optional, hidden by default)</param>
         void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null);
+
+        /// <summary>
+        /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
+        /// </summary>
+        /// <param name="item_list">List of items</param>
+        /// <param name="collided_list">List of collided flags (True=show as collided)</param>
+        /// <param name="robot_link_id">Robot link ID, when applicable</param>
+        void ShowAsCollided(List<IItem> item_list, List<bool> collided_list, List<int> robot_link_id = null);
 
         /// <summary>
         /// Get Joint positions of all robots defined in the robotItemList.
@@ -729,7 +746,7 @@ namespace RoboDk.API
         /// <param name="defaultRefFlags">When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)</param>
         /// <param name="customItems">Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)</param>
         /// <param name="customRefFlags">Provide a matching list of flags to customize the movement behavior for specific items</param>
-        void SetInteractiveMode(InteractiveType modeType = InteractiveType.MOVE, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<DisplayRefType> customRefFlags = null);
+        void SetInteractiveMode(InteractiveType modeType = InteractiveType.MoveReferences, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<InteractiveType> customRefFlags = null);
 
         /// <summary>
         /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)

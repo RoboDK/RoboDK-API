@@ -73,6 +73,7 @@
     <Compile Include="Model\InstructionType.cs" />
     <Compile Include="Model\ProjectionType.cs" />
     <Compile Include="Model\EventType.cs" />
+    <Compile Include="Model\VisibleRefType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\RdkException.cs" />
     <Compile Include="Model\ReferenceCalibrationType.cs" />

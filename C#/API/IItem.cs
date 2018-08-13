@@ -134,6 +134,34 @@ namespace RoboDk.API
         /// <param name="parent"></param>
         void SetParent(IItem parent);
 
+
+        /// <summary>
+        /// Attaches the item to another parent while maintaining the current absolute position in the station.
+        /// The relationship between this item and its parent is changed to maintain the abosolute position.
+        /// </summary>
+        /// <param name="parent">parent item to attach this item</param>
+        void SetParentStatic(IItem parent);
+
+        /// <summary>
+        /// Attach the closest object to the tool.
+        /// Returns the item that was attached.
+        /// Use item.Valid() to check if an object was attached to the tool.
+        /// </summary>
+        IItem AttachClosest();
+
+        /// <summary>
+        /// Detach the closest object attached to the tool (see also: setParentStatic).
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        IItem DetachClosest(IItem parent = null);
+
+        /// <summary>
+        /// Detaches any object attached to a tool.
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        void DetachAll(IItem parent = null);
+
+
         /// <summary>
         ///     Returns a list of the item childs that are attached to the provided item.
         /// </summary>
@@ -156,7 +184,7 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="visible"></param>
         /// <param name="visibleFrame">srt the visible reference frame (1) or not visible (0)</param>
-        void SetVisible(bool visible, int visibleFrame = -1);
+        void SetVisible(bool visible, VisibleRefType visibleFrame = VisibleRefType.Default);
 
         /// <summary>
         ///     Show an object or a robot link as collided (red)
@@ -379,7 +407,7 @@ namespace RoboDk.API
         bool SelectedFeature(out ObjectSelectionType featureType, out int featureId);
 
         /// <summary>
-        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         /// </summary>
         /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
         /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>

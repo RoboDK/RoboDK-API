@@ -1338,6 +1338,32 @@ public class RoboDK
     public const int EVENT_REFERENCE_RELEASED = 4;
     public const int EVENT_TOOL_MODIFIED = 5;
 
+    // Robot link visibility
+    public const int VISIBLE_REFERENCE_DEFAULT = -1;
+    public const int VISIBLE_REFERENCE_ON = 1;
+    public const int VISIBLE_REFERENCE_OFF = 0;
+    public const int VISIBLE_ROBOT_NONE = 0;
+    public const int VISIBLE_ROBOT_FLANGE = 0x01;
+    public const int VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1;
+    public const int VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2;
+    public const int VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3;
+    public const int VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4;
+    public const int VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5;
+    public const int VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6;
+    public const int VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7;
+    public const int VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8;
+    public const int VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9;
+    public const int VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10;
+    public const int VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11;
+    public const int VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12;
+    public const int VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13;
+    public const int VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14;
+    public const int VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15;
+    public const int VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16;
+    public const int VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB;
+    public const int VISIBLE_ROBOT_ALL = 0x7FFFFFFF;
+    public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
+
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
@@ -2875,6 +2901,18 @@ public class RoboDK
         _send_Int(auto_render ? 1 : 0);
         _check_status();
     }
+    
+    /// <summary>
+    /// Update the screen. 
+    /// This updates the position of all robots and internal links according to previously set values.
+    /// </summary>
+    public void Update()
+    {
+        _check_connection();
+        _send_Line("Refresh");
+        _send_Int(0);
+        _check_status();
+    }
 
     /// <summary>
     /// Returns (1/True) if object_inside is inside the object_parent
@@ -3006,17 +3044,26 @@ public class RoboDK
     /// <summary>
     /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
     /// </summary>
+    /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools)</param>
     /// <returns>List of items that are in a collision state</returns>
-    public List<Item> CollisionItems()
+    public List<Item> CollisionItems(List<int> link_id_list = null)
     {
         _check_connection();
         _send_Line("Collision_Items");
         int nitems = _recv_Int();
         List<Item> item_list = new List<Item>();
+        if (link_id_list != null)
+        {
+            link_id_list.Clear();
+        }
         for (int i = 0; i < nitems; i++)
         {
             item_list.Add(_recv_Item());
             int link_id = _recv_Int();//link id for robot items (ignored)
+            if (link_id_list != null)
+            {
+                link_id_list.Add(link_id);
+            }
             int collision_times = _recv_Int();//number of objects it is in collisions with
         }
         _check_status();
@@ -3163,6 +3210,23 @@ public class RoboDK
         _send_Line(param);
         _send_Line(value.ToString());
         _check_status();
+    }
+
+    /// <summary>
+    /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+    /// </summary>
+    /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+    /// <param name="value">Comand value (optional, not all commands require a value)</param>
+    /// <returns></returns>
+    public string Command(string cmd, string value)
+    {
+        _check_connection();
+        _send_Line("S_Param");
+        _send_Line(cmd);
+        _send_Line(value);
+        string response = _recv_Line();
+        _check_status();
+        return response;
     }
 
     /// <summary>
@@ -3318,6 +3382,38 @@ public class RoboDK
                 frame_vis = visible_frames[i];
             }
             _send_Int(frame_vis);
+        }
+        _check_status();
+    }
+
+
+    /// <summary>
+    /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
+    /// </summary>
+    /// <param name="item_list">List of items</param>
+    /// <param name="collided_list">List of collided flags (True=show as collided)</param>
+    /// <param name="robot_link_id">Robot link ID, when applicable</param>
+    public void ShowAsCollided(List<Item> item_list, List<bool> collided_list, List<int> robot_link_id = null)
+    {
+        _require_build(5794);
+        _check_connection();
+        int nitms = Math.Min(item_list.Count, collided_list.Count);
+        if (robot_link_id != null)
+        {
+            nitms = Math.Min(nitms, robot_link_id.Count);
+        }
+        _send_Line("ShowAsCollidedList");
+        _send_Int(nitms);
+        for (int i = 0; i < nitms; i++)
+        {
+            _send_Item(item_list[i]);
+            _send_Int(collided_list[i] ? 1 : 0);
+            int link_id = 0;
+            if (robot_link_id != null)
+            {
+                link_id = robot_link_id[i];
+            }
+            _send_Int(link_id);
         }
         _check_status();
     }
@@ -3876,7 +3972,63 @@ public class RoboDK
             link._check_status();
         }
 
-        ////// add more methods
+        /// <summary>
+        /// Attaches the item to another parent while maintaining the current absolute position in the station.
+        /// The relationship between this item and its parent is changed to maintain the abosolute position.
+        /// </summary>
+        /// <param name="parent">parent item to attach this item</param>
+        public void setParentStatic(Item parent)
+        {
+            link._check_connection();
+            link._send_Line("S_Parent_Static");
+            link._send_Item(this);
+            link._send_Item(parent);
+            link._check_status();
+        }
+
+
+        /// <summary>
+        /// Attach the closest object to the tool.
+        /// Returns the item that was attached.
+        /// Use item.Valid() to check if an object was attached to the tool.
+        /// </summary>
+        public Item AttachClosest()
+        {
+            link._check_connection();
+            link._send_Line("Attach_Closest");
+            link._send_Item(this);
+            Item item_attached = link._recv_Item();
+            link._check_status();
+            return item_attached;
+        }
+
+        /// <summary>
+        /// Detach the closest object attached to the tool (see also: setParentStatic).
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        public Item DetachClosest(Item parent = null)
+        {
+            link._check_connection();
+            link._send_Line("Detach_Closest");
+            link._send_Item(this);
+            link._send_Item(parent);
+            Item item_detached = link._recv_Item();
+            link._check_status();
+            return item_detached;
+        }
+
+        /// <summary>
+        /// Detaches any object attached to a tool.
+        /// </summary>
+        /// <param name="parent">New parent item to attach, such as a reference frame(optional). If not provided, the items held by the tool will be placed at the station root.</param>
+        public void DetachAll(Item parent = null)
+        {
+            link._check_connection();
+            link._send_Line("Detach_All");
+            link._send_Item(this);
+            link._send_Item(parent);
+            link._check_status();
+        }
 
         /// <summary>
         /// Return the parent item of this item (:class:`.Item`)
@@ -3929,23 +4081,23 @@ public class RoboDK
         /// Sets the item visiblity status
         /// </summary>
         /// <param name="visible"></param>
-        /// <param name="visible_frame">srt the visible reference frame (1) or not visible (0)</param>
-        public void setVisible(bool visible, int visible_frame = -1)
+        /// <param name="visible_reference">set the visible reference frame (1) or not visible (0)</param>
+        public void setVisible(bool visible, int visible_reference = -1)
         {
-            if (visible_frame < 0)
+            if (visible_reference < 0)
             {
-                visible_frame = visible ? 1 : 0;
+                visible_reference = visible ? 1 : 0;
             }
             link._check_connection();
             link._send_Line("S_Visible");
             link._send_Item(this);
             link._send_Int(visible ? 1 : 0);
-            link._send_Int(visible_frame);
+            link._send_Int(visible_reference);
             link._check_status();
         }
 
         /// <summary>
-        /// Show an object or a robot link as collided (red)
+        /// Show an object or a robot link as collided (red) or as not collided (normal color)
         /// </summary>
         /// <param name="collided"></param>
         /// <param name="robot_link_id"></param>
@@ -4319,7 +4471,7 @@ public class RoboDK
         }
 
         /// <summary>
-        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format, where the XYZ is the point coordinate and ijk is the surface normal.
+        /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
         /// </summary>
         /// <param name="feature_type">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'</param>
         /// <param name="feature_id">The internal ID to retrieve the right geometry from the object (use SelectedFeature)</param>
