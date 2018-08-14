@@ -64,6 +64,47 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
+    /// Matrix class constructor for a double array of arrays (list of points)
+    /// Example:
+    ///     RDK.AddCurve(new Mat(new double[4, 6] {{0,0,0, 0,0,1}, { 500, 0, 0, 0, 0, 1 }, { 500, 500, 0, 0, 0, 1 }, { 0, 0, 0, 0, 0, 1 } }));
+    /// </summary>
+    /// <param name="point_list">List of points (array of array of doubles)</param>
+    public Mat(double[,] point_list)
+    {
+        cols = point_list.GetLength(0);
+        rows = point_list.GetLength(1);
+        
+        // Convert a double array of arrays to a Mat object:
+        mat = new double[rows, cols];
+        for (int c = 0; c < cols; c++)
+        {
+            for (int r = 0; r < rows; r++)
+            {
+                mat[r, c] = point_list[c, r];
+            }
+        }
+    }
+
+    /// <summary>
+    /// Matrix class constructor for a double array. The array will be set as a column matrix.
+    /// Example:
+    ///     RDK.AddCurve(new Mat(new double[6] {{0,0,0, 0,0,1}}));
+    /// </summary>
+    /// <param name="point">Column array</param>
+    public Mat(double[] point)
+    {
+        cols = 1;
+        rows = point.GetLength(0);
+        
+        // Convert a double array of arrays to a Mat object:
+        mat = new double[rows, cols];
+        for (int r = 0; r < rows; r++)
+        {
+            mat[r, 1] = point[r];
+        }
+    }
+
+    /// <summary>
     /// Matrix class constructor for a 4x4 homogeneous matrix
     /// </summary>
     /// <param name="nx">Position [0,0]</param>
@@ -785,7 +826,7 @@ public class Mat // simple matrix class for homogeneous operations
     public override string ToString()                           // Function returns matrix as a string
     {
         string s = "";
-        bool string_as_xyzabc = true;
+        bool string_as_xyzabc = IsHomogeneous();
         if (string_as_xyzabc)
         {
             var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };

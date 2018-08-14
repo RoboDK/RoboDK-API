@@ -147,6 +147,46 @@ namespace RoboDk.API
             _mat[3, 0] = 1.0;
         }
 
+        /// <summary>
+        /// Matrix class constructor for a double array of arrays or a single column array (list of points)
+        /// Example:
+        ///     RDK.AddCurve(new Mat(new double[4, 6] {{0,0,0, 0,0,1}, { 500, 0, 0, 0, 0, 1 }, { 500, 500, 0, 0, 0, 1 }, { 0, 0, 0, 0, 0, 1 } }));
+        ///     RDK.AddPoints(new Mat(new double[6] {{0,0,0, 0,0,1}}));
+        /// </summary>
+        /// <param name="point_list">List of points (array of array of doubles)</param>
+        public Mat(double[,] point_list)
+        {
+            if (point_list.Rank == 2)
+            {
+                _cols = point_list.GetLength(0);
+                _rows = point_list.GetLength(1);
+
+                // Convert a double array of arrays to a Mat object:
+                _mat = new double[_rows, _cols];
+                for (int c = 0; c < _cols; c++)
+                {
+                    for (int r = 0; r < _rows; r++)
+                    {
+                        _mat[r, c] = point_list[c, r];
+                    }
+                }
+            } else if (point_list.Rank == 1)
+            {
+                _cols = 1;
+                _rows = point_list.GetLength(0);
+
+                // Convert a double array of arrays to a Mat object:
+                _mat = new double[_rows, _cols];
+                for (int r = 0; r < _rows; r++)
+                {
+                    _mat[r, 1] = point_list[0,r];
+                }
+            } else
+            {
+                throw new MatException("Invalid rank size. Provide a 1-dimensional or 2-dimensional double array to create a Mat.");
+            }
+        }
+
         #endregion
 
         #region Properties
