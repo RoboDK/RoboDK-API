@@ -114,6 +114,13 @@ struct tMatrix2D {
   bool canFreeData;
 };
 
+struct Color{
+    float r;
+    float g;
+    float b;
+    float a;
+};
+
 
 //--------------------- Joints class -----------------------
 class ROBODK tJoints {
@@ -196,6 +203,7 @@ public:
     void ShowRoboDK();
     void HideRoboDK();
     void CloseRoboDK();
+    QString Version();
     void setWindowState(int windowstate = WINDOWSTATE_NORMAL);
     void setFlagsRoboDK(int flags = FLAG_ROBODK_ALL);
     void setFlagsItem(Item item, int flags = FLAG_ITEM_ALL);
@@ -203,21 +211,34 @@ public:
     void ShowMessage(const QString &message, bool popup = true);
     Item AddFile(const QString &filename, const Item *parent=NULL);
     void Save(const QString &filename, const Item *itemsave=NULL);
+    Item AddShape(Mat *trianglePoints,Item *addTo = NULL, bool shapeOverride = false, Color *color = NULL);
+    Item AddCurve(Mat *curvePoints,Item *referenceObject = NULL,bool addToRef = false,int ProjectionType = PROJECTION_ALONG_NORMAL_RECALC);
+    Item AddPoints(Mat *points, Item *referenceObject = NULL, bool addToRef = false, int ProjectionType =  PROJECTION_ALONG_NORMAL_RECALC);
+    Mat ProjectPoints(Mat *points, Item objectProject, int ProjectionType = PROJECTION_ALONG_NORMAL_RECALC);
+
 
     void CloseStation();
     Item AddTarget(const QString &name, Item *itemparent = NULL, Item *itemrobot = NULL);
+
     Item AddFrame(const QString &name, Item *itemparent = NULL);
 
     Item AddProgram(const QString &name, Item *itemrobot = NULL);
+    Item AddStation(QString name);
+    Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = NULL);
+    QList<Item> getOpenStation();
+    void setActiveStation();
+    Item getActiveStation();
     int RunProgram(const QString &function_w_params);
     int RunCode(const QString &code, bool code_is_fcn_call = false);
     void RunMessage(const QString &message, bool message_is_comment = false);
     void Render(bool always_render = false);
+    void Update();
     bool IsInside(Item object_inside, Item object_parent);
     int setCollisionActive(int check_state = COLLISION_ON);
     bool setCollisionActivePair(int check_state, Item item1, Item item2, int id1 = 0, int id2 = 0);
     int Collisions();
     int Collision(Item item1, Item item2);
+    QList<Item> getCollisionItems(QList<int> link_id_list);
     void setSimulationSpeed(double speed);
     double SimulationSpeed();
     void setRunMode(int run_mode = 1);
@@ -228,10 +249,17 @@ public:
     void setParam(const QString &param, const QString &value);
 
     // --- add calibrate reference, calibrate tool, measure tracker, etc...
+    bool LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search = false);
+    bool CollisionLine(tXYZ p1, tXYZ p2);
+    void setVisible(QList<Item> itemList, QList<bool> visibleList, QList<int> visibleFrames);
+    void ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id = NULL);
+
 
     int ProgramStart(const QString &progname, const QString &defaultfolder = "", const QString &postprocessor = "", Item *robot = NULL);
     void setViewPose(const Mat &pose);
     Mat ViewPose();
+    bool SetRobotParams(Item *robot,tMatrix2D dhm, Mat poseBase, Mat poseTool);
+    Item getCursorXYZ(int x = -1, int y = -1, QList<double> xyzStation = QList<double>());
     QString License();
     QList<Item> Selection();
     Item Popup_ISO9283_CubeProgram(Item *robot);
