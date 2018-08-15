@@ -2,6 +2,7 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtCore/QProcess>
 #include <cmath>
+#include <algorithm>
 
 #define ROBODK_DEFAULT_PATH_EXE "C:/RoboDK/bin/RoboDK.exe"
 #define ROBODK_DEFAULT_PORT 20500
@@ -1669,6 +1670,19 @@ void RoboDK::CloseRoboDK() {
     _PROCESS = 0;
 }
 
+QString RoboDK::Version()
+{
+    _check_connection();
+    _send_Line("Version");
+    QString appName = _recv_Line();
+    int bitArch = _recv_Int();
+    QString ver4 = _recv_Line();
+    QString dateBuild = _recv_Line();
+    _check_status();
+    return ver4;
+
+}
+
 
 /// <summary>
 /// Set the state of the RoboDK window
@@ -1773,6 +1787,108 @@ void RoboDK::Save(const QString &filename, const Item *itemsave){
     _check_status();
 }
 
+/// <summary>
+///     Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can
+///     be provided optionally.
+/// </summary>
+/// <param name="trianglePoints">
+///     List of vertices grouped by triangles (3xN or 6xN matrix, N must be multiple of 3 because
+///     vertices must be stacked by groups of 3)
+/// </param>
+/// <param name="addTo">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
+/// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
+/// <param name="color">Color of the added shape</param>
+/// <returns>added object/shape (use item.Valid() to check if item is valid.)</returns>
+Item RoboDK::AddShape(Mat *trianglePoints, Item *addTo, bool shapeOverride, Color *color)
+{
+    double colorArray[4] = {color->r,color->g,color->b,color->a};
+    _check_connection();
+    _send_Line("AddShape3");
+    _send_Array(trianglePoints);
+    _send_Item(addTo);
+    _send_Int(shapeOverride? 1 : 0);
+    _send_Array(colorArray,4);
+    Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
+}
+
+/// <summary>
+/// Adds a curve provided point coordinates.
+/// The provided points must be a list of vertices.
+/// A vertex normal can be provided optionally.
+/// </summary>
+/// <param name="curvePoints">matrix 3xN or 6xN -> N must be multiple of 3</param>
+/// <param name="referenceObject">object to add the curve and/or project the curve to the surface</param>
+/// <param name="addToRef">
+///     If True, the curve will be added as part of the object in the RoboDK item tree (a reference
+///     object must be provided)
+/// </param>
+/// <param name="projectionType">
+///     Type of projection. For example:  ProjectionType.AlongNormalRecalc will project along the
+///     point normal and recalculate the normal vector on the surface projected.
+/// </param>
+/// <returns>added object/curve (use item.Valid() to check if item is valid.)</returns>
+Item RoboDK::AddCurve(Mat *curvePoints, Item *referenceObject, bool addToRef, int ProjectionType)
+{
+    _check_connection();
+    _send_Line("AddWire");
+    _send_Array(curvePoints);
+    _send_Item(referenceObject);
+    _send_Int(addToRef ? 1:0);
+    _send_Int(ProjectionType);
+    Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
+}
+
+/// <summary>
+/// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+/// </summary>
+/// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+/// <param name="referenceObject">item to attach the newly added geometry (optional)</param>
+/// <param name="addToRef">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+/// <param name="projectionType">Type of projection.Use the PROJECTION_* flags.</param>
+/// <returns>added object/shape (0 if failed)</returns>
+Item RoboDK::AddPoints(Mat *points, Item *referenceObject, bool addToRef, int ProjectionType)
+{
+    _check_connection();
+    _send_Line("AddPoints");
+    _send_Array(points);
+    _send_Item(referenceObject);
+    _send_Int(addToRef? 1 : 0);
+    _send_Int(ProjectionType);Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
+}
+
+Mat RoboDK::ProjectPoints(Mat *points, Item objectProject, int ProjectionType)
+{
+    _check_connection();
+    _send_Line("ProjectPoints");
+    _send_Array(points);
+    _send_Item(objectProject);
+    _send_Int(ProjectionType);
+    Mat projectedPoints = _recv_Pose();
+    _check_status();
+    return projectedPoints;
+}
+
+/// <summary>
+/// Add a new empty station.
+/// </summary>
+/// <param name="name">Name of the station</param>
+/// <returns>Newly created station IItem</returns>
+Item RoboDK::AddStation(QString name)
+{
+    _check_connection();
+    _send_Line("NewStation");
+    Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
+}
+
+
 
 
 /// <summary>
@@ -1835,6 +1951,40 @@ Item RoboDK::AddProgram(const QString &name, Item *itemrobot){
     return newitem;
 }
 
+/// <summary>
+/// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points.
+/// It returns the newly created :class:`.IItem` containing the project settings.
+/// Tip: Use the macro /RoboDK/Library/Macros/MoveRobotThroughLine.py to see an example that creates a new "curve follow project" given a list of points to follow(Option 4).
+/// </summary>
+/// <param name="name">Name of the project settings</param>
+/// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
+/// <returns></returns>
+Item RoboDK::AddMachiningProject(QString name, Item *itemrobot)
+{
+    _check_connection();
+    _send_Line("Add_MACHINING");
+    _send_Line(name);
+    _send_Item(itemrobot);
+    Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
+}
+
+
+QList<Item> RoboDK::getOpenStation()
+{
+    _check_connection();
+    _send_Line("G_AllStn");
+    int nstn = _recv_Int();
+    QList<Item> *listStn = new QList<Item>();
+    for (int i = 0;i < nstn;i++){
+        Item station = _recv_Item();
+        listStn->append(station);
+    }
+    _check_status();
+    return *listStn;
+}
+
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 /// <summary>
@@ -1884,6 +2034,18 @@ void RoboDK::Render(bool always_render){
     _check_connection();
     _send_Line("Render");
     _send_Int(auto_render ? 1 : 0);
+    _check_status();
+}
+
+/// <summary>
+/// Update the screen.
+/// This updates the position of all robots and internal links according to previously set values.
+/// </summary>
+void RoboDK::Update()
+{
+    _check_connection();
+    _send_Line("Refresh");
+    _send_Int(0);
     _check_status();
 }
 
@@ -1966,6 +2128,27 @@ int RoboDK::Collision(Item item1, Item item2){
     int ncollisions = _recv_Int();
     _check_status();
     return ncollisions;
+}
+
+QList<Item> RoboDK::getCollisionItems(QList<int> link_id_list)
+{
+    _check_connection();
+    _send_Line("Collision Items");
+    int nitems = _recv_Int();
+    QList<Item> itemList = QList<Item>();
+    if (!link_id_list.isEmpty()){
+        link_id_list.clear();
+    }
+    for (int i = 0; i < nitems; i++){
+        itemList.append(_recv_Item());
+        int linkId = _recv_Int();
+        if (!link_id_list.isEmpty()){
+            link_id_list.append(linkId);
+        }
+        int collisionTimes = _recv_Int();
+    }
+    _check_status();
+    return itemList;
 }
 
 /// <summary>
@@ -2080,12 +2263,43 @@ void RoboDK::setParam(const QString &param, const QString &value){
     _check_status();
 }
 
+bool RoboDK::LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search)
+{
+    _check_connection();
+    _send_Line("MeasLT");
+    _send_XYZ(estimate);
+    _send_Int(search ? 1 : 0);
+    _recv_XYZ(xyz);
+    _check_status();
+    if (xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2] < 0.0001){
+        return false;
+    }
+
+    return true;
+}
+
+void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id)
+{
+    int nitems = qMin(itemList.length(),collidedList.length());
+    if (robot_link_id != NULL){
+        nitems = qMin(nitems, robot_link_id->length());
+    }
+    _check_connection();
+    _send_Line("ShowAsCollidedList");
+    _send_Int(nitems);
+    for (int i = 0; i < nitems; i++){
+        _send_Item(itemList[i]);
+        _send_Int(collidedList[i] ? 1 : 0);
+        int link_id = 0;
+        if (robot_link_id != NULL){
+            link_id = robot_link_id->at(i);
+        }
+        _send_Int(link_id);
+    }
+    _check_status();
+}
 
 //---------------------------------------------- ADD MORE  (getParams, setParams, calibrate TCP, calibrate ref...)
-
-
-
-
 
 int RoboDK::ProgramStart(const QString &progname, const QString &defaultfolder, const QString &postprocessor, Item *robot){
     _check_connection();
@@ -2120,6 +2334,52 @@ Mat RoboDK::ViewPose(){
     Mat pose = _recv_Pose();
     _check_status();
     return pose;
+}
+//INCOMPLETE!!!!!!!
+/*bool RoboDK::SetRobotParams(Item *robot, tMatrix2D dhm, Mat poseBase, Mat poseTool)
+{
+    _check_connection();
+    _send_Line("S_AbsAccParam");
+    _send_Item(robot);
+    Mat r2b;
+    r2b.setToIdentity();
+    _send_Pose(r2b);
+    _send_Pose(poseBase);
+    _send_Pose(poseTool);
+    int *ndofs = dhm.size;
+    _send_Int(*ndofs);
+    for (int i = 0; i < *ndofs; i++){
+        _send_Array(dhm);
+    }
+
+    _send_Pose(poseBase);
+    _send_Pose(poseTool);
+    _send_Int(*ndofs);
+    for (int i = 0; i < *ndofs; i++){
+        _send_Array(dhm[i]);
+    }
+
+    _send_Array(NULL);
+    _send_Array(NULL);
+    _check_status();
+    return true;
+}*/
+
+Item RoboDK::getCursorXYZ(int x, int y, QList<double> xyzStation)
+{
+    _check_connection();
+    _send_Line("Proj2d3d");
+    _send_Int(x);
+    _send_Int(y);
+    int selection = _recv_Int();
+    tXYZ xyz;
+    Item selectedItem = _recv_Item();
+    _recv_XYZ(xyz);
+    _check_status();
+    if (xyz != NULL){
+        xyzStation.append(xyz[0]);xyzStation.append(xyz[1]);xyzStation.append(xyz[2]);
+    }
+    return selectedItem;
 }
 
 
