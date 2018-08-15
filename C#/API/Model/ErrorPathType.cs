@@ -50,6 +50,11 @@ namespace RoboDk.API.Model
     public enum ErrorPathType
     {
         /// <summary>
+        /// none of the flags is set -> No Error
+        /// </summary>
+        None = 0,
+
+        /// <summary>
         /// One or more points is not reachable
         /// </summary>
         Kinematic = 0x1, // 0b001
