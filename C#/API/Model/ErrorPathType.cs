@@ -50,23 +50,34 @@ namespace RoboDk.API.Model
     public enum ErrorPathType
     {
         /// <summary>
+        /// none of the flags is set -> No Error
+        /// </summary>
+        None = 0,
+
+        /// <summary>
         /// One or more points is not reachable
         /// </summary>
-        Kinematic = 0x1, /*0b001,*/
+        Kinematic = 0x1, // 0b001
 
         /// <summary>
         /// The path reaches the limit of joint axes
         /// </summary>
-        PathLimit = 0x2, /*0b010,*/
+        PathLimit = 0x2, // 0b010
 
         /// <summary>
         /// The robot reached a singularity point
         /// </summary>
-        PathSingularity = 0x4, /*0b100,*/
+        PathSingularity = 0x4, // 0b100
+
+        /// <summary>
+        /// The robot is too close to a singularity.
+        /// Lower the singularity tolerance to allow the robot to continue. 
+        /// </summary>
+        PathNearSingularity = 0x8, // 0b1000
 
         /// <summary>
         /// Collision detected
         /// </summary>
-        Collision = 0x20, /*0b100000*/
+        Collision = 0x20 // 0b100000
     }
 }

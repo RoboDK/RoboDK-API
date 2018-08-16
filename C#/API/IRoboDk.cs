@@ -60,9 +60,29 @@ namespace RoboDk.API
 
         string ApplicationDir { get; }
 
+        /// <summary>
+        /// Allows to install a function which can intercept all interface methods.
+        /// Used for Aspect oriented programming (e.g. Add loging to an Interface).
+        /// Example:
+        ///     rdk.InterceptorFunction = ItemInterceptorFunction;
+        ///     private IItem ItemInterceptorFunction(IItem item)
+        ///     {
+        ///         var behaviour = new LoggingAspect(_logger);
+        ///         var itemProxy = Unitity.Interception.Intercept.ThroughProxy(item, new InterfaceInterceptor(), new[] {behaviour});
+        ///         return itemProxy;
+        ///     }
+        /// </summary>
+        Func<IItem, IItem> ItemInterceptFunction { set; get; }
+
         #endregion
 
         #region Public Methods
+
+        /// <summary>
+        /// Open a new additional RoboDK Link to the same already existing RoboDK instance.
+        /// </summary>
+        /// <returns>New RoboDK Link</returns>
+        IRoboDK NewLink();
 
         /// <summary>
         /// Establish a connection with RoboDK. 

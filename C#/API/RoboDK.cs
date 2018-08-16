@@ -111,6 +111,8 @@ namespace RoboDk.API
 
         #region Properties
 
+        public Func<IItem, IItem> ItemInterceptFunction { set; get; } = item => item;
+
         /// <summary>
         /// Default Socket send / receive timeout in miliseconds: 10 seconds
         /// </summary>
@@ -226,6 +228,18 @@ namespace RoboDk.API
         #endregion
 
         #region Public Methods
+
+        /// <inheritdoc />
+        public IRoboDK NewLink()
+        {
+            var rdk = new RoboDK()
+            {
+                RoboDKServerStartPort = this.RoboDKServerStartPort,
+                RoboDKServerEndPort = this.RoboDKServerEndPort
+            };
+            rdk.Connect();
+            return rdk;
+        }
 
         public void Dispose()
         {
@@ -1894,11 +1908,13 @@ namespace RoboDk.API
 
             Array.Reverse(buffer1);
             Array.Reverse(buffer2);
-            var item = BitConverter.ToInt64(buffer1, 0);
+            var itemId = BitConverter.ToInt64(buffer1, 0);
 
             //Console.WriteLine("Received item: " + item.ToString());
             var type = (ItemType)BitConverter.ToInt32(buffer2, 0);
-            return new Item(this, item, type);
+            var item = new Item(this, itemId, type);
+            var itemProxy = ItemInterceptFunction(item);
+            return itemProxy;
         }
 
         //Sends an item pointer
@@ -2321,6 +2337,26 @@ namespace RoboDk.API
 
 
         #endregion
+
+        public sealed class RoboDKLink : IDisposable
+        {
+            private RoboDK _roboDK;
+
+            public IRoboDK RoboDK => _roboDK;
+
+            public RoboDKLink(IRoboDK roboDK)
+            {
+                _roboDK = (RoboDK)roboDK.NewLink();
+            }
+
+            public void Dispose()
+            {
+                var tempRoboDK = _roboDK;
+                _roboDK = null;
+                tempRoboDK._socket.Close();
+                tempRoboDK._socket.Dispose();
+            }
+        }
 
         private sealed class RoboDKEventSource : IRoboDKEventSource
         {
