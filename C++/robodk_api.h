@@ -187,7 +187,8 @@ public:
     RoboDK(const QString &robodk_ip="", int com_port=-1, const QString &args="", const QString &path="");
     ~RoboDK();
 
-    qint64 ProcessID();
+    quint64 ProcessID();
+    quint64 WindowID();
 
     bool Connected();
     bool Connect();
@@ -247,6 +248,7 @@ public:
     QList<QPair<QString, QString> > getParams();
     QString getParam(const QString &param);
     void setParam(const QString &param, const QString &value);
+    QString Command(const QString &cmd, const QString &value="");
 
     // --- add calibrate reference, calibrate tool, measure tracker, etc...
     bool LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search = false);
@@ -259,10 +261,10 @@ public:
     void setViewPose(const Mat &pose);
     Mat ViewPose();
     bool SetRobotParams(Item *robot,tMatrix2D dhm, Mat poseBase, Mat poseTool);
-    Item getCursorXYZ(int x = -1, int y = -1, QList<double> xyzStation = QList<double>());
+    Item getCursorXYZ(int x = -1, int y = -1, tXYZ xyzStation = NULL);
     QString License();
     QList<Item> Selection();
-    Item Popup_ISO9283_CubeProgram(Item *robot);
+    Item Popup_ISO9283_CubeProgram(Item *robot=NULL, tXYZ center=NULL, double side=-1, bool blocking=true);
 
 
 
@@ -519,6 +521,9 @@ public:
 
 //---------- add more
 
+    void Scale(double scale);
+    void Scale(double scale_xyz[3]);
+
     void setAsCartesianTarget();
     void setAsJointTarget();
     bool isJointTarget();
@@ -557,13 +562,15 @@ public:
     void setRunType(int program_run_type);
     int RunProgram();
     int RunCode(const QString &parameters);
-    int RunCodeCustom(const QString &code, int run_type = RoboDK::INSTRUCTION_CALL_PROGRAM);
+    int RunInstruction(const QString &code, int run_type = RoboDK::INSTRUCTION_CALL_PROGRAM);
     void Pause(double time_ms = -1);
     void setDO(const QString &io_var, const QString &io_value);
     void waitDI(const QString &io_var, const QString &io_value, double timeout_ms = -1);
     void customInstruction(const QString &name, const QString &path_run, const QString &path_icon = "", bool blocking = true, const QString &cmd_run_on_robot = "");
-    void addMoveJ(const Item &itemtarget);
-    void addMoveL(const Item &itemtarget);
+    //void addMoveJ(const Item &itemtarget);
+    //void addMoveL(const Item &itemtarget);
+    void ShowInstructions(bool visible=true);
+    void ShowTargets(bool visible=true);
     int InstructionCount();
     void Instruction(int ins_id, QString &name, int &instype, int &movetype, bool &isjointtarget, Mat &target, tJoints &joints);
     void setInstruction(int ins_id, const QString &name, int instype, int movetype, bool isjointtarget, const Mat &target, const tJoints &joints);

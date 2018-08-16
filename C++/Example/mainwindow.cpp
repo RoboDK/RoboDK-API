@@ -151,6 +151,8 @@ void MainWindow::on_btnProgRun_clicked(){
 void MainWindow::on_btnTestButton_clicked(){
     if (!Check_Robot()){ return; }
 
+
+
     //int runmode = RDK->RunMode(); // retrieve the run mode
 
     //RoboDK *RDK = new RoboDK();
@@ -170,7 +172,7 @@ void MainWindow::on_btnTestButton_clicked(){
     ROBOT->setPoseTool(pose_tool);    // set the tool frame: important for Online Programming
     ROBOT->setSpeed(100);             // Set Speed to 100 mm/s
     ROBOT->setRounding(5);            // set the rounding instruction (C_DIS & APO_DIS / CNT / ZoneData / Blend Radius / ...)
-    ROBOT->RunCodeCustom("CallOnStart"); // run a program
+    ROBOT->RunInstruction("CallOnStart"); // run a program
     for (int i = 0; i <= n_sides; i++) {
         // calculate angle in degrees:
         double angle = ((double) i / n_sides) * 360.0;
@@ -182,7 +184,7 @@ void MainWindow::on_btnTestButton_clicked(){
         pose_i.rotate(-angle,0,0,1.0);
 
         // add a comment (when generating code)
-        ROBOT->RunCodeCustom("Moving to point " + QString::number(i), RoboDK::INSTRUCTION_COMMENT);
+        ROBOT->RunInstruction("Moving to point " + QString::number(i), RoboDK::INSTRUCTION_COMMENT);
 
         // example to retrieve the pose as Euler angles (X,Y,Z,W,P,R)
         double xyzwpr[6];
@@ -190,7 +192,7 @@ void MainWindow::on_btnTestButton_clicked(){
 
         ROBOT->MoveL(pose_i);  // move the robot
     }
-    ROBOT->RunCodeCustom("CallOnFinish");
+    ROBOT->RunInstruction("CallOnFinish");
     ROBOT->MoveL(pose_ref);     // move back to the reference point
 
     return;
@@ -250,6 +252,18 @@ void MainWindow::on_btnTestButton_clicked(){
     tcp_wrt_obj.ToXYZRPW(xyzwpr);
 
     this->statusBar()->showMessage(QString("Tool with respect to %1").arg(object.Name()) + QString(": [X,Y,Z,W,P,R]=[%1, %2, %3, %4, %5, %6] mm/deg").arg(xyzwpr[0],0,'f',3).arg(xyzwpr[1],0,'f',3).arg(xyzwpr[2],0,'f',3).arg(xyzwpr[3],0,'f',3).arg(xyzwpr[4],0,'f',3).arg(xyzwpr[5],0,'f',3) );
+
+
+
+    /*
+    // Example to create the ISO cube program
+        tXYZ xyz;
+        xyz[0] = 100;
+        xyz[1] = 200;
+        xyz[2] = 300;
+        RDK->Popup_ISO9283_CubeProgram(ROBOT, xyz, 100, false);
+        return;
+    */
 
 }
 
@@ -452,7 +466,7 @@ void MainWindow::on_radIntegrateRoboDK_clicked()
             ui->statusBar->showMessage("RoboDK top level window was not found...");
             return;
         }
-
+        //HWND wid_rdk = (HWND) RDK->WindowID();
         // set parent widget
         robodk_window = QWindow::fromWinId((WId)wid_rdk);
         QWidget *new_widget = createWindowContainer(robodk_window);

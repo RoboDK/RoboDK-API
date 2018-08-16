@@ -684,11 +684,37 @@ Mat Item::PoseAbs(){
     return pose;
 }
 
-
 ///--------------------------------- add curve, scale, recolor, ...
 ///
 ///
 ///
+
+
+/// <summary>
+/// Apply a scale to an object to make it bigger or smaller.
+/// The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
+/// </summary>
+/// <param name="scale">scale to apply as scale or [scale_x, scale_y, scale_z]</param>
+void Item::Scale(double scale){
+    double scale_xyz[3];
+    scale_xyz[0] = scale;
+    scale_xyz[1] = scale;
+    scale_xyz[2] = scale;
+    Scale(scale_xyz);
+}
+
+/// <summary>
+/// Apply a per-axis scale to an object to make it bigger or smaller.
+/// The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
+/// </summary>
+/// <param name="scale">scale to apply as [scale_x, scale_y, scale_z]</param>
+void Item::Scale(double scale_xyz[3]){
+    _RDK->_check_connection();
+    _RDK->_send_Line("Scale");
+    _RDK->_send_Item(this);
+    _RDK->_send_Array(scale_xyz, 3);
+    _RDK->_check_status();
+}
 
 
 /// <summary>
@@ -919,7 +945,16 @@ bool Item::Disconnect(){
 /// <param name="target">target -> target to move to as a target item (RoboDK target item)</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveJ(const Item &itemtarget, bool blocking){
-    _RDK->_moveX(&itemtarget, NULL, NULL, this, 1, blocking);
+    if (_TYPE == RoboDK::ITEM_TYPE_PROGRAM){
+        _RDK->_check_connection();
+        _RDK->_send_Line("Add_INSMOVE");
+        _RDK->_send_Item(itemtarget);
+        _RDK->_send_Item(this);
+        _RDK->_send_Int(1);
+        _RDK->_check_status();
+    } else {
+        _RDK->_moveX(&itemtarget, NULL, NULL, this, 1, blocking);
+    }
 }
 
 /// <summary>
@@ -946,7 +981,16 @@ void Item::MoveJ(const Mat &target, bool blocking){
 /// <param name="itemtarget">target -> target to move to as a target item (RoboDK target item)</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveL(const Item &itemtarget, bool blocking){
-    _RDK->_moveX(&itemtarget, NULL, NULL, this, 2, blocking);
+    if (_TYPE == RoboDK::ITEM_TYPE_PROGRAM){
+        _RDK->_check_connection();
+        _RDK->_send_Line("Add_INSMOVE");
+        _RDK->_send_Item(itemtarget);
+        _RDK->_send_Item(this);
+        _RDK->_send_Int(2);
+        _RDK->_check_status();
+    } else {
+        _RDK->_moveX(&itemtarget, NULL, NULL, this, 2, blocking);
+    }
 }
 
 /// <summary>
@@ -1214,7 +1258,7 @@ int Item::RunCode(const QString &parameters){
 /// </summary>
 /// <param name="code"><string of the code or program to run/param>
 /// <param name="run_type">INSTRUCTION_* variable to specify if the code is a progra</param>
-int Item::RunCodeCustom(const QString &code, int run_type){
+int Item::RunInstruction(const QString &code, int run_type){
     _RDK->_check_connection();
     _RDK->_send_Line("RunCode2");
     _RDK->_send_Item(this);
@@ -1289,6 +1333,8 @@ void Item::customInstruction(const QString &name, const QString &path_run, const
     _RDK->_check_status();
 }
 
+/*
+/////// obsolete functions
 /// <summary>
 /// Adds a new robot move joint instruction to a program.
 /// </summary>
@@ -1314,6 +1360,32 @@ void Item::addMoveL(const Item &itemtarget){
     _RDK->_send_Int(2);
     _RDK->_check_status();
 }
+*/
+
+/// <summary>
+/// Show or hide instruction items of a program in the RoboDK tree
+/// </summary>
+/// <param name="show"></param>
+void Item::ShowInstructions(bool visible){
+    _RDK->_check_connection();
+    _RDK->_send_Line("Prog_ShowIns");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(visible ? 1 : 0);
+    _RDK->_check_status();
+}
+
+/// <summary>
+/// Show or hide targets of a program in the RoboDK tree
+/// </summary>
+/// <param name="show"></param>
+void Item::ShowTargets(bool visible){
+    _RDK->_check_connection();
+    _RDK->_send_Line("Prog_ShowTargets");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(visible ? 1 : 0);
+    _RDK->_check_status();
+}
+
 
 ////////// ADD MORE METHODS
 /// <summary>
@@ -1525,8 +1597,21 @@ RoboDK::~RoboDK(){
     _disconnect();
 }
 
-qint64 RoboDK::ProcessID(){
+quint64 RoboDK::ProcessID(){
+    if (_PROCESS == 0) {
+        QString response = Command("MainProcess_ID");
+        _PROCESS = response.toInt();
+    }
     return _PROCESS;
+}
+
+quint64 RoboDK::WindowID(){
+    qint64 window_id;
+    if (window_id == 0) {
+        QString response = Command("MainWindow_ID");
+        window_id = response.toInt();
+    }
+    return window_id;
 }
 
 bool RoboDK::Connected(){
@@ -2263,6 +2348,22 @@ void RoboDK::setParam(const QString &param, const QString &value){
     _check_status();
 }
 
+/// <summary>
+/// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+/// </summary>
+/// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+/// <param name="value">Comand value (optional, not all commands require a value)</param>
+/// <returns></returns>
+QString RoboDK::Command(const QString &cmd, const QString &value){
+    _check_connection();
+    _send_Line("SCMD");
+    _send_Line(cmd);
+    _send_Line(value);
+    QString answer = _recv_Line();
+    _check_status();
+    return answer;
+}
+
 bool RoboDK::LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search)
 {
     _check_connection();
@@ -2365,20 +2466,22 @@ Mat RoboDK::ViewPose(){
     return true;
 }*/
 
-Item RoboDK::getCursorXYZ(int x, int y, QList<double> xyzStation)
+Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
 {
     _check_connection();
     _send_Line("Proj2d3d");
     _send_Int(x);
     _send_Int(y);
     int selection = _recv_Int();
-    tXYZ xyz;
     Item selectedItem = _recv_Item();
+    tXYZ xyz;
     _recv_XYZ(xyz);
-    _check_status();
-    if (xyz != NULL){
-        xyzStation.append(xyz[0]);xyzStation.append(xyz[1]);xyzStation.append(xyz[2]);
+    if (xyzStation != NULL){
+        xyzStation[0] = xyz[0];
+        xyzStation[1] = xyz[1];
+        xyzStation[2] = xyz[2];
     }
+    _check_status();
     return selectedItem;
 }
 
@@ -2419,15 +2522,34 @@ QList<Item> RoboDK::Selection(){
 /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
 /// </summary>
 /// <returns>IS9283 Program</returns>
-Item RoboDK::Popup_ISO9283_CubeProgram(Item *robot){
+Item RoboDK::Popup_ISO9283_CubeProgram(Item *robot, tXYZ center, double side, bool blocking){
     //_require_build(5177);
+    Item iso_program;
     _check_connection();
-    _send_Line("Popup_ProgISO9283");
-    _send_Item(robot);
-    _TIMEOUT = 3600 * 1000;
-    Item iso_program = _recv_Item();
-    _TIMEOUT = ROBODK_API_TIMEOUT;
-    _check_status();
+    if (center == NULL){
+        _send_Line("Popup_ProgISO9283");
+        _send_Item(robot);
+        _TIMEOUT = 3600 * 1000;
+        iso_program = _recv_Item();
+        _TIMEOUT = ROBODK_API_TIMEOUT;
+        _check_status();
+    } else {
+        _send_Line("Popup_ProgISO9283_Param");
+        _send_Item(robot);
+        double values[5];
+        values[0] = center[0];
+        values[1] = center[1];
+        values[2] = center[2];
+        values[3] = side;
+        values[4] = blocking ? 1 : 0;
+        _send_Array(values, 4);
+        if (blocking){
+            _TIMEOUT = 3600 * 1000;
+            iso_program = _recv_Item();
+            _TIMEOUT = ROBODK_API_TIMEOUT;
+            _check_status();
+        }
+    }
     return iso_program;
 }
 
