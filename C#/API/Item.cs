@@ -93,7 +93,9 @@ namespace RoboDk.API
 
         public IItem Clone(IRoboDK connectionLink)
         {
-            return new Item((RoboDK)connectionLink, this.ItemId, this._type);
+            var item = new Item((RoboDK)connectionLink, this.ItemId, this._type);
+            var itemProxy = connectionLink.ItemInterceptFunction(item);
+            return itemProxy;
         }
 
         public override string ToString()
