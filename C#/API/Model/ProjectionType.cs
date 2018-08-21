@@ -47,10 +47,36 @@ namespace RoboDk.API.Model
     /// </summary>
     public enum ProjectionType
     {
-        None = 0, // No curve projection
-        Closest = 1, // The projection will the closest point on the surface
-        AlongNormal = 2, // The projection will be done along the normal.
-        AlongNormalRecalc =3, // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        /// <summary>
+        /// No curve projection.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// The projection will the closest point on the surface.
+        /// </summary>
+        Closest = 1,
+
+        /// <summary>
+        /// The projection will be done along the normal.
+        /// </summary>
+        AlongNormal = 2,
+
+        /// <summary>
+        /// The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        /// </summary>
+        AlongNormalRecalc = 3,
+
+        /// <summary>
+        /// The projection will be the closest point on the surface and the normals will be recalculated.
+        /// </summary>
+        ClosesRecalcNormal = 4,
+
+        /// <summary>
+        /// The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
+        /// </summary>
+        RecalcNormal = 5,
+
     }
 }
 

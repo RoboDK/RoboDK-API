@@ -1247,11 +1247,14 @@ public class RoboDK
     public const int CALIBRATE_FRAME_6P = 2;            //Calibrate by 6 points
     public const int CALIBRATE_TURNTABLE = 3;           //Calibrate turntable
 
-    // projection types (for AddCurve)
+    // projection types (for AddCurve, AddPoints and ProjectCurve)
     public const int PROJECTION_NONE = 0; // No curve projection
     public const int PROJECTION_CLOSEST = 1; // The projection will the closest point on the surface
     public const int PROJECTION_ALONG_NORMAL = 2; // The projection will be done along the normal.
     public const int PROJECTION_ALONG_NORMAL_RECALC = 3; // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+    public const int PROJECTION_CLOSEST_RECALC = 4; // The projection will be the closest point on the surface and the normals will be recalculated
+    public const int PROJECTION_RECALC = 5; // The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
+
 
     // Euler type
     public const int JOINT_FORMAT = -1; // joints

@@ -362,8 +362,7 @@ namespace RoboDk.API
         /// <returns>
         ///     It returns the projected points as a list of points (empty matrix if failed).
         /// </returns>
-        Mat ProjectPoints(Mat points, IItem objectProject,
-            ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
+        Mat ProjectPoints(Mat points, IItem objectProject, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
         /// <summary>
         /// Closes the current station without suggesting to save
