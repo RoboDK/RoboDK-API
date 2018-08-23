@@ -522,6 +522,8 @@ public:
     void setPoseAbs(Mat pose);
     Mat PoseAbs();
 
+    void setColor(double colorRGBA[4]);
+
 //---------- add more
 
     void Scale(double scale);
