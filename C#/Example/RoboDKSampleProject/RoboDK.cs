@@ -1355,6 +1355,7 @@ public class RoboDK
     public const int SELECT_PAN = 4;
     public const int SELECT_MOVE = 5;
     public const int SELECT_MOVE_SHIFT = 6;
+    public const int SELECT_MOVE_CLEAR = 7;
 
     // Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
     public const int DISPLAY_REF_DEFAULT = -1;
