@@ -343,21 +343,23 @@ public:
 
     // projection types (for AddCurve)
     enum {
-        PROJECTION_NONE = 0, // No curve projection
-        PROJECTION_CLOSEST = 1, // The projection will the closest point on the surface
-        PROJECTION_ALONG_NORMAL = 2, // The projection will be done along the normal.
-        PROJECTION_ALONG_NORMAL_RECALC = 3 // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        PROJECTION_NONE                = 0, // No curve projection
+        PROJECTION_CLOSEST             = 1, // The projection will the closest point on the surface
+        PROJECTION_ALONG_NORMAL        = 2, // The projection will be done along the normal.
+        PROJECTION_ALONG_NORMAL_RECALC = 3, // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        PROJECTION_CLOSEST_RECALC      = 4, // The projection will be the closest point on the surface and the normals will be recalculated
+        PROJECTION_RECALC              = 5  // The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
     };
 
     // Euler type
     enum {
-        JOINT_FORMAT = -1, // joints
+        JOINT_FORMAT      = -1, // joints
         EULER_RX_RYp_RZpp = 0, // generic
         EULER_RZ_RYp_RXpp = 1, // ABB RobotStudio
         EULER_RZ_RYp_RZpp = 2, // Kawasaki, Adept, Staubli
         EULER_RZ_RXp_RZpp = 3, // CATIA, SolidWorks
-        EULER_RX_RY_RZ = 4, // Fanuc, Kuka, Motoman, Nachi
-        EULER_RZ_RY_RX = 5, // CRS
+        EULER_RX_RY_RZ    = 4, // Fanuc, Kuka, Motoman, Nachi
+        EULER_RZ_RY_RX    = 5, // CRS
         EULER_QUEATERNION = 6 // ABB Rapid
     };
 
@@ -378,7 +380,8 @@ public:
         INSTRUCTION_CALL_PROGRAM = 0,
         INSTRUCTION_INSERT_CODE = 1,
         INSTRUCTION_START_THREAD = 2,
-        INSTRUCTION_COMMENT = 3
+        INSTRUCTION_COMMENT = 3,
+        INSTRUCTION_SHOW_MESSAGE = 4
     };
 
     // Object selection features:
@@ -518,6 +521,8 @@ public:
     void setPoseTool(Item tool_item);
     void setPoseAbs(Mat pose);
     Mat PoseAbs();
+
+    void setColor(double colorRGBA[4]);
 
 //---------- add more
 

@@ -151,8 +151,6 @@ void MainWindow::on_btnProgRun_clicked(){
 void MainWindow::on_btnTestButton_clicked(){
     if (!Check_Robot()){ return; }
 
-
-
     //int runmode = RDK->RunMode(); // retrieve the run mode
 
     //RoboDK *RDK = new RoboDK();

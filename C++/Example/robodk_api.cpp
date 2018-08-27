@@ -684,6 +684,19 @@ Mat Item::PoseAbs(){
     return pose;
 }
 
+/// <summary>
+/// Set the color of an object, tool or robot.
+/// A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+/// <summary>
+void Item::setColor(double colorRGBA[4]){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Color");
+    _RDK->_send_Item(this);
+    _RDK->_send_Array(colorRGBA, 4);
+    _RDK->_check_status();
+
+}
+
 ///--------------------------------- add curve, scale, recolor, ...
 ///
 ///
