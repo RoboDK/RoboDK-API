@@ -40,6 +40,7 @@
 
 #region Namespaces
 
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using RoboDk.API.Model;
@@ -718,11 +719,22 @@ namespace RoboDk.API
         void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1,
             double accelJoints = -1);
 
+
         /// <summary>
         ///     Sets the robot movement smoothing accuracy (also known as zone data value).
+        /// Obsolete, use SetRounding instead.
         /// </summary>
         /// <param name="zonedata">zonedata value (int) (robot dependent, set to -1 for fine movements)</param>
+        [Obsolete]
         void SetZoneData(double zonedata);
+
+        /// <summary>
+        /// Sets the rounding accuracy to smooth the edges of corners.
+        /// In general, it is recommended to allow a small approximation near the corners to maintain a constant speed.
+        /// Setting a rounding values greater than 0 helps avoiding jerky movements caused by constant acceleration and decelerations.
+        /// </summary>
+        /// <param name="rounding"></param>
+        void SetRounding(double rounding);
 
         /// <summary>
         ///     Displays a sequence of joints
