@@ -1067,6 +1067,18 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+
+        /// <inheritdoc />
+        public void SetRounding(double rounding)
+        {
+            Link.check_connection();
+            var command = "S_ZoneData";
+            Link.send_line(command);
+            Link.send_int((int) rounding * 1000);
+            Link.send_item(this);
+            Link.check_status();
+        }
+
         /// <inheritdoc />
         public void ShowSequence(Mat sequence)
         {
@@ -1467,7 +1479,7 @@ namespace RoboDk.API
                 flags, timeoutSec);
             result.ErrorMessage = errorMessage;
 
-            int numberOfJoints = jointList.Rows - 4;
+            var numberOfJoints = GetLink(ItemType.Robot).Joints().Length;
             for (var colId = 0; colId < jointList.Cols; colId++)
             {
                 var joints = new double[numberOfJoints];

@@ -38,11 +38,15 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
+using System;
+
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// 
+    /// Defines which parts an objects are visible.
+    /// <see cref="IItem.SetVisible(bool, VisibleRefType)"/>
     /// </summary>
+    [Flags]
     public enum VisibleRefType
     {
         /// <summary>
