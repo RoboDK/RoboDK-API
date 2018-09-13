@@ -424,6 +424,31 @@ void Item::Delete(){
 bool Item::Valid(){
     return _PTR != NULL;
 }
+/// <summary>
+/// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
+/// </summary>
+/// <param name="parent"></param>
+void Item::setParent(Item parent){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Parent");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
+
+/// <summary>
+/// Attaches the item to another parent while maintaining the current absolute position in the station.
+/// The relationship between this item and its parent is changed to maintain the abosolute position.
+/// </summary>
+/// <param name="parent">parent item to attach this item</param>
+void Item::setParentStatic(Item parent)
+{
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Parent_Static");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
 
 
 ////// add more methods
@@ -2084,6 +2109,30 @@ QList<Item> RoboDK::getOpenStation()
 }
 
 
+/// <summary>
+/// Returns the active station item (station currently visible)
+/// </summary>
+/// <returns></returns>
+Item RoboDK::getActiveStation() {
+    _check_connection();
+    _send_Line("G_ActiveStn");
+    Item station = _recv_Item();
+    _check_status();
+    return station;
+}
+
+/// <summary>
+/// Set the active station (project currently visible)
+/// </summary>
+/// <param name="station">station item, it can be previously loaded as an RDK file</param>
+void RoboDK::setActiveStation(Item station) {
+    _check_connection();
+    _send_Line("S_ActiveStn");
+    _send_Item(station);
+    _check_status();
+}
+
+
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 /// <summary>
 /// Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.
@@ -2414,6 +2463,61 @@ void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QLis
 }
 
 //---------------------------------------------- ADD MORE  (getParams, setParams, calibrate TCP, calibrate ref...)
+
+
+/// <summary>
+/// Calibrate a tool (TCP) given a number of points or calibration joints. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+/// </summary>
+/// <param name="poses_joints">matrix of poses in a given format or a list of joints</param>
+/// <param name="error_stats">stats[mean, standard deviation, max] - Output error stats summary</param>
+/// <param name="format">Euler format. Optionally, use JOINT_FORMAT and provide the robot.</param>
+/// <param name="algorithm">type of algorithm (by point, plane, ...)</param>
+/// <param name="robot">Robot used for calibration (if using joint values)</param>
+/// <returns>TCP as [x, y, z] - calculated TCP</returns>
+///
+void RoboDK::CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format, int algorithm, Item *robot, double *error_stats){
+    _check_connection();
+    _send_Line("CalibTCP2");
+    _send_Matrix2D(poses_joints);
+    _send_Int(format);
+    _send_Int(algorithm);
+    _send_Item(robot);
+    int nxyz = 3;
+    _recv_Array(tcp_xyz, &nxyz);
+    if (error_stats != NULL){
+        _recv_Array(error_stats);
+    } else {
+        double errors_ignored[20];
+        _recv_Array(errors_ignored);
+    }
+    tMatrix2D *error_graph = Matrix2D_Create();
+    _recv_Matrix2D(&error_graph);
+    Matrix2D_Delete(&error_graph);
+    _check_status();
+}
+
+/// <summary>
+/// Calibrate a Reference Frame given a list of points or joint values. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+/// </summary>
+/// <param name="joints">points as a 3xN matrix or nDOFsxN) - List of points or a list of robot joints</param>
+/// <param name="method">type of algorithm(by point, plane, ...) CALIBRATE_FRAME_...</param>
+/// <param name="use_joints">use points or joint values. The robot item must be provided if joint values is used.</param>
+/// <param name="robot"></param>
+/// <returns></returns>
+Mat RoboDK::CalibrateReference(tMatrix2D *poses_joints, int method, bool use_joints, Item *robot){
+    _check_connection();
+    _send_Line("CalibFrame");
+    _send_Matrix2D(poses_joints);
+    _send_Int(use_joints ? -1 : 0);
+    _send_Int(method);
+    _send_Item(robot);
+    Mat reference_pose = _recv_Pose();
+    double error_stats[20];
+    _recv_Array(error_stats);
+    _check_status();
+    return reference_pose;
+}
+
 
 int RoboDK::ProgramStart(const QString &progname, const QString &defaultfolder, const QString &postprocessor, Item *robot){
     _check_connection();

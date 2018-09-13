@@ -1288,6 +1288,41 @@ namespace RoboDk.API
             check_status();
         }
 
+
+        static char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        public static string Color2Hex(Color color)
+        {
+            byte[] bytes = new byte[4];
+            bytes[0] = color.A;
+            bytes[1] = color.R;
+            bytes[2] = color.G;
+            bytes[3] = color.B;
+            char[] chars = new char[bytes.Length * 2];
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                int b = bytes[i];
+                chars[i * 2] = hexDigits[b >> 4];
+                chars[i * 2 + 1] = hexDigits[b & 0xF];
+            }
+            return new string(chars);
+        }
+
+        /// <inheritdoc />
+        public void setColor(List<IItem> item_list, List<Color> color_list)
+        {
+            RequireBuild(6471);
+            int nitm = Math.Min(item_list.Count, color_list.Count);
+            check_connection();
+            send_line("S_ColorList");
+            send_int(nitm);
+            for (int i = 0; i < nitm; i++)
+            {
+                send_item(item_list[i]);
+                send_line("#" + Color2Hex(color_list[i]));
+            }
+            check_status();
+        }
+
         /// <inheritdoc />
         public void ShowAsCollided(List<IItem> item_list, List<bool> collided_list, List<int> robot_link_id = null)
         {

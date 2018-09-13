@@ -30,6 +30,7 @@ using Microsoft.Win32;          // For registry keys
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Drawing;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -3432,6 +3433,46 @@ public class RoboDK
     }
 
 
+    static char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    public static string Color2Hex(Color color)
+    {        
+        byte[] bytes = new byte[4];
+        bytes[0] = color.A;
+        bytes[1] = color.R;
+        bytes[2] = color.G;
+        bytes[3] = color.B;
+        char[] chars = new char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            int b = bytes[i];
+            chars[i * 2] = hexDigits[b >> 4];
+            chars[i * 2 + 1] = hexDigits[b & 0xF];
+        }
+        return new string(chars);
+    }
+
+    /// <summary>
+    /// Sets the color for a list of items
+    /// </summary>
+    /// <param name="item_list">list of items</param>
+    /// <param name="color_list">list of colors</param>
+    public void setColor(List<Item> item_list, List<Color> color_list)
+    {
+        int nitm = Math.Min(item_list.Count, color_list.Count);
+        _check_connection();
+        _send_Line("S_ColorList");
+        _send_Int(nitm);
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Item(item_list[i]);
+            _send_Line("#" + Color2Hex(color_list[i]));
+        }
+        _check_status();
+    }
+
+
+
+
     /// <summary>
     /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
     /// </summary>
@@ -4432,7 +4473,7 @@ public class RoboDK
         public void SetColor(int shape_id, List<double> tocolor)
         {
             link.check_color(tocolor);
-            link._check_connection();            
+            link._check_connection();
             link._send_Line("S_ShapeColor");
             link._send_Item(this);
             link._send_Int(shape_id);

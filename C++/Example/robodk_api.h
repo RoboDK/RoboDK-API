@@ -122,6 +122,11 @@ struct Color{
 };
 
 
+
+
+
+
+
 //--------------------- Joints class -----------------------
 class ROBODK tJoints {
 public:
@@ -227,7 +232,7 @@ public:
     Item AddStation(QString name);
     Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = NULL);
     QList<Item> getOpenStation();
-    void setActiveStation();
+    void setActiveStation(Item stn);
     Item getActiveStation();
     int RunProgram(const QString &function_w_params);
     int RunCode(const QString &code, bool code_is_fcn_call = false);
@@ -255,6 +260,8 @@ public:
     bool CollisionLine(tXYZ p1, tXYZ p2);
     void setVisible(QList<Item> itemList, QList<bool> visibleList, QList<int> visibleFrames);
     void ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id = NULL);
+    void CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format=EULER_RX_RY_RZ, int algorithm=CALIBRATE_TCP_BY_POINT, Item *robot=NULL, double *error_stats=NULL);
+    Mat CalibrateReference(tMatrix2D *poses_joints, int method = CALIBRATE_FRAME_3P_P1_ON_X, bool use_joints = false, Item *robot = NULL);
 
 
     int ProgramStart(const QString &progname, const QString &defaultfolder = "", const QString &postprocessor = "", Item *robot = NULL);
@@ -501,6 +508,8 @@ public:
     void Save(const QString &filename);
     void Delete();
     bool Valid();
+    void setParent(Item parent);
+    void setParentStatic(Item parent);
 
     QList<Item> Childs();
     bool Visible();
@@ -594,7 +603,10 @@ private:
 };
 
 
-
+Mat transl(double x, double y, double z);
+Mat rotx(double rx);
+Mat roty(double ry);
+Mat rotz(double rz);
 
 
 

@@ -592,6 +592,13 @@ namespace RoboDk.API
         void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null);
 
         /// <summary>
+        /// Sets the color for a list of items
+        /// </summary>
+        /// <param name="item_list">list of items</param>
+        /// <param name="color_list">list of colors</param>
+        void setColor(List<IItem> item_list, List<Color> color_list);
+
+        /// <summary>
         /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
         /// </summary>
         /// <param name="item_list">List of items</param>
