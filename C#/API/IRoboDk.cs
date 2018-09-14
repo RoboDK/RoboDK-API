@@ -427,6 +427,16 @@ namespace RoboDk.API
         int SetCollisionActive(CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOn);
 
         /// <summary>
+        /// Set all pairs as checking for collisions: 
+        /// </summary>
+        void EnableCollisionCheckingForAllItems();
+
+        /// <summary>
+        /// Set all pairs as NOT checking for collisions:  
+        /// </summary>
+        void DisableCollisionCheckingForAllItems();
+
+        /// <summary>
         /// Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. This allows altering
         /// the collision map for Collision checking.
         /// Specify the link id for robots or moving mechanisms (id 0 is the base).

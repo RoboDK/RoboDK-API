@@ -422,6 +422,7 @@ namespace RoboDk.API
             return serverPortIsOpen;
         }
 
+        /// <inheritdoc />
         public void EventsListenClose()
         {
             if (_roboDkEventSource != null)
@@ -962,6 +963,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void EnableCollisionCheckingForAllItems()
+        {
+            Command("CollisionMap", "All");
+        }
+
+        /// <inheritdoc />
+        public void DisableCollisionCheckingForAllItems()
+        {
+            Command("CollisionMap", "None");
+        }
+
+        /// <inheritdoc />
         public bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0,
             int id2 = 0)
         {
@@ -1173,7 +1186,7 @@ namespace RoboDk.API
         public string Command(string cmd, string value)
         {
             check_connection();
-            send_line("S_Param");
+            send_line("SCMD");
             send_line(cmd);
             send_line(value);
             string response = rec_line();
