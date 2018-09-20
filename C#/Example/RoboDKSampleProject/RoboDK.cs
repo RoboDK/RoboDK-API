@@ -146,6 +146,27 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
+    /// Check if it is a Homogeneous Identity matrix
+    /// </summary>
+    /// <returns></returns>
+    public bool isIdentity()
+    {
+        if (rows != 4 || this.rows != this.cols)
+            return false;
+
+        for (int i = 0; i < rows; i++)
+        {
+            if (mat[i,i] != 1.0)
+                return false;
+
+        }
+        if (mat[0, 3] != 0.0 || mat[1, 3] != 0.0 || mat[2, 3] != 0.0)
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
     /// Matrix class constructor for a 4x1 vector [x,y,z,1]
     /// </summary>
     /// <param name="x">x coordinate</param>
