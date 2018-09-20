@@ -273,6 +273,27 @@ namespace RoboDk.API
             return new Mat(cz, -sz, 0, 0, sz, cz, 0, 0, 0, 0, 1, 0);
         }
 
+        /// <summary>
+        /// Check if it is a Homogeneous Identity matrix
+        /// </summary>
+        /// <returns></returns>
+        public bool isIdentity()
+        {
+            if (this.Cols != 4 || this.Rows != this.Cols)
+                return false;
+
+            for (int i = 0; i < Rows; i++)
+            {
+                if (_mat[i, i] != 1.0)
+                    return false;
+
+            }
+            if (_mat[0, 3] != 0.0 || _mat[1, 3] != 0.0 || _mat[2, 3] != 0.0)
+                return false;
+
+            return true;
+        }
+
 
         //----------------------------------------------------
         //------ Pose to xyzrpw and xyzrpw to pose------------
