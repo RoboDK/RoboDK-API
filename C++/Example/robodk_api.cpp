@@ -3268,6 +3268,38 @@ double *Matrix2D_Get_col(const tMatrix2D *var, int col) { // ZERO BASED!!
 	return (var->data + var->size[0] * col);
 }
 
+
+void Matrix2D_Add(tMatrix2D *var, const double *array, int numel){
+    int oldnumel;
+    int size1 = var->size[0];
+    int size2 = var->size[1];
+    oldnumel = size1*size2;
+    var->size[1] = size2 + 1;
+    emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
+    numel = qMin(numel, size1);
+    for (int i=0; i<numel; i++){
+        var->data[size1*size2 + i] = array[i];
+    }
+}
+
+void Matrix2D_Add(tMatrix2D *var, const tMatrix2D *varadd){
+    int oldnumel;
+    int size1 = var->size[0];
+    int size2 = var->size[1];
+    int size1_ap = varadd->size[0];
+    int size2_ap = varadd->size[1];
+    int numel = size1_ap*size2_ap;
+    if (size1 != size1_ap){
+        return;
+    }
+    oldnumel = size1*size2;
+    var->size[1] = size2 + size2_ap;
+    emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
+    for (int i=0; i<numel; i++){
+        var->data[size1*size2 + i] = varadd->data[i];
+    }
+}
+
 void Debug_Array(const double *array, int arraysize) {
 	int i;
 	for (i = 0; i < arraysize; i++) {
