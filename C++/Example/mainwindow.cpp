@@ -252,6 +252,33 @@ void MainWindow::on_btnTestButton_clicked(){
     this->statusBar()->showMessage(QString("Tool with respect to %1").arg(object.Name()) + QString(": [X,Y,Z,W,P,R]=[%1, %2, %3, %4, %5, %6] mm/deg").arg(xyzwpr[0],0,'f',3).arg(xyzwpr[1],0,'f',3).arg(xyzwpr[2],0,'f',3).arg(xyzwpr[3],0,'f',3).arg(xyzwpr[4],0,'f',3).arg(xyzwpr[5],0,'f',3) );
 
 
+    // Example to define a reference frame given 3 points:
+    tMatrix2D* framePts = Matrix2D_Create();
+    Matrix2D_Set_Size(framePts, 3, 3);
+    double *p1 = Matrix2D_Get_col(framePts, 0);
+    double *p2 = Matrix2D_Get_col(framePts, 1);
+    double *p3 = Matrix2D_Get_col(framePts, 2);
+
+    // Define point 1:
+    p1[0] = 100;
+    p1[1] = 200;
+    p1[2] = 300;
+
+    // Define point 2:
+    p2[0] = 500;
+    p2[1] = 200;
+    p2[2] = 300;
+
+    // Define point 3:
+    p3[0] = 100;
+    p3[1] = 500;
+    p3[2] = 300;
+    Mat diagLocalFrame = RDK->CalibrateReference(framePts, RoboDK::CALIBRATE_FRAME_3P_P1_ON_X);
+    Item localPlaneFrame = RDK->AddFrame("Plane Coord");
+    localPlaneFrame.setPose(diagLocalFrame);
+    Matrix2D_Delete(&framePts);
+
+
 
     /*
     // Example to create the ISO cube program
