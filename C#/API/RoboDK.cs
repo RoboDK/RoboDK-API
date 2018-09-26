@@ -329,7 +329,7 @@ namespace RoboDk.API
             return connected;
         }
 
-        public bool StartNewRoboDKProcess(int port)
+        private bool StartNewRoboDKProcess(int port)
         {
             bool started = false;
 
@@ -2408,13 +2408,18 @@ namespace RoboDk.API
 
         private sealed class RoboDKEventSource : IRoboDKEventSource
         {
-            private readonly RoboDK _roboDK;
+            private RoboDK _roboDk;
             private Socket _socketEvents;
 
             public RoboDKEventSource(RoboDK roboDK, Socket socketEvents)
             {
-                _roboDK = roboDK;
+                // over this socket we will receive events from RoboDK
                 _socketEvents = socketEvents;
+
+                // create a new connection
+                // communication happens asynchronously.
+                // We are not allowed to use the already existing roboDK connecion used by the Main Application.
+                _roboDk = (RoboDK)roboDK.NewLink();
             }
 
             public bool Connected => _socketEvents.Connected;
@@ -2429,24 +2434,38 @@ namespace RoboDk.API
                 try
                 {
                     _socketEvents.ReceiveTimeout = timeout;
-                    var eventType = (EventType)_roboDK.rec_int(_socketEvents);
-                    var item = _roboDK.rec_item(_socketEvents);
-                    return EventResult.Create(eventType, item);
+
+                    // Wait for a new event and item from the event socket channel
+                    var eventType = (EventType)_roboDk.rec_int(_socketEvents);
+                    var item = _roboDk.rec_item(_socketEvents);
+
+                    if (eventType == EventType.SelectionChanged)
+                    {
+                        // get feature, shapeid and offset
+                        item.SelectedFeature(out var featureType, out var shapeId);
+                        item.GetPoints(featureType, shapeId, out var clickedOffset);
+
+                        return new SelectionChangedEventResult(item, featureType, shapeId, clickedOffset);
+                    }
+
+                    return new EventResult(eventType, item);
                 }
                 catch (Exception)
                 {
                     // Todo: ignored
                 }
 
-                return EventResult.None;
+                return new EventResult(EventType.NoEvent, null);
             }
 
             public void Close()
             {
                 if (_socketEvents != null)
                 {
+                    _roboDk.Dispose();
                     _socketEvents.Close();
                     _socketEvents = null;
+                    _roboDk = null;
                 }
             }
         }
