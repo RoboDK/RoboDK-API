@@ -3427,6 +3427,63 @@ public class RoboDK
         return itempicked;
     }
 
+
+    /// <summary>
+    /// Calculate the forward kinematics solution for multiple robots at the same time (faster)
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="joints_list">list of joint</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<Mat> SolveFK(List<Item> robot_list, List<double[]> joints_list, List<bool> solution_ok_list = null)
+    {
+        _require_build(6535);
+        int nitm = Math.Min(robot_list.Count, joints_list.Count);
+        _check_connection();
+        _send_Line("G_LFK");
+        _send_Int(nitm);
+        List<Mat> list_poses = new List<Mat>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Array(joints_list[i]);
+            _send_Item(robot_list[i]);
+            Mat pose = _recv_Pose();
+            int status = _recv_Int();
+            list_poses.Add(pose);
+            if (solution_ok_list != null)
+            {
+                solution_ok_list.Add(status > 0);
+            }
+        }
+        _check_status();
+        return list_poses;
+    }
+
+
+    /// <summary>
+    /// Calculate the inverse kinematics solution for multiple robots at the same time (faster)
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="pose_list">list of poses</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<double[]> SolveIK(List<Item> robot_list, List<Mat> pose_list)
+    {
+        _require_build(6535);
+        int nitm = Math.Min(robot_list.Count, pose_list.Count);
+        _check_connection();
+        _send_Line("G_LIK");
+        _send_Int(nitm);
+        List<double[]> list_joints = new List<double[]>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Pose(pose_list[i]);
+            _send_Item(robot_list[i]);
+            double[] joints_sol = _recv_Array();
+            list_joints.Add(joints_sol);
+        }
+        _check_status();
+        return list_joints;
+    }
+
     /// <summary>
     /// Sets the visibility for a list of items
     /// </summary>
