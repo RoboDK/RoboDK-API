@@ -1008,6 +1008,8 @@ class Mat(object):
             self.rows = [[0]*n for x in range(m)]
             
     def __iter__(self):
+        if self.size(0) == 0 or self.size(1) == 0:
+            return iter([])
         return iter(self.tr().rows)
             
     def copy(self):
@@ -1112,6 +1114,8 @@ class Mat(object):
                          
     def tr(self):
         """Returns the transpose of the matrix"""
+        if self.size(0) == 0 or self.size(1) == 0:
+            return Mat(0,0)
         mat = Mat([list(item) for item in zip(*self.rows)])      
         return mat
 
