@@ -42,50 +42,51 @@
 
 namespace RoboDk.API.Model
 {
+
     /// <summary>
-    /// Script execution Mode 
+    /// Type of the view pose: Isometric, Top, Front, Back, ...
     /// </summary>
-    public enum EventType
+    public enum ViewPoseType
     {
-        NoEvent = 0,
+        /// <summary>
+        /// Currently active view pose (do not calculate)
+        /// </summary>
+        ActiveView = 0,
 
         /// <summary>
-        /// One object (Item) has been selected or deselected from the tree
+        /// Isometric View pose
         /// </summary>
-        SelectionTreeChanged = 1,
+        Isometric = 1,
 
         /// <summary>
-        /// The location of an object, robot or reference frame was moved
+        /// Front view pose
         /// </summary>
-        ItemMoved = 2,
+        Front = 2,
 
         /// <summary>
-        /// A reference frame has been picked, or left clicked (any tool, reference frame or object)
+        /// Top view pose
         /// </summary>
-        ReferencePicked = 3,
+        Top = 3,
 
         /// <summary>
-        /// A reference frame has been released (any tool or reference frame or object)
+        /// Right view pose
         /// </summary>
-        ReferenceReleased = 4,
+        Right = 4,
 
         /// <summary>
-        /// A tool has changed (the TCP has been modified)
+        /// Left view pose
         /// </summary>
-        ToolModified = 5,
+        Left = 5,
 
         /// <summary>
-        /// A new program to follow the ISO 9283 cube has been created
+        /// Back view pose
         /// </summary>
-        IsoCubeCreated = 6,
+        Back = 6,
 
         /// <summary>
-        /// One object (Item) has been selected or deselected from 3D view
+        /// Fit all pose (do not change rotation)
         /// </summary>
-        Selection3DChanged = 7
-
-
+        FitAll = 7
     }
 }
-
 

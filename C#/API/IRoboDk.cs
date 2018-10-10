@@ -663,8 +663,7 @@ namespace RoboDk.API
         /// </param>
         /// <param name="robot">Robot to link</param>
         /// <returns>TODO: Document return value.</returns>
-        int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "",
-            IItem robot = null);
+        int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "", IItem robot = null);
 
         /// <summary>
         /// Set the pose of the wold reference frame with respect to the view (camera/screen).
@@ -675,8 +674,9 @@ namespace RoboDk.API
         /// <summary>
         /// Get the pose of the wold reference frame with respect to the view (camera/screen)
         /// </summary>
+        /// <param name="preset">Optionally specify a ViewPoseType to retrieve the pose for a specific view</param>
         /// <returns>Returns the current view pose.</returns>
-        Mat GetViewPose();
+        Mat GetViewPose(ViewPoseType preset = ViewPoseType.ActiveView);
 
         /// <summary>
         /// Gets the nominal robot parameters.
