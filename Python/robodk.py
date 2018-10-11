@@ -721,17 +721,31 @@ def Pose_2_UR(pose):
     
     .. seealso:: :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
     """
+    NUMERIC_TOLERANCE = 1e-8;
     def saturate_1(value):
         return min(max(value,-1.0),1.0)
         
     angle = acos(  saturate_1((pose[0,0]+pose[1,1]+pose[2,2]-1)/2)   )    
     rxyz = [pose[2,1]-pose[1,2], pose[0,2]-pose[2,0], pose[1,0]-pose[0,1]]
-
-    if angle == 0:
+    if angle < NUMERIC_TOLERANCE:
         rxyz = [0,0,0]
     else:
-        rxyz = normalize3(rxyz)
-        rxyz = mult3(rxyz, angle)
+        sin_angle = sin(angle)
+        if abs(sin_angle) < NUMERIC_TOLERANCE:
+            d3 = [pose[0,0],pose[1,1],pose[2,2]]
+            mx = max(d3)
+            mx_id = d3.index(mx)
+            if mx_id == 0:
+                rxyz = [pose[0,0]+1, pose[1,0]  , pose[2,0]  ]
+            elif mx_id == 1:
+                rxyz = [pose[0,1]  , pose[1,1]+1, pose[2,1]  ]
+            else:
+                rxyz = [pose[0,2]  , pose[1,2]  , pose[2,2]+1]
+            
+            rxyz = mult3(rxyz, angle/(sqrt(max(0,2*(1+mx)))))            
+        else:            
+            rxyz = normalize3(rxyz)
+            rxyz = mult3(rxyz, angle)
     return [pose[0,3], pose[1,3], pose[2,3], rxyz[0], rxyz[1], rxyz[2]]
     
 def UR_2_Pose(xyzwpr):
