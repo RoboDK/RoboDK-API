@@ -2451,22 +2451,22 @@ namespace RoboDk.API
                 try
                 {
                     _socketEvents.ReceiveTimeout = timeout;
-                    var eventType = (EventType)_roboDK.rec_int(_socketEvents);
-                    var item = _roboDK.rec_item(_socketEvents);
+                    var eventType = (EventType)_roboDk.rec_int(_socketEvents);
+                    var item = _roboDk.rec_item(_socketEvents);
 
                     if (eventType == EventType.Selection3DChanged)
                     {
-                        int nvalues = _roboDK.rec_int(_socketEvents);
-                        Mat pose_abs = _roboDK.rec_pose(_socketEvents);
+                        int nvalues = _roboDk.rec_int(_socketEvents);
+                        Mat pose_abs = _roboDk.rec_pose(_socketEvents);
                         double[] xyz = new double[] { 0, 0, 0 };
                         double[] ijk = new double[] { 0, 0, 0 };
-                        _roboDK.rec_xyz(xyz, _socketEvents);
-                        _roboDK.rec_xyz(ijk, _socketEvents);
-                        Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
-                        Console.WriteLine(pose_abs.ToString());
-                        Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
-                        Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
-                        Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+                        _roboDk.rec_xyz(xyz, _socketEvents);
+                        _roboDk.rec_xyz(ijk, _socketEvents);
+                        Debug.WriteLine("Additional event data - Absolute position (PoseAbs):");
+                        Debug.WriteLine(pose_abs.ToString());
+                        Debug.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
+                        Debug.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
+                        Debug.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
 
                         // get feature, shapeid and offset
                         item.SelectedFeature(out var featureType, out var shapeId);
@@ -2474,12 +2474,8 @@ namespace RoboDk.API
 
                         return new SelectionChangedEventResult(item, featureType, shapeId, clickedOffset);
                     }
-                    else
-                    {
-                        // no additional data is sent
-                    }
 
-                    return EventResult.Create(eventType, item);
+                    return new EventResult(eventType, item);
                 }
                 catch (Exception)
                 {
