@@ -50,7 +50,7 @@ namespace RoboDk.API
             IItem item,
             ObjectSelectionType objectSelection,
             int shapeId,
-            Mat clickedOffset) : base(EventType.SelectionChanged, item)
+            Mat clickedOffset) : base(EventType.Selection3DChanged, item)
         {
             ObjectSelectionType = objectSelection;
             ShapeId = shapeId;
