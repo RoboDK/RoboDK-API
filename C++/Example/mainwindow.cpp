@@ -9,6 +9,9 @@
 #pragma comment(lib,"user32.lib")
 #endif
 
+//#include <thread>
+
+
 #define M_PI 3.14159265358979323846
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -148,7 +151,22 @@ void MainWindow::on_btnProgRun_clicked(){
     RDK->RunProgram(program_name);
 }
 
+// Example to run a second instance of the RoboDK api in parallel:
+// make sure to include #include <thread>
+//std::thread *t1 = new std::thread(blocking_task);
+/*
+void blocking_task(){
+    RoboDK rdk; // important! It will not block the main thread (blocking or non blocking won'T make a difference)
+
+    // show the blocking popup:
+    rdk.Popup_ISO9283_CubeProgram();
+
+}
+*/
+
+// then, start the thread and let it finish once the user finishes with the popup
 void MainWindow::on_btnTestButton_clicked(){
+
     if (!Check_Robot()){ return; }
 
     //int runmode = RDK->RunMode(); // retrieve the run mode

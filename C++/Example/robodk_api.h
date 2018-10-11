@@ -543,6 +543,9 @@ public:
     bool isJointTarget();
     tJoints Joints();
     tJoints JointsHome();
+    Item ObjectLink(int link_id = 0);
+    Item getLink(int type_linked = RoboDK::ITEM_TYPE_ROBOT);
+
     void setJoints(const tJoints &jnts);
     void JointLimits(tJoints *lower_limits, tJoints *upper_limits);
     void setRobot(const Item &robot);

@@ -112,9 +112,12 @@ CALIBRATE_TURNTABLE = 3 # Calibrate turntable
 
 # projection types (for AddCurve)
 PROJECTION_NONE                = 0 # No curve projection
-PROJECTION_CLOSEST             = 1 # The projection will the closest point on the surface
+PROJECTION_CLOSEST             = 1 # The projection will be the closest point on the surface
 PROJECTION_ALONG_NORMAL        = 2 # The projection will be done along the normal.
 PROJECTION_ALONG_NORMAL_RECALC = 3 # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+PROJECTION_CLOSEST_RECALC      = 4 # The projection will be the closest point on the surface and the normals will be recalculated
+PROJECTION_RECALC              = 5 # The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
+
 
 # Euler type
 JOINT_FORMAT = -1 # Using joints (not poses)
@@ -474,7 +477,7 @@ class Robolink:
                     mat[i,j] = matnums[cnt]
                     cnt = cnt + 1
         else:
-            mat = Mat([[]])
+            mat = Mat(0,0)
         return mat
 
     def _moveX(self, target, itemrobot, movetype, blocking=True):
@@ -1093,9 +1096,11 @@ class Robolink:
             :caption: Available projection types
             
             PROJECTION_NONE                = 0      # No projection
-            PROJECTION_CLOSEST             = 1      # The projection will the closest point on the surface
-            PROJECTION_ALONG_NORMAL        = 2      # The projection will be done along the normal.
-            PROJECTION_ALONG_NORMAL_RECALC = 3      # The projection will be done along the normal and the normal will be recalculated according to the surface normal.            
+            PROJECTION_CLOSEST             = 1 # The projection will be the closest point on the surface
+            PROJECTION_ALONG_NORMAL        = 2 # The projection will be done along the normal.
+            PROJECTION_ALONG_NORMAL_RECALC = 3 # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+            PROJECTION_CLOSEST_RECALC      = 4 # The projection will be the closest point on the surface and the normals will be recalculated
+            PROJECTION_RECALC              = 5 # The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
         
         .. seealso:: :func:`~robolink.Robolink.AddShape`, :func:`~robolink.Robolink.AddPoints`
         """
@@ -1132,6 +1137,7 @@ class Robolink:
         """
         if isinstance(points,list):
             points = Mat(points).tr()
+            
         elif not isinstance(points, Mat):
             raise Exception("points must be a 3xN or 6xN list or matrix")
         self._check_connection()
@@ -1162,7 +1168,11 @@ class Robolink:
         islist = False
         if isinstance(points,list):
             islist = True
-            points = Mat(points)
+            points = Mat(points).tr()
+            # Safety check for backwards compatibility
+            if points.size(0) != 6 and points.size(1) == 6:
+                points = points.tr()
+            
         elif not isinstance(points, Mat):
             raise Exception("points must be a 3xN or 6xN list or matrix")
         self._check_connection()
@@ -1176,7 +1186,7 @@ class Robolink:
         self.COM.settimeout(self.TIMEOUT)        
         self._check_status()
         if islist:
-            projected_points = projected_points.tolist()
+            projected_points = list(projected_points)
         return projected_points
         
     def CloseStation():
@@ -1370,7 +1380,45 @@ class Robolink:
             target.setPose(KUKA_2_Pose([x,y,z,w,p,r]))
 
             # Add a new movement instruction linked to that target:
-            program.MoveJ(target)       
+            program.MoveJ(target)
+            
+        Example 4 - Add a program call after each movement instruction inside a program:
+                
+        .. code-block:: python        
+            
+            from robolink import *    # API to communicate with RoboDK
+            from robodk import *      # basic matrix operations
+            RDK = Robolink()
+
+            # Ask the user to select a program:
+            prog = RDK.ItemUserPick("Select a Program to modify", ITEM_TYPE_PROGRAM)
+            if not prog.Valid():
+                print("Operation cancelled or no programs available")
+                quit()
+
+            # Ask the user to enter a function call that will be added after each movement:
+            print("Program selected: " + prog.Name())
+            ins_call = mbox("Enter a program call to add after each movement", entry="SynchRobot")
+            if not ins_call:
+                print("Operation cancelled")
+                quit()
+
+            # Iterate through all the instructions in a program:
+            ins_id = 0
+            ins_count = prog.InstructionCount()
+            while ins_id < ins_count:
+                # Retrieve instruction
+                ins_nom, ins_type, move_type, isjointtarget, pose, joints = prog.Instruction(ins_id)
+                if ins_type == INS_TYPE_MOVE:
+                    # Select the movement instruction as a reference
+                    prog.InstructionSelect(ins_id)
+                    # Add a new program call
+                    prog.RunInstruction(ins_call, INSTRUCTION_CALL_PROGRAM)
+                    # Advance one additional instruction as we just added another instruction
+                    ins_id = ins_id + 1
+                    ins_count = ins_count + 1
+                    
+                ins_id = ins_id + 1
             
         More examples to generate programs directly from your script or move the robot directly from your program here: 
         :ref:`lbl-move-through-points`. or the macro available in RoboDK/Library/Macros/MoveRobotThroughLine.py
@@ -1385,13 +1433,19 @@ class Robolink:
         return newitem
         
     def AddMillingProject(self, name='Milling settings', itemrobot=0):
+        """Obsolete, use :func:`~robolink.Robolink.AddMachiningProject` instead"""
+        return self.AddMachiningProject(name, itemrobot)
+    
+    def AddMachiningProject(self, name='Milling settings', itemrobot=0):
         """Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
         It returns the newly created :class:`.Item` containing the project settings.
         Tip: Use the MoveRobotThroughLine.py macro to see an example that creates a new "curve follow project" given a list of points to follow (Option 4).
         
         :param str name: Name of the project settings
         :param itemrobot: Robot to use for the project settings (optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.
-        :type itemrobot: :class:`.Item`"""
+        :type itemrobot: :class:`.Item`
+        
+        .. seealso:: :func:`~robolink.Item.setMachiningParameters`"""
         self._check_connection()
         command = 'Add_MACHINING'
         self._send_line(command)
@@ -1748,8 +1802,8 @@ class Robolink:
     def Command(self, cmd, value=''):
         """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
         
-        :param str command: command
-        :param str value: command value (optional, not all commands require a value) 
+        :param str command: Command Name, such as Trace, Threads or Window.
+        :param str value: Comand value (optional, not all commands require a value) 
         
         .. code-block:: python
             :caption: Example commands
@@ -1765,7 +1819,7 @@ class Robolink:
             RDK.Command("MouseClick_Mid", "Pan")       # Set the mid mouse click to Pan the 3D view
             RDK.Command("MouseClick_Right", "Rotate")  # Set the right mouse click to Rotate the 3D view
             
-            RDK.Command("MouseClick", "Default")  # Set the default settings
+            RDK.Command("MouseClick", "Default")       # Set the default mouse 3D navigation settings
             
             # Provoke a resize event
             RDK.Command("Window", "Resize")
@@ -2090,6 +2144,27 @@ class Robolink:
         self._check_status()
         return errors
         
+    def setViewPose(self, pose):
+        """Set the pose of the wold reference frame with respect to the view (camera/screen)
+        
+        :param pose: pose of the item with respect to its parent
+        :type pose: :class:`.Mat`
+        """
+        self._check_connection()
+        command = 'S_ViewPose'
+        self._send_line(command)
+        self._send_pose(pose)
+        self._check_status()
+
+    def ViewPose(self):
+        """Get the pose of the wold reference frame with respect to the view (camera/screen)"""
+        self._check_connection()
+        command = 'G_ViewPose'
+        self._send_line(command)
+        pose = self._rec_pose()
+        self._check_status()
+        return pose
+
         
     def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=eye(4), tool=eye(4), name="New robot", robot=None):
         """Create a new robot or mechanism.
@@ -2418,7 +2493,17 @@ class Robolink:
         If no coordinates are provided, the current position of the cursor is retrieved.
         
         :param int x_coord: X coordinate in pixels
-        :param int y_coord: Y coordinate in pixels"""
+        :param int y_coord: Y coordinate in pixels
+        
+        .. code-block:: python
+            :caption: Example to retrieve the 3D point under the mouse cursor
+        
+            RDK = Robolink()
+            while True:
+                xyz, item = RDK.CursorXYZ()
+                print(str(item) + " " + str(xyz))
+        
+        """
         self._check_connection()
         command = 'Proj2d3d'
         self._send_line(command)
@@ -2727,7 +2812,8 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Visible`
         """        
-        if visible_frame is None: visible_frame = visible
+        if visible_frame is None: 
+            visible_frame = -1
         self.link._check_connection()
         command = 'S_Visible'
         self.link._send_line(command)
@@ -2772,6 +2858,23 @@ class Item():
         
         :param str varname: property name
         :param str value: property value
+        
+        .. seealso:: :func:`~robolink.Robolink.Command`
+        
+        Example:
+        
+        .. code-block:: python
+            
+            # How to change the display style of an object (color as AARRGGBB):
+            obj = RDK.ItemUserPick('Select an object to change the style', ITEM_TYPE_OBJECT)
+            obj.setValue('Display','PARTICLE=CUBE(0.2,0.2,0.2) COLOR=#FF771111')
+            
+            # Another way to change display style of points:
+            obj.setValue('Display','PARTICLE=SPHERE(4,8) COLOR=red')
+            
+            # How to change the size of displayed curves:
+            obj.setValue('Display','LINEW=4')            
+
         """
         self.link._check_connection()
         if isinstance(value, Mat):
@@ -2930,7 +3033,7 @@ class Item():
         
         :param tocolor: color to set
         :type tocolor: list of float
-        :param int shapeid: ID of the shape: the ID is the order in which the shape was added using AddShape()
+        :param int shape_id: ID of the shape: the ID is the order in which the shape was added using AddShape()
         
         .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
         """
@@ -2940,6 +3043,25 @@ class Item():
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_int(shape_id)
+        self.link._send_array(tocolor)
+        self.link._check_status()
+        
+    def setColorCurve(self, tocolor, curve_id=-1):
+        """Set the color of a curve object. It can also be used for tools.
+        A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+        
+        :param tocolor: color to set
+        :type tocolor: list of float
+        :param int curve_id: ID of the curve: the ID is the order in which the shape was added using AddCurve()
+        
+        .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
+        """
+        self.link._check_connection()            
+        tocolor = self.link._check_color(tocolor)
+        command = 'S_CurveColor'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_int(curve_id)
         self.link._send_array(tocolor)
         self.link._check_status()
         
@@ -3079,9 +3201,14 @@ class Item():
         points = self.link._rec_matrix()
         feature_name = self.link._rec_line()
         self.link._check_status()
-        return points.tr().rows, feature_name
+        return list(points), feature_name
    
     def setMillingParameters(self, ncfile='', part=0, params=''):
+        """Obsolete, use :func:`~robolink.Item.setMachiningParameters` instead"""
+        newprog, status = self.setMachiningParameters(ncfile,part,params)
+        return newprog, status
+        
+    def setMachiningParameters(self, ncfile='', part=0, params=''):
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
         Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
@@ -3091,7 +3218,7 @@ class Item():
         :type part: :class:`.Item`
         :param params: Additional options
         
-        .. seealso:: :func:`~robolink.Robolink.AddMillingProject`, :func:`~robolink.Item.Joints`, :func:`~robolink.Item.getLink`, :func:`~robolink.Item.setJoints`, :func:`~robolink.Item.setToolPose`, :func:`~robolink.Item.setFramePose`
+        .. seealso:: :func:`~robolink.Robolink.AddMachiningProject`, :func:`~robolink.Item.Joints`, :func:`~robolink.Item.getLink`, :func:`~robolink.Item.setJoints`, :func:`~robolink.Item.setToolPose`, :func:`~robolink.Item.setFramePose`
         
         Example:
         
@@ -3828,7 +3955,7 @@ class Item():
         
         If the robot can not reach the target pose it returns -2. If the robot can reach the target but it can not make a linear movement it returns -1.
         
-        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.AddTarget`
+        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Robolink.AddTarget`
         """
         self.link._check_connection()
         command = 'CollisionMoveL'
@@ -4327,7 +4454,21 @@ class Item():
         self.link._send_item(self)
         nins = self.link._rec_int()
         self.link._check_status()
-        return nins
+        return nins        
+        
+    def InstructionSelect(self, ins_id=-1):
+        """Select an instruction in the program as a reference to add new instructions. New instructions will be added after the selected instruction. If no instruction ID is specified, the active instruction will be selected and returned.
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        """
+        self.link._check_connection()
+        command = 'Prog_SelIns'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_int(ins_id)  
+        ins_id = self.link._rec_int()
+        self.link._check_status()
+        return ins_id
     
     def Instruction(self, ins_id=-1):
         """Return the current program instruction or the instruction given the instruction id (if provided).
@@ -4466,14 +4607,18 @@ class Item():
         :param str save_to_file: (optional) save the result to a file as Comma Separated Values (CSV). If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.
         :param int collision_check: (optional) check for collisions
         :param int flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations
-        :return: [message (str), list of joints, 0 if success]
+        :return: [message (str), joint_list (:class:`~robodk.Mat`), status (int)]
         
-        Returns a human readable error message (if any)
+        Outputs:
         
-        It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG.
+        message (str): Returns a human readable error message (if any).
         
-        The ERROR is returned as an int but it needs to be interpreted as a binary number
+        joint_list (:class:`~robodk.Mat`): 2D matrix with all the joint information and corresponding information such as step, time stamp and speeds. Each entry is one column.
+        It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG. 
+        Use list(:class:`~robodk.Mat`) to extract each column in a list. The ERROR is returned as an int but it needs to be interpreted as a binary number.
         
+        status (int): Status is 0 if the no problems arised. Otherwise it returns the number of instructions that can be successfully executed. If status is negative it means that one or more targets are not defined (missing target item).
+                
         .. code-block:: python
             :caption: Error bit masks
             

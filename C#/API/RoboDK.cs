@@ -477,8 +477,17 @@ namespace RoboDk.API
 
             switch (evt)
             {
-                case EventType.SelectionChanged:
-                    Console.WriteLine("Event: Selection changed");
+                case EventType.SelectionTreeChanged:
+                    Console.WriteLine("Event: Selection changed (something was selected in the tree)");
+                    if (itm.Valid())
+                        Console.WriteLine("  -> Selected: " + itm.Name());
+                    else
+                        Console.WriteLine("  -> Nothing selected");
+
+                    break;
+
+                case EventType.Selection3DChanged:
+                    Console.WriteLine("Event: Selection changed (something was selected in the 3D view)");
                     if (itm.Valid())
                         Console.WriteLine("  -> Selected: " + itm.Name());
                     else
@@ -1466,11 +1475,13 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public Mat GetViewPose()
+        public Mat GetViewPose(ViewPoseType preset = ViewPoseType.ActiveView)
         {
+            RequireBuild(6700);
             check_connection();
-            var command = "G_ViewPose";
+            var command = "G_ViewPose2";
             send_line(command);
+            send_int((int)preset);
             var pose = rec_pose();
             check_status();
             return pose;
@@ -2015,11 +2026,14 @@ namespace RoboDk.API
             _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
         }
 
-        internal Mat rec_pose()
+        internal Mat rec_pose(Socket sckt = null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             var pose = new Mat(4, 4);
             var bytes = new byte[16 * 8];
-            var nbytes = _socket.ReceiveData(bytes, 16 * 8, SocketFlags.None);
+            var nbytes = sckt.ReceiveData(bytes, 16 * 8, SocketFlags.None);
             if (nbytes != 16 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -2049,10 +2063,13 @@ namespace RoboDk.API
             }
         }
 
-        internal void rec_xyz(double[] xyzpos)
+        internal void rec_xyz(double[] xyzpos, Socket sckt = null)
         {
+            if (sckt == null)
+                sckt = _socket;
+
             var bytes = new byte[3 * 8];
-            var nbytes = _socket.ReceiveData(bytes, 3 * 8, SocketFlags.None);
+            var nbytes = sckt.ReceiveData(bytes, 3 * 8, SocketFlags.None);
             if (nbytes != 3 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -2434,21 +2451,35 @@ namespace RoboDk.API
                 try
                 {
                     _socketEvents.ReceiveTimeout = timeout;
+                    var eventType = (EventType)_roboDK.rec_int(_socketEvents);
+                    var item = _roboDK.rec_item(_socketEvents);
 
-                    // Wait for a new event and item from the event socket channel
-                    var eventType = (EventType)_roboDk.rec_int(_socketEvents);
-                    var item = _roboDk.rec_item(_socketEvents);
-
-                    if (eventType == EventType.SelectionChanged)
+                    if (eventType == EventType.Selection3DChanged)
                     {
+                        int nvalues = _roboDK.rec_int(_socketEvents);
+                        Mat pose_abs = _roboDK.rec_pose(_socketEvents);
+                        double[] xyz = new double[] { 0, 0, 0 };
+                        double[] ijk = new double[] { 0, 0, 0 };
+                        _roboDK.rec_xyz(xyz, _socketEvents);
+                        _roboDK.rec_xyz(ijk, _socketEvents);
+                        Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
+                        Console.WriteLine(pose_abs.ToString());
+                        Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
+                        Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
+                        Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+
                         // get feature, shapeid and offset
                         item.SelectedFeature(out var featureType, out var shapeId);
                         item.GetPoints(featureType, shapeId, out var clickedOffset);
 
                         return new SelectionChangedEventResult(item, featureType, shapeId, clickedOffset);
                     }
+                    else
+                    {
+                        // no additional data is sent
+                    }
 
-                    return new EventResult(eventType, item);
+                    return EventResult.Create(eventType, item);
                 }
                 catch (Exception)
                 {

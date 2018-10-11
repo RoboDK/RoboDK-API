@@ -819,6 +819,38 @@ tJoints Item::JointsHome(){
     return jnts;
 }
 
+
+/// <summary>
+/// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
+/// </summary>
+/// <param name="link_id">link index(0 for the robot base, 1 for the first link, ...)</param>
+/// <returns></returns>
+Item Item::ObjectLink(int link_id){
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_LinkObjId");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(link_id);
+    Item item = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item;
+}
+
+/// <summary>
+/// Returns an item pointer (Item class) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+/// </summary>
+/// <param name="type_linked">type of linked object to retrieve</param>
+/// <returns></returns>
+Item Item::getLink(int type_linked){
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_LinkType");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(type_linked);
+    Item item = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item;
+}
+
+
 /// <summary>
 /// Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
 /// </summary>

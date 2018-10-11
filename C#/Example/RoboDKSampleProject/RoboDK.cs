@@ -1399,11 +1399,13 @@ public class RoboDK
     public const int LISTJOINTS_ACCEL = 3;
     
     // Event types
-    public const int EVENT_SELECTION_CHANGED = 1;
+    public const int EVENT_SELECTION_TREE_CHANGED = 1;
     public const int EVENT_ITEM_MOVED = 2;
     public const int EVENT_REFERENCE_PICKED = 3;
     public const int EVENT_REFERENCE_RELEASED = 4;
     public const int EVENT_TOOL_MODIFIED = 5;
+    public const int EVENT_CREATED_ISOCUBE = 6;
+    public const int EVENT_SELECTION_3D_CHANGED = 7;
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;
@@ -1672,11 +1674,14 @@ public class RoboDK
         _COM.Send(bytesarray, 8 * nvalues, SocketFlags.None);
     }
 
-    Mat _recv_Pose()
+    Mat _recv_Pose(Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         Mat pose = new Mat(4, 4);
         byte[] bytes = new byte[16 * 8];
-        int nbytes = _COM.Receive(bytes, 16 * 8, SocketFlags.None);
+        int nbytes = com.Receive(bytes, 16 * 8, SocketFlags.None);
         if (nbytes != 16 * 8)
         {
             throw new RDKException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -1705,10 +1710,13 @@ public class RoboDK
             _COM.Send(bytes, 8, SocketFlags.None);
         }
     }
-    void _recv_XYZ(double[] xyzpos)
+    void _recv_XYZ(double[] xyzpos, Socket com = null)
     {
+        if (com == null)
+            com = _COM;
+
         byte[] bytes = new byte[3 * 8];
-        int nbytes = _COM.Receive(bytes, 3 * 8, SocketFlags.None);
+        int nbytes = com.Receive(bytes, 3 * 8, SocketFlags.None);
         if (nbytes != 3 * 8)
         {
             throw new RDKException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -2392,8 +2400,11 @@ public class RoboDK
     {
         switch (evt)
         {
-            case EVENT_SELECTION_CHANGED:
-                Console.WriteLine("Event: Selection changed");
+            case EVENT_SELECTION_TREE_CHANGED:
+                Console.WriteLine("Event: Selection changed (the tree was selected)");
+                break;
+            case EVENT_SELECTION_3D_CHANGED:
+                Console.WriteLine("Event: Selection changed (the 3D screen was selected)");
                 break;
             case EVENT_ITEM_MOVED:
                 Console.WriteLine("Event: Item Moved");
@@ -2431,6 +2442,24 @@ public class RoboDK
             int evt;
             Item itm;
             WaitForEvent(out evt, out itm);
+            if (evt == EVENT_SELECTION_3D_CHANGED)
+            {
+                int nvalues = _recv_Int(_COM_EVT);
+                Mat pose_abs = _recv_Pose(_COM_EVT);
+                double[] xyz = new double[] { 0, 0, 0 };
+                double[] ijk = new double[] { 0, 0, 0 };
+                _recv_XYZ(xyz, _COM_EVT);
+                _recv_XYZ(ijk, _COM_EVT);
+                Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
+                Console.WriteLine(pose_abs.ToString());
+                Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
+                Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
+                Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+            }
+            else
+            {
+                // no additional data is sent
+            }
             SampleRoboDkEvent(evt, itm);
         }
         Console.WriteLine("Event loop finished");
@@ -3288,7 +3317,7 @@ public class RoboDK
     public string Command(string cmd, string value)
     {
         _check_connection();
-        _send_Line("S_Param");
+        _send_Line("SCMD");
         _send_Line(cmd);
         _send_Line(value);
         string response = _recv_Line();
@@ -3425,6 +3454,63 @@ public class RoboDK
         bool collision = itempicked.Valid();
         _check_status();
         return itempicked;
+    }
+
+
+    /// <summary>
+    /// Calculate the forward kinematics solution for multiple robots at the same time (faster)
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="joints_list">list of joint</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<Mat> SolveFK(List<Item> robot_list, List<double[]> joints_list, List<bool> solution_ok_list = null)
+    {
+        _require_build(6535);
+        int nitm = Math.Min(robot_list.Count, joints_list.Count);
+        _check_connection();
+        _send_Line("G_LFK");
+        _send_Int(nitm);
+        List<Mat> list_poses = new List<Mat>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Array(joints_list[i]);
+            _send_Item(robot_list[i]);
+            Mat pose = _recv_Pose();
+            int status = _recv_Int();
+            list_poses.Add(pose);
+            if (solution_ok_list != null)
+            {
+                solution_ok_list.Add(status > 0);
+            }
+        }
+        _check_status();
+        return list_poses;
+    }
+
+
+    /// <summary>
+    /// Calculate the inverse kinematics solution for multiple robots at the same time (faster)
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="pose_list">list of poses</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<double[]> SolveIK(List<Item> robot_list, List<Mat> pose_list)
+    {
+        _require_build(6535);
+        int nitm = Math.Min(robot_list.Count, pose_list.Count);
+        _check_connection();
+        _send_Line("G_LIK");
+        _send_Int(nitm);
+        List<double[]> list_joints = new List<double[]>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Pose(pose_list[i]);
+            _send_Item(robot_list[i]);
+            double[] joints_sol = _recv_Array();
+            list_joints.Add(joints_sol);
+        }
+        _check_status();
+        return list_joints;
     }
 
     /// <summary>
@@ -3652,10 +3738,12 @@ public class RoboDK
     /// Get the pose of the wold reference frame with respect to the view (camera/screen)
     /// </summary>
     /// <param name="pose"></param>
-    public Mat ViewPose()
+    public Mat ViewPose(int preset = -1)
     {
+        _require_build(6700);
         _check_connection();
-        _send_Line("G_ViewPose");
+        _send_Line("G_ViewPose2");
+        _send_Int(preset);
         Mat pose = _recv_Pose();
         _check_status();
         return pose;
