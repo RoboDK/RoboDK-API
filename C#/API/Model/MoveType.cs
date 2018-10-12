@@ -50,6 +50,5 @@ namespace RoboDk.API.Model
         Linear = 2,
         Circular = 3
     }
-
 }
 
