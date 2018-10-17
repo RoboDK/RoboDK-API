@@ -92,17 +92,40 @@ public class Mat // simple matrix class for homogeneous operations
     ///     RDK.AddCurve(new Mat(new double[6] {{0,0,0, 0,0,1}}));
     /// </summary>
     /// <param name="point">Column array</param>
-    public Mat(double[] point)
+    public Mat(double[] point, bool is_pose = false)
     {
-        cols = 1;
-        rows = point.GetLength(0);
-        
-        // Convert a double array of arrays to a Mat object:
-        mat = new double[rows, cols];
-        for (int r = 0; r < rows; r++)
+        if (is_pose)
         {
-            mat[r, 1] = point[r];
+            cols = 4;
+            rows = 4;
+            if (point.GetLength(0) < 16)
+            {
+                throw new MatException("Invalid array size to create a pose Mat"); //raise Exception('Problems running function');
+            }
+
+            // Convert a double array of arrays to a Mat object:
+            mat = new double[rows, cols];
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; r < rows; r++)
+                {
+                    mat[r, c] = point[r+c*4];
+                }
+            }
         }
+        else
+        {
+            cols = 1;
+            rows = point.GetLength(0);
+
+            // Convert a double array of arrays to a Mat object:
+            mat = new double[rows, cols];
+            for (int r = 0; r < rows; r++)
+            {
+                mat[r, 1] = point[r];
+            }
+        }
+
     }
 
     /// <summary>
@@ -1792,14 +1815,17 @@ public class RoboDK
     }
 
     // Receives an array of doubles
-    double[] _recv_Array()
+    double[] _recv_Array(Socket com = null)
     {
-        int nvalues = _recv_Int();
+        if (com == null)
+            com = _COM;
+
+        int nvalues = _recv_Int(com);
         if (nvalues > 0)
         {
             double[] values = new double[nvalues];
             byte[] bytes = new byte[nvalues * 8];
-            int read = _COM.Receive(bytes, nvalues * 8, SocketFlags.None);
+            int read = com.Receive(bytes, nvalues * 8, SocketFlags.None);
             for (int i = 0; i < nvalues; i++)
             {
                 byte[] onedouble = new byte[8];
@@ -2444,17 +2470,20 @@ public class RoboDK
             WaitForEvent(out evt, out itm);
             if (evt == EVENT_SELECTION_3D_CHANGED)
             {
-                int nvalues = _recv_Int(_COM_EVT);
-                Mat pose_abs = _recv_Pose(_COM_EVT);
-                double[] xyz = new double[] { 0, 0, 0 };
-                double[] ijk = new double[] { 0, 0, 0 };
-                _recv_XYZ(xyz, _COM_EVT);
-                _recv_XYZ(ijk, _COM_EVT);
+                double[] data = _recv_Array(_COM_EVT);
+                Mat pose_abs = new Mat(data, true);
+                double[] xyz = new double[] { data[16], data[17], data[18] };
+                double[] ijk = new double[] { data[19], data[20], data[21] };
+                int feature_type = Convert.ToInt32(data[22]);
+                int feature_id = Convert.ToInt32(data[23]);
+
                 Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
                 Console.WriteLine(pose_abs.ToString());
                 Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
                 Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
                 Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+                Console.WriteLine("Feature Type and ID");
+                Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
             }
             else
             {
@@ -4369,12 +4398,14 @@ public class RoboDK
         /// Sets the position (pose) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
         /// </summary>
         /// <param name="pose">4x4 homogeneous matrix</param>
-        public void setGeometryPose(Mat pose)
+        /// <param name="apply_movement">Apply the movement to the inner geometry and not as a pose shift</param>
+        public void setGeometryPose(Mat pose, bool apply_movement = false)
         {
             link._check_connection();
-            link._send_Line("S_Hgeom");
+            link._send_Line("S_Hgeo2");
             link._send_Item(this);
             link._send_Pose(pose);
+            link._send_Int(apply_movement ? 1 : 0);
             link._check_status();
         }
 

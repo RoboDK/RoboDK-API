@@ -78,6 +78,49 @@ namespace RoboDk.API
             _mat = new double[_rows, _cols];
         }
 
+
+        /// <summary>
+        /// Matrix class constructor for a double array. The array will be set as a column matrix.
+        /// Example:
+        ///     RDK.AddCurve(new Mat(new double[6] {{0,0,0, 0,0,1}}));
+        /// </summary>
+        /// <param name="point">Column array</param>
+        public Mat(double[] point, bool is_pose = false)
+        {
+            if (is_pose)
+            {
+                _cols = 4;
+                _rows = 4;
+                if (point.GetLength(0) < 16)
+                {
+                    throw new MatException("Invalid array size to create a pose Mat"); //raise Exception('Problems running function');
+                }
+
+                // Convert a double array of arrays to a Mat object:
+                _mat = new double[_rows, _cols];
+                for (int r = 0; r < _rows; r++)
+                {
+                    for (int c = 0; r < _rows; r++)
+                    {
+                        _mat[r, c] = point[r + c * 4];
+                    }
+                }
+            }
+            else
+            {
+                _cols = 1;
+                _rows = point.GetLength(0);
+
+                // Convert a double array of arrays to a Mat object:
+                _mat = new double[_rows, _cols];
+                for (int r = 0; r < _rows; r++)
+                {
+                    _mat[r, 1] = point[r];
+                }
+            }
+
+        }
+
         /// <summary>
         ///     Matrix class constructor for a 4x4 homogeneous matrix
         /// </summary>

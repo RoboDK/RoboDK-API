@@ -2148,14 +2148,17 @@ namespace RoboDk.API
         }
 
         // Receives an array of doubles
-        internal double[] rec_array()
+        internal double[] rec_array(Socket sckt = null)
         {
-            var nvalues = rec_int();
+            if (sckt == null)
+                sckt = _socket;
+
+            var nvalues = rec_int(sckt);
             if (nvalues > 0)
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * 8];
-                var read = _socket.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
+                var read = sckt.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
                 for (var i = 0; i < nvalues; i++)
                 {
                     var onedouble = new byte[8];
@@ -2353,7 +2356,7 @@ namespace RoboDk.API
 
         internal bool VerifyConnection()
         {
-            bool useNewVersion = false; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
+            bool useNewVersion = true; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
             if (useNewVersion)
             {
                 send_line("RDK_API");
@@ -2438,17 +2441,20 @@ namespace RoboDk.API
 
                     if (eventType == EventType.Selection3DChanged)
                     {
-                        int nvalues = _roboDK.rec_int(_socketEvents);
-                        Mat pose_abs = _roboDK.rec_pose(_socketEvents);
-                        double[] xyz = new double[] { 0, 0, 0 };
-                        double[] ijk = new double[] { 0, 0, 0 };
-                        _roboDK.rec_xyz(xyz, _socketEvents);
-                        _roboDK.rec_xyz(ijk, _socketEvents);
+                        double[] data = _roboDK.rec_array(_socketEvents);
+                        Mat pose_abs = new Mat(data, true);
+                        double[] xyz = new double[] { data[16], data[17], data[18] };
+                        double[] ijk = new double[] { data[19], data[20], data[21] };
+                        int feature_type = Convert.ToInt32(data[22]);
+                        int feature_id = Convert.ToInt32(data[23]);
+
                         Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
                         Console.WriteLine(pose_abs.ToString());
                         Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
                         Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
                         Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+                        Console.WriteLine("Feature Type and ID");
+                        Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
                     }
                     else
                     {
