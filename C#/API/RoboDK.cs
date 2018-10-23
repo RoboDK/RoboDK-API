@@ -2161,14 +2161,17 @@ namespace RoboDk.API
         }
 
         // Receives an array of doubles
-        internal double[] rec_array()
+        internal double[] rec_array(Socket sckt = null)
         {
-            var nvalues = rec_int();
+            if (sckt == null)
+                sckt = _socket;
+
+            var nvalues = rec_int(sckt);
             if (nvalues > 0)
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * 8];
-                var read = _socket.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
+                var read = sckt.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
                 for (var i = 0; i < nvalues; i++)
                 {
                     var onedouble = new byte[8];
@@ -2366,7 +2369,7 @@ namespace RoboDk.API
 
         internal bool VerifyConnection()
         {
-            bool useNewVersion = false; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
+            bool useNewVersion = true; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
             if (useNewVersion)
             {
                 send_line("RDK_API");
@@ -2456,23 +2459,28 @@ namespace RoboDk.API
 
                     if (eventType == EventType.Selection3DChanged)
                     {
-                        int nvalues = _roboDk.rec_int(_socketEvents);
-                        Mat pose_abs = _roboDk.rec_pose(_socketEvents);
-                        double[] xyz = new double[] { 0, 0, 0 };
-                        double[] ijk = new double[] { 0, 0, 0 };
-                        _roboDk.rec_xyz(xyz, _socketEvents);
-                        _roboDk.rec_xyz(ijk, _socketEvents);
-                        Debug.WriteLine("Additional event data - Absolute position (PoseAbs):");
-                        Debug.WriteLine(pose_abs.ToString());
-                        Debug.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
-                        Debug.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
-                        Debug.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+                        var data = _roboDk.rec_array(_socketEvents);
+                        var poseAbs = new Mat(data, true);
+                        var xyz = new double[] { data[16], data[17], data[18] };
+                        var ijk = new double[] { data[19], data[20], data[21] };
+                        var featureType = (ObjectSelectionType)Convert.ToInt32(data[22]);
+                        var featureId = Convert.ToInt32(data[23]);
+
+                        Debug.WriteLine($"Additional event data - Absolute position (PoseAbs):");
+                        Debug.WriteLine($"{poseAbs}");
+                        Debug.WriteLine($"Selected Point: {xyz[0]}, {xyz[1]}, {xyz[2]}");  // point selected in relative coordinates
+                        Debug.WriteLine($"Normal Vector: {ijk[0]}, {ijk[1]}, {ijk[2]}");
+                        Debug.WriteLine($"Feature Type:{featureType} and ID:{featureId}");
 
                         // get feature, shapeid and offset
-                        item.SelectedFeature(out var featureType, out var shapeId);
-                        item.GetPoints(featureType, shapeId, out var clickedOffset);
+                        item.SelectedFeature(out var featureType2, out var featureId2);
+                        item.GetPoints(featureType, featureId2, out var clickedOffset);
 
-                        return new SelectionChangedEventResult(item, featureType, shapeId, clickedOffset);
+                        return new SelectionChangedEventResult(item, featureType, featureId, clickedOffset);
+                    }
+                    else
+                    {
+                        // no additional data is sent
                     }
 
                     return new EventResult(eventType, item);

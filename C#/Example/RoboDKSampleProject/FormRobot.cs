@@ -930,6 +930,8 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
+
+
             if (!Check_ROBOT()) { return; }
 
 

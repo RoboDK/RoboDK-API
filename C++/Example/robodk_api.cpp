@@ -821,6 +821,18 @@ tJoints Item::JointsHome(){
 
 
 /// <summary>
+/// Sets the joint position of the "home" joints for a robot.
+/// </summary>
+/// <param name="joints"></param>
+void Item::setJointsHome(const tJoints &jnts){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Home");
+    _RDK->_send_Array(&jnts);
+    _RDK->_send_Item(this);
+    _RDK->_check_status();
+}
+
+/// <summary>
 /// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
 /// </summary>
 /// <param name="link_id">link index(0 for the robot base, 1 for the first link, ...)</param>
