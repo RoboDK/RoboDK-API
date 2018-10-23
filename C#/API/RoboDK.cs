@@ -45,6 +45,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -2461,20 +2462,16 @@ namespace RoboDk.API
                     {
                         var data = _roboDk.rec_array(_socketEvents);
                         var poseAbs = new Mat(data, true);
-                        var xyz = new double[] { data[16], data[17], data[18] };
-                        var ijk = new double[] { data[19], data[20], data[21] };
+                        var xyzijk = data.Skip(16).Take(6).ToArray(); // { data[16], data[17], data[18], data[19], data[20], data[21] };
+                        var clickedOffset = new Mat(xyzijk);
                         var featureType = (ObjectSelectionType)Convert.ToInt32(data[22]);
                         var featureId = Convert.ToInt32(data[23]);
 
                         Debug.WriteLine($"Additional event data - Absolute position (PoseAbs):");
                         Debug.WriteLine($"{poseAbs}");
-                        Debug.WriteLine($"Selected Point: {xyz[0]}, {xyz[1]}, {xyz[2]}");  // point selected in relative coordinates
-                        Debug.WriteLine($"Normal Vector: {ijk[0]}, {ijk[1]}, {ijk[2]}");
+                        Debug.WriteLine($"Selected Point: {xyzijk[0]}, {xyzijk[1]}, {xyzijk[2]}");  // point selected in relative coordinates
+                        Debug.WriteLine($"Normal Vector : {xyzijk[3]}, {xyzijk[4]}, {xyzijk[5]}");
                         Debug.WriteLine($"Feature Type:{featureType} and ID:{featureId}");
-
-                        // get feature, shapeid and offset
-                        item.SelectedFeature(out var featureType2, out var featureId2);
-                        item.GetPoints(featureType, featureId2, out var clickedOffset);
 
                         return new SelectionChangedEventResult(item, featureType, featureId, clickedOffset);
                     }
