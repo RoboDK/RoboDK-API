@@ -101,7 +101,7 @@ namespace RoboDk.API
                 _mat = new double[_rows, _cols];
                 for (var r = 0; r < _rows; r++)
                 {
-                    for (var c = 0; r < _rows; r++)
+                    for (var c = 0; c < _cols; c++)
                     {
                         _mat[r, c] = point[r + c * 4];
                     }
@@ -116,7 +116,7 @@ namespace RoboDk.API
                 _mat = new double[_rows, _cols];
                 for (int r = 0; r < _rows; r++)
                 {
-                    _mat[r, 1] = point[r];
+                    _mat[r, 0] = point[r];
                 }
             }
 
