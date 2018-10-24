@@ -26,9 +26,8 @@ namespace RoboDk.API
     {
         #region Constructors
 
-        private EventResult(bool hasEvent, EventType eventType, IItem item)
+        public EventResult(EventType eventType, IItem item)
         {
-            HasEvent = hasEvent;
             EventType = eventType;
             Item = item;
         }
@@ -37,23 +36,31 @@ namespace RoboDk.API
 
         #region Properties
 
-        public static EventResult None { get; } = new EventResult(false, EventType.NoEvent, null);
-
-        public bool HasEvent { get; }
-
         public EventType EventType { get; }
 
         public IItem Item { get; }
 
         #endregion
 
-        #region Public Methods
+    }
 
-        public static EventResult Create(EventType eventType, IItem item)
+    public class SelectionChangedEventResult : EventResult
+    {
+        public SelectionChangedEventResult(
+            IItem item,
+            ObjectSelectionType objectSelection,
+            int shapeId,
+            Mat clickedOffset) : base(EventType.Selection3DChanged, item)
         {
-            return new EventResult(true, eventType, item);
+            ObjectSelectionType = objectSelection;
+            ShapeId = shapeId;
+            ClickedOffset = clickedOffset;
         }
 
-        #endregion
+        public ObjectSelectionType ObjectSelectionType { get; }
+
+        public int ShapeId { get; }
+
+        public Mat ClickedOffset { get; }
     }
 }

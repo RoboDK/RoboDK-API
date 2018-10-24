@@ -85,9 +85,10 @@ namespace RoboDk.API
         ///     RDK.AddCurve(new Mat(new double[6] {{0,0,0, 0,0,1}}));
         /// </summary>
         /// <param name="point">Column array</param>
-        public Mat(double[] point, bool is_pose = false)
+        /// <param name="isPose">if isPose is True then convert vector into a 4x4 Pose Matrix.</param>
+        public Mat(double[] point, bool isPose = false)
         {
-            if (is_pose)
+            if (isPose)
             {
                 _cols = 4;
                 _rows = 4;
@@ -98,9 +99,9 @@ namespace RoboDk.API
 
                 // Convert a double array of arrays to a Mat object:
                 _mat = new double[_rows, _cols];
-                for (int r = 0; r < _rows; r++)
+                for (var r = 0; r < _rows; r++)
                 {
-                    for (int c = 0; r < _rows; r++)
+                    for (var c = 0; c < _cols; c++)
                     {
                         _mat[r, c] = point[r + c * 4];
                     }
@@ -115,7 +116,7 @@ namespace RoboDk.API
                 _mat = new double[_rows, _cols];
                 for (int r = 0; r < _rows; r++)
                 {
-                    _mat[r, 1] = point[r];
+                    _mat[r, 0] = point[r];
                 }
             }
 
