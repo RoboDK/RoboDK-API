@@ -122,6 +122,11 @@ struct Color{
 };
 
 
+
+
+
+
+
 //--------------------- Joints class -----------------------
 class ROBODK tJoints {
 public:
@@ -227,7 +232,7 @@ public:
     Item AddStation(QString name);
     Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = NULL);
     QList<Item> getOpenStation();
-    void setActiveStation();
+    void setActiveStation(Item stn);
     Item getActiveStation();
     int RunProgram(const QString &function_w_params);
     int RunCode(const QString &code, bool code_is_fcn_call = false);
@@ -255,6 +260,8 @@ public:
     bool CollisionLine(tXYZ p1, tXYZ p2);
     void setVisible(QList<Item> itemList, QList<bool> visibleList, QList<int> visibleFrames);
     void ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id = NULL);
+    void CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format=EULER_RX_RY_RZ, int algorithm=CALIBRATE_TCP_BY_POINT, Item *robot=NULL, double *error_stats=NULL);
+    Mat CalibrateReference(tMatrix2D *poses_joints, int method = CALIBRATE_FRAME_3P_P1_ON_X, bool use_joints = false, Item *robot = NULL);
 
 
     int ProgramStart(const QString &progname, const QString &defaultfolder = "", const QString &postprocessor = "", Item *robot = NULL);
@@ -343,21 +350,23 @@ public:
 
     // projection types (for AddCurve)
     enum {
-        PROJECTION_NONE = 0, // No curve projection
-        PROJECTION_CLOSEST = 1, // The projection will the closest point on the surface
-        PROJECTION_ALONG_NORMAL = 2, // The projection will be done along the normal.
-        PROJECTION_ALONG_NORMAL_RECALC = 3 // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        PROJECTION_NONE                = 0, // No curve projection
+        PROJECTION_CLOSEST             = 1, // The projection will the closest point on the surface
+        PROJECTION_ALONG_NORMAL        = 2, // The projection will be done along the normal.
+        PROJECTION_ALONG_NORMAL_RECALC = 3, // The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
+        PROJECTION_CLOSEST_RECALC      = 4, // The projection will be the closest point on the surface and the normals will be recalculated
+        PROJECTION_RECALC              = 5  // The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
     };
 
     // Euler type
     enum {
-        JOINT_FORMAT = -1, // joints
+        JOINT_FORMAT      = -1, // joints
         EULER_RX_RYp_RZpp = 0, // generic
         EULER_RZ_RYp_RXpp = 1, // ABB RobotStudio
         EULER_RZ_RYp_RZpp = 2, // Kawasaki, Adept, Staubli
         EULER_RZ_RXp_RZpp = 3, // CATIA, SolidWorks
-        EULER_RX_RY_RZ = 4, // Fanuc, Kuka, Motoman, Nachi
-        EULER_RZ_RY_RX = 5, // CRS
+        EULER_RX_RY_RZ    = 4, // Fanuc, Kuka, Motoman, Nachi
+        EULER_RZ_RY_RX    = 5, // CRS
         EULER_QUEATERNION = 6 // ABB Rapid
     };
 
@@ -378,7 +387,8 @@ public:
         INSTRUCTION_CALL_PROGRAM = 0,
         INSTRUCTION_INSERT_CODE = 1,
         INSTRUCTION_START_THREAD = 2,
-        INSTRUCTION_COMMENT = 3
+        INSTRUCTION_COMMENT = 3,
+        INSTRUCTION_SHOW_MESSAGE = 4
     };
 
     // Object selection features:
@@ -498,6 +508,8 @@ public:
     void Save(const QString &filename);
     void Delete();
     bool Valid();
+    void setParent(Item parent);
+    void setParentStatic(Item parent);
 
     QList<Item> Childs();
     bool Visible();
@@ -519,6 +531,8 @@ public:
     void setPoseAbs(Mat pose);
     Mat PoseAbs();
 
+    void setColor(double colorRGBA[4]);
+
 //---------- add more
 
     void Scale(double scale);
@@ -529,6 +543,10 @@ public:
     bool isJointTarget();
     tJoints Joints();
     tJoints JointsHome();
+    void setJointsHome(const tJoints &jnts);
+    Item ObjectLink(int link_id = 0);
+    Item getLink(int type_linked = RoboDK::ITEM_TYPE_ROBOT);
+
     void setJoints(const tJoints &jnts);
     void JointLimits(tJoints *lower_limits, tJoints *upper_limits);
     void setRobot(const Item &robot);
@@ -589,7 +607,10 @@ private:
 };
 
 
-
+Mat transl(double x, double y, double z);
+Mat rotx(double rx);
+Mat roty(double ry);
+Mat rotz(double rz);
 
 
 

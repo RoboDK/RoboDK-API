@@ -4,7 +4,21 @@
 #include <cmath>
 #include <algorithm>
 
-#define ROBODK_DEFAULT_PATH_EXE "C:/RoboDK/bin/RoboDK.exe"
+#ifdef _WIN32
+// Default path on Windows:
+#define ROBODK_DEFAULT_PATH_BIN "C:/RoboDK/bin/RoboDK.exe"
+
+#elif __APPLE__
+// Default Install Path on Mac
+#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+
+#else
+
+// Default Install Path on Linux:
+#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/bin/RoboDK"
+
+#endif
+
 #define ROBODK_DEFAULT_PORT 20500
 
 #define ROBODK_API_TIMEOUT 1000 // communication timeout. Raise this value for slow computers
@@ -424,6 +438,31 @@ void Item::Delete(){
 bool Item::Valid(){
     return _PTR != NULL;
 }
+/// <summary>
+/// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
+/// </summary>
+/// <param name="parent"></param>
+void Item::setParent(Item parent){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Parent");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
+
+/// <summary>
+/// Attaches the item to another parent while maintaining the current absolute position in the station.
+/// The relationship between this item and its parent is changed to maintain the abosolute position.
+/// </summary>
+/// <param name="parent">parent item to attach this item</param>
+void Item::setParentStatic(Item parent)
+{
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Parent_Static");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
 
 
 ////// add more methods
@@ -684,6 +723,19 @@ Mat Item::PoseAbs(){
     return pose;
 }
 
+/// <summary>
+/// Set the color of an object, tool or robot.
+/// A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
+/// <summary>
+void Item::setColor(double colorRGBA[4]){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Color");
+    _RDK->_send_Item(this);
+    _RDK->_send_Array(colorRGBA, 4);
+    _RDK->_check_status();
+
+}
+
 ///--------------------------------- add curve, scale, recolor, ...
 ///
 ///
@@ -780,6 +832,50 @@ tJoints Item::JointsHome(){
     _RDK->_check_status();
     return jnts;
 }
+
+
+/// <summary>
+/// Sets the joint position of the "home" joints for a robot.
+/// </summary>
+/// <param name="joints"></param>
+void Item::setJointsHome(const tJoints &jnts){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_Home");
+    _RDK->_send_Array(&jnts);
+    _RDK->_send_Item(this);
+    _RDK->_check_status();
+}
+
+/// <summary>
+/// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
+/// </summary>
+/// <param name="link_id">link index(0 for the robot base, 1 for the first link, ...)</param>
+/// <returns></returns>
+Item Item::ObjectLink(int link_id){
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_LinkObjId");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(link_id);
+    Item item = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item;
+}
+
+/// <summary>
+/// Returns an item pointer (Item class) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+/// </summary>
+/// <param name="type_linked">type of linked object to retrieve</param>
+/// <returns></returns>
+Item Item::getLink(int type_linked){
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_LinkType");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(type_linked);
+    Item item = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item;
+}
+
 
 /// <summary>
 /// Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
@@ -1584,7 +1680,7 @@ RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, cons
         _PORT = ROBODK_DEFAULT_PORT;
     }
     if (_ROBODK_BIN.isEmpty()){
-        _ROBODK_BIN = ROBODK_DEFAULT_PATH_EXE;
+        _ROBODK_BIN = ROBODK_DEFAULT_PATH_BIN;
     }
     _ARGUMENTS = args;
     if (com_port > 0){
@@ -2071,6 +2167,30 @@ QList<Item> RoboDK::getOpenStation()
 }
 
 
+/// <summary>
+/// Returns the active station item (station currently visible)
+/// </summary>
+/// <returns></returns>
+Item RoboDK::getActiveStation() {
+    _check_connection();
+    _send_Line("G_ActiveStn");
+    Item station = _recv_Item();
+    _check_status();
+    return station;
+}
+
+/// <summary>
+/// Set the active station (project currently visible)
+/// </summary>
+/// <param name="station">station item, it can be previously loaded as an RDK file</param>
+void RoboDK::setActiveStation(Item station) {
+    _check_connection();
+    _send_Line("S_ActiveStn");
+    _send_Item(station);
+    _check_status();
+}
+
+
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 /// <summary>
 /// Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.
@@ -2401,6 +2521,61 @@ void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QLis
 }
 
 //---------------------------------------------- ADD MORE  (getParams, setParams, calibrate TCP, calibrate ref...)
+
+
+/// <summary>
+/// Calibrate a tool (TCP) given a number of points or calibration joints. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+/// </summary>
+/// <param name="poses_joints">matrix of poses in a given format or a list of joints</param>
+/// <param name="error_stats">stats[mean, standard deviation, max] - Output error stats summary</param>
+/// <param name="format">Euler format. Optionally, use JOINT_FORMAT and provide the robot.</param>
+/// <param name="algorithm">type of algorithm (by point, plane, ...)</param>
+/// <param name="robot">Robot used for calibration (if using joint values)</param>
+/// <returns>TCP as [x, y, z] - calculated TCP</returns>
+///
+void RoboDK::CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format, int algorithm, Item *robot, double *error_stats){
+    _check_connection();
+    _send_Line("CalibTCP2");
+    _send_Matrix2D(poses_joints);
+    _send_Int(format);
+    _send_Int(algorithm);
+    _send_Item(robot);
+    int nxyz = 3;
+    _recv_Array(tcp_xyz, &nxyz);
+    if (error_stats != NULL){
+        _recv_Array(error_stats);
+    } else {
+        double errors_ignored[20];
+        _recv_Array(errors_ignored);
+    }
+    tMatrix2D *error_graph = Matrix2D_Create();
+    _recv_Matrix2D(&error_graph);
+    Matrix2D_Delete(&error_graph);
+    _check_status();
+}
+
+/// <summary>
+/// Calibrate a Reference Frame given a list of points or joint values. Important: If the robot is calibrated, provide joint values to maximize accuracy.
+/// </summary>
+/// <param name="joints">points as a 3xN matrix or nDOFsxN) - List of points or a list of robot joints</param>
+/// <param name="method">type of algorithm(by point, plane, ...) CALIBRATE_FRAME_...</param>
+/// <param name="use_joints">use points or joint values. The robot item must be provided if joint values is used.</param>
+/// <param name="robot"></param>
+/// <returns></returns>
+Mat RoboDK::CalibrateReference(tMatrix2D *poses_joints, int method, bool use_joints, Item *robot){
+    _check_connection();
+    _send_Line("CalibFrame");
+    _send_Matrix2D(poses_joints);
+    _send_Int(use_joints ? -1 : 0);
+    _send_Int(method);
+    _send_Item(robot);
+    Mat reference_pose = _recv_Pose();
+    double error_stats[20];
+    _recv_Array(error_stats);
+    _check_status();
+    return reference_pose;
+}
+
 
 int RoboDK::ProgramStart(const QString &progname, const QString &defaultfolder, const QString &postprocessor, Item *robot){
     _check_connection();
@@ -3149,6 +3324,38 @@ void Matrix2D_SET_ij(const tMatrix2D *var, int i, int j, double value) { // ZERO
 
 double *Matrix2D_Get_col(const tMatrix2D *var, int col) { // ZERO BASED!!
 	return (var->data + var->size[0] * col);
+}
+
+
+void Matrix2D_Add(tMatrix2D *var, const double *array, int numel){
+    int oldnumel;
+    int size1 = var->size[0];
+    int size2 = var->size[1];
+    oldnumel = size1*size2;
+    var->size[1] = size2 + 1;
+    emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
+    numel = qMin(numel, size1);
+    for (int i=0; i<numel; i++){
+        var->data[size1*size2 + i] = array[i];
+    }
+}
+
+void Matrix2D_Add(tMatrix2D *var, const tMatrix2D *varadd){
+    int oldnumel;
+    int size1 = var->size[0];
+    int size2 = var->size[1];
+    int size1_ap = varadd->size[0];
+    int size2_ap = varadd->size[1];
+    int numel = size1_ap*size2_ap;
+    if (size1 != size1_ap){
+        return;
+    }
+    oldnumel = size1*size2;
+    var->size[1] = size2 + size2_ap;
+    emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
+    for (int i=0; i<numel; i++){
+        var->data[size1*size2 + i] = varadd->data[i];
+    }
 }
 
 void Debug_Array(const double *array, int arraysize) {

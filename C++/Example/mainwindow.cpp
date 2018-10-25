@@ -455,6 +455,7 @@ void MainWindow::on_radHideRoboDK_clicked()
 
 }
 
+#ifdef WIN32
 HWND FindTopWindow(DWORD pid)
 {
     std::pair<HWND, DWORD> params = { 0, pid };
@@ -484,6 +485,7 @@ HWND FindTopWindow(DWORD pid)
 
     return 0;
 }
+#endif
 
 void MainWindow::on_radIntegrateRoboDK_clicked()
 {

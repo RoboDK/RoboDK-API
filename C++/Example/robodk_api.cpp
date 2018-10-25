@@ -4,7 +4,21 @@
 #include <cmath>
 #include <algorithm>
 
-#define ROBODK_DEFAULT_PATH_EXE "C:/RoboDK/bin/RoboDK.exe"
+#ifdef _WIN32
+// Default path on Windows:
+#define ROBODK_DEFAULT_PATH_BIN "C:/RoboDK/bin/RoboDK.exe"
+
+#elif __APPLE__
+// Default Install Path on Mac
+#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+
+#else
+
+// Default Install Path on Linux:
+#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/bin/RoboDK"
+
+#endif
+
 #define ROBODK_DEFAULT_PORT 20500
 
 #define ROBODK_API_TIMEOUT 1000 // communication timeout. Raise this value for slow computers
@@ -1666,7 +1680,7 @@ RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, cons
         _PORT = ROBODK_DEFAULT_PORT;
     }
     if (_ROBODK_BIN.isEmpty()){
-        _ROBODK_BIN = ROBODK_DEFAULT_PATH_EXE;
+        _ROBODK_BIN = ROBODK_DEFAULT_PATH_BIN;
     }
     _ARGUMENTS = args;
     if (com_port > 0){
