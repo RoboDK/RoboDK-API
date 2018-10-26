@@ -107,7 +107,7 @@ public class Mat // simple matrix class for homogeneous operations
             mat = new double[rows, cols];
             for (int r = 0; r < rows; r++)
             {
-                for (int c = 0; r < rows; r++)
+                for (int c = 0; c < cols; c++)
                 {
                     mat[r, c] = point[r+c*4];
                 }
@@ -122,7 +122,7 @@ public class Mat // simple matrix class for homogeneous operations
             mat = new double[rows, cols];
             for (int r = 0; r < rows; r++)
             {
-                mat[r, 1] = point[r];
+                mat[r, 0] = point[r];
             }
         }
 
