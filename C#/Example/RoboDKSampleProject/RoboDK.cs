@@ -74,7 +74,7 @@ public class Mat // simple matrix class for homogeneous operations
     {
         cols = point_list.GetLength(0);
         rows = point_list.GetLength(1);
-        
+
         // Convert a double array of arrays to a Mat object:
         mat = new double[rows, cols];
         for (int c = 0; c < cols; c++)
@@ -109,7 +109,7 @@ public class Mat // simple matrix class for homogeneous operations
             {
                 for (int c = 0; c < cols; c++)
                 {
-                    mat[r, c] = point[r+c*4];
+                    mat[r, c] = point[r + c * 4];
                 }
             }
         }
@@ -179,7 +179,7 @@ public class Mat // simple matrix class for homogeneous operations
 
         for (int i = 0; i < rows; i++)
         {
-            if (mat[i,i] != 1.0)
+            if (mat[i, i] != 1.0)
                 return false;
 
         }
@@ -882,7 +882,7 @@ public class Mat // simple matrix class for homogeneous operations
             s = s.Remove(s.Length - 3);
         }
         else
-        {            
+        {
             for (int i = 0; i < rows; i++)
             {
                 for (int j = 0; j < cols; j++) s += String.Format("{0,5:0.00}", mat[i, j]) + " ";
@@ -1420,7 +1420,7 @@ public class RoboDK
     public const int LISTJOINTS_DEFAULT = 1; // same as 0
     public const int LISTJOINTS_SPEED = 2;
     public const int LISTJOINTS_ACCEL = 3;
-    
+
     // Event types
     public const int EVENT_SELECTION_TREE_CHANGED = 1;
     public const int EVENT_ITEM_MOVED = 2;
@@ -2804,7 +2804,7 @@ public class RoboDK
     /// <param name="shape_override">Set to true to replace any other existing geometry</param>
     /// <param name="color">Optionally specify the color as RGBA [0-1]</param>
     /// <returns></returns>
-    public Item AddShape(Mat triangle_points, Item add_to = null, bool shape_override = false, List<double> color=null)
+    public Item AddShape(Mat triangle_points, Item add_to = null, bool shape_override = false, List<double> color = null)
     {
         _require_build(5449);
         _check_connection();
@@ -3026,7 +3026,7 @@ public class RoboDK
         _send_Int(auto_render ? 1 : 0);
         _check_status();
     }
-    
+
     /// <summary>
     /// Update the screen. 
     /// This updates the position of all robots and internal links according to previously set values.
@@ -3109,7 +3109,7 @@ public class RoboDK
     {
         int npairs = Math.Min(check_state.Count, Math.Min(item1.Count, item2.Count));
         _check_connection();
-        _send_Line("Collision_SetPairList");        
+        _send_Line("Collision_SetPairList");
         _send_Int(npairs);
         for (int i = 0; i < npairs; i++)
         {
@@ -3153,7 +3153,7 @@ public class RoboDK
     /// <param name="item1"></param>
     /// <param name="item2"></param>
     /// <returns></returns>
-    public int Collision(Item item1, Item item2, bool use_collision_map=true)
+    public int Collision(Item item1, Item item2, bool use_collision_map = true)
     {
         _require_build(5449);
         _check_connection();
@@ -3571,7 +3571,7 @@ public class RoboDK
 
     static char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     public static string Color2Hex(Color color)
-    {        
+    {
         byte[] bytes = new byte[4];
         bytes[0] = color.A;
         bytes[1] = color.R;
@@ -4325,7 +4325,7 @@ public class RoboDK
         /// </summary>
         /// <param name="collided"></param>
         /// <param name="robot_link_id"></param>
-        public void ShowAsCollided(bool collided, int robot_link_id=0)
+        public void ShowAsCollided(bool collided, int robot_link_id = 0)
         {
             link._require_build(5449);
             link._check_connection();
@@ -4716,7 +4716,7 @@ public class RoboDK
             return name;
         }
 
-       /// <summary>
+        /// <summary>
         /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         /// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
         /// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
@@ -4740,7 +4740,7 @@ public class RoboDK
             link._check_status();
             return program;
         }
-        
+
         //"""Target item calls"""
 
         /// <summary>
@@ -5773,6 +5773,25 @@ public class RoboDK
         public bool Finish()
         {
             return link.Finish();
+        }
+
+        /// <summary>
+        /// Send a specific parameter to RoboDK. This is reserved for internal purposes.
+        /// </summary>
+        /// <param name="param">Item parameter</param>
+        /// <param name="value">value</param>
+        /// <returns></returns>
+        public string setParam(string param, string value = "")
+        {
+            link._require_build(7129);
+            link._check_connection();
+            link._send_Line("ICMD");
+            link._send_Item(this);
+            link._send_Line(param);
+            link._send_Line(value);
+            string response = link._recv_Line();
+            link._check_status();
+            return response;
         }
     }
 
