@@ -931,6 +931,8 @@ namespace ProjectRoboDK
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
 
+            RDK.Command("FrameSizes", 12.34567);
+            return;
 
             if (!Check_ROBOT()) { return; }
 

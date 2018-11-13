@@ -1193,7 +1193,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public string Command(string cmd, string value)
+        public string Command(string cmd, string value = "")
         {
             check_connection();
             send_line("SCMD");
@@ -1202,6 +1202,24 @@ namespace RoboDk.API
             string response = rec_line();
             check_status();
             return response;
+        }
+
+        /// <inheritdoc />
+        public string Command(string cmd, bool value = false)
+        {
+            return Command(cmd, value ? "1" : "0");
+        }
+
+        /// <inheritdoc />
+        public string Command(string cmd, int value = 0)
+        {
+            return Command(cmd, value.ToString());
+        }
+
+        /// <inheritdoc />
+        public string Command(string cmd, double value = 0.0)
+        {
+            return Command(cmd, value.ToString("0.######"));
         }
 
         /// <inheritdoc />

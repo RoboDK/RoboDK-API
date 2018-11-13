@@ -3343,7 +3343,7 @@ public class RoboDK
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
     /// <param name="value">Comand value (optional, not all commands require a value)</param>
     /// <returns></returns>
-    public string Command(string cmd, string value)
+    public string Command(string cmd, string value="")
     {
         _check_connection();
         _send_Line("SCMD");
@@ -3353,6 +3353,39 @@ public class RoboDK
         _check_status();
         return response;
     }
+
+    /// <summary>
+    /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+    /// </summary>
+    /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+    /// <param name="value">Comand value (optional, not all commands require a value)</param>
+    /// <returns></returns>
+    public string Command(string cmd, bool value=false)
+    {
+        return Command(cmd, value ? "1" : "0");
+    }
+
+    /// <summary>
+    /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+    /// </summary>
+    /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+    /// <param name="value">Comand value (optional, not all commands require a value)</param>
+    /// <returns></returns>
+    public string Command(string cmd, int value=0)
+    {
+        return Command(cmd, value.ToString());
+    }
+
+    /// <summary>
+    /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+    /// </summary>
+    /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+    /// <param name="value">Comand value (optional, not all commands require a value)</param>
+    /// <returns></returns>
+    public string Command(string cmd, double value=0.0)
+    {
+        return Command(cmd, value.ToString("0.######"));
+    }    
 
     /// <summary>
     /// Returns the list of open stations in RoboDK
@@ -5200,6 +5233,33 @@ public class RoboDK
             link._COM.ReceiveTimeout = link._TIMEOUT;
             link._check_status();
             return collision;
+        }
+
+        /// <summary>
+        /// Checks if a joint movement is free of collision.
+        /// </summary>
+        /// <param name="j1">joints -> start joints</param>
+        /// <param name="j2">joints -> joints via</param>
+        /// <param name="j3">joints -> joints final destination</param>
+        /// <param name="blend_deg">Blend in degrees</param>
+        /// <param name="minstep_deg">(optional): maximum joint step in degrees</param>
+        /// <returns>collision : returns true if the movement is possible and free of collision. Otherwise it returns false.</returns>
+        public bool MoveJ_Test_Blend(double[] j1, double[] j2, double[] j3, double blend_deg = 5, double minstep_deg = -1)
+        {
+            link._require_build(7206);
+            link._check_connection();
+            link._send_Line("CollisionMoveBlend");
+            link._send_Item(this);
+            link._send_Array(j1);
+            link._send_Array(j2);
+            link._send_Array(j3);
+            link._send_Int((int)(minstep_deg * 1000.0));
+            link._send_Int((int)(blend_deg * 1000.0));
+            link._COM.ReceiveTimeout = 3600 * 1000;
+            int collision = link._recv_Int();
+            link._COM.ReceiveTimeout = link._TIMEOUT;
+            link._check_status();
+            return collision != 0;
         }
 
         /// <summary>
