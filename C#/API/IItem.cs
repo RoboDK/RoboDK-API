@@ -693,6 +693,17 @@ namespace RoboDk.API
         int MoveJ_Test(double[] j1, double[] j2, double minstepDeg = -1);
 
         /// <summary>
+        /// Checks if a joint movement is free of collision.
+        /// </summary>
+        /// <param name="j1">joints -> start joints</param>
+        /// <param name="j2">joints -> joints via</param>
+        /// <param name="j3">joints -> joints final destination</param>
+        /// <param name="blendDeg">Blend in degrees</param>
+        /// <param name="minstepDeg">(optional): maximum joint step in degrees</param>
+        /// <returns>collision : returns true if the movement is possible and free of collision. Otherwise it returns false.</returns>
+        bool MoveJ_Test_Blend(double[] j1, double[] j2, double[] j3, double blendDeg = 5, double minstepDeg = -1);
+
+        /// <summary>
         ///     Checks if a linear movement is free of collision.
         /// </summary>
         /// <param name="j1">joints -> start joints</param>

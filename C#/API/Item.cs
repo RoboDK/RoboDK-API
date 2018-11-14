@@ -1009,8 +1009,7 @@ namespace RoboDk.API
         public int MoveJ_Test(double[] j1, double[] j2, double minstepDeg = -1)
         {
             Link.check_connection();
-            var command = "CollisionMove";
-            Link.send_line(command);
+            Link.send_line("CollisionMove");
             Link.send_item(this);
             Link.send_array(j1);
             Link.send_array(j2);
@@ -1020,6 +1019,25 @@ namespace RoboDk.API
             Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
             Link.check_status();
             return collision;
+        }
+
+        /// <inheritdoc />
+        public bool MoveJ_Test_Blend(double[] j1, double[] j2, double[] j3, double blendDeg = 5, double minstepDeg = -1)
+        {
+            Link.RequireBuild(7206);
+            Link.check_connection();
+            Link.send_line("CollisionMoveBlend");
+            Link.send_item(this);
+            Link.send_array(j1);
+            Link.send_array(j2);
+            Link.send_array(j3);
+            Link.send_int((int)(minstepDeg * 1000.0));
+            Link.send_int((int)(blendDeg * 1000.0));
+            Link.ReceiveTimeout = 3600 * 1000;
+            var collision = Link.rec_int();
+            Link.ReceiveTimeout = Link.DefaultSocketTimeoutMilliseconds;
+            Link.check_status();
+            return collision != 0;
         }
 
         /// <inheritdoc />
