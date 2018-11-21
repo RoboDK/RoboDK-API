@@ -700,7 +700,7 @@ namespace RoboDk.API
         /// <param name="j3">joints -> joints final destination</param>
         /// <param name="blendDeg">Blend in degrees</param>
         /// <param name="minstepDeg">(optional): maximum joint step in degrees</param>
-        /// <returns>collision : returns true if the movement is possible and free of collision. Otherwise it returns false.</returns>
+        /// <returns>collision : returns false if the movement is possible and free of collision. Otherwise it returns true.</returns>
         bool MoveJ_Test_Blend(double[] j1, double[] j2, double[] j3, double blendDeg = 5, double minstepDeg = -1);
 
         /// <summary>

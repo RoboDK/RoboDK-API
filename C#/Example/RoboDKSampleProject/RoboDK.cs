@@ -5243,7 +5243,7 @@ public class RoboDK
         /// <param name="j3">joints -> joints final destination</param>
         /// <param name="blend_deg">Blend in degrees</param>
         /// <param name="minstep_deg">(optional): maximum joint step in degrees</param>
-        /// <returns>collision : returns true if the movement is possible and free of collision. Otherwise it returns false.</returns>
+        /// <returns>collision : returns false if the movement is possible and free of collision. Otherwise it returns true.</returns>
         public bool MoveJ_Test_Blend(double[] j1, double[] j2, double[] j3, double blend_deg = 5, double minstep_deg = -1)
         {
             link._require_build(7206);
