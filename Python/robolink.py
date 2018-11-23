@@ -798,7 +798,10 @@ class Robolink:
         An item type can be specified to filter desired items. If no type is specified, all items are selectable.
         (check variables ITEM_TYPE_*)
         Example:
-           RL.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
+        
+        .. code-block:: python
+        
+            RDK.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
            
         :param str message: message to display
         :param int itemtype: filter choices by a specific item type (ITEM_TYPE_*)
@@ -1026,7 +1029,7 @@ class Robolink:
         return newitem
 
     def AddFile(self, filename, parent=0):
-        """Load a file and attaches it to parent and returns the newly added :class:`.Item`. 
+        """Load a file and attach it to parent (if provided). The call returns the newly added :class:`.Item`. If the new file is an object and it is attached to a robot it will be automatically converted to a tool.
         
         :param str filename: any file to load, supported by RoboDK. Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... It is also possible to load supported robot programs, such as SRC (KUKA), SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
         :param parent: item to attach the newly added object (optional)
@@ -1038,9 +1041,18 @@ class Robolink:
             
             RDK = Robolink()
             item = RDK.AddFile(r'C:\\Users\\Name\\Desktop\\object.step')
-            RDK.setPose(item, transl(100,50,500))
+            item.setPose(transl(100,50,500))
             
-        .. seealso:: :func:`~robolink.Robolink.Save`
+            # Add a tool to an existing robot:
+            tool = RDK.AddFile(r'C:\\Users\\Name\\Desktop\\robot-tool.stl', robot)
+            tool.setPoseTool(transl(100,50,500))
+            
+            # Add a reference frame, move it and add an object to that reference frame (locally):
+            frame = AddFrame('Reference A')
+            frame.setPose(transl(100,200,300))
+            new_object = RDK.Addfile('path-to-object.stl', frame)
+            
+        .. seealso:: :func:`~robolink.Robolink.Save`, :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Robolink.AddTool`, :func:`~robolink.Robolink.Copy`, :func:`~robolink.Robolink.Paste`
             
         """
         self._check_connection()
@@ -2516,6 +2528,65 @@ class Robolink:
         return xyz, item
         
         
+    def PluginLoad(self, plugin_name="", load=1):
+        """Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
+        
+        :param str plugin_name: name of the plugin or path (if it is not in the default directory.
+        :param int load: load the plugin (1/default) or unload (0)
+        
+        .. code-block:: python
+            :caption: Example to load a plugin
+        
+            RDK = Robolink()
+            RDK.PluginLoad("C:/RoboDK/bin/plugin/yourplugin.dll")        
+        """
+        self._check_connection()
+        command = 'PluginLoad'
+        self._send_line(command)
+        self._send_int(load)
+        self._check_status()
+        return xyz, item
+        
+    def PluginCommand(self, plugin_name, plugin_command="", value=""):
+        """Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
+        
+        :param str plugin_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
+        :param str command: Specific command handled by your plugin
+        :param str value: Specific value (optional) handled by your plugin        
+        """
+        self._check_connection()
+        command = 'PluginCommand'
+        self._send_line(command)
+        self._send_line(plugin_name)
+        self._send_line(plugin_command)
+        self._send_line(value)
+        result = self._rec_line()
+        self._check_status()
+        return result
+        
+    def EmbedWindow(self, docked_name, window_name, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=100):
+        """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
+        
+        :param str docked_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
+        :param str window_name: The name of the window currently open
+        :param int pid: Process ID (optional)
+        :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
+        :param int area_allowed: Areas allowed (default is 15:no constrain)
+        :param int timeout: Timeout to abort attempting to embed the window        
+        """
+        self._check_connection()
+        command = 'WinProcDock'
+        self._send_line(command)
+        self._send_line(docked_name)
+        self._send_line(window_name)
+        self._send_array([size_w, size_h])
+        self._send_line(str(pid))
+        self._send_int(area_allowed)
+        self._send_int(area_add)        
+        self._send_int(timeout)        
+        result = self._rec_int()
+        self._check_status()
+        return result > 0
     
 class Item():
     """The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
@@ -2807,13 +2878,18 @@ class Item():
         
         :param visible: Set the object as visible (1/True) or invisible (0/False)
         :type visible: bool
-        :param visible_frame: Set the reference frame as visible (1/True ) or invisible (0/False)
+        :param visible_frame: Set the reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items)
         :type visible_frame: bool
         
         .. seealso:: :func:`~robolink.Item.Visible`
         """        
         if visible_frame is None: 
             visible_frame = -1
+        elif visible_frame is False:
+            visible_frame = -2
+        elif visible_frame is True:
+            visible_frame = -3
+        
         self.link._check_connection()
         command = 'S_Visible'
         self.link._send_line(command)
@@ -3344,6 +3420,21 @@ class Item():
         joints = self.link._rec_array()
         self.link._check_status()
         return joints
+        
+    def setJointsHome(self, joints):
+        """Set the home position of the robot in the joint space.
+        
+        :param joints: robot joints
+        :type joints: list of float or :class:`.Mat`
+        
+        .. seealso:: :func:`~robolink.Item.setJoints`
+        """
+        self.link._check_connection()
+        command = 'S_Home'
+        self.link._send_line(command)
+        self.link._send_array(joints)
+        self.link._send_item(self)
+        self.link._check_status()
         
     def ObjectLink(self, link_id=0):
         """Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
@@ -4599,14 +4690,15 @@ class Item():
         self.link._check_status()
         return insmat, errors
           
-    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0):
+    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0, time_step=0.2):
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         
         :param float mm_step: step in mm to split the linear movements
         :param float deg_step: step in deg to split the joint movements
         :param str save_to_file: (optional) save the result to a file as Comma Separated Values (CSV). If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.
         :param int collision_check: (optional) check for collisions
-        :param int flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations
+        :param int flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and make the splitting time-based.
+        :param float time_step: (optional) set the time step in seconds for time based calculation
         :return: [message (str), joint_list (:class:`~robodk.Mat`), status (int)]
         
         Outputs:
@@ -4636,7 +4728,7 @@ class Item():
         command = 'G_ProgJointList'
         self.link._send_line(command)
         self.link._send_item(self)
-        self.link._send_array([mm_step, deg_step, float(collision_check), float(flags)])
+        self.link._send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
         joint_list = save_to_file   
         self.link.COM.settimeout(3600)
         if save_to_file is None:

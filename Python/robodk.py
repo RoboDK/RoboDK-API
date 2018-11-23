@@ -345,7 +345,7 @@ def toc():
 def LoadList(strfile, separator=',', codec='utf-8'):
     """Load data from a CSV file or a TXT file to a Python list (list of list of numbers) 
     
-    .. seealso:: :func:`~robodk.LoadMat`
+    .. seealso:: :func:`~robodk.SaveList`, :func:`~robodk.LoadMat`
         
     Example:
         
@@ -356,6 +356,9 @@ def LoadList(strfile, separator=',', codec='utf-8'):
             for i in range(len(csvdata)):
                 print(csvdata[i])
                 values.append(csvdata[i])
+              
+            # We can also save the list back to a CSV file
+            # SaveList(csvdata, strfile, ',')
         
     """
     def todecimal(value):
@@ -375,6 +378,14 @@ def LoadList(strfile, separator=',', codec='utf-8'):
             csvdata.append(row_nums)
     return csvdata
     
+def SaveList(list_variable, strfile, separator=','):
+    """Save a list or a list of lists as a CSV or TXT file.
+    
+    .. seealso:: :func:`~robodk.LoadList`, :func:`~robodk.LoadMat`"""
+    
+    Mat(list_variable).tr().SaveMat(strfile, separator)
+
+    
 def LoadMat(strfile, separator=','):
     """Load data from a CSV file or a TXT file to a :class:`.Mat` Matrix
     
@@ -386,15 +397,15 @@ def LoadMat(strfile, separator=','):
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
 def pose_2_xyzrpw(H):
-    """Calculates the equivalent position and euler angles ([x,y,z,r,p,w] array) of the given pose according to the following operation:
+    """Calculates the equivalent position (mm) and Euler angles (deg) as an [x,y,z,r,p,w] array, given a pose.
+    It returns the values that correspond to the following operation: 
+    transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
     
     :param H: pose
     :type H: :class:`.Mat`
     :return: [x,y,z,w,p,r] in mm and deg
-    
-    Uses the following order: transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
         
-    .. seealso:: :class:`.Mat`, :func:`~robodk.xyzrpw_2_pose`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     x = H[0,3]
     y = H[1,3]
@@ -414,10 +425,10 @@ def pose_2_xyzrpw(H):
     return [x, y, z, r*180/pi, p*180/pi, w*180/pi]
     
 def xyzrpw_2_pose(xyzrpw):
-    """Calculates the pose from the position and euler angles ([x,y,z,r,p,w] array)
+    """Calculates the pose from the position (mm) and Euler angles (deg), given a [x,y,z,r,p,w] array.
     The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.pose_2_xyzrpw`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     [x,y,z,r,p,w] = xyzrpw
     a = r*pi/180
@@ -431,16 +442,31 @@ def xyzrpw_2_pose(xyzrpw):
     sc = math.sin(c)    
     H = Mat([[cb*cc, cc*sa*sb - ca*sc, sa*sc + ca*cc*sb, x],[cb*sc, ca*cc + sa*sb*sc, ca*sb*sc - cc*sa, y],[-sb, cb*sa, ca*cb, z],[0,0,0,1]])
     return H
+    
+def Pose(tx,ty,tz,rx,ry,rz):
+    """Returns the pose (:class:`.Mat`) given the position (mm) and Euler angles (deg) as an array [x,y,z,rx,ry,rz].
+    The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+    This pose format is printed for homogeneous poses automatically. This Pose is the same representation used by Mecademic or Staubli robot controllers.
+    
+    :param float tx: position (X coordinate)
+    :param float ty: position (Y coordinate)
+    :param float tz: position (Z coordinate)
+    :param float rx: first rotation (X coordinate)
+    :param float ry: first rotation (Y coordinate)
+    :param float rz: first rotation (Z coordinate)
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`
+    """
+    return TxyzRxyz_2_Pose([tx,ty,tz,rx*pi/180,ry*pi/180,rz*pi/180])
 
 def TxyzRxyz_2_Pose(xyzrpw):
-    """Calculates the pose from the position and euler angles ([x,y,z,rx,ry,rz] array)
+    """Returns the pose given the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz].
+    The result is the same as calling: H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz)
     
     :param xyzrpw: [x,y,z,rx,ry,rz] in mm and radians
     :type xyzrpw: list of float
-    
-    The result is the same as calling: H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz)
-    
-    .. seealso:: :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+        
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     [x,y,z,rx,ry,rz] = xyzrpw
     srx = math.sin(rx);
@@ -453,12 +479,14 @@ def TxyzRxyz_2_Pose(xyzrpw):
     return H
 
 def Pose_2_TxyzRxyz(H):
-    """Converts a pose to a 6-value target as [x,y,z,rx,ry,rz] so that H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz).
+    """Retrieve the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz] given a pose. 
+    It returns the values that correspond to the following operation: 
+    H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz).
     
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     x = H[0,3]
     y = H[1,3]
@@ -494,7 +522,7 @@ def Pose_2_Staubli(H):
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     xyzwpr = Pose_2_TxyzRxyz(H)
     xyzwpr[3] = xyzwpr[3]*180.0/pi
@@ -503,23 +531,23 @@ def Pose_2_Staubli(H):
     return xyzwpr
     
 def Pose_2_Motoman(H):
-    """Converts a pose (4x4 matrix) to a Motoman XYZWPR target
+    """Converts a pose (4x4 matrix) to a Motoman XYZWPR target (mm and deg)
     
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :func:`~robodk.Motoman_2_Pose`, :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
     
 def Pose_2_Fanuc(H):
-    """Converts a pose (4x4 matrix) to a Fanuc XYZWPR target
+    """Converts a pose (4x4 matrix) to a Fanuc XYZWPR target (mm and deg)
     
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
@@ -527,7 +555,7 @@ def Pose_2_Fanuc(H):
 def Motoman_2_Pose(xyzwpr):
     """Converts a Motoman target to a pose (4x4 matrix)
     
-    .. seealso:: :func:`~robodk.Pose_2_Motoman`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return xyzrpw_2_pose(xyzwpr)
     
@@ -537,7 +565,7 @@ def Pose_2_KUKA(H):
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :func:`~robodk.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     x = H[0,3]
     y = H[1,3]
@@ -559,7 +587,7 @@ def Pose_2_KUKA(H):
 def KUKA_2_Pose(xyzrpw):
     """Converts a KUKA XYZABC target to a pose (4x4 matrix), required by KUKA KRC controllers.
     
-    .. seealso:: :func:`~robodk.Pose_2_KUKA`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     [x,y,z,r,p,w] = xyzrpw
     a = r*math.pi/180.0
@@ -576,7 +604,7 @@ def KUKA_2_Pose(xyzrpw):
 def Adept_2_Pose(xyzrpw):
     """Converts an Adept XYZRPW target to a pose (4x4 matrix)
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     [x,y,z,r,p,w] = xyzrpw
     a = r*math.pi/180.0
@@ -596,7 +624,7 @@ def Pose_2_Adept(H):
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     x = H[0,3]
     y = H[1,3]
@@ -624,7 +652,7 @@ def Pose_2_Adept(H):
 def Comau_2_Pose(xyzrpw):
     """Converts a Comau XYZRPW target to a pose (4x4 matrix), the same representation required by PDL Comau programs.
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return Adept_2_Pose(xyzrpw)
     
@@ -632,7 +660,9 @@ def Pose_2_Comau(H):
     """Converts a pose to a Comau target, the same representation required by PDL Comau programs.
     
     :param H: pose
-    :type H: :class:`.Mat`"""
+    :type H: :class:`.Mat`
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`"""
     return Pose_2_Adept(H)
     
 def Pose_2_Nachi(pose):
@@ -641,7 +671,7 @@ def Pose_2_Nachi(pose):
     :param pose: pose
     :type pose: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     [x,y,z,r,p,w] = pose_2_xyzrpw(pose)
     return [x,y,z,w,p,r]
@@ -649,7 +679,7 @@ def Pose_2_Nachi(pose):
 def Nachi_2_Pose(xyzwpr):
     """Converts a Nachi XYZRPW target to a pose (4x4 matrix)
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return Fanuc_2_Pose(xyzwpr)
     
@@ -659,7 +689,7 @@ def pose_2_quaternion(Ti):
     :param Ti: pose
     :type Ti: :class:`.Mat`
     
-    .. seealso:: :func:`~robodk.quaternion_2_pose`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     a=(Ti[0,0])
     b=(Ti[1,1])
@@ -680,7 +710,12 @@ def pose_2_quaternion(Ti):
     return [q1, q2, q3, q4]
 
 def quaternion_2_pose(qin):
-    """Returns the pose orientation matrix (4x4 matrix) from a quaternion orientation vector"""
+    """Returns the pose orientation matrix (4x4 matrix) given a quaternion orientation vector
+    
+    :param list qin: quaternions as 4 float values
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
+    """
     qnorm = sqrt(qin[0]*qin[0]+qin[1]*qin[1]+qin[2]*qin[2]+qin[3]*qin[3])
     q = qin
     q[0] = q[0]/qnorm
@@ -700,7 +735,7 @@ def Pose_2_ABB(H):
     :param H: pose
     :type H: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     q = pose_2_quaternion(H)
     return [H[0,3],H[1,3],H[2,3],q[0],q[1],q[2],q[3]]
@@ -711,7 +746,7 @@ def print_pose_ABB(pose):
     :param pose: pose
     :type pose: :class:`.Mat`
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     q = pose_2_quaternion(pose)
     print('[[%.3f,%.3f,%.3f],[%.6f,%.6f,%.6f,%.6f]]'%(pose[0,3],pose[1,3],pose[2,3],q[0],q[1],q[2],q[3]))
@@ -719,7 +754,7 @@ def print_pose_ABB(pose):
 def Pose_2_UR(pose):
     """Calculate the p[x,y,z,u,v,w] position with rotation vector for a pose target. This is the same format required by Universal Robot controllers.
     
-    .. seealso:: :class:`.Mat`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     NUMERIC_TOLERANCE = 1e-8;
     def saturate_1(value):
@@ -955,7 +990,7 @@ class Mat(object):
     
     Poses are commonly used in robotics to place objects, reference frames and targets with respect to each other.
    
-    .. seealso:: :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.KUKA_2_Pose`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.UR_2_Pose`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_TxyzRxyz`
+    .. seealso:: :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Adept_2_Pose`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.KUKA_2_Pose`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     
     Example:
         
@@ -1033,6 +1068,49 @@ class Mat(object):
             for j in range(sz[1]):
                 newmat[i,j] = self[i,j]
         return newmat
+        
+    def __len__(self):
+        """Return the number of columns"""
+        return len(self.rows[0])
+        
+    def ColsCount(self):
+        """Return the number of coumns. Same as len().
+        
+        .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.RowsCount`
+        """
+        return len(self.rows[0])
+        
+    def RowsCount(self):
+        """Return the number of rows
+        
+        .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.ColsCount`
+        
+        """
+        return len(self.rows[0])
+        
+    def Cols(self):
+        """Retrieve the matrix as a list of columns (list of list of float).
+        
+        .. seealso:: :func:`~Mat.Rows`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
+        
+        Example:
+        
+            .. code-block:: python
+        
+            >>> transl(10,20,30).Rows()
+            [[1, 0, 0, 10], [0, 1, 0, 20], [0, 0, 1, 30], [0, 0, 0, 1]]
+            
+            >>> transl(10,20,30).Cols()
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [10, 20, 30, 1]]
+        """
+        return self.tr().rows
+        
+    def Rows(self):
+        """Get the matrix as a list of lists
+        
+        .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
+        """
+        return self.rows
         
     def __getitem__(self, idx):
         if isinstance(idx,int):#integer A[1]
@@ -1117,8 +1195,13 @@ class Mat(object):
         
     def __str__(self):
         #s='\n [ '.join([(', '.join([str(item) for item in row])+' ],') for row in self.rows])
-        s='\n [ '.join([(', '.join(['%.3f'%item for item in row])+' ],') for row in self.rows])
-        return '[[ ' + s[:-1] + ']\n'
+        str_add = ''
+        if self.isHomogeneous():
+            x,y,z,rx,ry,rz = Pose_2_TxyzRxyz(self)
+            str_add = 'Pose(%.3f, %.3f, %.3f,  %.3f, %.3f, %.3f):\n' % (x,y,z,rx*180/pi,ry*180/pi,rz*180/pi)
+        
+        s='\n [ '.join([(', '.join([('%.3f'%item if type(item) == float else str(item)) for item in row])+' ],') for row in self.rows])
+        return str_add + '[[ ' + s[:-1] + ']\n'
 
     def __repr__(self):
         s=str(self)
@@ -1359,15 +1442,25 @@ class Mat(object):
         self[1,2] = v_xyz[1]
         self[2,2] = v_xyz[2]    
         
-    def SaveMat(self, strfile):
-        """Save :class:`.Mat` Matrix to a CSV or TXT file"""
+    def SaveCSV(self, strfile):
+        """Save the :class:`.Mat` Matrix to a CSV (Comma Separated Values) file. The file can be easily opened as a spreadsheet such as Excel.
+        
+        .. seealso:: :func:`~Mat.SaveMat`, :func:`~robodk.SaveList`, :func:`~robodk.LoadList`, :func:`~robodk.LoadMat`
+        """
+        self.tr().SaveMat(strfile)
+    
+    def SaveMat(self, strfile, separator=','):
+        """Save the :class:`.Mat` Matrix to a CSV or TXT file
+        
+        .. seealso:: :func:`~Mat.SaveCSV`, :func:`~robodk.SaveList`, :func:`~robodk.LoadList`, :func:`~robodk.LoadMat`
+        """
         sz = self.size()
         m = sz[0]
         n = sz[1]
         file = open(strfile, 'w')
         for j in range(n):
             for i in range(m):
-                file.write('%.6f ' % self.rows[i][j])          
+                file.write(('%.6f'+separator) % self.rows[i][j])          
             file.write('\n')                
         file.close()
     
