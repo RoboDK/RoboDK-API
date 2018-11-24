@@ -937,7 +937,8 @@ namespace RoboDk.API
         /// <param name="saveToFile">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
         /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
         /// <param name="flags">Reserved for future compatibility</param>
-        /// <param name="timeoutSec"></param>
+        /// <param name="timeoutSec">Maximum time to wait for the result (in seconds)</param>
+        /// <param name="time_step">Time step for time-based calculation (ListJointsType must be set to TimeBased)</param>
         /// <returns>List of InstructionListJointsResult.</returns>
         InstructionListJointsResult GetInstructionListJoints(
             double mmStep = 10.0,
@@ -945,7 +946,8 @@ namespace RoboDk.API
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
             ListJointsType flags = 0,
-            int timeoutSec = 3600);
+            int timeoutSec = 3600,
+            double time_step = 0.2);
 
         /// <summary>
         /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
@@ -957,7 +959,8 @@ namespace RoboDk.API
         /// <param name="saveToFile">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
         /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
         /// <param name="flags">Reserved for future compatibility</param>
-        /// <param name="timeoutSec"></param>
+        /// <param name="timeoutSec">Maximum time to wait for the result (in seconds)</param>
+        /// <param name="time_step">Time step for time-based calculation (ListJointsType must be set to TimeBased)</param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
         int InstructionListJoints(out string errorMsg,
             out Mat jointList,
@@ -966,7 +969,8 @@ namespace RoboDk.API
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
             ListJointsType flags = 0,
-            int timeoutSec = 3600);
+            int timeoutSec = 3600,
+            double time_step = 0.2);
 
         /// <summary>
         ///     Disconnect from the RoboDK API. This flushes any pending program generation.

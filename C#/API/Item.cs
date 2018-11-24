@@ -1485,7 +1485,8 @@ namespace RoboDk.API
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
             ListJointsType flags = 0,
-            int timeoutSec = 3600)
+            int timeoutSec = 3600,
+            double time_step = 0.2)
         {
             InstructionListJointsResult result =
                 new InstructionListJointsResult {JointList = new List<InstructionListJointsResult.JointsResult>()};
@@ -1494,7 +1495,7 @@ namespace RoboDk.API
             Mat jointList;
             result.ErrorCode = InstructionListJoints(out errorMessage, out jointList, mmStep, degStep, saveToFile,
                 collisionCheck,
-                flags, timeoutSec);
+                flags, timeoutSec, time_step);
             result.ErrorMessage = errorMessage;
 
             var numberOfJoints = GetLink(ItemType.Robot).Joints().Length;
@@ -1534,12 +1535,13 @@ namespace RoboDk.API
             string saveToFile = "",
             CollisionCheckOptions collisionCheck = CollisionCheckOptions.CollisionCheckOff,
             ListJointsType flags = 0,
-            int timeoutSec = 3600)
+            int timeoutSec = 3600,
+            double time_step = 0.2)
         {
             Link.check_connection();
             Link.send_line("G_ProgJointList");
             Link.send_item(this);
-            double[] parameter = {mmStep, degStep, (double) collisionCheck, (double)flags};
+            double[] parameter = {mmStep, degStep, (double) collisionCheck, (double)flags, time_step};
             Link.send_array(parameter);
 
             //joint_list = save_to_file;

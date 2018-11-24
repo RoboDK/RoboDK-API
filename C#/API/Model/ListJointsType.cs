@@ -43,7 +43,7 @@
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// Type of information returned by InstructionListJoints
+    /// Type of information returned by InstructionListJoints and GetInstructionListJoints
     /// </summary>
     public enum ListJointsType
     {
@@ -69,6 +69,11 @@ namespace RoboDk.API.Model
         /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn]
         /// </summary>
         SpeedAndAcceleration = 3,
+
+        /// <summary>
+        /// Make the result time-based so that the interval between joint values is provided at constant time steps
+        /// </summary>
+        TimeBased = 4
     }
 }
 

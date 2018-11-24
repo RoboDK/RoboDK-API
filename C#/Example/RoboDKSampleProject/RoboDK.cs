@@ -5797,14 +5797,16 @@ public class RoboDK
         /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
         /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
         /// <param name="collision_check">Check for collisions: will set to 1 or 0</param>
-        /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations</param>
+        /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and also make it time-based</param>
+        /// <param name="timeout_sec">Maximum time to wait for the result (seconds)</param>
+        /// <param name="time_step">Time step in seconds for time-based calculation (only used if the flag is set to 4)</param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600)
+        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600, double time_step=0.2)
         {
             link._check_connection();
             link._send_Line("G_ProgJointList");
             link._send_Item(this);
-            double[] ste_mm_deg = { mm_step, deg_step, collision_check, flags };
+            double[] ste_mm_deg = { mm_step, deg_step, collision_check, flags, time_step };
             link._send_Array(ste_mm_deg);
             //joint_list = save_to_file;
             link._COM.ReceiveTimeout = 3600 * 1000;

@@ -1,4 +1,5 @@
 :: install miktex.org/download
+:: install Docfx: https://github.com/dotnet/docfx/releases
 SET PATH=C:\Docfx\;%PATH%
 
 :top
