@@ -930,10 +930,7 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
-
-            RDK.Command("FrameSizes", 12.34567);
-            return;
-
+            
             if (!Check_ROBOT()) { return; }
 
 
@@ -1076,6 +1073,66 @@ namespace ProjectRoboDK
 
 
 
+
+            //-------------------------------------------------------------
+            // Test forward/inverse kinematics calculation for multiple robots
+            var station = RDK.AddStation("Speed Tests");
+
+            string robot_file = RDK.getParam("PATH_LIBRARY") + "/KUKA-KR-210-R2700.robot";
+            int n_robots = 10;
+            int n_tests = 100;
+            List<RoboDK.Item> robot_list = new List<RoboDK.Item>();
+            List<double[]> joints_list = new List<double[]>();
+
+            for (int i = 0; i < n_robots; i++)
+            {
+                var robot = RDK.AddFile(robot_file);
+                var joints = new double[] { i * 5, -90, 90, 0, 90, 0 };
+                robot.setJoints(joints);
+                robot_list.Add(robot);
+                joints_list.Add(joints);
+            }
+
+
+
+            double time_average_ms = 0;
+
+            for (int t = 0; t < n_tests; t++)
+            {
+                var t1 = DateTime.Now;
+
+                // Bulk calculation (new): you can provide a list of robots: 2.5 ms for 10 robots on avg
+                var pose_solutions = RDK.SolveFK(robot_list, joints_list);
+                var joint_solutions = RDK.SolveIK(robot_list, pose_solutions);
+                var joints_solutions2 = RDK.SolveIK(robot_list, pose_solutions, joints_list);
+                var jnts = RDK.SolveIK_All(robot_list, pose_solutions);
+                var cnfigs = RDK.JointsConfig(robot_list, joints_list);
+
+
+                /*
+                // Individual calculation (typical operation): 5.5 ms for 10 robots on avg
+                for (int i = 0; i < n_robots; i++)
+                {
+                    Mat pose = robot_list[i].SolveFK(joints_list[i]);
+                    var solution = robot_list[i].SolveIK(pose); // pose_solutions[i]);                    
+                }
+                */
+
+                var t2 = DateTime.Now;
+                var elapsed_ms = t2.Subtract(t1).TotalMilliseconds;
+                time_average_ms = time_average_ms + elapsed_ms;
+                Console.WriteLine("Forward/inverse kinematics Calculated in (ms)" + elapsed_ms.ToString());
+            }
+            time_average_ms = time_average_ms / n_tests;
+            Console.WriteLine("=> Average calculation time (ms): " + time_average_ms.ToString());
+
+            station.Delete();
+
+            return;
+
+
+
+
             double[][] dhm;
             Mat pose_base;
             Mat pose_tool;
@@ -1167,58 +1224,7 @@ namespace ProjectRoboDK
                 Console.WriteLine("");
             }
 
-
-            //-------------------------------------------------------------
-            // Test forward/inverse kinematics calculation for multiple robots
-            var station = RDK.AddStation("Speed Tests");
-
-            string robot_file = RDK.getParam("PATH_LIBRARY") + "/KUKA-KR-210-R2700.robot";
-            int n_robots = 10;
-            int n_tests = 100;
-            List<RoboDK.Item> robot_list = new List<RoboDK.Item>();
-            List<double[]> joints_list = new List<double[]>();
-
-            for (int i = 0; i < n_robots; i++)
-            {
-                var robot = RDK.AddFile(robot_file);
-                var joints = new double[] { i * 5, -90, 90, 0, 90, 0 };
-                robot.setJoints(joints);
-                robot_list.Add(robot);
-                joints_list.Add(joints);
-            }
-
-
-            double time_average_ms = 0;
-
-            for (int t = 0; t < n_tests; t++)
-            {
-                var t1 = DateTime.Now;
-
-                // Bulk calculation (new): you can provide a list of robots: 2.5 ms for 10 robots on avg
-                var pose_solutions = RDK.SolveFK(robot_list, joints_list);
-                var joint_solutions = RDK.SolveIK(robot_list, pose_solutions);
-
-                /*
-                // Individual calculation (typical operation): 5.5 ms for 10 robots on avg
-                for (int i = 0; i < n_robots; i++)
-                {
-                    Mat pose = robot_list[i].SolveFK(joints_list[i]);
-                    var solution = robot_list[i].SolveIK(pose); // pose_solutions[i]);                    
-                }
-                */
-
-                var t2 = DateTime.Now;
-                var elapsed_ms = t2.Subtract(t1).TotalMilliseconds;
-                time_average_ms = time_average_ms + elapsed_ms;
-                Console.WriteLine("Forward/inverse kinematics Calculated in (ms)" + elapsed_ms.ToString());
-            }
-            time_average_ms = time_average_ms / n_tests;
-            Console.WriteLine("=> Average calculation time (ms): " + time_average_ms.ToString());
-
-
-            station.Delete();
-
-
+            
 
             /*RoboDK.Item frame = RDK.getItem("FrameTest");
             double[] xyzwpr = { 1000.0, 2000.0, 3000.0, 12.0 * Math.PI / 180.0, 84.98 * Math.PI / 180.0, 90.0 * Math.PI / 180.0 };

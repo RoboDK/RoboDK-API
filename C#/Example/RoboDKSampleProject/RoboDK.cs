@@ -3575,6 +3575,83 @@ public class RoboDK
         return list_joints;
     }
 
+
+    /// <summary>
+    /// Calculate the inverse kinematics solution for multiple robots at the same time (faster)
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="pose_list">list of poses</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<double[]> SolveIK(List<Item> robot_list, List<Mat> pose_list, List<double[]> japrox_list)
+    {
+        _require_build(7399);
+        int nitm = Math.Min(Math.Min(robot_list.Count, pose_list.Count), japrox_list.Count);
+        _check_connection();
+        _send_Line("G_LIK_jnts");
+        _send_Int(nitm);
+        List<double[]> list_joints = new List<double[]>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Pose(pose_list[i]);
+            _send_Array(japrox_list[i]);
+            _send_Item(robot_list[i]);            
+            double[] joints_sol = _recv_Array();
+            list_joints.Add(joints_sol);
+        }
+        _check_status();
+        return list_joints;
+    }
+
+
+    /// <summary>
+    /// Calculate the inverse kinematics solution for multiple robots at the same time. This call allows you to have a bulk calculation for faster performance.
+    /// </summary>
+    /// <param name="robot_list">list of items</param>
+    /// <param name="pose_list">list of poses</param>
+    /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+    public List<Mat> SolveIK_All(List<Item> robot_list, List<Mat> pose_list)
+    {
+        _require_build(7399);
+        int nitm = Math.Min(robot_list.Count, pose_list.Count);
+        _check_connection();
+        _send_Line("G_LIK_cmpl");
+        _send_Int(nitm);
+        List<Mat> list_joints2d = new List<Mat>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Pose(pose_list[i]);
+            _send_Item(robot_list[i]);
+            Mat joints_sol_all = _recv_Matrix2D();
+            list_joints2d.Add(joints_sol_all);
+        }
+        _check_status();
+        return list_joints2d;
+    }
+    
+    /// <summary>
+    /// Returns the robot configuration state for a set of robot joints.
+    /// </summary>
+    /// <param name="joints">array of joints</param>
+    /// <returns>3-array -> configuration status as [REAR, LOWERARM, FLIP]</returns>
+    public List<double[]> JointsConfig(List<Item> robot_list, List<double[]> joints_list)
+    {
+        _require_build(7399);
+        int nitm = Math.Min(robot_list.Count, joints_list.Count);
+        _check_connection();
+        _send_Line("G_LThetas_Config");
+        _send_Int(nitm);
+        List<double[]> list_config = new List<double[]>();
+        for (int i = 0; i < nitm; i++)
+        {
+            _send_Array(joints_list[i]);
+            _send_Item(robot_list[i]);
+            double[] config = _recv_Array();
+            list_config.Add(config);
+        }
+        _check_status();
+        return list_config;
+    }
+
     /// <summary>
     /// Sets the visibility for a list of items
     /// </summary>
