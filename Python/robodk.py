@@ -1560,6 +1560,8 @@ def UploadDirFTP(localpath, server_ip, remote_path, username, password):
         os.chdir('..')
     uploadThis(myPath) # now call the recursive function
     myFTP.close()
+    print("POPUP: Folder trasfer completed: <font color=\"blue\">%s</font>" % remote_path)
+    sys.stdout.flush()
     return True
     
 def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
@@ -1606,18 +1608,24 @@ def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
 
     uploadThis(file_path_name, filename)
     myFTP.close()
+    print("POPUP: File trasfer completed: <font color=\"blue\">%s</font>" % remote_path_prog)
+    sys.stdout.flush()
     return True
 
-def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass):
+def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec = 2):
     """Upload a program or a list of programs to the robot through FTP provided the connection parameters"""
     # Iterate through program list if it is a list of files
     if isinstance(program, list):
         if len(program) == 0:
             print('POPUP: Nothing to transfer')
+            sys.stdout.flush()
+            pause(pause_sec)
             return
+        
+        pause_sec_multi = pause_sec
         for prog in program:
-            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass)
-        pause(2)
+            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec_multi)
+            pause_sec_multi = 0
         return
     
     import os
@@ -1627,7 +1635,10 @@ def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass):
     else:
         print('Sending program folder %s...' % program)
         UploadDirFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)    
-    pause(2)
+    
+    pause(pause_sec)
+    print("POPUP: Done")
+    sys.stdout.flush()
 
 
 #----------------------------------------------------

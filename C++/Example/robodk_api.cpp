@@ -343,6 +343,9 @@ void Mat::Pos(tXYZ xyz){
     xyz[2] = Get(2, 3);
 }
 
+Mat Mat::inv() const{
+    return this->inverted();
+}
 
 
 void Mat::Set(int i, int j, double value){
@@ -971,11 +974,18 @@ void Item::JointsConfig(const tJoints &joints, tConfig config){
 /// </summary>
 /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
 /// <returns>array of joints</returns>
-tJoints Item::SolveIK(const Mat &pose){
+tJoints Item::SolveIK(const Mat &pose, const Mat *tool, const Mat *ref){
     tJoints jnts;
+    Mat base2flange(pose);
+    if (tool != nullptr){
+        base2flange = pose*tool->inv();
+    }
+    if (ref != nullptr){
+        base2flange = (*ref) * base2flange;
+    }
     _RDK->_check_connection();
     _RDK->_send_Line("G_IK");
-    _RDK->_send_Pose(pose);
+    _RDK->_send_Pose(base2flange);
     _RDK->_send_Item(this);
     _RDK->_recv_Array(&jnts);
     _RDK->_check_status();
@@ -987,18 +997,25 @@ tJoints Item::SolveIK(const Mat &pose){
 /// </summary>
 /// <param name="pose">4x4 matrix -> pose of the robot tool with respect to the robot frame</param>
 /// <returns>double x n x m -> joint list (2D matrix)</returns>
-tMatrix2D* Item::SolveIK_All_Mat2D(const Mat &pose){
-    tMatrix2D *mat2d = NULL;
+tMatrix2D* Item::SolveIK_All_Mat2D(const Mat &pose, const Mat *tool, const Mat *ref){
+    tMatrix2D *mat2d = nullptr;
+    Mat base2flange(pose);
+    if (tool != nullptr){
+        base2flange = pose*tool->inv();
+    }
+    if (ref != nullptr){
+        base2flange = (*ref) * base2flange;
+    }
     _RDK->_check_connection();
     _RDK->_send_Line("G_IK_cmpl");
-    _RDK->_send_Pose(pose);
+    _RDK->_send_Pose(base2flange);
     _RDK->_send_Item(this);
     _RDK->_recv_Matrix2D(&mat2d);
     _RDK->_check_status();
     return mat2d;
 }
-QList<tJoints> Item::SolveIK_All(const Mat &pose){
-    tMatrix2D *mat2d = SolveIK_All_Mat2D(pose);
+QList<tJoints> Item::SolveIK_All(const Mat &pose, const Mat *tool, const Mat *ref){
+    tMatrix2D *mat2d = SolveIK_All_Mat2D(pose, tool, ref);
     QList<tJoints> jnts_list;
     int ndofs = Matrix2D_Size(mat2d, 1) - 2;
     for (int i=0; i<Matrix2D_Size(mat2d, 2); i++){

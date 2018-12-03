@@ -167,6 +167,9 @@ public:
     void setPos(double x, double y, double z);
     void Pos(tXYZ xyz);
 
+    /// Invert the pose (homogeneous matrix assumed)
+    Mat inv() const;
+
     void Set(int i, int j, double value);
     double Get(int i, int j) const;
 
@@ -496,7 +499,7 @@ class ROBODK Item {
     friend class RoboDK_API::RoboDK;
     
 public:
-    Item(RoboDK *rdk = NULL, quint64 ptr=0, qint32 type=-1);
+    Item(RoboDK *rdk=nullptr, quint64 ptr=0, qint32 type=-1);
     Item(const Item &other);
 
     ~Item();
@@ -554,9 +557,9 @@ public:
     Item AddTool(const Mat &tool_pose, const QString &tool_name = "New TCP");
     Mat SolveFK(const tJoints &joints);
     void JointsConfig(const tJoints &joints, tConfig config);
-    tJoints SolveIK(const Mat &pose);
-    tMatrix2D *SolveIK_All_Mat2D(const Mat &pose);
-    QList<tJoints> SolveIK_All(const Mat &pose);
+    tJoints SolveIK(const Mat &pose, const Mat *tool=nullptr, const Mat *ref=nullptr);
+    tMatrix2D *SolveIK_All_Mat2D(const Mat &pose, const Mat *tool=nullptr, const Mat *ref=nullptr);
+    QList<tJoints> SolveIK_All(const Mat &pose, const Mat *tool=nullptr, const Mat *ref=nullptr);
     bool Connect(const QString &robot_ip = "");
     bool Disconnect();
     void MoveJ(const Item &itemtarget, bool blocking = true);
@@ -593,7 +596,7 @@ public:
     void Instruction(int ins_id, QString &name, int &instype, int &movetype, bool &isjointtarget, Mat &target, tJoints &joints);
     void setInstruction(int ins_id, const QString &name, int instype, int movetype, bool isjointtarget, const Mat &target, const tJoints &joints);
     int InstructionList(tMatrix2D *instructions);
-    double Update(int collision_check = RoboDK::COLLISION_OFF, int timeout_sec = 3600, double *out_nins_time_dist = NULL, double mm_step = -1, double deg_step = -1);
+    double Update(int collision_check = RoboDK::COLLISION_OFF, int timeout_sec = 3600, double *out_nins_time_dist = nullptr, double mm_step = -1, double deg_step = -1);
     int InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step = 10.0, double deg_step = 5.0, const QString &save_to_file = "");
     bool Finish();
 
