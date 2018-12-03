@@ -772,6 +772,33 @@ void Item::Scale(double scale_xyz[3]){
 }
 
 
+
+
+/// <summary>
+/// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+/// Tip: Use getLink() and setLink() to get/set the robot tool, reference frame, robot and program linked to the project.
+/// Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
+/// </summary>
+/// <param name="ncfile">path to the NC (G-code/APT/Point cloud) file to load (optional)</param>
+/// <param name="part_obj">object holding curves or points to automatically set up a curve/point follow project (optional)</param>
+/// <param name="options">Additional options (optional)</param>
+/// <returns>Program linked to the project (invalid item if failed to update). Use Update() to retrieve the result</returns>
+Item Item::setMachiningParameters(QString ncfile, Item part_obj, QString options)
+{
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_MachiningParams");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(ncfile);
+    _RDK->_send_Item(part_obj);
+    _RDK->_send_Line("NO_UPDATE " + options);
+    _RDK->_TIMEOUT = 3600 * 1000;
+    Item program = _RDK->_recv_Item();
+    _RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
+    double status = _RDK->_recv_Int() / 1000.0;
+    _RDK->_check_status();
+    return program;
+}
+
 /// <summary>
 /// Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
 /// </summary>
@@ -2167,6 +2194,7 @@ Item RoboDK::AddMachiningProject(QString name, Item *itemrobot)
     _check_status();
     return newitem;
 }
+
 
 
 QList<Item> RoboDK::getOpenStation()

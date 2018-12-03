@@ -540,6 +540,7 @@ public:
 
     void Scale(double scale);
     void Scale(double scale_xyz[3]);
+    Item setMachiningParameters(QString ncfile = "", Item part_obj = nullptr, QString options = "");
 
     void setAsCartesianTarget();
     void setAsJointTarget();
