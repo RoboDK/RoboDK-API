@@ -8,7 +8,7 @@ The RoboDK API is available in the following programming languages:
 * [C#](./C%23)
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
 * [C++](./C%2B%2B) (Using Qt libraries)
-* Visual Basic
+* [Visual Basic](./Visual%20Basic)
    
 The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
 While RoboDK's graphical user interface can be used to create programs, it is possible to extend the robot controller limitations by using a universal programming language such as Python.
