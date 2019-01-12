@@ -3360,7 +3360,7 @@ public class RoboDK
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
     /// <param name="value">Comand value (optional, not all commands require a value)</param>
     /// <returns></returns>
-    public string Command(string cmd, bool value=false)
+    public string Command(string cmd, bool value)
     {
         return Command(cmd, value ? "1" : "0");
     }
@@ -3371,7 +3371,7 @@ public class RoboDK
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
     /// <param name="value">Comand value (optional, not all commands require a value)</param>
     /// <returns></returns>
-    public string Command(string cmd, int value=0)
+    public string Command(string cmd, int value)
     {
         return Command(cmd, value.ToString());
     }
@@ -3382,7 +3382,7 @@ public class RoboDK
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
     /// <param name="value">Comand value (optional, not all commands require a value)</param>
     /// <returns></returns>
-    public string Command(string cmd, double value=0.0)
+    public string Command(string cmd, double value)
     {
         return Command(cmd, value.ToString("0.######"));
     }    
