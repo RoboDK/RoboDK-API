@@ -506,10 +506,7 @@ namespace ProjectRoboDK
             if (!Check_RDK()) { return; }
 
             // unhook from the integrated panel it is inside the main panel
-            if (RDK.PROCESS != null)
-            {
-                SetParent(RDK.PROCESS.MainWindowHandle, IntPtr.Zero);
-            }
+            SetParent(RDK.GetWindowHandle(), IntPtr.Zero);
 
             RDK.setWindowState(RoboDK.WINDOWSTATE_NORMAL); // removes Cinema mode and shows the screen
             RDK.setWindowState(RoboDK.WINDOWSTATE_MAXIMIZED); // shows maximized
@@ -549,15 +546,10 @@ namespace ProjectRoboDK
             if (!rad_RoboDK_Integrated.Checked) { return; }
 
             if (!Check_RDK()) { return; }
-            if (RDK.PROCESS == null)
-            {
-                notifybar.Text = "Invalid handle. Close RoboDK and open RoboDK with this application";
-                rad_RoboDK_show.PerformClick();
-                return;
-            }
 
             // hook window pointer to the integrated panel
-            SetParent(RDK.PROCESS.MainWindowHandle, panel_rdk.Handle);
+            //SetParent(RDK.PROCESS.MainWindowHandle, panel_rdk.Handle);
+            SetParent(RDK.GetWindowHandle(), panel_rdk.Handle);
 
             //RDK.setWindowState(RoboDK.WINDOWSTATE_SHOW); // show RoboDK window if it was hidden
             RDK.setWindowState(RoboDK.WINDOWSTATE_CINEMA); // sets cinema mode (remove the menu, the toolbar, the title bar and the status bar)
@@ -576,7 +568,7 @@ namespace ProjectRoboDK
             if (!rad_RoboDK_Integrated.Checked) { return; }
 
             // resize the content of the panel_rdk when it is resized
-            MoveWindow(RDK.PROCESS.MainWindowHandle, 0, 0, panel_rdk.Width, panel_rdk.Height, true);
+            MoveWindow(RDK.GetWindowHandle(), 0, 0, panel_rdk.Width, panel_rdk.Height, true);
         }
 
         //////////////////////////////////////////////////////////////
@@ -1224,7 +1216,97 @@ namespace ProjectRoboDK
                 Console.WriteLine("");
             }
 
-            
+
+
+            return;
+
+
+            // Example to retrieve the selected point and normal of a surface and create a target.
+            // get the robot reference frame
+            RoboDK.Item robot_ref = ROBOT.getLink(RoboDK.ITEM_TYPE_FRAME);
+            if (!robot_ref.Valid())
+            {
+                Console.WriteLine("The robot doesn't have a reference frame selected. Selecting a robot reference frame (or make a reference frame active is required to add a target).");
+                return;
+            }
+
+            //var obj = RDK.getItem("box", ITEM_TYPE_OBJECT);//RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT);
+            //var obj = RDK.getItem("tide", ITEM_TYPE_OBJECT);//RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT);
+
+            int feature_type = -1;
+            int feature_id = -1;
+
+            // Remember the information relating to the selected point (XYZ and surface normal).
+            // These values are retrieved in Absolute coordinates (with respect to the station).
+            double[] point_xyz = null;
+            double[] point_ijk = null;
+
+            while (true)
+            {
+                var obj_selected = RDK.GetSelectedItems();
+                if (obj_selected.Count == 1 && obj_selected[0].Type() == RoboDK.ITEM_TYPE_OBJECT)
+                {
+                    var obj = obj_selected[0];
+                    // RDK.SetSelectedItems(); // ideally we need this function to clear the selection
+                    var is_Selected = obj.SelectedFeature(out feature_type, out feature_id);
+                    if (is_Selected && feature_type == RoboDK.FEATURE_SURFACE)
+                    {
+                        Mat point_list;
+                        string description = obj.GetPoints(feature_type, feature_id, out point_list);
+                        // great, we got the point from the surface. This will be size 6x1
+                        Console.WriteLine("Point information: " + description);
+                        if (point_list.cols < 1 || point_list.rows < 6)
+                        {
+                            // something is wrong! This should not happen....
+                            Console.WriteLine(point_list.ToString());
+                            continue;
+                        }
+                        double[] value = point_list.GetCol(0).ToDoubles();
+                        point_xyz = new double[] { value[0], value[1], value[2] };
+                        // invert the IJK values (RoboDK provides the normal coming out of the surface but we usually want the Z axis to go into the object)
+                        point_ijk = new double[] { -value[3], -value[4], -value[5] };
+                        Mat obj_pose_abs = obj.PoseAbs();
+
+                        // Calculate the point in Absolute coordinates (with respect to the station)
+                        point_xyz = obj_pose_abs * point_xyz;
+                        point_ijk = obj_pose_abs.Rot3x3() * point_ijk;
+                        break;
+                    }
+                }
+            }
+
+
+            // Calculate the absolute pose of the robot reference
+            Mat ref_pose_abs = robot_ref.PoseAbs();
+
+            // Calculate the absolute pose of the robot tool 
+            Mat robot_pose_abs = ref_pose_abs * robot_ref.Pose();
+
+            // Calculate the robot pose for the selected target and use the tool Y axis as a reference
+            // (we try to get the pose that has the Y axis as close as possible as the current robot position)
+            Mat pose_surface_abs = Mat.xyzijk_2_pose(point_xyz, point_ijk, robot_pose_abs.VY());
+
+            if (!pose_surface_abs.IsHomogeneous())
+            {
+                Console.WriteLine("Something went wrong");
+                return;
+            }
+
+            // calculate the pose of the target (relative to the reference frame)
+            Mat pose_surface_rel = ref_pose_abs.inv() * pose_surface_abs;
+
+            // add a target and update the pose
+            var target_new = RDK.AddTarget("T1", robot_ref, ROBOT);
+            target_new.setAsCartesianTarget();
+            target_new.setJoints(ROBOT.Joints()); // this is only important if we want to remember the current configuration
+            target_new.setPose(pose_surface_rel);
+
+
+
+
+
+
+
 
             /*RoboDK.Item frame = RDK.getItem("FrameTest");
             double[] xyzwpr = { 1000.0, 2000.0, 3000.0, 12.0 * Math.PI / 180.0, 84.98 * Math.PI / 180.0, 90.0 * Math.PI / 180.0 };

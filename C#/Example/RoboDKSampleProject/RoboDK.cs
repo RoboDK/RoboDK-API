@@ -52,6 +52,94 @@ public class Mat // simple matrix class for homogeneous operations
         { }
     }
 
+
+
+
+    /// <summary>
+    /// Returns the norm of a 3D vector
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static public double norm(double[] p)
+    {
+        return Math.Sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+    }
+
+    /// <summary>
+    /// Returns the unitary vector
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static public double[] normalize3(double[] p)
+    {
+        double norminv = 1.0 / norm(p);
+        return new double[] { p[0] * norminv, p[1] * norminv, p[2] * norminv };
+    }
+
+    /// <summary>
+    /// Returns the cross product of two 3D vectors
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static public double[] cross(double[] a, double[] b)
+    {
+        return new double[] {a[1]* b[2] - a[2]* b[1],
+          a[2]* b[0] - a[0]* b[2],
+           a[0]* b[1] - a[1]* b[0]};
+    }
+    /// <summary>
+    /// Returns the dot product of two 3D vectors
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    static public double dot(double[] a, double[] b)
+    {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
+    /// <summary>
+    /// Returns the angle in radians of two 3D vectors
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    static public double angle3(double[] a, double[] b)
+    {
+        return Math.Acos(dot(normalize3(a), normalize3(b)));
+    }
+
+    /// <summary>
+    /// Convert a point XYZ and IJK vector (Z axis) to a pose given a hint for the Y axis
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="zaxis"></param>
+    /// <param name="reference"></param>
+    /// <param name="yaxis_hint"></param>
+    /// <returns></returns>
+    static public Mat xyzijk_2_pose(double[] point, double[] zaxis, double[] yaxis_hint = null)
+    {
+        Mat pose = Mat.Identity4x4();
+        if (yaxis_hint == null)
+        {
+            yaxis_hint = new double[] { 0, 0, 1 };
+        }
+        pose.setPos(point);
+        pose.setVZ(zaxis);
+        if (Mat.angle3(zaxis, yaxis_hint) < 2 * Math.PI / 180)
+        {
+            yaxis_hint = new double[] { 0, 1, 1 };
+        }
+        double[] xaxis = Mat.normalize3(Mat.cross(yaxis_hint, zaxis));
+        double[] yaxis = Mat.cross(zaxis, xaxis);
+        pose.setVX(xaxis);
+        pose.setVY(yaxis);
+        return pose;
+    }
+
+
+
+
     /// <summary>
     /// Matrix class constructor for any size matrix
     /// </summary>
@@ -167,6 +255,42 @@ public class Mat // simple matrix class for homogeneous operations
             for (int j = 0; j < cols; j++)
                 mat[i, j] = pose[i, j];
     }
+
+    /// <summary>
+    /// Matrix class constructor for a 3x3 homogeneous matrix
+    /// </summary>
+    /// <param name="nx"></param>
+    /// <param name="ox"></param>
+    /// <param name="ax"></param>
+    /// <param name="ny"></param>
+    /// <param name="oy"></param>
+    /// <param name="ay"></param>
+    /// <param name="nz"></param>
+    /// <param name="oz"></param>
+    /// <param name="az"></param>
+    public Mat(double nx, double ox, double ax, double ny, double oy, double ay, double nz, double oz, double az)
+    {
+        rows = 3;
+        cols = 3;
+        mat = new double[rows, cols];
+        mat[0, 0] = nx; mat[1, 0] = ny; mat[2, 0] = nz;
+        mat[0, 1] = ox; mat[1, 1] = oy; mat[2, 1] = oz;
+        mat[0, 2] = ax; mat[1, 2] = ay; mat[2, 2] = az;
+    }
+
+    /// <summary>
+    /// Returns the sub 3x3 matrix that represents the pose rotation
+    /// </summary>
+    /// <returns></returns>
+    public Mat Rot3x3()
+    {
+        if (!IsHomogeneous())
+        {
+            throw new MatException("It is not possible to retrieve a sub 3x3 rotation mat"); //raise Exception('Problems running function');
+        }
+        return new Mat(mat[0, 0], mat[0, 1], mat[0, 2], mat[1, 0], mat[1, 1], mat[1, 2], mat[2, 0], mat[2, 1], mat[2, 2]);
+    }
+
 
     /// <summary>
     /// Check if it is a Homogeneous Identity matrix
@@ -796,6 +920,92 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
 
+
+
+    /// <summary>
+    /// Returns the VX orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <returns>VX orientation vector</returns>
+    public double[] VX()
+    {
+        if (!Is4x4())
+        {
+            return null;
+        }
+        double[] xyz = new double[3];
+        xyz[0] = mat[0, 0]; xyz[1] = mat[1, 0]; xyz[2] = mat[2, 0];
+        return xyz;
+    }
+
+    /// <summary>
+    /// Sets the VX orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <param name="xyz">VX orientation vector</param>
+    public void setVX(double[] xyz)
+    {
+        if (!Is4x4() || xyz.Length < 3)
+        {
+            return;
+        }
+        mat[0, 0] = xyz[0]; mat[1, 0] = xyz[1]; mat[2, 0] = xyz[2];
+    }
+    /// <summary>
+    /// Returns the VY orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <returns>VY orientation vector</returns>
+    public double[] VY()
+    {
+        if (!Is4x4())
+        {
+            return null;
+        }
+        double[] xyz = new double[3];
+        xyz[0] = mat[0, 1]; xyz[1] = mat[1, 1]; xyz[2] = mat[2, 1];
+        return xyz;
+    }
+
+    /// <summary>
+    /// Sets the VY orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <param name="xyz">VY orientation vector</param>
+    public void setVY(double[] xyz)
+    {
+        if (!Is4x4() || xyz.Length < 3)
+        {
+            return;
+        }
+        mat[0, 1] = xyz[0]; mat[1, 1] = xyz[1]; mat[2, 1] = xyz[2];
+    }
+    /// <summary>
+    /// Returns the VZ orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <returns>VZ orientation vector</returns>
+    public double[] VZ()
+    {
+        if (!Is4x4())
+        {
+            return null;
+        }
+        double[] xyz = new double[3];
+        xyz[0] = mat[0, 2]; xyz[1] = mat[1, 2]; xyz[2] = mat[2, 2];
+        return xyz;
+    }
+
+    /// <summary>
+    /// Sets the VZ orientation vector of the Homogeneous matrix
+    /// </summary>
+    /// <param name="xyz">VZ orientation vector</param>
+    public void setVZ(double[] xyz)
+    {
+        if (!Is4x4() || xyz.Length < 3)
+        {
+            return;
+        }
+        mat[0, 2] = xyz[0]; mat[1, 2] = xyz[1]; mat[2, 2] = xyz[2];
+    }
+
+
+
     public double this[int iRow, int iCol]      // Access this matrix as a 2D array
     {
         get { return mat[iRow, iCol]; }
@@ -959,7 +1169,7 @@ public class Mat // simple matrix class for homogeneous operations
             for (int j = 0; j < size; j++) C[i, j] = A[ya + i, xa + j];
     }
 
-    private static Mat StrassenMultiply(Mat A, Mat B)                // Smart matrix multiplication
+    private static Mat MultiplyMat(Mat A, Mat B)                // Smart matrix multiplication
     {
         if (A.cols != B.rows) throw new MatException("Wrong dimension of matrix!");
 
@@ -1000,31 +1210,31 @@ public class Mat // simple matrix class for homogeneous operations
 
         SafeAplusBintoC(A, 0, 0, A, h, h, mField[0, 0], h);
         SafeAplusBintoC(B, 0, 0, B, h, h, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 1], 1, mField); // (A11 + A22) * (B11 + B22);
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 1], 1, mField); // (A11 + A22) * (B11 + B22);
 
         SafeAplusBintoC(A, 0, h, A, h, h, mField[0, 0], h);
         SafeACopytoC(B, 0, 0, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 2], 1, mField); // (A21 + A22) * B11;
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 2], 1, mField); // (A21 + A22) * B11;
 
         SafeACopytoC(A, 0, 0, mField[0, 0], h);
         SafeAminusBintoC(B, h, 0, B, h, h, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 3], 1, mField); //A11 * (B12 - B22);
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 3], 1, mField); //A11 * (B12 - B22);
 
         SafeACopytoC(A, h, h, mField[0, 0], h);
         SafeAminusBintoC(B, 0, h, B, 0, 0, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 4], 1, mField); //A22 * (B21 - B11);
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 4], 1, mField); //A22 * (B21 - B11);
 
         SafeAplusBintoC(A, 0, 0, A, h, 0, mField[0, 0], h);
         SafeACopytoC(B, h, h, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 5], 1, mField); //(A11 + A12) * B22;
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 5], 1, mField); //(A11 + A12) * B22;
 
         SafeAminusBintoC(A, 0, h, A, 0, 0, mField[0, 0], h);
         SafeAplusBintoC(B, 0, 0, B, h, 0, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 6], 1, mField); //(A21 - A11) * (B11 + B12);
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 6], 1, mField); //(A21 - A11) * (B11 + B12);
 
         SafeAminusBintoC(A, h, 0, A, h, h, mField[0, 0], h);
         SafeAplusBintoC(B, 0, h, B, h, h, mField[0, 1], h);
-        StrassenMultiplyRun(mField[0, 0], mField[0, 1], mField[0, 1 + 7], 1, mField); // (A12 - A22) * (B21 + B22);
+        MultiplyMatRun(mField[0, 0], mField[0, 1], mField[0, 1 + 7], 1, mField); // (A12 - A22) * (B21 + B22);
 
         R = new Mat(A.rows, B.cols);                  // result
 
@@ -1052,8 +1262,7 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     // function for square matrix 2^N x 2^N
-
-    private static void StrassenMultiplyRun(Mat A, Mat B, Mat C, int l, Mat[,] f)    // A * B into C, level of recursion, matrix field
+    private static void MultiplyMatRun(Mat A, Mat B, Mat C, int l, Mat[,] f)    // A * B into C, level of recursion, matrix field
     {
         int size = A.rows;
         int h = size / 2;
@@ -1071,31 +1280,31 @@ public class Mat // simple matrix class for homogeneous operations
 
         AplusBintoC(A, 0, 0, A, h, h, f[l, 0], h);
         AplusBintoC(B, 0, 0, B, h, h, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 1], l + 1, f); // (A11 + A22) * (B11 + B22);
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 1], l + 1, f); // (A11 + A22) * (B11 + B22);
 
         AplusBintoC(A, 0, h, A, h, h, f[l, 0], h);
         ACopytoC(B, 0, 0, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 2], l + 1, f); // (A21 + A22) * B11;
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 2], l + 1, f); // (A21 + A22) * B11;
 
         ACopytoC(A, 0, 0, f[l, 0], h);
         AminusBintoC(B, h, 0, B, h, h, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 3], l + 1, f); //A11 * (B12 - B22);
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 3], l + 1, f); //A11 * (B12 - B22);
 
         ACopytoC(A, h, h, f[l, 0], h);
         AminusBintoC(B, 0, h, B, 0, 0, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 4], l + 1, f); //A22 * (B21 - B11);
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 4], l + 1, f); //A22 * (B21 - B11);
 
         AplusBintoC(A, 0, 0, A, h, 0, f[l, 0], h);
         ACopytoC(B, h, h, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 5], l + 1, f); //(A11 + A12) * B22;
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 5], l + 1, f); //(A11 + A12) * B22;
 
         AminusBintoC(A, 0, h, A, 0, 0, f[l, 0], h);
         AplusBintoC(B, 0, 0, B, h, 0, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 6], l + 1, f); //(A21 - A11) * (B11 + B12);
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 6], l + 1, f); //(A21 - A11) * (B11 + B12);
 
         AminusBintoC(A, h, 0, A, h, h, f[l, 0], h);
         AplusBintoC(B, 0, h, B, h, h, f[l, 1], h);
-        StrassenMultiplyRun(f[l, 0], f[l, 1], f[l, 1 + 7], l + 1, f); // (A12 - A22) * (B21 + B22);
+        MultiplyMatRun(f[l, 0], f[l, 1], f[l, 1 + 7], l + 1, f); // (A12 - A22) * (B21 + B22);
 
         /// C11
         for (int i = 0; i < h; i++)          // rows
@@ -1118,9 +1327,9 @@ public class Mat // simple matrix class for homogeneous operations
                 C[i, j] = f[l, 1 + 1][i - h, j - h] - f[l, 1 + 2][i - h, j - h] + f[l, 1 + 3][i - h, j - h] + f[l, 1 + 6][i - h, j - h];
     }
 
-    public static Mat StupidMultiply(Mat m1, Mat m2)                  // Stupid matrix multiplication
+    public static Mat MultiplyMatSimple(Mat m1, Mat m2)                  // Stupid matrix multiplication
     {
-        if (m1.cols != m2.rows) throw new MatException("Wrong dimensions of matrix!");
+        if (m1.cols != m2.rows) throw new MatException("Wrong matrix dimensions to allow multiplication!");
 
         Mat result = ZeroMatrix(m1.rows, m2.cols);
         for (int i = 0; i < result.rows; i++)
@@ -1137,6 +1346,7 @@ public class Mat // simple matrix class for homogeneous operations
                 r[i, j] = m[i, j] * n;
         return r;
     }
+
     private static double[] Multiply(Mat m1, double[] p1)         // Add matrix
     {
         double[] p2 = new double[p1.Length];
@@ -1154,7 +1364,7 @@ public class Mat // simple matrix class for homogeneous operations
             double vi = 0;
             for (int j = 0; j < m1.cols; j++)
             {
-                vi = vi + m1[i, j] + p1[j];
+                vi = vi + m1[i, j] * p1[j];
             }
             p2[i] = vi;
         }
@@ -1203,7 +1413,7 @@ public class Mat // simple matrix class for homogeneous operations
     { return Mat.Add(m1, -m2); }
 
     public static Mat operator *(Mat m1, Mat m2)
-    { return Mat.StrassenMultiply(m1, m2); }
+    { return Mat.MultiplyMat(m1, m2); }
 
     public static Mat operator *(double n, Mat m)
     { return Mat.Multiply(n, m); }
@@ -1457,7 +1667,8 @@ public class RoboDK
     public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
 
 
-    public System.Diagnostics.Process PROCESS = null; // pointer to the process
+    private System.Diagnostics.Process PROCESS = null; // pointer to the process
+    private IntPtr window_handle = IntPtr.Zero;
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
 
 
@@ -1511,6 +1722,7 @@ public class RoboDK
     {
         if (!is_connected() && !Connect())
         {
+            window_handle = IntPtr.Zero;
             throw new RDKException("Can't connect to RoboDK API");
         }
     }
@@ -2106,6 +2318,7 @@ public class RoboDK
     /// <returns></returns>
     public bool Disconnect()
     {
+        window_handle = IntPtr.Zero;
         if (_COM != null && _COM.Connected)
         {
             _COM.Disconnect(false);
@@ -2122,6 +2335,7 @@ public class RoboDK
     /// 
     public bool Finish()
     {
+        window_handle = IntPtr.Zero;
         return Disconnect();
     }
 
@@ -2298,6 +2512,33 @@ public class RoboDK
             PROCESS = null;
         }
         return connected;
+    }
+
+    /// <summary>
+    /// Get RoboDK main window handle
+    /// </summary>
+    /// <returns></returns>
+    public IntPtr GetWindowHandle()
+    {
+        if (window_handle != IntPtr.Zero)
+        {
+            return window_handle;
+        }
+        // Retrieve the wain window handle
+        if (PROCESS != null)
+        {
+            window_handle = PROCESS.MainWindowHandle;
+            return window_handle;
+        }
+        else
+        {
+            _require_build(7750);
+            // RoboDK was not started from this application.
+            // In that case, we can retrieve the window pointer by using a specific RoboDK command
+            string str_window_id = Command("MainWindow_ID");
+            window_handle = new IntPtr(Convert.ToInt32(str_window_id));
+            return window_handle;
+        }
     }
 
 

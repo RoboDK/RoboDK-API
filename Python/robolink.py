@@ -211,6 +211,7 @@ ERROR_PATH_NEARSINGULARITY = 0b1000 # The robot is too close to a singularity. L
 ERROR_COLLISION = 0b100000          # Collision detected
 
 # Interactive selection option (for 3D mouse behavior and setInteractiveMode)
+SELECT_RESET    =-1
 SELECT_NONE     =0
 SELECT_RECTANGLE=1
 SELECT_ROTATE   =2
@@ -218,6 +219,7 @@ SELECT_ZOOM     =3
 SELECT_PAN      =4
 SELECT_MOVE     =5
 SELECT_MOVE_SHIFT=6
+SELECT_MOVE_CLEAR=7
 
 # Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
 DISPLAY_REF_DEFAULT =     -1

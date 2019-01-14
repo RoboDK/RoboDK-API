@@ -86,7 +86,36 @@ def DirExists(folder):
 def FileExists(file):
     """Returns true if the file exists"""
     return os.path.exists(file)
-
+    
+def FilterName(namefilter, safechar='P', reserved_names=None):
+    """Get a safe program or variable name that can be used for robot programming"""
+    # remove non accepted characters
+    for c in r' -[]/\;,><&*:%=+@!#^|?^':
+        namefilter = namefilter.replace(c,'')
+    
+    # remove non english characters
+    char_list = (c for c in namefilter if 0 < ord(c) < 127)
+    namefilter = ''.join(char_list)
+        
+    # Make sure we have a non empty string
+    if len(namefilter) <= 0:
+        namefilter = safechar
+        
+    # Make sure we don't start with a number
+    if namefilter[0].isdigit():
+        print(namefilter)
+        namefilter = safechar + namefilter
+        
+    # Make sure we are not using a reserved name
+    if reserved_names is not None:
+        while namefilter.lower() in reserved_names:
+            namefilter = safechar + namefilter
+            
+        # Add the name to reserved names
+        reserved_names.append(namefilter)
+        
+    return namefilter
+    
 #----------------------------------------------------
 #--------      Generic math usage     ---------------
 
@@ -1622,10 +1651,14 @@ def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec = 2)
             pause(pause_sec)
             return
         
-        pause_sec_multi = pause_sec
         for prog in program:
-            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec_multi)
-            pause_sec_multi = 0
+            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, 0)        
+        
+        print("POPUP: <font color=\"blue\">Done: %i files and folders successfully transferred</font>" % len(program))
+        sys.stdout.flush()
+        pause(pause_sec)
+        print("POPUP: Done")
+        sys.stdout.flush()
         return
     
     import os
@@ -1681,7 +1714,15 @@ def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strt
     file_path = filedialog.asksaveasfile(**options)
     #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
     return file_path
-
+    
+def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
+    """Ask the user to select a folder to save a program or other file"""   
+    tkinter.Tk().withdraw()
+    dirname = filedialog.askdirectory(initialdir=path_programs, title=popup_msg)
+    if len(dirname) < 1:
+        dirname = None
+        
+    return dirname
 class MessageBox(object):
 
     def __init__(self, msg, b1, b2, frame, t, entry):
