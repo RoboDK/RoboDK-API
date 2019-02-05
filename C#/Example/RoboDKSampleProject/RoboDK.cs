@@ -1667,7 +1667,7 @@ public class RoboDK
     public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
 
 
-    private System.Diagnostics.Process PROCESS = null; // pointer to the process
+    public System.Diagnostics.Process PROCESS = null; // pointer to the process
     private IntPtr window_handle = IntPtr.Zero;
     public string LAST_STATUS_MESSAGE = ""; // holds any warnings for the last call
 
