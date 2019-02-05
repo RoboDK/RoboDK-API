@@ -478,11 +478,17 @@ namespace RoboDk.API
         bool Collision(IItem item1, IItem item2, bool useCollisionMap = true);
 
         /// <summary>
-        /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+        /// Return the list of items that are in a collision state. This call will run a check for collisions if collision checking is not activated (if SetCollisionActive is set to Off).
         /// </summary>
         /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools)</param>
         /// <returns>List of items that are in a collision state</returns>
         List<IItem> GetCollisionItems(List<int> link_id_list = null);
+
+        /// <summary>
+        /// Returns the list of pairs of items that are in a collision state. This call will run a check for collisions if collision checking is not activated (if SetCollisionActive is set to Off).
+        /// </summary>
+        /// <returns></returns>
+        List<CollisionPair> GetCollisionPairs();
 
         /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 

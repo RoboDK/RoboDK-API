@@ -698,6 +698,9 @@ class Robolink:
                     break;
                     
                 try:
+                    if self.APPLICATION_DIR == '':
+                        connected = 0
+                        return connected
                     command = [self.APPLICATION_DIR] + self.ARGUMENTS
                     start_robodk(command)                    
                     #import time
@@ -1674,6 +1677,26 @@ class Robolink:
         self._check_status()
         return item_list
         
+    def CollisionPairs(self):
+        """Return the list of pairs of items that are in a collision state.
+        
+        .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
+        """
+        self._check_connection()
+        command = 'Collision_Pairs'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_1 = self._rec_item()
+            id_1 = self._rec_int()
+            item_2 = self._rec_item()
+            id_2 = self._rec_int()
+            item_list.append([item_1, item_2, id_1, id_2])
+
+        self._check_status()
+        return item_list
+        
     def setSimulationSpeed(self, speed):
         """Set the simulation speed. 
         A simulation speed of 5 (default) means that 1 second of simulation time equals to 5 seconds in a real application.
@@ -2123,10 +2146,10 @@ class Robolink:
         It is also possible to specify the name of the post processor as well as the folder to save the program. 
         This method must be called before any program output is generated (before any robot movement or other instruction).
         
-        :param str progname: name of the program
-        :param str folder: folder to save the program, leave empty to use the default program folder
-        :param str postprocessor: name of the post processor. For a post processor in C:/RoboDK/Posts/Fanuc_post.py, specify "Fanuc_post.py" or simply "Fanuc_post".
-        :param robot: Robot to link
+        :param str progname: Name of the program
+        :param str folder: Folder to save the program, leave empty to use the default program folder (usually Desktop)
+        :param str postprocessor: Name of the post processor. For example, to select the post processor C:/RoboDK/Posts/Fanuc_RJ3.py, specify "Fanuc_RJ3.py" or simply "Fanuc_RJ3".
+        :param robot: Robot used for program generation
         :type robot: :class:`.Item`
         
         Example:
@@ -2569,7 +2592,7 @@ class Robolink:
     def EmbedWindow(self, docked_name, window_name, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=100):
         """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
         
-        :param str docked_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
+        :param str docked_name: Name of the docked tab
         :param str window_name: The name of the window currently open
         :param int pid: Process ID (optional)
         :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
@@ -4270,7 +4293,7 @@ class Item():
     def MakeProgram(self, filestr='', run_mode = RUNMODE_MAKE_ROBOTPROG):
         """Generate the program file. Returns True if the program was successfully generated.
         
-        :param str filestr: File path of the program. It can be left empty to use the default action (promt to user or rewrite file)
+        :param str filestr: Path to save the program ending with a slash (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
         :param run_mode: RUNMODE_MAKE_ROBOTPROG to generate the program file. Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.
         :return: [success (True or False), log (str), transfer_succeeded (True/False)]
         
