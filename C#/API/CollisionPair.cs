@@ -2,10 +2,10 @@
 {
     public class CollisionPair
     {
-        public CollisionPair(IItem item1, int id1, IItem item2, int id2)
+        public CollisionPair(IItem item1, int robotLinkId1, IItem item2, int robotLinkId2)
         {
-            CollisionItem1 = new CollisionItem(item1, id1);
-            CollisionItem2 = new CollisionItem(item2, id2);
+            CollisionItem1 = new CollisionItem(item1, robotLinkId1);
+            CollisionItem2 = new CollisionItem(item2, robotLinkId2);
         }
 
         public CollisionPair(IItem item1, IItem item2)
