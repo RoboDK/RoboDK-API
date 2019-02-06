@@ -48,6 +48,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollisionItem.cs" />
     <Compile Include="CollisionPair.cs" />
     <Compile Include="IItem.cs" />
     <Compile Include="IRoboDkEventSource.cs" />
