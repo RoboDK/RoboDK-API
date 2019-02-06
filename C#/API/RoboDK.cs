@@ -985,16 +985,15 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0,
-            int id2 = 0)
+        public bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, CollisionPair collisionPair)
         {
             check_connection();
             var command = "Collision_SetPair";
             send_line(command);
-            send_item(item1);
-            send_item(item2);
-            send_int(id1);
-            send_int(id2);
+            send_item(collisionPair.Item1);
+            send_item(collisionPair.Item2);
+            send_int(collisionPair.RobotLinkId1);
+            send_int(collisionPair.RobotLinkId2);
             send_int((int)collisionCheck);
             var success = rec_int();
             check_status();
@@ -1002,11 +1001,11 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null)
+        public bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, IReadOnlyList<CollisionPair> collisionPairs)
         {
             check_connection();
             send_line("Collision_SetPairList");
-            int npairs = Math.Min(checkState.Count, Math.Min(item1.Count, item2.Count));
+            int npairs = Math.Min(checkState.Count, collisionPairs.Count);
             // pre-allocate send buffer
             // 4: sendIntToBuffer(npairs, buffer);
             // (npairs * 2 * 8) : see Tag1: Send items
@@ -1017,21 +1016,12 @@ namespace RoboDk.API
             for (int i = 0; i < npairs; i++)
             {
                 // Tag1: Send items
-                buffer = sendItemToBuffer(item1[i], buffer);
-                buffer = sendItemToBuffer(item2[i], buffer);
-                int idok1 = 0;
-                int idok2 = 0;
-                if (id1 != null && id1.Count > i)
-                {
-                    idok1 = id1[i];
-                }
-                if (id2 != null && id2.Count > i)
-                {
-                    idok2 = id2[i];
-                }
-                // Tag2: send id's and checkState
-                buffer = sendIntToBuffer(idok1, buffer);
-                buffer = sendIntToBuffer(idok2, buffer);
+                buffer = sendItemToBuffer(collisionPairs[i].Item1, buffer);
+                buffer = sendItemToBuffer(collisionPairs[i].Item2, buffer);
+                // Tag2: send id's
+                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId1, buffer);
+                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId2, buffer);
+                // Tag3: send check state
                 buffer = sendIntToBuffer((int)checkState[i], buffer);
             }
             _socket.SendData(buffer.ToArray());
@@ -1067,25 +1057,19 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public List<IItem> GetCollisionItems(List<int> link_id_list = null)
+        public List<CollisionItem> GetCollisionItems()
         {
             check_connection();
             send_line("Collision_Items");
             int nitems = rec_int();
-            List<IItem> itemList = new List<IItem>(nitems);
-            if (link_id_list != null)
-            {
-                link_id_list.Clear();
-            }
+            List<CollisionItem> itemList = new List<CollisionItem>(nitems);
             for (int i = 0; i < nitems; i++)
             {
-                itemList.Add(rec_item());
-                int linkId = rec_int();//link id for robot items (ignored)
-                if (link_id_list != null)
-                {
-                    link_id_list.Add(linkId);
-                }
-                int collisionTimes = rec_int();//number of objects it is in collisions with
+                IItem item = rec_item();
+                int id = rec_int();
+                itemList.Add(new CollisionItem(item, id));
+
+                int collisionTimes = rec_int(); //number of objects it is in collisions with (unused)
             }
             check_status();
             return itemList;
@@ -1100,14 +1084,12 @@ namespace RoboDk.API
             List<CollisionPair> list_items = new List<CollisionPair>(nitems);
             for (int i = 0; i < nitems; i++)
             {
-                CollisionPair pair = new CollisionPair
-                {
-                    item1 = rec_item(),
-                    id1 = rec_int(),
-                    item2 = rec_item(),
-                    id2 = rec_int()
-                };
-                list_items.Add(pair);
+                IItem item1 = rec_item();
+                int id1 = rec_int();
+                IItem item2 = rec_item();
+                int id2 = rec_int();
+                CollisionPair collisionPair = new CollisionPair(item1, id1, item2, id2);
+                list_items.Add(collisionPair);
             }
             check_status();
             return list_items;

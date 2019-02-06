@@ -442,12 +442,9 @@ namespace RoboDk.API
         /// Specify the link id for robots or moving mechanisms (id 0 is the base).
         /// </summary>
         /// <param name="collisionCheck">Set to COLLISION_ON or COLLISION_OFF</param>
-        /// <param name="item1">IItem 1</param>
-        /// <param name="item2">IItem 2</param>
-        /// <param name="id1">Joint id for IItem 1 (if IItem 1 is a robot or a mechanism)</param>
-        /// <param name="id2">Joint id for IItem 2 (if IItem 2 is a robot or a mechanism)</param>
+        /// <param name="collisionPair">Collision pair (item1, id1, item2, id2) to set</param>
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
-        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, IItem item1, IItem item2, int id1 = 0, int id2 = 0);
+        bool SetCollisionActivePair(CollisionCheckOptions collisionCheck, CollisionPair collisionPair);
 
 
         /// <summary>
@@ -455,12 +452,9 @@ namespace RoboDk.API
         /// Specify the link id for robots or moving mechanisms (id 0 is the base).
         /// </summary>
         /// <param name="checkState">Set to COLLISION_ON or COLLISION_OFF</param>
-        /// <param name="item1">Item 1</param>
-        /// <param name="item2">Item 2</param>
-        /// <param name="id1">Joint id for Item 1 (if Item 1 is a robot or a mechanism)</param>
-        /// <param name="id2">Joint id for Item 2 (if Item 2 is a robot or a mechanism)</param>
+        /// <param name="collisionPairs">List of collision pairs to set</param>
         /// <returns>Returns true if succeeded. Returns false if setting the pair failed (wrong id was provided)</returns>
-        bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, List<IItem> item1, List<IItem> item2, List<int> id1 = null, List<int> id2 = null);
+        bool SetCollisionActivePair(List<CollisionCheckOptions> checkState, IReadOnlyList<CollisionPair> collisionPairs);
 
         /// <summary>
         /// Returns the number of pairs of objects that are currently in a collision state.
@@ -480,9 +474,8 @@ namespace RoboDk.API
         /// <summary>
         /// Return the list of items that are in a collision state. This call will run a check for collisions if collision checking is not activated (if SetCollisionActive is set to Off).
         /// </summary>
-        /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools)</param>
         /// <returns>List of items that are in a collision state</returns>
-        List<IItem> GetCollisionItems(List<int> link_id_list = null);
+        List<CollisionItem> GetCollisionItems();
 
         /// <summary>
         /// Returns the list of pairs of items that are in a collision state. This call will run a check for collisions if collision checking is not activated (if SetCollisionActive is set to Off).
