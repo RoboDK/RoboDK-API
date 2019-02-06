@@ -992,8 +992,8 @@ namespace RoboDk.API
             send_line(command);
             send_item(collisionPair.Item1);
             send_item(collisionPair.Item2);
-            send_int(collisionPair.Id1);
-            send_int(collisionPair.Id2);
+            send_int(collisionPair.RobotLinkId1);
+            send_int(collisionPair.RobotLinkId2);
             send_int((int)collisionCheck);
             var success = rec_int();
             check_status();
@@ -1019,8 +1019,8 @@ namespace RoboDk.API
                 buffer = sendItemToBuffer(collisionPairs[i].Item1, buffer);
                 buffer = sendItemToBuffer(collisionPairs[i].Item2, buffer);
                 // Tag2: send id's
-                buffer = sendIntToBuffer(collisionPairs[i].Id1, buffer);
-                buffer = sendIntToBuffer(collisionPairs[i].Id2, buffer);
+                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId1, buffer);
+                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId2, buffer);
                 // Tag3: send check state
                 buffer = sendIntToBuffer((int)checkState[i], buffer);
             }
