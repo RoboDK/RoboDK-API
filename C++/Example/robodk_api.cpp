@@ -1312,6 +1312,19 @@ void Item::WaitMove(double timeout_sec) const{
     //}
 }
 
+
+/// <summary>
+/// Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+/// </summary>
+/// <param name="accurate">set to 1 to use the accurate model or 0 to use the nominal model</param>
+void Item::setAccuracyActive(int accurate){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_AbsAccOn");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(accurate);
+    _RDK->_check_status();
+}
+
 ///////// ADD MORE METHODS
 
 

@@ -140,7 +140,7 @@ public:
 
     int GetValues(double *joints);
     void SetValues(const double *joints, int ndofs = -1);
-    QString ToString(const QString &separator, int precision = 3);
+    QString ToString(const QString &separator=" , ", int precision = 3);
     bool FromString(const QString &str);
 
 
@@ -580,6 +580,7 @@ public:
     bool Busy();
     void Stop();
     void WaitMove(double timeout_sec = 300) const;
+    void setAccuracyActive(int accurate = 1);
     bool MakeProgram(const QString &filename);
     void setRunType(int program_run_type);
     int RunProgram();
