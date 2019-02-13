@@ -7,7 +7,7 @@ The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
 * [C#](./C%23)
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
-* [C++](https://robodk.com/doc/en/CppAPI/index.html) (Using Qt libraries)
+* [C++](https://robodk.com/doc/en/CppAPI/index.html)
 * [Visual Basic](./Visual%20Basic)
    
 The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
@@ -28,7 +28,7 @@ RoboDK can be used for a wide range of applications, such as 3D printing, robot 
  * [Industrial Robot application examples](https://robodk.com/examples)
  * [RoboDK Blog](https://robodk.com/blog)
  
-*Important* The RoboDK API is not the same as the [RoboDK PlugIn interface] (https://robodk.com/doc/en/PlugIns/index.html)
+**Important:** The RoboDK API is not the same as the [RoboDK PlugIn interface](https://robodk.com/doc/en/PlugIns/index.html)
 
 Requirements
 -------------
