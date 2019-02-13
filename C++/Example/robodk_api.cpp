@@ -36,80 +36,348 @@ namespace RoboDK_API {
 #endif
 
 
-//--------     Generic matrix usage    ---------------
-/// <summary>
-/// Return a translation matrix
-///                 |  1   0   0   X |
-/// transl(X,Y,Z) = |  0   1   0   Y |
-///                 |  0   0   1   Z |
-///                 |  0   0   0   1 |
-/// </summary>
-/// <param name="x">translation along X (mm)</param>
-/// <param name="y">translation along Y (mm)</param>
-/// <param name="z">translation along Z (mm)</param>
-/// <returns></returns>
+//----------------------------------- Joints class ------------------------
+tJoints::tJoints(int ndofs){
+    _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
+    for (int i=0; i<_nDOFs; i++){
+        _Values[i] = 0.0;
+    }
+}
+tJoints::tJoints(const tJoints &copy){
+    SetValues(copy._Values, copy._nDOFs);
+}
+tJoints::tJoints(const double *joints, int ndofs){
+    SetValues(joints, ndofs);
+}
+tJoints::tJoints(const float *joints, int ndofs){
+    int ndofs_ok = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
+    double jnts[RDK_SIZE_JOINTS_MAX];
+    for (int i=0; i<ndofs_ok; i++){
+        jnts[i] = joints[i];
+    }
+    SetValues(jnts, ndofs_ok);
+}
+tJoints::tJoints(const tMatrix2D *mat2d, int column, int ndofs){
+    int ncols = Matrix2D_Size(mat2d, 2);
+    if (column >= ncols){
+        _nDOFs = 0;
+        qDebug()<<"Warning: tMatrix2D column outside range when creating joints";
+    }
+    if (ndofs < 0){
+        ndofs = Matrix2D_Size(mat2d, 1);
+    }
+    _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
+    double *ptr = Matrix2D_Get_col(mat2d, column);
+    SetValues(ptr, _nDOFs);
+}
+tJoints::tJoints(const QString &str){
+    _nDOFs = 0;
+    FromString(str);
+}
+
+const double* tJoints::ValuesD() const{
+    return _Values;
+}
+const float* tJoints::ValuesF() const{
+    for (int i=0; i<RDK_SIZE_JOINTS_MAX; i++){
+        ((float*)_ValuesF)[i] = _Values[i];
+    }
+    return _ValuesF;
+}
+#ifdef ROBODK_API_FLOATS
+const float* tJoints::Values() const{
+    return ValuesF();
+}
+#else
+const double* tJoints::Values() const{
+    return _Values;
+}
+#endif
+
+double* tJoints::Data(){
+    return _Values;
+}
+
+
+void tJoints::SetValues(const double *values, int ndofs){
+    if (ndofs >= 0){
+        _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
+    }
+    for (int i=0; i<_nDOFs; i++){
+        _Values[i] = values[i];
+    }
+}
+
+void tJoints::SetValues(const float *values, int ndofs){
+    if (ndofs >= 0){
+        _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
+    }
+    for (int i=0; i<_nDOFs; i++){
+        _Values[i] = values[i];
+    }
+}
+int tJoints::GetValues(double *values){
+    for (int i=0; i<_nDOFs; i++){
+        values[i] = _Values[i];
+    }
+    return _nDOFs;
+}
+QString tJoints::ToString(const QString &separator, int precision) const {
+    if (!Valid()){
+        return "tJoints(Invalid)";
+    }
+    QString values("tJoints({");
+    if (_nDOFs <= 0){
+        return values;
+    }
+    values.append(QString::number(_Values[0],'f',precision));
+    for (int i=1; i<_nDOFs; i++){
+        values.append(separator);
+        values.append(QString::number(_Values[i],'f',precision));
+    }
+    values.append("}  ,  " + QString::number(_nDOFs) +  ")");
+    return values;
+}
+bool tJoints::FromString(const QString &str){
+    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    _nDOFs = qMin(jnts_list.length(), RDK_SIZE_JOINTS_MAX);
+    for (int i=0; i<_nDOFs; i++){
+        QString stri(jnts_list.at(i));
+        _Values[i] = stri.trimmed().toDouble();
+    }
+    return true;
+}
+
+int tJoints::Length() const {
+    return _nDOFs;
+}
+
+void tJoints::setLength(int new_length) {
+    if (new_length >= 0 && new_length < _nDOFs){
+        _nDOFs = new_length;
+    }
+}
+
+bool tJoints::Valid() const {
+    return _nDOFs > 0;
+}
+//---------------------------------------------------------------------
+
+
+
+
+
+
 Mat transl(double x, double y, double z){
-    Mat mat;
-    mat.setToIdentity();
-    mat.setPos(x, y, z);
-    return mat;
+    return Mat::transl(x,y,z);
 }
 
-/// <summary>
-/// Return a X-axis rotation matrix
-///            |  1  0        0        0 |
-/// rotx(rx) = |  0  cos(rx) -sin(rx)  0 |
-///            |  0  sin(rx)  cos(rx)  0 |
-///            |  0  0        0        1 |
-/// </summary>
-/// <param name="rx">rotation around X axis (in radians)</param>
-/// <returns></returns>
 Mat rotx(double rx){
-    double cx = cos(rx);
-    double sx = sin(rx);
-    return Mat(1, 0, 0, 0, 0, cx, -sx, 0, 0, sx, cx, 0);
+    return Mat::rotx(rx);
 }
 
-/// <summary>
-/// Return a Y-axis rotation matrix
-///            |  cos(ry)  0   sin(ry)  0 |
-/// roty(ry) = |  0        1   0        0 |
-///            | -sin(ry)  0   cos(ry)  0 |
-///            |  0        0   0        1 |
-/// </summary>
-/// <param name="ry">rotation around Y axis (in radians)</param>
-/// <returns></returns>
 Mat roty(double ry){
-    double cy = cos(ry);
-    double sy = sin(ry);
-    return Mat(cy, 0, sy, 0, 0, 1, 0, 0, -sy, 0, cy, 0);
+    return Mat::roty(ry);
 }
 
-/// <summary>
-/// Return a Z-axis rotation matrix
-///            |  cos(rz)  -sin(rz)   0   0 |
-/// rotz(rx) = |  sin(rz)   cos(rz)   0   0 |
-///            |  0         0         1   0 |
-///            |  0         0         0   1 |
-/// </summary>
-/// <param name="rz">rotation around Z axis (in radians)</param>
-/// <returns></returns>
 Mat rotz(double rz){
-    double cz = cos(rz);
-    double sz = sin(rz);
-    return Mat(cz, -sz, 0, 0, sz, cz, 0, 0, 0, 0, 1, 0);
+    return Mat::rotz(rz);
+}
+
+Mat::Mat() : QMatrix4x4() {
+    _valid = true;
+    setToIdentity();
+}
+Mat::Mat(bool valid) : QMatrix4x4() {
+    _valid = valid;
+    setToIdentity();
+}
+
+Mat::Mat(const QMatrix4x4 &matrix) : QMatrix4x4(matrix) {
+    // just copy
+    _valid = true;
+}
+Mat::Mat(const Mat &matrix) : QMatrix4x4(matrix) {
+    // just copy
+    _valid = matrix._valid;
+}
+
+Mat::Mat(double nx, double ox, double ax, double tx, double ny, double oy, double ay, double ty, double nz, double oz, double az, double tz) :
+    QMatrix4x4(nx, ox, ax, tx, ny, oy, ay, ty, nz, oz, az, tz, 0,0,0,1)
+{
+    _valid = true;
+}
+Mat::Mat(const double v[16]) :
+    QMatrix4x4(v[0], v[4], v[8], v[12], v[1], v[5], v[9], v[13], v[2], v[6], v[10], v[14], v[3], v[7], v[11], v[15])
+{
+    _valid = true;
+}
+Mat::Mat(const float v[16]) :
+    QMatrix4x4(v[0], v[4], v[8], v[12], v[1], v[5], v[9], v[13], v[2], v[6], v[10], v[14], v[3], v[7], v[11], v[15])
+{
+    _valid = true;
+}
+
+
+
+Mat::~Mat(){
+
+}
+
+
+void Mat::VX(tXYZ xyz) const {
+    xyz[0] = Get(0, 0);
+    xyz[1] = Get(1, 0);
+    xyz[2] = Get(2, 0);
+}
+void Mat::VY(tXYZ xyz) const {
+    xyz[0] = Get(0, 1);
+    xyz[1] = Get(1, 1);
+    xyz[2] = Get(2, 1);
+}
+void Mat::VZ(tXYZ xyz) const {
+    xyz[0] = Get(0, 2);
+    xyz[1] = Get(1, 2);
+    xyz[2] = Get(2, 2);
+}
+void Mat::Pos(tXYZ xyz) const {
+    xyz[0] = Get(0, 3);
+    xyz[1] = Get(1, 3);
+    xyz[2] = Get(2, 3);
+}
+void Mat::setVX(double x, double y, double z){
+    Set(0,0, x);
+    Set(1,0, y);
+    Set(2,0, z);
+}
+void Mat::setVY(double x, double y, double z){
+    Set(0,1, x);
+    Set(1,1, y);
+    Set(2,1, z);
+}
+
+void Mat::setVZ(double x, double y, double z){
+    Set(0,2, x);
+    Set(1,2, y);
+    Set(2,2, z);
+}
+
+void Mat::setPos(double x, double y, double z){
+    Set(0,3, x);
+    Set(1,3, y);
+    Set(2,3, z);
+}
+void Mat::setVX(double xyz[3]){
+    Set(0,0, xyz[0]);
+    Set(1,0, xyz[1]);
+    Set(2,0, xyz[2]);
+}
+void Mat::setVY(double xyz[3]){
+    Set(0,1, xyz[0]);
+    Set(1,1, xyz[1]);
+    Set(2,1, xyz[2]);
+}
+void Mat::setVZ(double xyz[3]){
+    Set(0,2, xyz[0]);
+    Set(1,2, xyz[1]);
+    Set(2,2, xyz[2]);
+}
+void Mat::setPos(double xyz[3]){
+    Set(0,3, xyz[0]);
+    Set(1,3, xyz[1]);
+    Set(2,3, xyz[2]);
+}
+
+void Mat::Set(int i, int j, double value){
+    QVector4D rw(this->row(i));
+    rw[j] = value;
+    setRow(i, rw);
+    // the following should not crash!!
+    //float **dt_ok = (float**) data();
+    //dt_ok[i][j] = value;
+}
+
+double Mat::Get(int i, int j) const{
+    return row(i)[j];
+    // the following hsould be allowed!!
+    //return ((const float**)data())[i][j];
+}
+
+
+Mat Mat::inv() const{
+    return this->inverted();
+}
+
+bool Mat::isHomogeneous() const {
+    const bool debug_info = false;
+    tXYZ vx, vy, vz;
+    const double tol = 1e-7;
+    VX(vx);
+    VY(vy);
+    VZ(vz);
+    if (fabs((double) DOT(vx,vy)) > tol){
+        if (debug_info){
+            qDebug() << "Vector X and Y are not perpendicular!";
+        }
+        return false;
+    } else if (fabs((double) DOT(vx,vz)) > tol){
+        if (debug_info){
+            qDebug() << "Vector X and Z are not perpendicular!";
+        }
+        return false;
+    } else if (fabs((double) DOT(vy,vz)) > tol){
+        if (debug_info){
+            qDebug() << "Vector Y and Z are not perpendicular!";
+        }
+        return false;
+    } else if (fabs((double) (NORM(vx)-1.0)) > tol){
+        if (debug_info){
+            qDebug() << "Vector X is not unitary! " << NORM(vx);
+        }
+        return false;
+    } else if (fabs((double) (NORM(vy)-1.0)) > tol){
+        if (debug_info){
+            qDebug() << "Vector Y is not unitary! " << NORM(vy);
+        }
+        return false;
+    } else if (fabs((double) (NORM(vz)-1.0)) > tol){
+        if (debug_info){
+            qDebug() << "Vector Z is not unitary! " << NORM(vz);
+        }
+        return false;
+    }
+    return true;
+}
+
+bool Mat::MakeHomogeneous(){
+    tXYZ vx, vy, vz;
+    VX(vx);
+    VY(vy);
+    VZ(vz);
+    bool is_homogeneous = isHomogeneous();
+    //if (is_homogeneous){
+    //    return false;
+    //}
+
+    NORMALIZE(vx);
+    CROSS(vz, vx, vy);
+    NORMALIZE(vz);
+    CROSS(vy, vz, vx);
+    NORMALIZE(vy);
+    setVX(vx);
+    setVY(vy);
+    setVZ(vz);
+    Set(3,0, 0.0);
+    Set(3,1, 0.0);
+    Set(3,2, 0.0);
+    Set(3,3, 1.0);
+    return !is_homogeneous;
 }
 
 
 //----------------------------------------------------
-//------ Pose to xyzrpw and xyzrpw to pose------------
-/// <summary>
-/// Calculates the equivalent position and euler angles ([x,y,z,r,p,w] vector) of the given pose
-/// Note: transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
-/// See also: FromXYZRPW()
-/// </summary>
-/// <returns>XYZWPR translation and rotation in mm and degrees</returns>
-void Mat::ToXYZRPW(tXYZWPR xyzwpr){
+
+void Mat::ToXYZRPW(tXYZWPR xyzwpr) const{
     double x = Get(0,3);
     double y = Get(1,3);
     double z = Get(2,3);
@@ -135,15 +403,38 @@ void Mat::ToXYZRPW(tXYZWPR xyzwpr){
     xyzwpr[5] = w*180.0/M_PI;
 }
 
-QString Mat::ToString(const QString &separator, int precision, bool in_xyzwpr){
+QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only) const {
+    if (!Valid()){
+        return "Mat(Invalid)";
+    }
+    QString str;
+    if (!isHomogeneous()){
+        str.append("Warning!! Pose is not homogeneous! Use Mat::MakeHomogeneous() to make this matrix homogeneous\n");
+    }
+    str.append("Mat(XYZRPW_2_Mat(");
+
     tXYZWPR xyzwpr;
     ToXYZRPW(xyzwpr);
-
-    QString str;
     str.append(QString::number(xyzwpr[0],'f',precision));
     for (int i=1; i<6; i++){
         str.append(separator);
         str.append(QString::number(xyzwpr[i],'f',precision));
+    }
+    str.append("))");
+
+    if (xyzwpr_only){
+        return str;
+    }
+    str.append("\n");
+    for (int i=0; i<4; i++){
+        str.append("[");
+        for (int j=0; j<4; j++){
+            str.append(QString::number(row(i)[j], 'f', precision));
+            if (j < 3){
+                str.append(separator);
+            }
+        }
+        str.append("];\n");
     }
     return str;
 }
@@ -168,92 +459,6 @@ bool Mat::FromString(const QString &pose_str){
 }
 
 
-//----------------------------------- Joints class ------------------------
-tJoints::tJoints(int ndofs){
-    nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
-    for (int i=0; i<nDOFs; i++){
-        Values[i] = 0.0;
-    }
-}
-tJoints::tJoints(const tJoints &copy){
-    SetValues(copy.Values, copy.nDOFs);
-}
-tJoints::tJoints(const tMatrix2D *mat2d, int column, int ndofs){
-    if (Matrix2D_Size(mat2d, 2) >= column){
-        nDOFs = 0;
-        qDebug()<<"Warning: tMatrix2D column outside range when creating joints";
-    }
-    if (ndofs < 0){
-        ndofs = Matrix2D_Size(mat2d, 1);
-    }
-    nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
-
-    double *ptr = Matrix2D_Get_col(mat2d, column);
-    SetValues(ptr, nDOFs);
-}
-tJoints::tJoints(const QString &str){
-    nDOFs = 0;
-    FromString(str);
-}
-
-void tJoints::SetValues(const double *values, int ndofs){
-    if (ndofs >= 0){
-        nDOFs = ndofs;
-    }
-    for (int i=0; i<nDOFs; i++){
-        Values[i] = values[i];
-    }
-}
-int tJoints::GetValues(double *values){
-    for (int i=0; i<nDOFs; i++){
-        values[i] = Values[i];
-    }
-    return nDOFs;
-}
-QString tJoints::ToString(const QString &separator, int precision){
-    QString values;
-    if (nDOFs <= 0){
-        return values;
-    }
-    values.append(QString::number(Values[0],'f',precision));
-    for (int i=1; i<nDOFs; i++){
-        values.append(separator);
-        values.append(QString::number(Values[i],'f',precision));
-    }
-    return values;
-}
-bool tJoints::FromString(const QString &str){
-    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
-    nDOFs = qMin(jnts_list.length(), RDK_SIZE_JOINTS_MAX);
-    for (int i=0; i<nDOFs; i++){
-        QString stri(jnts_list.at(i));
-        Values[i] = stri.trimmed().toDouble();
-    }
-    return true;
-}
-double* tJoints::Data(){
-    return Values;
-}
-int tJoints::Length(){
-    return nDOFs;
-}
-//---------------------------------------------------------------------
-
-
-
-
-
-/// <summary>
-/// Calculates the pose from the position and euler angles ([x,y,z,r,p,w] vector)
-/// The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
-/// </summary>
-/// <param name="x"></param>
-/// <param name="y"></param>
-/// <param name="z"></param>
-/// <param name="w"></param>
-/// <param name="p"></param>
-/// <param name="r"></param>
-/// <returns>Homogeneous matrix (4x4)</returns>
 Mat Mat::XYZRPW_2_Mat(double x, double y, double z, double r, double p, double w){
     double a = r * M_PI / 180.0;
     double b = p * M_PI / 180.0;
@@ -279,88 +484,71 @@ void Mat::FromXYZRPW(tXYZWPR xyzwpr){
     }
 }
 
+const double* Mat::ValuesD() const {
+    double* _ddata16_non_const = (double*) _ddata16;
+    for(int i=0; i<16; ++i){
+        _ddata16_non_const[i] = constData()[i];
+    }
+    return _ddata16;
+}
+const float* Mat::ValuesF() const {
+    return constData();
+}
+
+#ifdef ROBODK_API_FLOATS
+const float* Mat::Values() const {
+    return constData();
+}
+#else
+const double* Mat::Values() const {
+    return ValuesD();
+}
+
+#endif
 
 
 
-
-Mat::Mat() : QMatrix4x4() {
-    setToIdentity();
+void Mat::Values(double data[16]) const{
+    for(int i=0; i<16; ++i){
+        data[i] = constData()[i];
+    }
+}
+void Mat::Values(float data[16]) const{
+    for(int i=0; i<16; ++i){
+        data[i] = constData()[i];
+    }
+}
+bool Mat::Valid() const{
+    return _valid;
 }
 
-Mat::Mat(const QMatrix4x4 &matrix) : QMatrix4x4(matrix) {
-    // just copy
+Mat Mat::transl(double x, double y, double z){
+    Mat mat;
+    mat.setToIdentity();
+    mat.setPos(x, y, z);
+    return mat;
 }
 
-Mat::Mat(double nx, double ox, double ax, double tx, double ny, double oy, double ay, double ty, double nz, double oz, double az, double tz) :
-    QMatrix4x4(nx, ox, ax, tx, ny, oy, ay, ty, nz, oz, az, tz, 0, 0, 0, 1)
-{
-
-}
-Mat::~Mat(){
-
-}
-void Mat::setVX(double x, double y, double z){
-    Set(0,0, x);
-    Set(1,0, y);
-    Set(2,0, z);
-}
-void Mat::VX(tXYZ xyz){
-    xyz[0] = Get(0, 0);
-    xyz[1] = Get(1, 0);
-    xyz[2] = Get(2, 0);
+Mat Mat::rotx(double rx){
+    double cx = cos(rx);
+    double sx = sin(rx);
+    return Mat(1, 0, 0, 0, 0, cx, -sx, 0, 0, sx, cx, 0);
 }
 
-void Mat::setVY(double x, double y, double z){
-    Set(0,1, x);
-    Set(1,1, y);
-    Set(2,1, z);
-}
-void Mat::VY(tXYZ xyz){
-    xyz[0] = Get(0, 1);
-    xyz[1] = Get(1, 1);
-    xyz[2] = Get(2, 1);
+Mat Mat::roty(double ry){
+    double cy = cos(ry);
+    double sy = sin(ry);
+    return Mat(cy, 0, sy, 0, 0, 1, 0, 0, -sy, 0, cy, 0);
 }
 
-void Mat::setVZ(double x, double y, double z){
-    Set(0,2, x);
-    Set(1,2, y);
-    Set(2,2, z);
-}
-void Mat::VZ(tXYZ xyz){
-    xyz[0] = Get(0, 2);
-    xyz[1] = Get(1, 2);
-    xyz[2] = Get(2, 2);
-}
-
-void Mat::setPos(double x, double y, double z){
-    Set(0,3, x);
-    Set(1,3, y);
-    Set(2,3, z);
-}
-void Mat::Pos(tXYZ xyz){
-    xyz[0] = Get(0, 3);
-    xyz[1] = Get(1, 3);
-    xyz[2] = Get(2, 3);
-}
-
-Mat Mat::inv() const{
-    return this->inverted();
+Mat Mat::rotz(double rz){
+    double cz = cos(rz);
+    double sz = sin(rz);
+    return Mat(cz, -sz, 0, 0, sz, cz, 0, 0, 0, 0, 1, 0);
 }
 
 
-void Mat::Set(int i, int j, double value){
-    QVector4D rw(this->row(i));
-    rw[j] = value;
-    setRow(i, rw);
-    // the following should not crash!!
-    //float **dt_ok = (float**) data();
-    //dt_ok[i][j] = value;
-}
-double Mat::Get(int i, int j) const{
-    return row(i)[j];
-    // the following hsould be allowed!!
-    //return ((const float**)data())[i][j];
-}
+
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
@@ -381,6 +569,12 @@ Item::~Item(){
 
 }
 
+QString Item::ToString() const {
+    if (this->Valid()){
+        return QString("Item(&RDK, %1, %2); // %3").arg(_PTR).arg(_TYPE).arg(Name());
+    }
+    return "Item(Invalid)";
+}
 
 
 /// <summary>
@@ -438,7 +632,7 @@ void Item::Delete(){
 /// Checks if the item is valid. An invalid item will be returned by an unsuccessful function call.
 /// </summary>
 /// <returns>true if valid, false if invalid</returns>
-bool Item::Valid(){
+bool Item::Valid() const {
     return _PTR != NULL;
 }
 /// <summary>
@@ -458,13 +652,25 @@ void Item::setParent(Item parent){
 /// The relationship between this item and its parent is changed to maintain the abosolute position.
 /// </summary>
 /// <param name="parent">parent item to attach this item</param>
-void Item::setParentStatic(Item parent)
-{
+void Item::setParentStatic(Item parent) {
     _RDK->_check_connection();
     _RDK->_send_Line("S_Parent_Static");
     _RDK->_send_Item(this);
     _RDK->_send_Item(parent);
     _RDK->_check_status();
+}
+
+/// <summary>
+/// Return the parent item of this item
+/// </summary>
+/// <returns>Parent item</returns>
+Item Item::Parent() const {
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_Parent");
+    _RDK->_send_Item(this);
+    Item itm_parent = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return itm_parent;
 }
 
 
@@ -473,7 +679,7 @@ void Item::setParentStatic(Item parent)
 /// Returns a list of the item childs that are attached to the provided item.
 /// </summary>
 /// <returns>item x n -> list of child items</returns>
-QList<Item> Item::Childs(){
+QList<Item> Item::Childs() const {
     _RDK->_check_connection();
     _RDK->_send_Line("G_Childs");
     _RDK->_send_Item(this);
@@ -491,7 +697,7 @@ QList<Item> Item::Childs(){
 /// Returns 1 if the item is visible, otherwise, returns 0.
 /// </summary>
 /// <returns>true if visible, false if not visible</returns>
-bool Item::Visible(){
+bool Item::Visible() const {
     _RDK->_check_connection();
     _RDK->_send_Line("G_Visible");
     _RDK->_send_Item(this);
@@ -521,7 +727,7 @@ void Item::setVisible(bool visible, int visible_frame){
 /// Returns the name of an item. The name of the item is always displayed in the RoboDK station tree
 /// </summary>
 /// <returns>name of the item</returns>
-QString Item::Name(){
+QString Item::Name() const {
     _RDK->_check_connection();
     _RDK->_send_Line("G_Name");
     _RDK->_send_Item(this);
@@ -562,7 +768,7 @@ void Item::setPose(Mat pose){
 /// If a robot is provided, it will get the pose of the end efector
 /// </summary>
 /// <returns>4x4 homogeneous matrix (pose)</returns>
-Mat Item::Pose(){
+Mat Item::Pose() const {
     _RDK->_check_connection();
     _RDK->_send_Line("G_Hlocal");
     _RDK->_send_Item(this);
@@ -822,7 +1028,7 @@ void Item::setAsJointTarget(){
 /// <summary>
 /// Returns True if a target is a joint target (green icon). Otherwise, the target is a Cartesian target (red icon).
 /// </summary>
-bool Item::isJointTarget(){
+bool Item::isJointTarget() const {
     _RDK->_check_connection();
     _RDK->_send_Line("Target_Is_JT");
     _RDK->_send_Item(this);
@@ -837,7 +1043,7 @@ bool Item::isJointTarget(){
 /// Returns the current joints of a robot or the joints of a target. If the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
 /// </summary>
 /// <returns>double x n -> joints matrix</returns>
-tJoints Item::Joints(){
+tJoints Item::Joints() const {
     tJoints jnts;
     _RDK->_check_connection();
     _RDK->_send_Line("G_Thetas");
@@ -853,7 +1059,7 @@ tJoints Item::Joints(){
 /// Returns the home joints of a robot. These joints can be manually set in the robot "Parameters" menu, then select "Set home position"
 /// </summary>
 /// <returns>double x n -> joints array</returns>
-tJoints Item::JointsHome(){
+tJoints Item::JointsHome() const {
     tJoints jnts;
     _RDK->_check_connection();
     _RDK->_send_Line("G_Home");
@@ -970,14 +1176,21 @@ Item Item::AddTool(const Mat &tool_pose, const QString &tool_name){
 /// </summary>
 /// <param name="joints"></param>
 /// <returns>4x4 homogeneous matrix: pose of the robot flange with respect to the robot base</returns>
-Mat Item::SolveFK(const tJoints &joints){
+Mat Item::SolveFK(const tJoints &joints, const Mat *tool, const Mat *ref){
     _RDK->_check_connection();
     _RDK->_send_Line("G_FK");
     _RDK->_send_Array(&joints);
     _RDK->_send_Item(this);
     Mat pose = _RDK->_recv_Pose();
+    Mat base2flange(pose);
+    if (tool != nullptr){
+        base2flange = pose*(*tool);
+    }
+    if (ref != nullptr){
+        base2flange = ref->inv() * base2flange;
+    }
     _RDK->_check_status();
-    return pose;
+    return base2flange;
 }
 
 /// <summary>
@@ -1000,6 +1213,8 @@ void Item::JointsConfig(const tJoints &joints, tConfig config){
 /// Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
 /// </summary>
 /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
+/// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+/// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
 /// <returns>array of joints</returns>
 tJoints Item::SolveIK(const Mat &pose, const Mat *tool, const Mat *ref){
     tJoints jnts;
@@ -1018,6 +1233,36 @@ tJoints Item::SolveIK(const Mat &pose, const Mat *tool, const Mat *ref){
     _RDK->_check_status();
     return jnts;
 }
+
+
+
+/// <summary>
+/// Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
+/// </summary>
+/// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
+/// <param name="joints_approx">Aproximate solution. Leave empty to return the closest match to the current robot position.</param>
+/// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+/// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
+/// <returns>array of joints</returns>
+tJoints Item::SolveIK(const Mat pose, tJoints joints_approx, const Mat *tool, const Mat *ref){
+    Mat base2flange(pose);
+    if (tool != nullptr){
+        base2flange = pose*tool->inv();
+    }
+    if (ref != nullptr){
+        base2flange = (*ref) * base2flange;
+    }
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_IK_jnts");
+    _RDK->_send_Pose(base2flange);
+    _RDK->_send_Array(&joints_approx);
+    _RDK->_send_Item(this);
+    tJoints jnts;
+    _RDK->_recv_Array(&jnts);
+    _RDK->_check_status();
+    return jnts;
+}
+
 
 /// <summary>
 /// Computes the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
@@ -1045,8 +1290,11 @@ QList<tJoints> Item::SolveIK_All(const Mat &pose, const Mat *tool, const Mat *re
     tMatrix2D *mat2d = SolveIK_All_Mat2D(pose, tool, ref);
     QList<tJoints> jnts_list;
     int ndofs = Matrix2D_Size(mat2d, 1) - 2;
-    for (int i=0; i<Matrix2D_Size(mat2d, 2); i++){
-        jnts_list.append(tJoints(mat2d, i));
+    int nsol = Matrix2D_Size(mat2d, 2);
+    for (int i=0; i<nsol; i++){
+        tJoints jnts = tJoints(mat2d, i);
+        jnts.setLength(jnts.Length() - 2);
+        jnts_list.append(jnts);
     }
     return jnts_list;
 }
@@ -3069,13 +3317,13 @@ bool RoboDK::_send_XYZ(const tXYZ pos){
     return true;
 }
 bool RoboDK::_recv_Array(tJoints *jnts){
-    return _recv_Array(jnts->Values, &(jnts->nDOFs));
+    return _recv_Array(jnts->_Values, &(jnts->_nDOFs));
 }
 bool RoboDK::_send_Array(const tJoints *jnts){
     if (jnts == NULL){
         return _send_Int(0);
     }
-    return _send_Array(jnts->Values, jnts->nDOFs);
+    return _send_Array(jnts->_Values, jnts->_nDOFs);
 }
 bool RoboDK::_send_Array(const Mat *mat){
     if (mat == NULL){

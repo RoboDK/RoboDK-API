@@ -15,6 +15,8 @@ namespace Ui {
 class MainWindow;
 }
 
+
+/// Example's main window (robot panel)
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -23,11 +25,16 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    /// Select a robot
     void Select_Robot();
 
+    /// Validate if RoboDK is running (RDK is valid)
     bool Check_RoboDK();
+
+    /// Validate if a Robot has been selected (ROBOT variable is valid)
     bool Check_Robot();
 
+    /// Apply an incremental movement
     void IncrementalMove(int id, double sense);
 
 
@@ -69,10 +76,13 @@ private:
 private:
     Ui::MainWindow *ui;
 
-
+    /// Pointer to RoboDK
     RoboDK *RDK;
+
+    /// Pointer to the robot item
     Item *ROBOT;
 
+    /// Pointer to the RoboDK window
     QWindow *robodk_window;
 };
 

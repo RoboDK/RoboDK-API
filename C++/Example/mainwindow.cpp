@@ -169,7 +169,6 @@ void MainWindow::on_btnTestButton_clicked(){
 
     if (!Check_Robot()){ return; }
 
-
     //int runmode = RDK->RunMode(); // retrieve the run mode
 
     //RoboDK *RDK = new RoboDK();
@@ -296,7 +295,47 @@ void MainWindow::on_btnTestButton_clicked(){
     Item localPlaneFrame = RDK->AddFrame("Plane Coord");
     localPlaneFrame.setPose(diagLocalFrame);
     Matrix2D_Delete(&framePts);
+    return;
 
+
+
+
+    // Inverse kinematics test:
+    //Mat tool_pose = transl(10,20,30);
+    //Mat ref_pose = transl(100, 100,500);
+
+    qDebug() << "Testing pose:";
+    qDebug() << "Using robot: " << ROBOT;
+    Mat pose_test(0.733722985, 0.0145948902, -0.679291904, -814.060547, 0.000000000, -0.999769211, -0.0214804877, -8.96536446, -0.679448724, 0.0157607272, -0.733553648, 340.561951);
+    ROBOT->setAccuracyActive(1);
+    pose_test.MakeHomogeneous();
+    qDebug() << pose_test;
+
+    // Calculate a single solution (closest to the current robot position):
+    tJoints joints = ROBOT->SolveIK(pose_test); //, &tool_pose, &ref_pose);
+    qDebug() << "Solution : " << joints;
+
+    // Iterate through all possible solutions
+    // Calculate all nominal solutions:
+    ROBOT->setAccuracyActive(0);
+    auto all_solutions = ROBOT->SolveIK_All(pose_test); //, &tool_pose, &ref_pose);
+    // Use accurate kinematics and calculate inverse kinematics using the closest point
+    ROBOT->setAccuracyActive(1);
+    for (int i=0; i<all_solutions.length(); i++){
+        tJoints joints_nominal_i = all_solutions.at(i);
+        qDebug() << "Nominal  solution " << i << ": " << joints_nominal_i;
+        tJoints joints_accurate_i = ROBOT->SolveIK(pose_test, joints_nominal_i); //, &tool_pose, &ref_pose);
+        qDebug() << "Accurate solution " << i << ": " << joints_accurate_i;
+    }
+
+
+
+
+    /*qDebug() << joints.ToString();
+    tJoints joints = ROBOT->SolveIK(pose_problems);
+    qDebug() << joints.ToString();
+    */
+    return;
 
 
     /*
@@ -456,7 +495,7 @@ void MainWindow::on_radHideRoboDK_clicked()
 
 }
 
-#ifdef WIN32
+#ifdef _MSC_VER
 HWND FindTopWindow(DWORD pid)
 {
     std::pair<HWND, DWORD> params = { 0, pid };
@@ -499,7 +538,7 @@ void MainWindow::on_radIntegrateRoboDK_clicked()
     }
 
 
-#ifdef WIN32
+#ifdef _MSC_VER
     if (procWID != 0){
         qDebug() << "Using parent process=" << procWID;
         //SetParent((HWND) procWID, (HWND)widget_container->window()->winId());

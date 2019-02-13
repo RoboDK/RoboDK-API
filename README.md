@@ -7,7 +7,7 @@ The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
 * [C#](./C%23)
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
-* [C++](./C%2B%2B) (Using Qt libraries)
+* [C++](https://robodk.com/doc/en/CppAPI/index.html) (Using Qt libraries)
 * [Visual Basic](./Visual%20Basic)
    
 The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
@@ -27,6 +27,8 @@ https://robodk.com/offline-programming
 RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place...
  * [Industrial Robot application examples](https://robodk.com/examples)
  * [RoboDK Blog](https://robodk.com/blog)
+ 
+*Important* The RoboDK API is not the same as the [RoboDK PlugIn interface] (https://robodk.com/doc/en/PlugIns/index.html)
 
 Requirements
 -------------
@@ -42,7 +44,9 @@ Documentation
  * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
  * [RoboDK API reference (based on Python)](https://robodk.com/doc/en/PythonAPI/index.html)
  * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
-
+ * [C++ version of the API] (https://robodk.com/doc/en/CppAPI/index.html)
+ * [C# version of the API (NuGet)] (https://robodk.com/doc/en/CsAPI/index.html)
+ * [PlugIn interface (C++)] (https://robodk.com/doc/en/PlugIns/index.html)
 
 Example
 -------------
