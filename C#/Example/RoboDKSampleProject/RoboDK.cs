@@ -3585,7 +3585,7 @@ public class RoboDK
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
     /// <param name="value">Comand value (optional, not all commands require a value)</param>
     /// <returns></returns>
-    public string Command(string cmd, string value="")
+    public string Command(string cmd, string value = "")
     {
         _check_connection();
         _send_Line("SCMD");
@@ -3627,7 +3627,7 @@ public class RoboDK
     public string Command(string cmd, double value)
     {
         return Command(cmd, value.ToString("0.######"));
-    }    
+    }
 
     /// <summary>
     /// Returns the list of open stations in RoboDK
@@ -3836,7 +3836,7 @@ public class RoboDK
         {
             _send_Pose(pose_list[i]);
             _send_Array(japrox_list[i]);
-            _send_Item(robot_list[i]);            
+            _send_Item(robot_list[i]);
             double[] joints_sol = _recv_Array();
             list_joints.Add(joints_sol);
         }
@@ -3869,7 +3869,7 @@ public class RoboDK
         _check_status();
         return list_joints2d;
     }
-    
+
     /// <summary>
     /// Returns the robot configuration state for a set of robot joints.
     /// </summary>
@@ -5007,6 +5007,20 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Apply a scale to an object to make it bigger or smaller.
+        /// The scale can be uniform (if scale is a float value) or per axis (if scale is a vector).
+        /// </summary>
+        /// <param name="scale">scale to apply</param>
+        public void Scale(double scale)
+        {
+            if (scale == 1.0)
+                return;
+
+            double[] scale3 = new double[] { scale, scale, scale };
+            Scale(scale3);
+        }
+
+        /// <summary>
         /// Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         /// </summary>
         /// <param name="curve_points">matrix 3xN or 6xN -> N must be multiple of 3</param>
@@ -6120,7 +6134,7 @@ public class RoboDK
         /// <param name="timeout_sec">Maximum time to wait for the result (seconds)</param>
         /// <param name="time_step">Time step in seconds for time-based calculation (only used if the flag is set to 4)</param>
         /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600, double time_step=0.2)
+        public int InstructionListJoints(out string error_msg, out Mat joint_list, double mm_step = 10.0, double deg_step = 5.0, string save_to_file = "", int collision_check = COLLISION_OFF, int flags = 0, int timeout_sec = 3600, double time_step = 0.2)
         {
             link._check_connection();
             link._send_Line("G_ProgJointList");
