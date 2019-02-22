@@ -45,6 +45,9 @@ UR_GET_JOINT_CURRENTS = 348
 UR_GET_TCP_POSITION = 444       # Real TCP position
 UR_GET_TCP_SPEED = 492          # Real TCP speed
 UR_GET_TCP_FORCES = 540
+UR_GET_INPUTS = (86-32)*8 + 252
+UR_GET_OUTPUTS = (131-32)*8 + 252
+
 
 # Get packet size according to the byte array
 def packet_size(buf):
@@ -65,11 +68,21 @@ def packet_check(buf):
 def packet_value(buf, offset, nval=6):
     if len(buf) < offset+nval:
         print("Not available offset (maybe older Polyscope version?): %i - %i" % (len(buf), offset))
-        return None
-    format = '!'
+        return None    
+    fmt = '!'
     for i in range(nval):
-        format+='d'
-    return list(struct.unpack_from(format, buf, offset))    #return list(struct.unpack_from("!dddddd", buf, offset))
+        fmt+='d'
+    return list(struct.unpack_from(fmt, buf, offset))    #return list(struct.unpack_from("!dddddd", buf, offset))
+
+# Get packet bits
+def packet_value_bin(buf, offset, nval=8):
+    if len(buf) < offset+nval:
+        print("Not available offset (maybe older Polyscope version?): %i - %i" % (len(buf), offset))
+        return None
+    hex_list = ''
+    return ''.join(format(x, '02x') for x in buf[offset:(offset+nval)])
+
+    
 
 #########################################################################
 
@@ -98,7 +111,7 @@ if SAVE_CSV_FILE:
     file_path = RDK.getParam('FILE_OPENSTATION')[:-4] + '_Monitoring_%s_%s.csv' % (robotname, time.strftime("%Y-%m-%d-%Hh%Mm%Ss", time.gmtime()))
     print("Monitoring robot %s to %s" % (robotname, file_path))
     fid = open(file_path,'w')
-    fid.write('time (s), Speed (m/s), Speed (rad/s), J1 (deg), J2 (deg), J3 (deg), J4 (deg), J5 (deg), J6 (deg), TCP X (m), TCP Y (m), TCP Z (m), TCP u (rad), TCP v (rad), TCP w (rad), Speed X (m/s), Speed Y (m/s), Speed Z (m/s), Speed u (rad/s), Speed v (rad/s), Speed w (rad/s)\n')
+    fid.write('time (s), Speed (m/s), Speed (rad/s), J1 (deg), J2 (deg), J3 (deg), J4 (deg), J5 (deg), J6 (deg), TCP X (m), TCP Y (m), TCP Z (m), TCP u (rad), TCP v (rad), TCP w (rad), Speed X (m/s), Speed Y (m/s), Speed Z (m/s), Speed u (rad/s), Speed v (rad/s), Speed w (rad/s), Inputs, Outputs\n')
     tic()
 
 
@@ -110,6 +123,10 @@ def on_packet(packet, packet_id):
     ROBOT_JOINTS = [ji * 180.0/pi for ji in rob_joints_RAD]    
     ROBOT_TCP_XYZUVW = packet_value(packet, UR_GET_TCP_POSITION)
     ROBOT_TCP_SPEED = packet_value(packet, UR_GET_TCP_SPEED)
+    ROBOT_INPUTS = packet_value_bin(packet, UR_GET_INPUTS)
+    ROBOT_OUTPUTS = packet_value_bin(packet, UR_GET_OUTPUTS)
+    #print("Output:")
+    #print(ROBOT_OUTPUTS)
     
     #ROBOT_SPEED = packet_value(packet, UR_GET_JOINT_SPEEDS)
     #ROBOT_CURRENT = packet_value(packet, UR_GET_JOINT_CURRENTS)
@@ -130,9 +147,10 @@ def on_packet(packet, packet_id):
                 
             for value in ROBOT_TCP_SPEED:
                 fid.write(',%.6f' % value)
-            
-            fid.write('\n')
-            
+
+            fid.write(',' + ROBOT_INPUTS)
+            fid.write(',' + ROBOT_OUTPUTS)
+            fid.write('\n')            
     
 
 # Monitor thread to retrieve information from the robot

@@ -80,9 +80,10 @@ while True:
         print("Warning!! Robot configuration changed!! This will lead to unextected movements!")
         print(robot_config)
         print(new_robot_config)
+    else:
 
-    # move the robot joints to the new position
-    robot.MoveJ(new_robot_joints)
-    #robot.MoveL(new_robot_joints)
+        # move the robot joints to the new position
+        robot.MoveJ(new_robot_joints)
+        #robot.MoveL(new_robot_joints)
     
 

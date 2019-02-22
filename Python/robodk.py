@@ -165,7 +165,7 @@ def name_2_id(str_name_id):
 #--------     Generic matrix usage    ---------------
 
 def rotx(rx):
-    r"""Returns a rotation matrix around the X axis
+    r"""Returns a rotation matrix around the X axis (radians)
     
     .. math::
         
@@ -184,7 +184,7 @@ def rotx(rx):
     return Mat([[1,0,0,0],[0,ct,-st,0],[0,st,ct,0],[0,0,0,1]])
 
 def roty(ry):
-    r"""Returns a rotation matrix around the Y axis
+    r"""Returns a rotation matrix around the Y axis (radians)
     
     .. math::
         
@@ -203,7 +203,7 @@ def roty(ry):
     return Mat([[ct,0,st,0],[0,1,0,0],[-st,0,ct,0],[0,0,0,1]])
 
 def rotz(rz):
-    r"""Returns a rotation matrix around the Z axis
+    r"""Returns a rotation matrix around the Z axis (radians)
     
     .. math::
         
@@ -222,7 +222,7 @@ def rotz(rz):
     return Mat([[ct,-st,0,0],[st,ct,0,0],[0,0,1,0],[0,0,0,1]])
 
 def transl(tx,ty=None,tz=None):
-    r"""Returns a translation matrix
+    r"""Returns a translation matrix (mm)
     
     .. math::
         
@@ -312,11 +312,17 @@ def eye(size=4):
         0 & 0 & 0 & 1
         \end{bmatrix}
         
-    :param int size: square matrix size (4 by default)
+    :param int size: square matrix size (4x4 Identity matrix by default, otherwise it is initialized to 0)
     
     .. seealso:: :func:`~robodk.transl`, :func:`~robodk.rotx`, :func:`~robodk.roty`, :func:`~robodk.rotz`
     """
-    return Mat([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
+    if size == 4:
+        return Mat([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
+    else:
+        newmat = Mat(size,size)
+        for i in range(size):
+            newmat[i,i] = 1
+        return newmat
 
 def size(matrix,dim=None):
     """Returns the size of a matrix (m,n).
@@ -1443,6 +1449,10 @@ class Mat(object):
     def VZ(self):
         """Returns the Z vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
         return self[0:3,2].tolist()
+        
+    def Rot33(self):
+        """Returns the sub 3x3 rotation matrix"""
+        return self[0:3,0:3]
         
     def setPos(self, newpos):
         """Sets the XYZ position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""

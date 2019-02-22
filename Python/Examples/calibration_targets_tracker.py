@@ -15,15 +15,26 @@ TRACKER_REF_NAME = 'Tracker reference' # keyword of the measurement system refer
 TCP_PREFIX = 'CalibTool'
 
 # Use the tag CHECK_COLLISION_NAME to automatically turn the objects visible. This will allow to detect collisions.
+CHECK_COLLISION = True
 CHECK_COLLISION_MOVE = True
 CHECK_COLLISION_NAME = 'collision'
-CHECK_COLLISION_STEP = 10 # in degrees, step to check for collisions. higher is faster.
+CHECK_COLLISION_STEP = -1 # in degrees, step to check for collisions. higher is faster.
 
 # Use the tag CHECK_COLLISION_NAME to automatically turn the objects visible. This will allow to detect collisions.
 CHECK_WORKSPACE = False
 CHECK_WORKSPACE_NAME = 'Workspace'
 
+# Avoid a cylinder located at X=0, Y=0 or radius R_MIN
+R_MIN = 100
+R_MIN_Z = 200
 
+# Allow rotations of the tool pointing to the measurement system
+ROTX_MIN = -10
+ROTX_MAX =  10
+ROTY_MIN = -10
+ROTY_MAX =  10
+ROTZ_MIN = -180
+ROTZ_MAX =  180
 
 
 # use FILE_SAVE_PREFIX to automatically save the file, otherwise, comment this line
@@ -70,7 +81,7 @@ RDK = Robolink()
 
 # get previously set variables
 NMEASURES = RDK.getParam('CALIB_MEASUREMENTS')
-JOINTS_REF = to_list(RDK.getParam('CALIB_JOINTS_REF'), 6)
+#JOINTS_REF = to_list(RDK.getParam('CALIB_JOINTS_REF'), 6)
 ANG_MIN = to_list(RDK.getParam('CALIB_JOINTLIM_LOW'), 6)
 ANG_MAX = to_list(RDK.getParam('CALIB_JOINTLIM_HIGH'), 6)
 XYZ_MIN = to_list(RDK.getParam('CALIB_XYZLIM_LOW'), 3)
@@ -119,9 +130,9 @@ if CHECK_WORKSPACE:
 #------------------------------------------------------------
 
 
-if JOINTS_REF is None:
-    # Use robot home position as default reference joints
-    JOINTS_REF = robot.JointsHome().tolist()
+#if JOINTS_REF is None:
+#    # Use robot home position as default reference joints
+#    JOINTS_REF = robot.JointsHome().tolist()
 
 if XYZ_MIN is None:
     XYZ_MIN = DEFAULT_XYZ_MIN
@@ -189,12 +200,12 @@ while True:
         RDK.setParam('CALIB_JOINTLIM_HIGH', ANG_MAX)
 
         # ---------------- getting the XYZ limits (lower bound)
-        XYZ_MIN = get_values('Enter the Cartesian limits (lower bound, in mm), then select OK.', XYZ_MIN, 3)
-        RDK.setParam('CALIB_XYZLIM_LOW', XYZ_MIN)
+        #XYZ_MIN = get_values('Enter the Cartesian limits (lower bound, in mm), then select OK.', XYZ_MIN, 3)
+        #RDK.setParam('CALIB_XYZLIM_LOW', XYZ_MIN)
 
         # ---------------- getting the XYZ limits (upper bound)
-        XYZ_MAX = get_values('Enter the Cartesian limits (upper bound, in mm), then select OK.', XYZ_MAX, 3)
-        RDK.setParam('CALIB_XYZLIM_HIGH', XYZ_MAX)
+        #XYZ_MAX = get_values('Enter the Cartesian limits (upper bound, in mm), then select OK.', XYZ_MAX, 3)
+        #RDK.setParam('CALIB_XYZLIM_HIGH', XYZ_MAX)
 
     # show summary of parameters
     #robot.setJoints(JOINTS_REF)
@@ -228,17 +239,7 @@ while True:
 
 # raise Exception('done')
 
-# Avoid a cylinder located at X=0, Y=0 or radius R_MIN
-R_MIN = 100
-R_MIN_Z = 200
 
-# Allow rotations of the tool pointing to the measurement system
-ROTX_MIN = -10
-ROTX_MAX =  10
-ROTY_MIN = -10
-ROTY_MAX =  10
-ROTZ_MIN = -180
-ROTZ_MAX =  180
 
 NDOFS = len(ANG_MAX)
 
@@ -263,6 +264,7 @@ def check_joints(jin):
     angles = jin.tolist()
     for i in range(NDOFS):
         if angles[i] > ANG_MAX[i] or angles[i] < ANG_MIN[i]:
+            print("        Joint %i out of limits (%.1f)" % ((i+1),angles[i]))
             return False
     return True
 
@@ -271,11 +273,17 @@ def check_pose(hin):
     x = hin[0,3]
     y = hin[1,3]
     z = hin[2,3]
-    if x < XYZ_MIN[0] or x > XYZ_MAX[0] or y < XYZ_MIN[1] or y > XYZ_MAX[1] or z < XYZ_MIN[2] or z > XYZ_MAX[2]:
-        return False
+    if x < XYZ_MIN[0] or x > XYZ_MAX[0]:
+        print("        X coordinate out of limits %.1f" % x)
+    elif y < XYZ_MIN[1] or y > XYZ_MAX[1]:
+        print("        Y coordinate out of limits %.1f" % y)
+    elif z < XYZ_MIN[2] or z > XYZ_MAX[2]:
+        print("        Z coordinate out of limits %.1f" % z)
     elif x*x + y*y < R_MIN*R_MIN and z < R_MIN_Z:
-        return False
-    return True
+        print("        Robot wrist too close to the robot")
+    else:
+        return True
+    return False
 
 def randpose(rob, htool, point):
     """Returns a random pose where the Z axis points to the measurement system within the accepted rotation limits.
@@ -357,7 +365,8 @@ ptracker = Htracker_wrt_robot[0:3,3].tolist()
 # -----------------------------------------------------------------------
 print('Generating ' + repr(NMEASURES) + ' calibration/validation measurements.')
 JLIST = Mat(6,0)
-LAST_JOINTS = JOINTS_REF
+JOINTS_REF = robot.JointsHome()
+LAST_JOINTS = JOINTS_REF #robot.Joints()
 TCPLIST = Mat(3,0)
 
 i = -1
@@ -375,16 +384,21 @@ while id_measure < NMEASURES:
     hi = randpose(robot, Htool, ptracker)
     print('Nmeasures: ' + repr(id_measure))
     print('Iteration: ' + repr(i))
-    ji = robot.SolveIK(hi*iHtool)
+    pose_flange = hi*iHtool
+    print(pose_flange)
+    ji = robot.SolveIK(pose_flange, JOINTS_REF)
     if not check_joints(ji):
         print('    Joint outside limits')
         continue
-    if not check_pose(hi):
+    if not check_pose(pose_flange): #check_pose(hi):
         print('    Pose outside limits')
         continue
         
     # display potentially good configuration
     robot.setJoints(ji)
+    if CHECK_COLLISION and RDK.Collisions():
+        print('    End point is in a collision state %i' % i)
+        continue
     if CHECK_WORKSPACE and not tool_object.IsInside(workspace_object):
         print('    Tool object outside measurement workspace %i' % i)
         continue

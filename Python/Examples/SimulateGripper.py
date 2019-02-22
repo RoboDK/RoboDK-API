@@ -16,8 +16,8 @@ from robodk import *      # basic matrix operations
 RDK = Robolink()
 
 
-OPENED_KEYWORD = 'Opened'
-CLOSED_KEYWORD = 'Closed'
+OPENED_KEYWORD = 'Open'
+CLOSED_KEYWORD = 'Close'
 UPDATE_FREQUENCY = 0.01   
 
 # Loop forever

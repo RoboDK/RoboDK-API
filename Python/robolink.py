@@ -241,8 +241,8 @@ class Robolink:
     program, ...).
     
     :param str robodk_ip: IP of the RoboDK API server (default='localhost')
-    :param int port: Port of the RoboDK API server (default=None, it will use the default values)
-    :param str args: Command line arguments to pass to RoboDK on startup (such as '/NOSPLASH /NOSHOW), to not display RoboDK. It has no effect if RoboDK is already running.\n
+    :param int port: Port of the RoboDK API server (default=None, it will use the default value)
+    :param list args: Command line arguments to pass to RoboDK on startup (for example: '/NOSPLASH /NOSHOW' should be passed as args=['/NOSPLASH','/NOSHOW'] to not display RoboDK). Arguments have no effect if RoboDK is already running.\n
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
     :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
     
@@ -556,9 +556,12 @@ class Robolink:
         """A connection is attempted upon creation of the object
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
-        In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as '/NOSPLASH /NOSHOW), to not display RoboDK. It has no effect if RoboDK is already running.
+        In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe)."""
-        self.IP = robodk_ip
+        if type(args) is str:
+            args = [args]
+            
+        self.IP = robodk_ip           
         self.ARGUMENTS = args
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
@@ -657,7 +660,14 @@ class Robolink:
             import subprocess
             #import time            
             #tstart = time.time()
-            p = subprocess.Popen(command,stdout=subprocess.PIPE)
+            
+            from sys import platform as _platform
+            p = None
+            if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
+                p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
+            else:
+                p = subprocess.Popen(command,stdout=subprocess.PIPE)
+                
             while True:
                 line = str(p.stdout.readline().decode("utf-8")).strip()
                 print(line)
@@ -3666,12 +3676,16 @@ class Item():
         self.link._check_status()
         return newtool
     
-    def SolveFK(self, joints):
+    def SolveFK(self, joints, tool=None, reference=None):
         """Calculate the forward kinematics of the robot for the provided joints.
         Returns the pose of the robot flange with respect to the robot base reference (:class:`.Mat`).
         
         :param joints: robot joints
         :type joints: list of float or :class:`.Mat`
+        :param tool: Optionally provide the tool used to calculate the forward kinematics. If this parameter is ignored it will use the robot flange.
+        :type tool: :class:`.Mat`
+        :param reference: Optionally provide the reference frame used to calculate the forward kinematics. If this parameter is ignored it will use the robot base frame.
+        :type reference: :class:`.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         
@@ -3712,14 +3726,18 @@ class Item():
             # move the robot to the new position
             robot.MoveJ(new_robot_joints)
             #robot.MoveL(new_robot_joints)
-        """
+        """        
         self.link._check_connection()
         command = 'G_FK'
         self.link._send_line(command)
         self.link._send_array(joints)
         self.link._send_item(self)
         pose = self.link._rec_pose()
-        self.link._check_status()
+        self.link._check_status()                
+        if tool is not None:
+            pose = pose*tool
+        if reference is not None:
+            pose = invH(reference)*pose
         return pose
     
     def JointsConfig(self, joints):
@@ -4766,4 +4784,33 @@ class Item():
         error_msg = self.link._rec_line()
         self.link._check_status()
         return error_msg, joint_list, error_code
-
+        
+    def setParam(self, param, value=''):
+        """Send a specific parameter for an item.
+        
+        :param str command: Command name
+        :param str value: Comand value (optional, not all commands require a value) 
+        
+        .. code-block:: python
+            :caption: Example commands
+            
+            from robolink import *
+            RDK = Robolink()      # Start the RoboDK API
+            
+            # How to change the number of threads using by the RoboDK application:
+            robot = RDK.Item("", ITEM_TYPE_ROBOT)
+            
+            # Set the robot post processor (name of the py file in the posts folder)
+            robot.setParam("PostProcessor", "Fanuc_RJ3")
+        
+        .. seealso:: :func:`~robolink.Robolink.setParam`
+        """    
+        self.link._check_connection()
+        command = 'ICMD'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(param))
+        self.link._send_line(str(value).replace('\n','<br>'))
+        line = self.link._rec_line()
+        self.link._check_status()
+        return line

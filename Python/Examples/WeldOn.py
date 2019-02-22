@@ -1,5 +1,7 @@
 # This macro allows simulating a weld gun
-# It creates a new "spray gun" object in RoboDK that allows simulating particle deposition
+# This is an old version of the ArcStart / ArcEnd macro. Use these macros instead for higher flexibility.
+# 
+# This macro creates a new "spray gun" object in RoboDK that allows simulating particle deposition
 # by using RDK.Spray_Add(tool, object, options_command, volume, geometry)
 # tool: tool item (TCP) to use
 # object: object to project the particles
