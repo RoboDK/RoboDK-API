@@ -1,7 +1,7 @@
 RoboDK API
 =========
 
-This repository is the implementation of the RoboDK API in different programming languages for simulation and offline programming. The RoboDK API allows programming any industrial robot with your preferred programming language.
+This repository is the implementation of the RoboDK API in different programming languages for simulation and offline programming. The RoboDK API allows you to program any industrial robot arm using your preferred programming language.
 
 The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
@@ -28,7 +28,7 @@ RoboDK can be used for a wide range of applications, such as 3D printing, robot 
  * [Industrial Robot application examples](https://robodk.com/examples)
  * [RoboDK Blog](https://robodk.com/blog)
  
-**Important:** The RoboDK API is not the same as the [RoboDK PlugIn interface](https://robodk.com/doc/en/PlugIns/index.html)
+**Important:** The RoboDK API is not the same as the [RoboDK Plug-In interface](https://robodk.com/doc/en/PlugIns/index.html).
 
 Requirements
 -------------
