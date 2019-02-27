@@ -1639,6 +1639,7 @@ public class RoboDK
     public const int EVENT_TOOL_MODIFIED = 5;
     public const int EVENT_CREATED_ISOCUBE = 6;
     public const int EVENT_SELECTION_3D_CHANGED = 7;
+    public const int EVENT_3DVIEW_MOVED = 8;
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;

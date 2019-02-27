@@ -82,9 +82,12 @@ namespace RoboDk.API.Model
         /// <summary>
         /// One object (Item) has been selected or deselected from 3D view
         /// </summary>
-        Selection3DChanged = 7
+        Selection3DChanged = 7,
 
-
+        /// <summary>
+        /// The user moved the position of the camera in the 3D view (ViewPose)
+        /// </summary>
+        Moved3DView = 8
     }
 }
 
