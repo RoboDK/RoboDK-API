@@ -8,7 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+#
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
 # This file defines the following two classes:
@@ -234,6 +234,37 @@ DISPLAY_REF_PXY= 0b001000000
 DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
+
+
+def getPathRoboDK(): 
+    """RoboDK's executable/binary file"""
+    from sys import platform as _platform
+    if _platform == "linux" or _platform == "linux2":
+        # Ubuntu, Linux or Debian
+        return os.path.expanduser("~/RoboDK/bin/RoboDK")
+    elif _platform == "darwin":
+        # MacOS
+        #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+        return "~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
+    else:
+        # Windows assumed  
+        import winreg        
+        
+        # Try to get the value from the Windows registry:
+        try:
+            # Open the key and return the handle object.
+            hKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "Software\\RoboDK")            
+            # Read the value.                      
+            result = winreg.QueryValueEx(hKey, "INSTDIR")            
+            # Close the handle object.
+            winreg.CloseKey(hKey)            
+            # Return only the value from the resulting tuple (value, type_as_int).
+            return result[0].replace("\\","/") + "/bin/RoboDK.exe"        
+        except:# FileNotFoundError:
+            print("RoboDK was not installed properly. Install RoboDK from www.robodk.com/download.")
+            
+        return "C:/RoboDK/bin/RoboDK.exe"
+
 class Robolink:
     """The Robolink class is the link to to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
     Any interaction is made through \"items\" (Item() objects). An item is an object in the
@@ -261,7 +292,7 @@ class Robolink:
     PORT = -1
     BUILD = 0              # This variable holds the build id and is used for version checking
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+            
     def _is_connected(self):
         """Returns 1 if connection is valid, returns 0 if connection is invalid"""
         if not self.COM: return 0
@@ -566,13 +597,7 @@ class Robolink:
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
         else:
-            from sys import platform as _platform
-            if _platform == "linux" or _platform == "linux2":
-                self.APPLICATION_DIR = os.path.expanduser("~/RoboDK/bin/RoboDK")
-            elif _platform == "darwin":
-                self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-            else:
-                self.APPLICATION_DIR = "C:/RoboDK/bin/RoboDK.exe"
+            self.APPLICATION_DIR = getPathRoboDK()
             
         if port is not None:
             self.PORT_START = port
@@ -4324,8 +4349,10 @@ class Item():
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_line(filestr)
-        self.link._send_int(run_mode)        
+        self.link._send_int(run_mode)
+        self.link.COM.settimeout(300) # wait up to 5 minutes for the program to generate
         prog_status = self.link._rec_int()
+        self.link.COM.settimeout(self.link.TIMEOUT)
         prog_log_str = self.link._rec_line()
         transfer_status = self.link._rec_int()
         self.link._check_status()

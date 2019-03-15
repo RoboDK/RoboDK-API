@@ -943,7 +943,9 @@ def dot(a,b):
     
 def angle3(a,b):
     """Returns the angle in radians of two 3D vectors"""
-    return acos(dot(normalize3(a),normalize3(b)))
+    cos_angle = dot(normalize3(a),normalize3(b))
+    cos_angle = min(1.0, max(-1.0, cos_angle))
+    return acos(cos_angle)
 
 def pose_angle(pose):
     """Returns the angle in radians of a 4x4 matrix pose
@@ -1733,6 +1735,7 @@ def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your p
         dirname = None
         
     return dirname
+    
 class MessageBox(object):
 
     def __init__(self, msg, b1, b2, frame, t, entry):
