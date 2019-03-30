@@ -234,7 +234,10 @@ DISPLAY_REF_PXY= 0b001000000
 DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
-
+def RoboDKInstallFound():
+    """Check if RoboDK is installed"""    
+    path_install = getPathRoboDK()
+    return os.File.Exists(path_install)
 
 def getPathRoboDK(): 
     """RoboDK's executable/binary file"""
@@ -292,7 +295,12 @@ class Robolink:
     PORT = -1
     BUILD = 0              # This variable holds the build id and is used for version checking
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
+    def _setTimeout(self, timeout_sec=30):
+        """Set the communication timeout (in seconds)."""
+        # Change the default timeout here, in seconds:
+        self.TIMEOUT = 30 # in seconds
+        self.COM.settimeout(self.TIMEOUT)
+        
     def _is_connected(self):
         """Returns 1 if connection is valid, returns 0 if connection is invalid"""
         if not self.COM: return 0
@@ -602,9 +610,9 @@ class Robolink:
         if port is not None:
             self.PORT_START = port
             self.PORT_END = port
-            self.ARGUMENTS.append("/PORT=%i" % port)
+            self.ARGUMENTS.append("-PORT=%i" % port)
             
-        elif '/NEWINSTANCE' in self.ARGUMENTS:
+        elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
             from socket import socket
             with socket() as s:
                 s.bind(('',0))
@@ -612,7 +620,7 @@ class Robolink:
                 print("Using available port %i" % port)
                 self.PORT_START = port
                 self.PORT_END = port
-                self.ARGUMENTS.append("/PORT=%i" % port)
+                self.ARGUMENTS.append("-PORT=%i" % port)
                 
         self.Connect()
 
@@ -2619,8 +2627,10 @@ class Robolink:
         self._send_line(command)
         self._send_line(plugin_name)
         self._send_line(plugin_command)
-        self._send_line(value)
+        self._send_line(str(value))
+        self.COM.settimeout(3600*24*7)
         result = self._rec_line()
+        self.COM.settimeout(self.TIMEOUT)
         self._check_status()
         return result
         

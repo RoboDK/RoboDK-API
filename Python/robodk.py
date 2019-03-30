@@ -594,6 +594,13 @@ def Motoman_2_Pose(xyzwpr):
     """
     return xyzrpw_2_pose(xyzwpr)
     
+def Fanuc_2_Pose(xyzwpr):
+    """Converts a Motoman target to a pose (4x4 matrix)
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
+    """
+    return xyzrpw_2_pose(xyzwpr)
+    
 def Pose_2_KUKA(H):
     """Converts a pose (4x4 matrix) to an XYZABC KUKA target (Euler angles), required by KUKA KRC controllers.
     
@@ -716,7 +723,7 @@ def Nachi_2_Pose(xyzwpr):
     
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    return Fanuc_2_Pose(xyzwpr)
+    return xyzrpw_2_pose(xyzwpr)
     
 def pose_2_quaternion(Ti):
     """Returns the quaternion orientation vector of a pose (4x4 matrix)
