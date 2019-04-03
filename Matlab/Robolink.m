@@ -1,54 +1,43 @@
 classdef Robolink < handle
-% The Robolink class is an implementation of the RoboDK API for Matlab.
-% This class allows creating macros for RoboDK and program industrial
-% robots offline.
-%
+% This class allows to create macros for RoboDK.
 % Any interaction is made through "items". An item is an object in the
 % Robodk tree (it can be either a robot, an object, a tool, a frame, a 
 % program, ...).
 % An item is a unique number (pointer) that represents one object.
-% 
-% The RoboDK API for Matlab is implemented with the following classes (files):
-%     Robolink.m
-%     RobolinkItem.m
 %
-% RoboDK API Help:
+% RoboDK api Help:
 % ->Type "doc Robolink"            for more help on the Robolink class
 % ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
 % ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
-%
-% More information:
-%     RoboDK documentation: https://robodk.com/doc/en/RoboDK-API.html
-%     Robolink class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink
-%     Item class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Item
-%
     properties (Constant)
-        ITEM_TYPE_STATION=1;        % Station item (RDK files)
-        ITEM_TYPE_ROBOT=2;          % Robot items (robot files)
-        ITEM_TYPE_FRAME=3;          % Reference frame
-        ITEM_TYPE_TOOL=4;           % Tool item
-        ITEM_TYPE_OBJECT=5;         % Object items
-        ITEM_TYPE_TARGET=6;         % Target items
-        ITEM_TYPE_PROGRAM=8;        % Programs made using the GUI
-        ITEM_TYPE_INSTRUCTION=9     % Instruction inside a program
-        ITEM_TYPE_PROGRAM_PYTHON=10;    % Python programs/scripts
-        ITEM_TYPE_MACHINING=11;     % Robot machining projects
-        ITEM_TYPE_BALLBARVALIDATION=12; % Ballbar validation
-        ITEM_TYPE_CALIBPROJECT=13;  % Robot calibration project
-        ITEM_TYPE_VALID_ISO9283=14; % Robot ISO9283 performance test
-        
-        
-        MOVE_TYPE_INVALID = -1          % Not a movement
-        MOVE_TYPE_JOINT = 1             % Joint move
-        MOVE_TYPE_LINEAR = 2            % Linear move
-        MOVE_TYPE_CIRCULAR = 3          % Circular move
-        MOVE_TYPE_LINEARSEARCH = 4      % Search Linear
-        
+        % Tree item types
+        ITEM_TYPE_STATION=1;
+        ITEM_TYPE_ROBOT=2;
+        ITEM_TYPE_FRAME=3;
+        ITEM_TYPE_TOOL=4;
+        ITEM_TYPE_OBJECT=5;
+        ITEM_TYPE_TARGET=6;
+        ITEM_TYPE_PROGRAM=8;
+        ITEM_TYPE_INSTRUCTION=9
+        ITEM_TYPE_PROGRAM_PYTHON=10;
+        ITEM_TYPE_MACHINING=11;
+        ITEM_TYPE_BALLBARVALIDATION=12;
+        ITEM_TYPE_CALIBPROJECT=13;
+        ITEM_TYPE_VALID_ISO9283=14;
 
-        PATH_OPENSTATION = 'PATH_OPENSTATION';  % Retrieve the full path of the open RDK file
-        FILE_OPENSTATION = 'FILE_OPENSTATION';  % Retrieve the file name of the open station
-        PATH_DESKTOP = 'PATH_DESKTOP';          % Retrieve the Desktop path
+        % Move types
+        MOVE_TYPE_INVALID = -1;
+        MOVE_TYPE_JOINT = 1;
+        MOVE_TYPE_LINEAR = 2;
+        MOVE_TYPE_CIRCULAR = 3;
+        
+        
+        % Station parameters request
+        PATH_OPENSTATION = 'PATH_OPENSTATION';
+        FILE_OPENSTATION = 'FILE_OPENSTATION';
+        PATH_DESKTOP = 'PATH_DESKTOP';
 
+        % Script execution types
         RUNMODE_SIMULATE=1;                      % performs the simulation moving the robot (default)
         RUNMODE_QUICKVALIDATE=2;                 % performs a quick check to validate the robot movements
         RUNMODE_MAKE_ROBOTPROG=3;                % makes the robot program
@@ -56,21 +45,22 @@ classdef Robolink < handle
         RUNMODE_MAKE_ROBOTPROG_AND_START=5;      % makes the robot program and starts it on the robot (independently from the PC)
         RUNMODE_RUN_ROBOT=6;                     % moves the real robot from the PC (PC is the client, the robot behaves like a server)
 
+        % Program execution type
         PROGRAM_RUN_ON_SIMULATOR=1;  % Set the program to run on the simulator
         PROGRAM_RUN_ON_ROBOT=2;      % Set the program to run on the robot
 
-        
-        CALIBRATE_TCP_BY_POINT = 0;     % Calibrate the TCP using points
-        CALIBRATE_TCP_BY_PLANE = 1;     % Calibrate the TCP using a plane
+        % TCP calibration types
+        CALIBRATE_TCP_BY_POINT = 0;
+        CALIBRATE_TCP_BY_PLANE = 1;
 
-        
+        % projection types (for AddCurve)
         PROJECTION_NONE                = 0; % No curve projection
         PROJECTION_CLOSEST             = 1; % The projection will the closest point on the surface
         PROJECTION_ALONG_NORMAL        = 2; % The projection will be done along the normal.
         PROJECTION_ALONG_NORMAL_RECALC = 3; % The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
 
-        
-        EULER_RX_RYp_RZpp = 0; % Generic Euler representation rx->ry'->rz''
+        % Euler type
+        EULER_RX_RYp_RZpp = 0; % generic
         EULER_RZ_RYp_RXpp = 1; % ABB RobotStudio
         EULER_RZ_RYp_RZpp = 2; % Kawasaki, Adept, Staubli
         EULER_RZ_RXp_RZpp = 3; % CATIA, SolidWorks
@@ -78,20 +68,23 @@ classdef Robolink < handle
         EULER_RZ_RY_RX    = 5; % CRS
         EULER_QUEATERNION = 6; % ABB Rapid
         
+        % Collision checking state
+        COLLISION_OFF = 0 % Collision checking turned Off
+        COLLISION_ON = 1 % Collision checking turned On
         
-        TIMEOUT = 5;     % Timeout for API communication, in seconds
+        % Other public variables
+        TIMEOUT = 5;     % timeout for communication, in seconds
     end
     properties
         APPLICATION_DIR = 'C:\RoboDK\bin\RoboDK.exe'; % file path to the Robodk program (executable)
-        COM = 0;         % tcpip com       
-
+        COM = 0;         % tcpip com
     end
     properties(GetAccess = 'private', SetAccess = 'private')
         SAFE_MODE = 1;   % checks that provided items exist in memory
         AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
         PORT_START = 20500; % port to start looking for app connection
         PORT_END   = 20510; % port to stop looking for app connection
-        PORT = -1;     
+        PORT = -1;
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     methods % (Access = 'private')
@@ -106,11 +99,7 @@ classdef Robolink < handle
 %             if status(1) == 'o'
 %                 connected = 1;
 %             end
-            if this.COM == 0
-                connected = 0;          
-            else
-                connected = 1;
-            end
+            connected = 1;
         end
         function check_connection(this)
             % This is a private function. 
@@ -236,6 +225,7 @@ classdef Robolink < handle
             size1 = size(pose,1);
             size2 = size(pose,2);
             if size1 ~= 4 || size2 ~= 4
+                disp(pose);
                 error('Invalid pose');
             end
             bytes = [];
@@ -430,17 +420,6 @@ classdef Robolink < handle
             else
                 ok = 0;
             end
-        end
-        
-        function Disconnect(this)
-            % Disconnect from the RoboDK API
-            clear this.COM;
-            this.COM = 0;
-        end
-        
-        function Finish(this)
-            % Generate any pending programs
-            this.Disconnect();
         end
         function connected = Connect(this)
             % Establishes a connection with Robodk. RoboDK must be running, otherwise, the variable APPLICATION_DIR must be set properly.
@@ -741,7 +720,38 @@ classdef Robolink < handle
             send_int(this, auto_render);
             check_status(this);
         end
-        
+        function Update(this)
+            % Update the screen. This updates the position of all robots and internal links according to previously set values. 
+            % This function is useful when Render is turned off (Example: "RDK.Render(False)"). Otherwise, by default RoboDK will update all links after any modification of the station (when robots or items are moved). 
+            if nargin < 2
+                always_render = 0;
+            end
+            auto_render = int32(~always_render);
+            check_connection(this);
+            command = 'Refresh';
+            send_line(this, command);
+            send_int(this, 0);
+            check_status(this);
+        end
+        function inside = IsInside(this, object_inside, object)
+            % Return 1 (True) if object_inside is inside the object, otherwise, it returns 0 (False). Both objects must be of type :class:`.Item`"""
+            check_connection(this);
+            command = 'IsInside';
+            send_line(this, command);
+            send_item(this, object_inside);
+            send_item(this, object);
+            inside = rec_int(self);
+            check_status(this);
+        end
+        function ncollisions = setCollisionActive(this, check_state)
+            % Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects (:class:`.Item`). This allows altering the collision map for Collision checking.
+            check_connection(this);
+            command = 'Collision_SetState';
+            send_line(this, command);
+            send_int(this, check_state);
+            ncollisions = rec_int(this);
+            check_status(this);
+        end        
         function ncollisions = Collisions(this)
             % Returns the number of pairs of objects that are currently in collision state.
             check_connection(this);
@@ -883,33 +893,6 @@ classdef Robolink < handle
             itempicked = rec_item(this);
             xyz = rec_xyz(this);
             collision = itempicked.Valid();
-            check_status(this);
-        end       
-        function errors = ProgramStart(this, programname, folder, postprocessor, robot)
-            % Defines the name of the program when the program is generated (offline programming). 
-            % It is also possible to specify the name of the post processor as well as the folder to save the program. 
-            % This method must be called before any program output is generated (before any robot movement or other instruction).
-            % In 1: name of the program
-            % In 2: folder to save the program, leave empty to use the default program folder
-            % In 3: name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")
-            % In 4: Robot to link
-            if nargin < 3
-                folder = '';
-            end
-            if nargin < 4
-                postprocessor = '';
-            end
-            if nargin < 5
-                robot = RobolinkItem(this);
-            end            
-            check_connection(this);
-            command = 'ProgramStart';
-            send_line(this,command);
-            send_line(this,programname);
-            send_line(this,folder);
-            send_line(this,postprocessor);
-            send_item(this,robot);
-            errors = rec_int(this);
             check_status(this);
         end
         

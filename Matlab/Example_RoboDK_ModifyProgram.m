@@ -1,12 +1,8 @@
 % This is an example that uses the RoboDK API for Matlab.
 % This is a .m file (Matlab file).
 % The RoboDK API for Matlab requires the files in this folder.
-% This example requires RoboDK to be running 
-% (otherwise, RoboDK will be started if it was installed in the default location)
-% This example automatically loads the Example 01 installed by default in the "Library" folder
-
-% Note: This program is not meant to accomplish a specific goal, only to
-% show how to use the Matlab API
+% This example requires RoboDK to be running.
+% This example automatically loads the Example 1 installed by default in the "Library" folder
 % 
 % RoboDK api Help:
 % ->Type "doc Robolink"            for more help on the Robolink class
@@ -52,7 +48,7 @@ for i=1:nins
     if instype == RobolinkItem.INS_TYPE_MOVE && movetype == RDK.MOVE_TYPE_LINEAR && isjointtarget == 0
         % Shift/rotate the current pose
         fprintf('(modifying instruction)');
-        pose2 = transl(0,0,10)*pose;%*rotz(-2*pi/180)*pose;
+        pose2 = transl(1.1,-2.1,10)*rotz(-2*pi/180)*pose;
         name2 = [name, ' shifted']; % note: right click program and select show instructions
         prog.setInstruction(i, name2, instype, movetype, isjointtarget, pose2, joints);
     end

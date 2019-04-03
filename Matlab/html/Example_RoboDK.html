@@ -1,0 +1,774 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Example_RoboDK</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-03-26"><meta name="DC.source" content="Example_RoboDK.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Retrieving objects from the station and modifying them</a></li><li><a href="#3">How to generate a robot program</a></li><li><a href="#4">How to change the parent that an item is attached to</a></li><li><a href="#5">How to Attach/Detach an object to the robot tool</a></li><li><a href="#6">How to scale an object and how to detect collisions</a></li><li><a href="#7">How to move the robot programmaticall without creating a program</a></li><li><a href="#8">Calculate forward and inverse kinematics of a robot</a></li></ul></div><pre class="codeinput"><span class="comment">% This is an example that uses the RoboDK API for Matlab.</span>
+<span class="comment">% This is a .m file (Matlab file).</span>
+<span class="comment">% The RoboDK API for Matlab requires the files in this folder.</span>
+<span class="comment">% This example requires RoboDK to be running.</span>
+<span class="comment">% This example automatically loads the Example 1 installed by default in the "Library" folder</span>
+<span class="comment">%</span>
+<span class="comment">% RoboDK api Help:</span>
+<span class="comment">% -&gt;Type "doc Robolink"            for more help on the Robolink class</span>
+<span class="comment">% -&gt;Type "doc RobolinkItem"        for more help on the RobolinkItem item class</span>
+<span class="comment">% -&gt;Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes</span>
+
+clc
+clear
+close <span class="string">all</span>
+
+<span class="comment">% Generate a Robolink object RL. This object interfaces with RoboDK.</span>
+RL = Robolink;
+
+<span class="comment">% Get the library path</span>
+path = RL.getParam(<span class="string">'PATH_LIBRARY'</span>);
+
+<span class="comment">% Open example 1</span>
+RL.AddFile([path,<span class="string">'Example 1 - Pick and place.rdk'</span>]);
+
+<span class="comment">% Display a list of all items</span>
+RL.ItemList();
+
+<span class="comment">% Get one item by its name</span>
+program = RL.Item(<span class="string">'Pick and place'</span>);
+
+<span class="comment">% Start "Pick and place" program</span>
+program.RunProgram();
+
+<span class="comment">% Alternative call to run the program</span>
+<span class="comment">% program = RL.Item('Pick and place').RunProgram();</span>
+
+<span class="comment">% Another alternative call to run the same program</span>
+<span class="comment">% RL.RunProgram('Pick and place');</span>
+
+<span class="comment">% return;</span>
+</pre><pre class="codeoutput">1	-&gt;	Example 1 - Pick and place
+2	-&gt;	ABB IRB 1600-8/1.45 Base
+3	-&gt;	ABB IRB 1600-8/1.45
+4	-&gt;	Tool
+5	-&gt;	Table 1
+6	-&gt;	Approach
+7	-&gt;	Target b1
+8	-&gt;	Target b2
+9	-&gt;	Target b3
+10	-&gt;	Target b4
+11	-&gt;	Target b5
+12	-&gt;	base
+13	-&gt;	ball 1
+14	-&gt;	ball 2
+15	-&gt;	ball 3
+16	-&gt;	ball 4
+17	-&gt;	ball 5
+18	-&gt;	Table 2
+19	-&gt;	base
+20	-&gt;	Pick and place
+21	-&gt;	Replace objects
+</pre><h2>Retrieving objects from the station and modifying them<a name="2"></a></h2><pre class="codeinput"><span class="comment">% Get some items in the station by their name. Each item is visible in the</span>
+<span class="comment">% current project tree</span>
+
+robot = RL.Item(<span class="string">'ABB IRB 1600-8/1.45'</span>);
+fprintf(<span class="string">'Robot selected:\t%s\n'</span>, robot.Name());
+robot.setVisible(1);
+<span class="comment">% We can validate the type of each item by calling:</span>
+<span class="comment">% robot.Type()</span>
+<span class="comment">% We can retreive the item position with respect to the station with PoseAbs()</span>
+<span class="comment">% robot.PoseAbs()</span>
+
+frameref = robot.Parent();
+fprintf(<span class="string">'Robot reference selected:\t%s\n'</span>, frameref.Name());
+
+object = RL.Item(<span class="string">'base'</span>);
+fprintf(<span class="string">'Object selected:\t%s\n'</span>, object.Name());
+
+ball = RL.Item(<span class="string">'ball'</span>);
+fprintf(<span class="string">'Ball selected:\t%s\n'</span>, ball.Name());
+
+frametable = RL.Item(<span class="string">'Table 1'</span>);
+fprintf(<span class="string">'Table selected:\t%s\n'</span>, frametable.Name());
+
+tool = RL.Item(<span class="string">'Tool'</span>);
+fprintf(<span class="string">'Tool selected:\t%s\n'</span>, tool.Name());
+
+target1 = RL.Item(<span class="string">'Target b1'</span>);
+fprintf(<span class="string">'Target 1 selected:\t%s\n'</span>, target1.Name());
+
+target2 = RL.Item(<span class="string">'Target b3'</span>);
+fprintf(<span class="string">'Target 2 selected:\t%s\n'</span>, target2.Name());
+
+
+<span class="comment">% return</span>
+</pre><pre class="codeoutput">Robot selected:	ABB IRB 1600-8/1.45
+Robot reference selected:	ABB IRB 1600-8/1.45 Base
+Object selected:	base
+Ball selected:	ball 1
+Table selected:	Table 1
+Tool selected:	Tool
+Target 1 selected:	Target b1
+Target 2 selected:	Target b3
+</pre><h2>How to generate a robot program<a name="3"></a></h2><pre class="codeinput"><span class="comment">% Clean up previous items automatically generated by this script</span>
+<span class="comment">% the keyword "macro" is used if we want to delete any items when the</span>
+<span class="comment">% script is executed again.</span>
+tic()
+<span class="keyword">while</span> 1
+    item = RL.Item(<span class="string">'macro'</span>);
+    <span class="keyword">if</span> item.Valid() == 0
+        <span class="comment">% Iterate until there are no items with the "macro" name</span>
+        <span class="keyword">break</span>
+    <span class="keyword">end</span>
+    <span class="comment">% if Valid() returns 1 it means that an item was found</span>
+    <span class="comment">% if so, delete the item in the RoboDK station</span>
+    item.Delete();
+<span class="keyword">end</span>
+
+<span class="comment">% Set the home joints</span>
+jhome = [ 0, 0, 0, 0, 30, 0];
+
+<span class="comment">% Set the robot at the home position</span>
+robot.setJoints(jhome);
+
+<span class="comment">% Turn off rendering (faster)</span>
+RL.Render(0);
+
+<span class="comment">% Get the tool pose</span>
+Htcp = tool.Htool();
+
+<span class="comment">% Create a reference frame with respect to the robot base reference</span>
+ref = RL.AddFrame(<span class="string">'Frame macro'</span>, frameref);
+<span class="comment">% Set the reference frame at coordinates XYZ, rotation of 90deg about Y plus rotation of 180 deg about Z</span>
+Hframe = transl(750,250,500)*roty(pi/2)*rotz(pi);
+ref.setPose(Hframe);
+
+<span class="comment">% Set the robot's reference frame as the reference we just cretaed</span>
+robot.setFrame(ref);
+<span class="comment">% Set the tool frame</span>
+robot.setTool(tool);
+
+<span class="comment">% Get the position of the TCP wrt the robot base</span>
+Hhome = inv(Hframe)*robot.SolveFK(jhome)*Htcp;
+
+<span class="comment">% Create a new program "prog"</span>
+prog = RL.AddProgram(<span class="string">'Prog macro'</span>);
+
+<span class="comment">% Create a joint target home</span>
+target = RL.AddTarget(<span class="string">'Home'</span>, ref, robot);
+target.setAsJointTarget();
+target.setJoints(jhome)
+<span class="comment">% Add joint movement into the program</span>
+prog.addMoveJ(target);
+
+<span class="comment">% Generate a sequence of targets and move along the targets (linear move)</span>
+angleY = 0;
+<span class="keyword">for</span> dy=600:-100:100
+    targetname = sprintf(<span class="string">'Target TY=%i RY=%i'</span>,dy,angleY);
+    target = RL.AddTarget(targetname,ref,robot);
+    <span class="comment">% Move along Z direction of the reference frame</span>
+    pose = transl(0,dy,0);
+    <span class="comment">% Keep the same orientation as home orientation</span>
+    pose(1:3,1:3) = Hhome(1:3,1:3);
+    pose = pose*roty(angleY*pi/180);
+    target.setPose(pose);
+    prog.addMoveL(target);
+    angleY = angleY + 20;
+<span class="keyword">end</span>
+
+<span class="comment">% Set automatic render on every call</span>
+RL.Render(1);
+
+<span class="comment">% Run the program we just created</span>
+prog.RunProgram();
+
+<span class="comment">% Wait for the movement to finish</span>
+<span class="keyword">while</span> robot.Busy()
+    pause(1);
+    fprintf(<span class="string">'Waiting for the robot to finish...\n'</span>);
+<span class="keyword">end</span>
+
+<span class="comment">% Run the program once again</span>
+fprintf(<span class="string">'Running the program again...\n'</span>);
+prog.RunProgram();
+</pre><pre class="codeoutput">Waiting for the robot to finish...
+Waiting for the robot to finish...
+Waiting for the robot to finish...
+Running the program again...
+</pre><h2>How to change the parent that an item is attached to<a name="4"></a></h2><pre class="codeinput"><span class="comment">% Change the support of a target</span>
+<span class="comment">% The final result of the operations made to target1 and target2 is the same</span>
+Htarget = target1.Pose();
+target1.setParentStatic(frameref);
+target1.setPose(Htarget);
+
+target2.setParent(frameref);
+
+<span class="comment">% We can list the items that depend on an item</span>
+childs = frametable.Childs();
+<span class="keyword">for</span> i=1:numel(childs)
+    name = childs{i}.Name();
+    newname = [name,<span class="string">' modified'</span>];
+    visible = childs{i}.Visible();
+    childs{i}.setName(newname);
+    fprintf(<span class="string">'%s %i\n'</span>,newname, visible);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Approach modified 1
+Target b2 modified 1
+Target b4 modified 1
+Target b5 modified 1
+base modified 1
+ball 1 modified 1
+ball 2 modified 1
+ball 3 modified 1
+ball 4 modified 1
+ball 5 modified 1
+</pre><h2>How to Attach/Detach an object to the robot tool<a name="5"></a></h2><pre class="codeinput"><span class="comment">% Attach the closest object to the tool</span>
+attached = tool.AttachClosest();
+<span class="comment">% If we know what object we want to attach, we can use this function</span>
+<span class="comment">% instead: object.setParentStatic(tool);</span>
+<span class="keyword">if</span> attached.Valid()
+    attachedname = attached.Name();
+    fprintf(<span class="string">'Attached: %s\n'</span>, attachedname);
+<span class="keyword">else</span>
+    <span class="comment">% The tolerance can be changed in:</span>
+    <span class="comment">% Tools-&gt;Options-&gt;General tab-&gt;Maximum distance to attach an object to</span>
+    <span class="comment">% a robot tool (default is 1000 mm)</span>
+    fprintf(<span class="string">'No object is close enough\n'</span>);
+<span class="keyword">end</span>
+pause(2);
+tool.DetachAll();
+fprintf(<span class="string">'Detached all objects\n'</span>);
+</pre><pre class="codeoutput">Attached: base modified
+Detached all objects
+</pre><h2>How to scale an object and how to detect collisions<a name="6"></a></h2><pre class="codeinput"><span class="comment">% Replace objects (we call the program previously set in example 1)</span>
+RL.Item(<span class="string">'Replace objects'</span>).RunProgram();
+
+<span class="comment">% Verify if a joint movement from j1 to j2 is free of colllision</span>
+j1 = [-100, -50, -50, -50, -50, -50];
+j2 = [100, 50, 50, 50, 50, 50];
+collision = robot.MoveJ_Collision(j1, j2, 1);
+disp(collision)
+<span class="comment">% Activate the trace to see what path the robot tries to make</span>
+<span class="comment">% To activate the trace: Tools-&gt;Trace-&gt;Active (ALT+T)</span>
+
+<span class="comment">% Detect collisions: returns the number of pairs of objects in a collision state</span>
+pairs = RL.Collision();
+fprintf(<span class="string">'Pairs collided: %i\n'</span>, pairs);
+
+<span class="comment">% Scale the geometry of an object, scale can be one number or a scale per axis</span>
+object.Scale([10, 10, 0.5]);
+
+<span class="comment">% Detect the intersection between a line and any object</span>
+p1 = [1000; 0; 8000];
+p2 = [1000; 0;    0];
+[collision, itempicked, xyz] = RL.Collision_Line(p1, p2);
+<span class="keyword">if</span> itempicked.Valid()
+    fprintf(<span class="string">'Line from p1 to p2 collides with %s\n'</span>, itempicked.Name());
+    <span class="comment">% Create a point in the intersection to display collision</span>
+    ball.Copy();
+    newball = RL.Paste();
+    <span class="comment">% Set this ball at the collision point</span>
+    newball.setPose(transl(xyz(1),xyz(2),xyz(3)));
+    newball.Scale(0.5); <span class="comment">% Make this ball 50% of the original size</span>
+    newball.Recolor([1 0 0]); <span class="comment">% Make it a red ball</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">     1
+
+Pairs collided: 1
+Line from p1 to p2 collides with base modified
+</pre><h2>How to move the robot programmaticall without creating a program<a name="7"></a></h2><pre class="codeinput"><span class="comment">% Replace objects (we call the program previously set in example 1)</span>
+RL.Item(<span class="string">'Replace objects'</span>).RunProgram();
+
+<span class="comment">% RL.setRunMode(1); % this performs a quick validation without showing the dynamic movement</span>
+<span class="comment">% (1 = RUNMODE_QUICKVALIDATE)</span>
+
+fprintf(<span class="string">'Moving by target item...\n'</span>);
+robot.setFrame(frametable);
+RL.setSimulationSpeed(10);
+<span class="keyword">for</span> i=1:2
+    robot.setSpeed(10000,1000);
+    robot.MoveJ(target1);
+    robot.setSpeed(100,200);
+    robot.MoveL(target2);
+
+<span class="keyword">end</span>
+
+fprintf(<span class="string">'Moving by joints...\n'</span>);
+J1 = [0,0,0,0,50,0];
+J2 = [40,30,-30,0,50,0];
+<span class="keyword">for</span> i=1:2
+    robot.MoveJ(J1);
+    robot.MoveL(J2);
+<span class="keyword">end</span>
+
+fprintf(<span class="string">'Moving by pose...\n'</span>);
+<span class="comment">% Follow these steps to retreive a pose:</span>
+<span class="comment">% 1-Double click a robot</span>
+<span class="comment">% 2-Copy the pose of the Tool frame with respect to the User Frame (as a Matrix)</span>
+<span class="comment">% 3-Paste it here</span>
+H1 = [    -0.492404,    -0.642788,    -0.586824,  -101.791308 ;
+     -0.413176,     0.766044,    -0.492404,  1265.638417 ;
+      0.766044,     0.000000,    -0.642788,   117.851733 ;
+      0.000000,     0.000000,     0.000000,     1.000000 ];
+
+H2 = [    -0.759717,    -0.280123,    -0.586823,  -323.957442 ;
+      0.060192,     0.868282,    -0.492405,   358.739694 ;
+      0.647462,    -0.409410,    -0.642787,   239.313006 ;
+      0.000000,     0.000000,     0.000000,     1.000000 ];
+
+<span class="keyword">for</span> i=1:2
+    robot.MoveJ(H1);
+    robot.MoveL(H2);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Moving by target item...
+Moving by joints...
+Moving by pose...
+</pre><h2>Calculate forward and inverse kinematics of a robot<a name="8"></a></h2><pre class="codeinput"><span class="comment">% Get the current robot joints</span>
+fprintf(<span class="string">'Current robot joints:\n'</span>);
+joints = robot.Joints();
+disp(joints);
+
+<span class="comment">% Get the current position of the TCP with respect to the reference frame</span>
+fprintf(<span class="string">'Calculated pose for current joints:\n'</span>);
+H_tcp_wrt_frame = robot.SolveFK(joints);
+disp(H_tcp_wrt_frame);
+
+<span class="comment">% Calculate the joints to reach this position (should be the same as joints)</span>
+fprintf(<span class="string">'Calculated robot joints from pose:\n'</span>);
+joints2 = robot.SolveIK(H_tcp_wrt_frame);
+disp(joints2);
+
+<span class="comment">% Calculate all solutions</span>
+fprintf(<span class="string">'All solutions available for the selected position:\n'</span>);
+joints3_all = robot.SolveIK_All(H_tcp_wrt_frame);
+disp(joints3_all);
+
+<span class="comment">% Show the sequence in the slider bar in RoboDK</span>
+RL.ShowSequence(joints3_all);
+
+pause(1);
+<span class="comment">% Make joints 4 the solution to reach the target off by 100 mm in Z</span>
+joints4 = robot.SolveIK(H_tcp_wrt_frame*transl(0,0,-100));
+<span class="comment">% Set the robot at the new position calculated</span>
+robot.setJoints(joints4);
+</pre><pre class="codeoutput">Current robot joints:
+  -56.8091
+  -22.9202
+   33.5814
+   47.6220
+   54.6902
+ -104.7797
+
+Calculated pose for current joints:
+   -0.5868   -0.2801    0.7597  305.0477
+   -0.4924    0.8683   -0.0602 -394.7465
+   -0.6428   -0.4094   -0.6475  978.1476
+         0         0         0    1.0000
+
+Calculated robot joints from pose:
+  -56.8091
+  -22.9202
+   33.5814
+   47.6220
+   54.6902
+ -104.7797
+
+All solutions available for the selected position:
+  Columns 1 through 7
+
+  -56.8091  -56.8091  123.1909  123.1909  -56.8091  -56.8091  123.1909
+  -22.9202  -22.9202   -3.2918   -3.2918  -22.9202  -22.9202   -3.2918
+   33.5814   33.5814 -192.6814 -192.6814   33.5814   33.5814 -192.6814
+   47.6220 -132.3780 -129.3428   50.6572   47.6220 -132.3780 -129.3428
+   54.6902  -54.6902   51.2124  -51.2124   54.6902  -54.6902   51.2124
+ -104.7797   75.2203 -109.8131   70.1869  255.2203 -284.7797  250.1869
+
+  Column 8
+
+  123.1909
+   -3.2918
+ -192.6814
+   50.6572
+  -51.2124
+ -289.8131
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% This is an example that uses the RoboDK API for Matlab.
+% This is a .m file (Matlab file).
+% The RoboDK API for Matlab requires the files in this folder.
+% This example requires RoboDK to be running.
+% This example automatically loads the Example 1 installed by default in the "Library" folder
+% 
+% RoboDK api Help:
+% ->Type "doc Robolink"            for more help on the Robolink class
+% ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
+% ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
+
+clc
+clear
+close all
+
+% Generate a Robolink object RL. This object interfaces with RoboDK.
+RL = Robolink;
+
+% Get the library path
+path = RL.getParam('PATH_LIBRARY');
+
+% Open example 1
+RL.AddFile([path,'Example 1 - Pick and place.rdk']);
+
+% Display a list of all items
+RL.ItemList();
+
+% Get one item by its name
+program = RL.Item('Pick and place');
+
+% Start "Pick and place" program
+program.RunProgram();
+
+% Alternative call to run the program
+% program = RL.Item('Pick and place').RunProgram();
+
+% Another alternative call to run the same program
+% RL.RunProgram('Pick and place');
+
+% return;
+
+%% Retrieving objects from the station and modifying them
+
+% Get some items in the station by their name. Each item is visible in the
+% current project tree
+
+robot = RL.Item('ABB IRB 1600-8/1.45');
+fprintf('Robot selected:\t%s\n', robot.Name());
+robot.setVisible(1);
+% We can validate the type of each item by calling:
+% robot.Type()
+% We can retreive the item position with respect to the station with PoseAbs()
+% robot.PoseAbs()
+
+frameref = robot.Parent();
+fprintf('Robot reference selected:\t%s\n', frameref.Name());
+
+object = RL.Item('base');
+fprintf('Object selected:\t%s\n', object.Name());
+
+ball = RL.Item('ball');
+fprintf('Ball selected:\t%s\n', ball.Name());
+
+frametable = RL.Item('Table 1');
+fprintf('Table selected:\t%s\n', frametable.Name());
+
+tool = RL.Item('Tool');
+fprintf('Tool selected:\t%s\n', tool.Name());
+
+target1 = RL.Item('Target b1');
+fprintf('Target 1 selected:\t%s\n', target1.Name());
+
+target2 = RL.Item('Target b3');
+fprintf('Target 2 selected:\t%s\n', target2.Name());
+
+
+% return
+%% How to generate a robot program
+
+% Clean up previous items automatically generated by this script
+% the keyword "macro" is used if we want to delete any items when the
+% script is executed again.
+tic()
+while 1
+    item = RL.Item('macro');
+    if item.Valid() == 0
+        % Iterate until there are no items with the "macro" name
+        break
+    end
+    % if Valid() returns 1 it means that an item was found
+    % if so, delete the item in the RoboDK station
+    item.Delete();
+end
+
+% Set the home joints
+jhome = [ 0, 0, 0, 0, 30, 0];
+
+% Set the robot at the home position
+robot.setJoints(jhome);
+
+% Turn off rendering (faster)
+RL.Render(0);
+
+% Get the tool pose
+Htcp = tool.Htool();
+
+% Create a reference frame with respect to the robot base reference
+ref = RL.AddFrame('Frame macro', frameref);
+% Set the reference frame at coordinates XYZ, rotation of 90deg about Y plus rotation of 180 deg about Z
+Hframe = transl(750,250,500)*roty(pi/2)*rotz(pi);
+ref.setPose(Hframe);
+
+% Set the robot's reference frame as the reference we just cretaed
+robot.setFrame(ref);
+% Set the tool frame
+robot.setTool(tool);
+
+% Get the position of the TCP wrt the robot base
+Hhome = inv(Hframe)*robot.SolveFK(jhome)*Htcp;
+
+% Create a new program "prog"
+prog = RL.AddProgram('Prog macro');
+
+% Create a joint target home
+target = RL.AddTarget('Home', ref, robot);
+target.setAsJointTarget();
+target.setJoints(jhome)
+% Add joint movement into the program
+prog.addMoveJ(target);
+
+% Generate a sequence of targets and move along the targets (linear move)
+angleY = 0;
+for dy=600:-100:100
+    targetname = sprintf('Target TY=%i RY=%i',dy,angleY);
+    target = RL.AddTarget(targetname,ref,robot);
+    % Move along Z direction of the reference frame
+    pose = transl(0,dy,0);
+    % Keep the same orientation as home orientation
+    pose(1:3,1:3) = Hhome(1:3,1:3);
+    pose = pose*roty(angleY*pi/180);
+    target.setPose(pose);
+    prog.addMoveL(target);
+    angleY = angleY + 20;
+end
+
+% Set automatic render on every call
+RL.Render(1);
+
+% Run the program we just created
+prog.RunProgram();
+
+% Wait for the movement to finish
+while robot.Busy()
+    pause(1);
+    fprintf('Waiting for the robot to finish...\n');
+end
+
+% Run the program once again
+fprintf('Running the program again...\n');
+prog.RunProgram();
+
+
+%% How to change the parent that an item is attached to
+
+% Change the support of a target
+% The final result of the operations made to target1 and target2 is the same
+Htarget = target1.Pose();
+target1.setParentStatic(frameref);
+target1.setPose(Htarget);
+
+target2.setParent(frameref);
+
+% We can list the items that depend on an item
+childs = frametable.Childs();
+for i=1:numel(childs)
+    name = childs{i}.Name();
+    newname = [name,' modified'];
+    visible = childs{i}.Visible();
+    childs{i}.setName(newname);
+    fprintf('%s %i\n',newname, visible);
+end
+
+%% How to Attach/Detach an object to the robot tool
+
+% Attach the closest object to the tool
+attached = tool.AttachClosest();
+% If we know what object we want to attach, we can use this function
+% instead: object.setParentStatic(tool);
+if attached.Valid()
+    attachedname = attached.Name();
+    fprintf('Attached: %s\n', attachedname);
+else
+    % The tolerance can be changed in:
+    % Tools->Options->General tab->Maximum distance to attach an object to
+    % a robot tool (default is 1000 mm)
+    fprintf('No object is close enough\n');
+end
+pause(2);
+tool.DetachAll();
+fprintf('Detached all objects\n');
+
+%% How to scale an object and how to detect collisions
+
+% Replace objects (we call the program previously set in example 1)
+RL.Item('Replace objects').RunProgram();
+
+% Verify if a joint movement from j1 to j2 is free of colllision
+j1 = [-100, -50, -50, -50, -50, -50];
+j2 = [100, 50, 50, 50, 50, 50];
+collision = robot.MoveJ_Collision(j1, j2, 1);
+disp(collision)
+% Activate the trace to see what path the robot tries to make
+% To activate the trace: Tools->Trace->Active (ALT+T)
+
+% Detect collisions: returns the number of pairs of objects in a collision state
+pairs = RL.Collision();
+fprintf('Pairs collided: %i\n', pairs);
+
+% Scale the geometry of an object, scale can be one number or a scale per axis
+object.Scale([10, 10, 0.5]);
+
+% Detect the intersection between a line and any object
+p1 = [1000; 0; 8000];
+p2 = [1000; 0;    0];
+[collision, itempicked, xyz] = RL.Collision_Line(p1, p2);
+if itempicked.Valid()
+    fprintf('Line from p1 to p2 collides with %s\n', itempicked.Name());
+    % Create a point in the intersection to display collision
+    ball.Copy();
+    newball = RL.Paste();
+    % Set this ball at the collision point
+    newball.setPose(transl(xyz(1),xyz(2),xyz(3)));
+    newball.Scale(0.5); % Make this ball 50% of the original size
+    newball.Recolor([1 0 0]); % Make it a red ball
+end
+
+
+%% How to move the robot programmaticall without creating a program
+
+% Replace objects (we call the program previously set in example 1)
+RL.Item('Replace objects').RunProgram();
+
+% RL.setRunMode(1); % this performs a quick validation without showing the dynamic movement
+% (1 = RUNMODE_QUICKVALIDATE)
+
+fprintf('Moving by target item...\n');
+robot.setFrame(frametable);
+RL.setSimulationSpeed(10);
+for i=1:2    
+    robot.setSpeed(10000,1000);  
+    robot.MoveJ(target1);  
+    robot.setSpeed(100,200);
+    robot.MoveL(target2);
+    
+end
+
+fprintf('Moving by joints...\n');
+J1 = [0,0,0,0,50,0];
+J2 = [40,30,-30,0,50,0];
+for i=1:2
+    robot.MoveJ(J1);
+    robot.MoveL(J2);
+end
+
+fprintf('Moving by pose...\n');
+% Follow these steps to retreive a pose:
+% 1-Double click a robot
+% 2-Copy the pose of the Tool frame with respect to the User Frame (as a Matrix)
+% 3-Paste it here
+H1 = [    -0.492404,    -0.642788,    -0.586824,  -101.791308 ;
+     -0.413176,     0.766044,    -0.492404,  1265.638417 ;
+      0.766044,     0.000000,    -0.642788,   117.851733 ;
+      0.000000,     0.000000,     0.000000,     1.000000 ];
+
+H2 = [    -0.759717,    -0.280123,    -0.586823,  -323.957442 ;
+      0.060192,     0.868282,    -0.492405,   358.739694 ;
+      0.647462,    -0.409410,    -0.642787,   239.313006 ;
+      0.000000,     0.000000,     0.000000,     1.000000 ];
+  
+for i=1:2
+    robot.MoveJ(H1);
+    robot.MoveL(H2);
+end
+
+%% Calculate forward and inverse kinematics of a robot
+
+% Get the current robot joints
+fprintf('Current robot joints:\n');
+joints = robot.Joints();
+disp(joints);
+
+% Get the current position of the TCP with respect to the reference frame
+fprintf('Calculated pose for current joints:\n');
+H_tcp_wrt_frame = robot.SolveFK(joints);
+disp(H_tcp_wrt_frame);
+
+% Calculate the joints to reach this position (should be the same as joints)
+fprintf('Calculated robot joints from pose:\n');
+joints2 = robot.SolveIK(H_tcp_wrt_frame);
+disp(joints2);
+
+% Calculate all solutions
+fprintf('All solutions available for the selected position:\n');
+joints3_all = robot.SolveIK_All(H_tcp_wrt_frame);
+disp(joints3_all);
+
+% Show the sequence in the slider bar in RoboDK
+RL.ShowSequence(joints3_all);
+
+pause(1);
+% Make joints 4 the solution to reach the target off by 100 mm in Z
+joints4 = robot.SolveIK(H_tcp_wrt_frame*transl(0,0,-100));
+% Set the robot at the new position calculated
+robot.setJoints(joints4);
+
+
+
+##### SOURCE END #####
+--></body></html>

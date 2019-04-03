@@ -1,39 +1,27 @@
 classdef RobolinkItem < handle
-% The Robolink class is an implementation of the RoboDK API for Matlab.
-% This class allows creating macros for RoboDK and program industrial
-% robots offline.
+% The Item class represents an item in RoboDK station.
+% An item can be a robot, a frame, a tool, an object, a target, ... (any item visible in the station tree)
+% An item can also be seen as a node where other items can be attached to (child items).
+% Items (RobolinkItem) are created by certain functions calls from Robolink class.
+% Every item has one parent item/node and can have one or more child items/nodes.
 % 
-% Any interaction is made through "items". An item is an object in the
-% Robodk tree (it can be either a robot, an object, a tool, a frame, a 
-% program, ...).
-% An item is a unique number (pointer) that represents one object.
-% 
-% The RoboDK API for Matlab is implemented with the following classes (files):
-%     Robolink.m
-%     RobolinkItem.m
-% 
-% RoboDK API Help:
+% RoboDK api Help:
 % ->Type "doc Robolink"            for more help on the Robolink class
 % ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
 % ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
-% 
-% More information:
-%     RoboDK documentation: https://robodk.com/doc/en/RoboDK-API.html
-%     Robolink class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink
-%     Item class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Item
-% 
     properties (Constant)    
-        
-        INS_TYPE_INVALID = -1;  % Invalid Instruction
-        INS_TYPE_MOVE = 0;      % Linear or Joint move instruction
-        INS_TYPE_MOVEC = 1;     % Circular move instruction
-        INS_TYPE_CHANGESPEED = 2;   % Set Speed Instruction
-        INS_TYPE_CHANGEFRAME = 3;   % Set Reference Frame instruction
-        INS_TYPE_CHANGETOOL = 4;    % Set Tool frame instruction
-        INS_TYPE_PAUSE = 6;         % Pause instruction
-        INS_TYPE_EVENT = 7;         % Event instruction
-        INS_TYPE_CODE = 8;          % Insert code instruction
-        INS_TYPE_PRINT = 9;         % Print instruction
+        % Instruction types
+        INS_TYPE_INVALID = -1;
+        INS_TYPE_MOVE = 0;
+        INS_TYPE_MOVEC = 1;
+        INS_TYPE_CHANGESPEED = 2;
+        INS_TYPE_CHANGEFRAME = 3;
+        INS_TYPE_CHANGETOOL = 4;
+        INS_TYPE_CHANGEROBOT = 5;
+        INS_TYPE_PAUSE = 6;
+        INS_TYPE_EVENT = 7;
+        INS_TYPE_CODE = 8;
+        INS_TYPE_PRINT = 9;
         
     end    
     properties
@@ -55,6 +43,10 @@ classdef RobolinkItem < handle
             this.link = rl;
             this.type = itemtype;
         end
+        function rdk = RDK(this)
+            % Get the pointer to RoboDK instance
+            rdk = this.link;
+        end            
         function type = Type(this)
             % Returns an integer that represents the type of the item (robot, object, tool, frame, ...)
             this.link.check_connection();
@@ -241,6 +233,26 @@ classdef RobolinkItem < handle
             pose = this.link.rec_pose();
             this.link.check_status();
         end
+        function setHtool(this, pose)
+            % Sets the tool pose of an item.
+            % In 2 : 4x4 homogeneous matrix (pose)
+            this.link.check_connection();
+            command = 'S_Htool';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_pose(pose);
+            this.link.check_status();
+        end
+        function pose = Htool(this)
+            % Gets the tool pose of an item.
+            % Out 1 : 4x4 homogeneous matrix (pose)
+            this.link.check_connection();
+            command = 'G_Htool';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            pose = this.link.rec_pose();
+            this.link.check_status();
+        end
         function setPoseAbs(this, pose)
             % Sts the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.
             % In  1 : 4x4 homogeneous matrix (pose)
@@ -348,6 +360,18 @@ classdef RobolinkItem < handle
             this.link.send_item(this);
             this.link.check_status();
         end
+        function [lim_inf, lim_sup, joints_type] = JointLimits(this)
+            % Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type)
+            % In  1 : double x n -> joints
+            this.link.check_connection();
+            command = 'G_RobLimits';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            lim_inf = this.link.rec_array()';
+            lim_sup = this.link.rec_array()';
+            joints_type = this.link.rec_int()/1000.0;
+            this.link.check_status();
+        end
         function setRobot(this, robot)
             % Sets the robot of a program or a target. You must set the robot linked to a program or a target every time you copy paste these objects.
             % If the robot is not provided, the first available robot will be chosen automatically.
@@ -362,37 +386,7 @@ classdef RobolinkItem < handle
             this.link.send_item(robot);
             this.link.check_status();
         end
-%         function setPoseTool(this, pose)
-%             % Sets the tool pose of an item.
-%             % In 2 : 4x4 homogeneous matrix (pose)
-%             this.link.check_connection();
-%             command = 'S_Htool';
-%             this.link.send_line(command);
-%             this.link.send_item(this);
-%             this.link.send_pose(pose);
-%             this.link.check_status();
-%         end
-        function pose = PoseTool(this)
-            % Gets the tool pose of an item.
-            % Out 1 : 4x4 homogeneous matrix (pose)
-            this.link.check_connection();
-            command = 'G_Htool';
-            this.link.send_line(command);
-            this.link.send_item(this);
-            pose = this.link.rec_pose();
-            this.link.check_status();
-        end
-        function pose = PoseFrame(this)
-            % Gets the reference frame pose of a robot
-            % Out 1 : 4x4 homogeneous matrix (pose)
-            this.link.check_connection();
-            command = 'G_Frame';
-            this.link.send_line(command);
-            this.link.send_item(this);
-            pose = this.link.rec_pose();
-            this.link.check_status();
-        end
-        function setPoseFrame(this, frame)
+        function setFrame(this, frame)
             % Sets the frame of a robot. The frame can be either an item pointer or a 4x4 Matrix.
             % If "frame" is an item pointer, it links the robot to the frame item. If frame is a 4x4 Matrix, it updates the linked pose of the robot frame.
             % In  1 : item/pose -> frame item or 4x4 Matrix (pose of the reference frame)
@@ -409,7 +403,7 @@ classdef RobolinkItem < handle
             this.link.send_item(this);
             this.link.check_status();
         end
-        function setPoseTool(this, tool)
+        function setTool(this, tool)
             % Sets the tool pose of a robot. The tool pose can be either an item pointer or a 4x4 Matrix.
             % If "tool" is an item pointer, it links the robot to the tool item. If tool is a 4x4 Matrix, it updates the linked pose of the robot tool.
             % In  1 : item/pose -> tool item or 4x4 Matrix (pose of the tool frame)
@@ -500,7 +494,9 @@ classdef RobolinkItem < handle
             this.link.send_array(j1);
             this.link.send_array(j2);            
             this.link.send_int(minstep_deg*1000);
+            set(this.link.COM,'Timeout', 3600);
             collision = this.link.rec_int();
+            set(this.link.COM,'Timeout', this.link.TIMEOUT);            
             this.link.check_status();   
         end   
         function collision = MoveL_Test(this, j1, poseto, minstep_deg)
@@ -520,30 +516,27 @@ classdef RobolinkItem < handle
             this.link.send_array(j1);
             this.link.send_pose(poseto);            
             this.link.send_int(minstep_deg*1000);
+            set(this.link.COM,'Timeout', 3600);
             collision = this.link.rec_int();
+            set(this.link.COM,'Timeout', this.link.TIMEOUT);            
             this.link.check_status();   
         end   
-        function setSpeed(this, speed_linear, speed_joints, accel_linear, accel_joints)
+        function setSpeed(this, speed, accel)
             % Sets the speed and/or the acceleration of a robot.
             % In  1 : speed -> speed in mm/s (-1 = no change)
             % In  2 : accel (optional) -> acceleration in mm/s2 (-1 = no change)
-            if nargin < 3
-                speed_joints = -1;
+            if nargin < 2
+                accel = -1;
             end
-            if nargin < 4
-                accel_linear = -1;
-            end
-            if nargin < 5
-                accel_joints = -1;
-            end            
             this.link.check_connection();
-            command = 'S_Speed4';
+            command = 'S_Speed';
             this.link.send_line(command);
+            this.link.send_int(speed*1000);
+            this.link.send_int(accel*1000);
             this.link.send_item(this);
-            this.link.send_array([speed_linear, speed_joints, accel_linear, accel_joints]);
             this.link.check_status();            
         end
-        function setRounding(this, zonedata)
+        function setZoneData(this, zonedata)
             % Sets the robot zone data value.
             % In  1 : zonedata value (robot dependent, set to -1 for fine movements)
             this.link.check_connection();

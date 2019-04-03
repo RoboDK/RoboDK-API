@@ -1,0 +1,1250 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Robolink</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-03-26"><meta name="DC.source" content="Robolink.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> Robolink &lt; handle
+<span class="comment">% This class allows to create macros for Robodk program.</span>
+<span class="comment">% Any interaction is made through "items". An item is an object in the</span>
+<span class="comment">% Robodk tree (it can be either a robot, an object, a tool, a frame, a</span>
+<span class="comment">% program, ...).</span>
+<span class="comment">% An item is a unique number (pointer) that represents one object.</span>
+<span class="comment">%</span>
+<span class="comment">% RoboDK api Help:</span>
+<span class="comment">% -&gt;Type "doc Robolink"            for more help on the Robolink class</span>
+<span class="comment">% -&gt;Type "doc RobolinkItem"        for more help on the RobolinkItem item class</span>
+<span class="comment">% -&gt;Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes</span>
+
+    <span class="keyword">properties</span>
+        APPLICATION_DIR = <span class="string">'C:\RoboDK\bin\RoboDK.exe'</span>; <span class="comment">% file path to the Robodk program (executable)</span>
+        COM = 0;         <span class="comment">% tcpip com</span>
+    <span class="keyword">end</span>
+    <span class="keyword">properties</span>(GetAccess = <span class="string">'private'</span>, SetAccess = <span class="string">'private'</span>)
+        SAFE_MODE = 1;   <span class="comment">% checks that provided items exist in memory</span>
+        AUTO_UPDATE = 0; <span class="comment">% if AUTO_UPDATE is zero, the scene is rendered after every function call</span>
+        TIMEOUT = 5;     <span class="comment">% timeout for communication, in seconds</span>
+        PORT_START = 20500; <span class="comment">% port to start looking for app connection</span>
+        PORT_END   = 20510; <span class="comment">% port to stop looking for app connection</span>
+        PORT = -1;
+    <span class="keyword">end</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="keyword">methods</span> <span class="comment">% (Access = 'private')</span>
+        <span class="keyword">function</span> connected = is_connected(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Returns 1 if connection is valid, returns 0 if connection is invalid</span>
+            <span class="keyword">if</span> strcmp(this.COM,<span class="string">'tcpip'</span>) ~= 0
+                connected = 0;
+                <span class="keyword">return</span>
+            <span class="keyword">end</span>
+            status = get(this.COM,<span class="string">'status'</span>);
+            <span class="keyword">if</span> status(1) == <span class="string">'o'</span>
+                connected = 1;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> check_connection(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% If we are not connected it will attempt a connection, if it fails, it will throw an error</span>
+            <span class="keyword">if</span> ~is_connected(this) &amp;&amp; Connect(this) ~= 1
+                error(<span class="string">'Unable to connect'</span>);
+            <span class="keyword">end</span>
+            flushinput(this.COM);<span class="comment">%Clear anything still in the input buffer from the previous commands</span>
+            flushoutput(this.COM);<span class="comment">%Remove data from output buffer.</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> status = check_status(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% this function checks the status of the connection</span>
+            lastwarn(<span class="string">''</span>); <span class="comment">% makes timeout warning an error</span>
+            status = fread(this.COM, 1, <span class="string">'int32'</span>);
+            <span class="keyword">if</span> ~isempty(lastwarn)
+                error(lastwarn)
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> status &gt; 0 &amp;&amp; status &lt; 10
+                strproblems = <span class="string">'Unknown error'</span>;
+                <span class="keyword">switch</span> status
+                    <span class="keyword">case</span> 1
+                        strproblems = <span class="string">'Invalid item: The item identifier provided is not valid or it does not exist.'</span>;
+                    <span class="keyword">case</span> 2
+                        strproblems = rec_line(this);
+                        warning(strproblems);
+                        status = 0;
+                        <span class="keyword">return</span>
+                        <span class="comment">%error(strproblems);</span>
+                        <span class="comment">%status = -1;</span>
+                        <span class="comment">%return</span>
+                    <span class="keyword">case</span> 3
+                        strproblems = rec_line(this);
+                    <span class="keyword">case</span> 9
+                        strproblems = <span class="string">'Invalid license. Contact us at: www.robodk.org'</span>;
+                    <span class="keyword">otherwise</span>
+                        <span class="comment">% do nothing</span>
+                <span class="keyword">end</span>
+                fprintf([strproblems,<span class="string">'\n'</span>]);
+                error(strproblems);
+            <span class="keyword">elseif</span> status == 0
+                <span class="comment">% everything is OK</span>
+            <span class="keyword">else</span>
+                error(<span class="string">'problems running function'</span>);
+                fclose(this.COM);<span class="comment">% reconnect to reset connection</span>
+                fopen(this.COM);
+                validate_connection(this);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_line(this, string)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends a string of characters with a \n</span>
+            fprintf(this.COM, string);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> string = rec_line(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives a string. It reads until if finds \n</span>
+            string = [];
+            chari = fread(this.COM, 1, <span class="string">'char'</span>);
+            <span class="keyword">while</span> chari ~= 10 <span class="comment">%LF</span>
+                string = [string, chari];
+                chari = fread(this.COM, 1, <span class="string">'char'</span>);
+            <span class="keyword">end</span>
+            string = char(string);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_item(this, item)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends an item pointer</span>
+            fwrite(this.COM, item.item(1), <span class="string">'float64'</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> item = rec_item(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives an item pointer</span>
+            itemnum = fread(this.COM, 1, <span class="string">'float64'</span>);
+            item = RobolinkItem(this, itemnum);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_pose(this, pose)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends a pose (4x4 matrix)</span>
+            fwrite(this.COM, pose(1:16), <span class="string">'double'</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> pose = rec_pose(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives a pose (4x4 matrix)</span>
+            pose = fread(this.COM, 16, <span class="string">'double'</span>);
+            pose = reshape(pose,4,4);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_xyz(this, pos)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends an xyz vector</span>
+            fwrite(this.COM, pos(1:3), <span class="string">'double'</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> pos = rec_xyz(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives an xyz vector (3x1 matrix)</span>
+            pos = fread(this.COM, 3, <span class="string">'double'</span>);
+            pos = reshape(pos,3,1);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_int(this, num)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends an int (32 bits)</span>
+            <span class="keyword">if</span> numel(num) &gt; 1
+                num = num(1);
+            <span class="keyword">end</span>
+            fwrite(this.COM, num, <span class="string">'int32'</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> num = rec_int(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives an int (32 bits)</span>
+            num = fread(this.COM, 1, <span class="string">'int32'</span>);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_array(this, values)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends an array of doubles</span>
+            nval = numel(values);
+            send_int(this, nval);
+            <span class="keyword">if</span> nval &gt; 0
+                valok = reshape(values,nval,1);
+                fwrite(this.COM, valok, <span class="string">'double'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> values = rec_array(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives an array of doubles</span>
+            nvalues = rec_int(this);
+            <span class="keyword">if</span> nvalues &gt; 0
+                values = fread(this.COM, nvalues, <span class="string">'double'</span>);
+            <span class="keyword">else</span>
+                values = [];
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> send_matrix(this, mat)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Sends a 2 dimensional matrix (nxm)</span>
+            size1 = size(mat,1);
+            size2 = size(mat,2);
+            send_int(this,size1);
+            send_int(this,size2);
+            <span class="keyword">for</span> j=1:size2
+                <span class="keyword">for</span> i=1:size1
+                    fwrite(this.COM,mat(i,j),<span class="string">'float64'</span>);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> mat = rec_matrix(this)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Receives a 2 dimensional matrix (nxm)</span>
+            size1 = rec_int(this);
+            size2 = rec_int(this);
+            <span class="keyword">if</span> size1*size2 &gt; 0
+                mat = fread(this.COM, size1*size2, <span class="string">'double'</span>);
+                mat = reshape(mat, size2, size1)';
+            <span class="keyword">else</span>
+                mat = [];
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> moveX(this, target, itemrobot, movetype, blocking)
+            <span class="comment">% This is a private function.</span>
+            <span class="comment">% Performs a linear or joint movement. Use MoveJ or MoveL instead.</span>
+            <span class="keyword">if</span> nargin &lt; 5
+                blocking = 300;
+            <span class="keyword">end</span>
+            <span class="comment">%check_connection(this);</span>
+            itemrobot.WaitMove();<span class="comment">% checks connection</span>
+            command = <span class="string">'MoveX'</span>;
+            send_line(this, command);
+            send_int(this, movetype);
+            <span class="keyword">if</span> numel(target) == 1 <span class="comment">% target is an item</span>
+                send_int(this,3);
+                send_array(this,[]);
+                send_item(this,target);
+            <span class="keyword">elseif</span> size(target,1) == 1 || size(target,2) == 1 <span class="comment">% target are joints</span>
+                send_int(this, 1);
+                send_array(this, target);
+                send_item(this, RobolinkItem(this, 0));
+            <span class="keyword">elseif</span> numel(target) == 16 <span class="comment">% target is a pose</span>
+                send_int(this, 2);
+                send_array(this, target);
+                send_item(this, RobolinkItem(this, 0));
+            <span class="keyword">else</span>
+                error(<span class="string">'Invalid input values'</span>);
+            <span class="keyword">end</span>
+            send_item(this, itemrobot);
+            check_status(this);
+            <span class="keyword">if</span> blocking
+                itemrobot.WaitMove();
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> this = Robolink()
+            <span class="comment">% Creates a connection to the RoboDK's API</span>
+            Connect(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> ok = Set_connection_params(this, safe_mode, auto_update, timeout)
+            <span class="comment">% Sets the API behavior parameters: SAFE_MODE, AUTO_UPDATE and TIMEOUT.</span>
+            <span class="comment">% SAFE_MODE checks that item pointers provided by the user are valid.</span>
+            <span class="comment">% AUTO_UPDATE checks that item pointers provided by the user are valid.</span>
+            <span class="comment">% TIMEOUT is the timeout to wait for a response. Increase if you experience problems loading big files.</span>
+            <span class="comment">% If connection failed returns 0.</span>
+            <span class="comment">% Example:  Set_connection_params(0,0); % Use for speed. Render() must be called to refresh the window.</span>
+            <span class="comment">%           Set_connection_params(1,1); % Default behavior. Updates every time.</span>
+            <span class="comment">% In  1 (optional) : int -&gt; SAFE_MODE (1=yes, 0=no)</span>
+            <span class="comment">% In  2 (optional) : int -&gt; AUTO_UPDATE (1=yes, 0=no)</span>
+            <span class="comment">% In  3 (optional) : int -&gt; TIMEOUT (1=yes, 0=no)</span>
+            <span class="comment">% Out 1 : int -&gt; connection status (1=ok, 0=problems)</span>
+            <span class="keyword">if</span> nargin &gt; 1
+                this.SAFE_MODE = safe_mode;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin &gt; 2
+                this.AUTO_UPDATE = auto_update;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin &gt; 3
+                this.TIMEOUT = timeout;
+            <span class="keyword">end</span>
+            fprintf(this.COM, <span class="string">'CMD_START'</span>); <span class="comment">% appends LF (char(10))</span>
+            fprintf(this.COM, sprintf(<span class="string">'%i %i'</span>, this.SAFE_MODE, this.AUTO_UPDATE));<span class="comment">% appends LF</span>
+            response = rec_line(this);
+            <span class="keyword">if</span> strcmp(response, <span class="string">'READY'</span>)
+                ok = 1;
+            <span class="keyword">else</span>
+                ok = 0;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> connected = Connect(this)
+            <span class="comment">% Establishes a connection with Robodk. RoboDK must be running, otherwise, the variable APPLICATION_DIR must be set properly.</span>
+            <span class="comment">% If the connection succeededs it returns 1, otherwise it returns 0</span>
+            connected = 0;
+            <span class="keyword">for</span> i=1:2
+                <span class="keyword">for</span> port=this.PORT_START:this.PORT_END
+                    this.COM = tcpip(<span class="string">'localhost'</span>, port, <span class="string">'Timeout'</span>, this.TIMEOUT, <span class="string">'BytesAvailableFcnMode'</span>, <span class="string">'byte'</span>, <span class="string">'InputBufferSize'</span>, 4000);
+                    <span class="keyword">try</span>
+                        fopen(this.COM);
+                        connected = is_connected(this);
+                        <span class="keyword">if</span> connected
+                            <span class="keyword">break</span>
+                        <span class="keyword">end</span>
+                    <span class="keyword">catch</span>
+
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> connected <span class="comment">% if status is closed, try to open application</span>
+                    this.PORT = port;
+                    <span class="keyword">break</span>;
+                <span class="keyword">else</span>
+                    <span class="keyword">try</span>
+                        winopen(this.APPLICATION_DIR);
+                        pause(2);
+                    <span class="keyword">catch</span>
+                        error([<span class="string">'application path is not correct or could not start: '</span>,this.APPLICATION_DIR]);
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> connected &amp;&amp; ~Set_connection_params(this)
+                connected = 0;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> item = Item(this, name)
+            <span class="comment">% Returns an item by its name. If there is no exact match it will return the last closest match.</span>
+            <span class="comment">% Example: item = Item('Robot');</span>
+            check_connection(this);
+            command = <span class="string">'G_Item'</span>;
+            send_line(this, command);
+            send_line(this, name);
+            item = rec_item(this);        <span class="comment">%     item = fread(com, 2, 'ulong');% ulong is 32 bits!!!</span>
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> list = ItemList(this)
+            <span class="comment">% Returns a list of names of all available items in the currently open station in Robodk.</span>
+            check_connection(this);
+            command = <span class="string">'G_List_Items'</span>;
+            send_line(this, command);
+            count = rec_int(this);
+            list = cell(1,count);
+            <span class="keyword">for</span> i=1:count
+                namei = rec_line(this);
+                fprintf(<span class="string">'%i\t-&gt;\t%s\n'</span>,i,namei);
+                list{i} = namei;
+            <span class="keyword">end</span>
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        <span class="keyword">function</span> Copy(this, item)
+            <span class="comment">% Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste_Item().</span>
+            <span class="comment">% In 1 : item (optional) -&gt; Parent item</span>
+            <span class="comment">% Example:  object = RL.Item('My Object');</span>
+            <span class="comment">%           RL.Copy(object);</span>
+            <span class="comment">%           newobject = RL.Paste();</span>
+            <span class="comment">%           newobject.setName(newobject, 'My Object (copy 1)');</span>
+            <span class="comment">%           newobject = Paste();</span>
+            <span class="comment">%           newobject.setName(newobject, 'My Object (copy 2)');</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                item = RobolinkItem(this);
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'Copy'</span>;
+            send_line(this, command);
+            send_item(this, item);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> newitem = Paste(this, toparent)
+            <span class="comment">% Pastes the copied item (same as Ctrl+V). Needs to be used after Copy_Item(). See Copy() for an example.</span>
+            <span class="comment">% In 1 : item</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                toparent = RobolinkItem(this);
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'Paste'</span>;
+            send_line(this, command);
+            send_item(this, toparent);
+            newitem = rec_item(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> newitem = AddFile(this, filename, parent)
+            <span class="comment">% Loads a file and attaches it to parent. It can be any file supported by Robodk.</span>
+            <span class="comment">% Timeout may have to be increased if big files are loaded.</span>
+            <span class="comment">% In 1  : string -&gt; absolute path of the file</span>
+            <span class="comment">% In 2 (optional) : item -&gt; parent to attach</span>
+            <span class="comment">% Out 1 : item -&gt; added item (0 if failed)</span>
+            check_connection(this);
+            <span class="keyword">if</span> nargin &lt; 3
+                parent = RobolinkItem(this);
+            <span class="keyword">end</span>
+            command = <span class="string">'Add'</span>;
+            send_line(this, command);
+            send_line(this, filename);
+            send_item(this, parent);
+            newitem = rec_item(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> newitem = AddTarget(this, name, itemparent, itemrobot)
+            <span class="comment">% Adds a new target that can be reached with a robot.</span>
+            <span class="comment">% In  1 : string -&gt; name of the target</span>
+            <span class="comment">% In  2 (optional) : item -&gt; parent to attach to (such as a frame)</span>
+            <span class="comment">% In  3 (optional) : item -&gt; main robot that will be used to go to this target</span>
+            <span class="comment">% Out 1 : item -&gt; the new item created</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                itemparent = RobolinkItem(this);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin &lt; 4
+                itemrobot = RobolinkItem(this);
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'Add_TARGET'</span>;
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemparent);
+            send_item(this, itemrobot);
+            newitem = rec_item(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> newitem = AddFrame(this, name, itemparent)
+            <span class="comment">% Adds a new Frame that can be referenced by a robot.</span>
+            <span class="comment">% In  1 : string -&gt; name of the frame</span>
+            <span class="comment">% In  2 (optional) : item -&gt; parent to attach to (such as the rrobot base frame)</span>
+            <span class="comment">% Out 1 : item -&gt; the new item created</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                itemparent = RobolinkItem(this);
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'Add_FRAME'</span>;
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemparent);
+            newitem = rec_item(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> newitem = AddProgram(this, name, itemrobot)
+            <span class="comment">% Adds a new program.</span>
+            <span class="comment">% In  1 : string -&gt; name of the program</span>
+            <span class="comment">% In  2 (optional) : item -&gt; robot that will be used</span>
+            <span class="comment">% Out 1 : item -&gt; the new item created</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                itemrobot = RobolinkItem(this);
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'Add_PROG'</span>;
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemrobot);
+            newitem = rec_item(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        <span class="keyword">function</span> prog_status = RunProgram(this, fcn_param)
+            <span class="comment">% Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.</span>
+            <span class="comment">% In  1 : fcn call -&gt; string of the program to run</span>
+            <span class="comment">% Out 1 : this function always returns 0"""</span>
+            prog_status = this.RunCode(fcn_param, 1);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> prog_status = RunCode(this, code, code_is_fcn_call)
+            <span class="comment">% Adds code to run in the program output. If the program exists it will also run the program in simulate mode.</span>
+            <span class="comment">% In  1 : code -&gt; string of the code or program to run</span>
+            <span class="comment">% In  2 : code_is_fcn_call -&gt; True if the code corresponds to a function call, if so, RoboDK will handle the syntax when the code is generated</span>
+            <span class="comment">% Out 1 : this function alsways returns 0</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                code_is_fcn_call = 0;
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'RunCode'</span>;
+            send_line(this, command);
+            send_int(this, code_is_fcn_call);
+            send_line(this, strrep(strrep(code,<span class="string">'\r\n'</span>,<span class="string">'&lt;&lt;br&gt;&gt;'</span>),<span class="string">'\n'</span>,<span class="string">'&lt;&lt;br&gt;&gt;'</span>))
+            prog_status = rec_int(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> prog_status = RunMessage(this, message, message_is_comment)
+            <span class="comment">% Shows a message or a comment in the robot program.</span>
+            <span class="comment">% In  1 : string -&gt; message or comment to show in the teach pendant</span>
+            <span class="comment">% Out 1 : int -&gt; if message_is_comment is set to True (or 1) the message will appear only as a comment in the code</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                message_is_comment = 0;
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'RunMessage'</span>;
+            send_line(this, command);
+            send_int(this, message_is_comment);
+            send_line(this, strrep(strrep(message,<span class="string">'\r\n'</span>,<span class="string">'&lt;&lt;br&gt;&gt;'</span>),<span class="string">'\n'</span>,<span class="string">'&lt;&lt;br&gt;&gt;'</span>))
+            prog_status = rec_int(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        <span class="keyword">function</span> Render(this, always_render)
+            <span class="comment">% Renders the scene. This function turns off rendering unless always_render is set to true.</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                always_render = 0;
+            <span class="keyword">end</span>
+            auto_render = int32(~always_render);
+            check_connection(this);
+            command = <span class="string">'Render'</span>;
+            send_line(this, command);
+            send_int(this, auto_render);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> ncollisions = Collision(this)
+            <span class="comment">% Returns the number of pairs of objects that are currently in collision state.</span>
+            check_connection(this);
+            command = <span class="string">'Collision'</span>;
+            send_line(this, command);
+            ncollisions = rec_int(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> setSimulationSpeed(this, speed)
+            <span class="comment">% Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed.</span>
+            check_connection(this);
+            command = <span class="string">'SimulateSpeed'</span>;
+            send_line(this, command);
+            send_int(this, speed*1000);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> setRunMode(this, run_mode)
+            <span class="comment">% Sets the behavior of the script. By default, robodk shows the path simulation for movement instructions (run_mode=1).</span>
+            <span class="comment">% Setting the run_mode to 2 allows to perform a quick check to see if the path is feasible.</span>
+            <span class="comment">% In   1 : int = RUNMODE</span>
+            <span class="comment">% RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)</span>
+            <span class="comment">% RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements</span>
+            <span class="comment">% RUNMODE_MAKE_ROBOTPROG=3  makes the robot program</span>
+            <span class="comment">% RUNMODE_RUN_REAL=4        moves the real robot is it is connected</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                run_mode = 1;
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'S_RunMode'</span>;
+            send_line(this, command);
+            send_int(this, run_mode);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> run_mode = RunMode(this)
+            <span class="comment">% Gets the behavior of the script. By default, robodk shows the path simulation for movement instructions (run_mode=1).</span>
+            <span class="comment">% If run_mode = 2, the script is performing a quick check to see if the path is feasible (usually managed by the GUI).</span>
+            <span class="comment">% If run_mode = 3, the script is generating the robot program (usually managed by the GUI).</span>
+            <span class="comment">% Out  1 : int = RUNMODE</span>
+            <span class="comment">% RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)</span>
+            <span class="comment">% RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements</span>
+            <span class="comment">% RUNMODE_MAKE_ROBOTPROG=3  makes the robot program</span>
+            <span class="comment">% RUNMODE_RUN_REAL=4        moves the real robot is it is connected</span>
+            check_connection(this);
+            command = <span class="string">'G_RunMode'</span>;
+            send_line(this, command);
+            run_mode = rec_int(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> value = getParam(this, param)
+            <span class="comment">% Gets a global parameter from the RoboDK station.</span>
+            <span class="comment">% In  1 : string = parameter</span>
+            <span class="comment">% Out 1 : string = value</span>
+            <span class="comment">% Available parameters:</span>
+            <span class="comment">% PATH_OPENSTATION = folder path of the current .stn file</span>
+            <span class="comment">% FILE_OPENSTATION = file path of the current .stn file</span>
+            <span class="comment">% PATH_DESKTOP = folder path of the user's folder</span>
+            <span class="comment">% PATH_LIBRARY = library path</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                param = <span class="string">'PATH_OPENSTATION'</span>;
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'G_Param'</span>;
+            send_line(this, command);
+            send_line(this, param);
+            value = rec_line(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> ShowSequence(this, matrix)
+            <span class="comment">% Displays a sequence of joints</span>
+            <span class="comment">% In  1 : joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</span>
+            RobolinkItem(this, 0).ShowSequence(matrix);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> xyz = LaserTracker_Measure(this, estimate, search)
+            <span class="comment">% Takes a laser tracker measurement with respect to the reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.</span>
+            <span class="comment">% Returns the XYZ coordinates of target if it was found. Othewise it retuns the vector [0;0;0].</span>
+            <span class="keyword">if</span> nargin &lt; 2
+                estimate = [0; 0; 0];
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin &lt; 3
+                search = 0;
+            <span class="keyword">end</span>
+            check_connection(this);
+            command = <span class="string">'MeasLT'</span>;
+            send_line(this, command);
+            send_xyz(this, estimate);
+            send_int(this, search);
+            xyz = rec_xyz(this);
+            check_status(this);
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> [collision, itempicked, xyz] = Collision_Line(this, p1, p2, ref)
+            <span class="comment">% Checks the collision between a line and the station. The line is composed by 2 points.</span>
+            <span class="comment">% In  1 : p1 -&gt; start point of the line</span>
+            <span class="comment">% In  2 : p2 -&gt; end point of the line</span>
+            <span class="comment">% In  3 : pose (optional) -&gt; reference of the 2 points</span>
+            <span class="comment">% Out 1 : collision -&gt; True if there is a collision, False otherwise</span>
+            <span class="comment">% Out 2 : item -&gt; Item collided</span>
+            <span class="comment">% Out 3 : point -&gt; collision point (station reference)</span>
+            <span class="keyword">if</span> nargin &lt; 4
+                ref = eye(4);
+            <span class="keyword">end</span>
+            p1abs = ref*[p1(1:3);1];
+            p2abs = ref*[p2(1:3);1];
+            check_connection(this);
+            command = <span class="string">'CollisionLine'</span>;
+            send_line(this, command);
+            send_xyz(this, p1abs);
+            send_xyz(this, p2abs);
+            itempicked = rec_item(this);
+            xyz = rec_xyz(this);
+            collision = itempicked.Valid();
+            check_status(this);
+        <span class="keyword">end</span>
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+classdef Robolink < handle
+% This class allows to create macros for Robodk program.
+% Any interaction is made through "items". An item is an object in the
+% Robodk tree (it can be either a robot, an object, a tool, a frame, a 
+% program, ...).
+% An item is a unique number (pointer) that represents one object.
+%
+% RoboDK api Help:
+% ->Type "doc Robolink"            for more help on the Robolink class
+% ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
+% ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
+
+    properties
+        APPLICATION_DIR = 'C:\RoboDK\bin\RoboDK.exe'; % file path to the Robodk program (executable)
+        COM = 0;         % tcpip com
+    end
+    properties(GetAccess = 'private', SetAccess = 'private')
+        SAFE_MODE = 1;   % checks that provided items exist in memory
+        AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
+        TIMEOUT = 5;     % timeout for communication, in seconds
+        PORT_START = 20500; % port to start looking for app connection
+        PORT_END   = 20510; % port to stop looking for app connection
+        PORT = -1;
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    methods % (Access = 'private')
+        function connected = is_connected(this)
+            % This is a private function. 
+            % Returns 1 if connection is valid, returns 0 if connection is invalid
+            if strcmp(this.COM,'tcpip') ~= 0
+                connected = 0;
+                return
+            end
+            status = get(this.COM,'status');
+            if status(1) == 'o'
+                connected = 1;
+            end
+        end
+        function check_connection(this)
+            % This is a private function. 
+            % If we are not connected it will attempt a connection, if it fails, it will throw an error
+            if ~is_connected(this) && Connect(this) ~= 1
+                error('Unable to connect');
+            end
+            flushinput(this.COM);%Clear anything still in the input buffer from the previous commands                
+            flushoutput(this.COM);%Remove data from output buffer.
+        end
+        function status = check_status(this)
+            % This is a private function. 
+            % this function checks the status of the connection
+            lastwarn(''); % makes timeout warning an error
+            status = fread(this.COM, 1, 'int32');
+            if ~isempty(lastwarn)
+                error(lastwarn)
+            end
+            if status > 0 && status < 10
+                strproblems = 'Unknown error';
+                switch status
+                    case 1
+                        strproblems = 'Invalid item: The item identifier provided is not valid or it does not exist.';
+                    case 2
+                        strproblems = rec_line(this);
+                        warning(strproblems);
+                        status = 0;
+                        return
+                        %error(strproblems);
+                        %status = -1;
+                        %return
+                    case 3
+                        strproblems = rec_line(this);
+                    case 9
+                        strproblems = 'Invalid license. Contact us at: www.robodk.org';
+                    otherwise
+                        % do nothing
+                end
+                fprintf([strproblems,'\n']);
+                error(strproblems);
+            elseif status == 0
+                % everything is OK
+            else
+                error('problems running function');
+                fclose(this.COM);% reconnect to reset connection                
+                fopen(this.COM);
+                validate_connection(this);
+            end
+        end
+        function send_line(this, string)
+            % This is a private function. 
+            % Sends a string of characters with a \n
+            fprintf(this.COM, string);
+        end
+        function string = rec_line(this)
+            % This is a private function. 
+            % Receives a string. It reads until if finds \n
+            string = [];
+            chari = fread(this.COM, 1, 'char');
+            while chari ~= 10 %LF
+                string = [string, chari];
+                chari = fread(this.COM, 1, 'char');
+            end
+            string = char(string);
+        end        
+        function send_item(this, item)
+            % This is a private function. 
+            % Sends an item pointer
+            fwrite(this.COM, item.item(1), 'float64'); 
+        end
+        function item = rec_item(this)
+            % This is a private function. 
+            % Receives an item pointer
+            itemnum = fread(this.COM, 1, 'float64');
+            item = RobolinkItem(this, itemnum);
+        end
+        function send_pose(this, pose)
+            % This is a private function. 
+            % Sends a pose (4x4 matrix)
+            fwrite(this.COM, pose(1:16), 'double');
+        end
+        function pose = rec_pose(this)
+            % This is a private function. 
+            % Receives a pose (4x4 matrix)
+            pose = fread(this.COM, 16, 'double');
+            pose = reshape(pose,4,4);
+        end
+        function send_xyz(this, pos)
+            % This is a private function. 
+            % Sends an xyz vector
+            fwrite(this.COM, pos(1:3), 'double');
+        end
+        function pos = rec_xyz(this)
+            % This is a private function. 
+            % Receives an xyz vector (3x1 matrix)
+            pos = fread(this.COM, 3, 'double');
+            pos = reshape(pos,3,1);
+        end        
+        function send_int(this, num)
+            % This is a private function. 
+            % Sends an int (32 bits)
+            if numel(num) > 1
+                num = num(1);
+            end
+            fwrite(this.COM, num, 'int32'); 
+        end
+        function num = rec_int(this)
+            % This is a private function. 
+            % Receives an int (32 bits)
+            num = fread(this.COM, 1, 'int32');
+        end
+        function send_array(this, values)
+            % This is a private function. 
+            % Sends an array of doubles
+            nval = numel(values);
+            send_int(this, nval);
+            if nval > 0
+                valok = reshape(values,nval,1);
+                fwrite(this.COM, valok, 'double');
+            end
+        end
+        function values = rec_array(this)
+            % This is a private function. 
+            % Receives an array of doubles
+            nvalues = rec_int(this);
+            if nvalues > 0
+                values = fread(this.COM, nvalues, 'double');
+            else
+                values = [];
+            end
+        end
+        function send_matrix(this, mat)
+            % This is a private function. 
+            % Sends a 2 dimensional matrix (nxm)
+            size1 = size(mat,1);
+            size2 = size(mat,2);
+            send_int(this,size1);
+            send_int(this,size2);            
+            for j=1:size2
+                for i=1:size1
+                    fwrite(this.COM,mat(i,j),'float64');
+                end
+            end
+        end
+        function mat = rec_matrix(this)
+            % This is a private function. 
+            % Receives a 2 dimensional matrix (nxm)
+            size1 = rec_int(this);
+            size2 = rec_int(this);
+            if size1*size2 > 0
+                mat = fread(this.COM, size1*size2, 'double');
+                mat = reshape(mat, size2, size1)';
+            else
+                mat = [];
+            end            
+        end
+        function moveX(this, target, itemrobot, movetype, blocking)
+            % This is a private function. 
+            % Performs a linear or joint movement. Use MoveJ or MoveL instead.
+            if nargin < 5
+                blocking = 300;
+            end
+            %check_connection(this);
+            itemrobot.WaitMove();% checks connection
+            command = 'MoveX';
+            send_line(this, command);
+            send_int(this, movetype);
+            if numel(target) == 1 % target is an item
+                send_int(this,3);
+                send_array(this,[]);
+                send_item(this,target);
+            elseif size(target,1) == 1 || size(target,2) == 1 % target are joints
+                send_int(this, 1);
+                send_array(this, target);
+                send_item(this, RobolinkItem(this, 0));
+            elseif numel(target) == 16 % target is a pose
+                send_int(this, 2);
+                send_array(this, target);
+                send_item(this, RobolinkItem(this, 0));
+            else
+                error('Invalid input values');
+            end
+            send_item(this, itemrobot);
+            check_status(this);
+            if blocking
+                itemrobot.WaitMove();
+            end
+        end
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    methods
+        function this = Robolink()
+            % Creates a connection to the RoboDK's API
+            Connect(this);
+        end
+        function ok = Set_connection_params(this, safe_mode, auto_update, timeout)
+            % Sets the API behavior parameters: SAFE_MODE, AUTO_UPDATE and TIMEOUT.
+            % SAFE_MODE checks that item pointers provided by the user are valid.
+            % AUTO_UPDATE checks that item pointers provided by the user are valid.
+            % TIMEOUT is the timeout to wait for a response. Increase if you experience problems loading big files.
+            % If connection failed returns 0.
+            % Example:  Set_connection_params(0,0); % Use for speed. Render() must be called to refresh the window.
+            %           Set_connection_params(1,1); % Default behavior. Updates every time.
+            % In  1 (optional) : int -> SAFE_MODE (1=yes, 0=no)
+            % In  2 (optional) : int -> AUTO_UPDATE (1=yes, 0=no)
+            % In  3 (optional) : int -> TIMEOUT (1=yes, 0=no)
+            % Out 1 : int -> connection status (1=ok, 0=problems)            
+            if nargin > 1
+                this.SAFE_MODE = safe_mode;
+            end
+            if nargin > 2
+                this.AUTO_UPDATE = auto_update;
+            end
+            if nargin > 3
+                this.TIMEOUT = timeout;
+            end  
+            fprintf(this.COM, 'CMD_START'); % appends LF (char(10))
+            fprintf(this.COM, sprintf('%i %i', this.SAFE_MODE, this.AUTO_UPDATE));% appends LF
+            response = rec_line(this);
+            if strcmp(response, 'READY')                
+                ok = 1;
+            else
+                ok = 0;
+            end
+        end
+        function connected = Connect(this)
+            % Establishes a connection with Robodk. RoboDK must be running, otherwise, the variable APPLICATION_DIR must be set properly.
+            % If the connection succeededs it returns 1, otherwise it returns 0
+            connected = 0;
+            for i=1:2
+                for port=this.PORT_START:this.PORT_END
+                    this.COM = tcpip('localhost', port, 'Timeout', this.TIMEOUT, 'BytesAvailableFcnMode', 'byte', 'InputBufferSize', 4000); 
+                    try
+                        fopen(this.COM);
+                        connected = is_connected(this);
+                        if connected
+                            break
+                        end
+                    catch
+
+                    end
+                end
+                if connected % if status is closed, try to open application
+                    this.PORT = port;
+                    break;
+                else
+                    try
+                        winopen(this.APPLICATION_DIR);
+                        pause(2);
+                    catch
+                        error(['application path is not correct or could not start: ',this.APPLICATION_DIR]);
+                    end
+                end
+            end
+            if connected && ~Set_connection_params(this)
+                connected = 0;
+            end
+        end
+    end       
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    methods
+        function item = Item(this, name)
+            % Returns an item by its name. If there is no exact match it will return the last closest match.
+            % Example: item = Item('Robot');
+            check_connection(this);
+            command = 'G_Item';
+            send_line(this, command);
+            send_line(this, name); 
+            item = rec_item(this);        %     item = fread(com, 2, 'ulong');% ulong is 32 bits!!!
+            check_status(this);
+        end     
+        function list = ItemList(this)
+            % Returns a list of names of all available items in the currently open station in Robodk.
+            check_connection(this);
+            command = 'G_List_Items';
+            send_line(this, command);
+            count = rec_int(this);
+            list = cell(1,count);
+            for i=1:count
+                namei = rec_line(this);
+                fprintf('%i\t->\t%s\n',i,namei);
+                list{i} = namei;
+            end
+            check_status(this);
+        end     
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function Copy(this, item)
+            % Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste_Item().
+            % In 1 : item (optional) -> Parent item
+            % Example:  object = RL.Item('My Object');
+            %           RL.Copy(object);
+            %           newobject = RL.Paste();
+            %           newobject.setName(newobject, 'My Object (copy 1)');
+            %           newobject = Paste();
+            %           newobject.setName(newobject, 'My Object (copy 2)');
+            if nargin < 2
+                item = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Copy';
+            send_line(this, command);
+            send_item(this, item);
+            check_status(this);
+        end
+        function newitem = Paste(this, toparent)
+            % Pastes the copied item (same as Ctrl+V). Needs to be used after Copy_Item(). See Copy() for an example.
+            % In 1 : item
+            if nargin < 2
+                toparent = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Paste';
+            send_line(this, command);
+            send_item(this, toparent);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        function newitem = AddFile(this, filename, parent)
+            % Loads a file and attaches it to parent. It can be any file supported by Robodk.
+            % Timeout may have to be increased if big files are loaded.
+            % In 1  : string -> absolute path of the file
+            % In 2 (optional) : item -> parent to attach
+            % Out 1 : item -> added item (0 if failed)
+            check_connection(this);
+            if nargin < 3
+                parent = RobolinkItem(this);
+            end
+            command = 'Add';
+            send_line(this, command);
+            send_line(this, filename);
+            send_item(this, parent);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        function newitem = AddTarget(this, name, itemparent, itemrobot)
+            % Adds a new target that can be reached with a robot.
+            % In  1 : string -> name of the target
+            % In  2 (optional) : item -> parent to attach to (such as a frame)
+            % In  3 (optional) : item -> main robot that will be used to go to this target
+            % Out 1 : item -> the new item created
+            if nargin < 3
+                itemparent = RobolinkItem(this);
+            end
+            if nargin < 4
+                itemrobot = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Add_TARGET';
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemparent);
+            send_item(this, itemrobot);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        function newitem = AddFrame(this, name, itemparent)
+            % Adds a new Frame that can be referenced by a robot.
+            % In  1 : string -> name of the frame
+            % In  2 (optional) : item -> parent to attach to (such as the rrobot base frame)
+            % Out 1 : item -> the new item created
+            if nargin < 3
+                itemparent = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Add_FRAME';
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemparent);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        function newitem = AddProgram(this, name, itemrobot)
+            % Adds a new program.
+            % In  1 : string -> name of the program
+            % In  2 (optional) : item -> robot that will be used
+            % Out 1 : item -> the new item created
+            if nargin < 3
+                itemrobot = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Add_PROG';
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemrobot);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function prog_status = RunProgram(this, fcn_param)
+            % Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.
+            % In  1 : fcn call -> string of the program to run
+            % Out 1 : this function always returns 0"""
+            prog_status = this.RunCode(fcn_param, 1);
+        end
+        function prog_status = RunCode(this, code, code_is_fcn_call)
+            % Adds code to run in the program output. If the program exists it will also run the program in simulate mode.
+            % In  1 : code -> string of the code or program to run
+            % In  2 : code_is_fcn_call -> True if the code corresponds to a function call, if so, RoboDK will handle the syntax when the code is generated
+            % Out 1 : this function alsways returns 0
+            if nargin < 3
+                code_is_fcn_call = 0;
+            end
+            check_connection(this);
+            command = 'RunCode';
+            send_line(this, command);
+            send_int(this, code_is_fcn_call);
+            send_line(this, strrep(strrep(code,'\r\n','<<br>>'),'\n','<<br>>'))
+            prog_status = rec_int(this);
+            check_status(this);
+        end
+        function prog_status = RunMessage(this, message, message_is_comment)
+            % Shows a message or a comment in the robot program.
+            % In  1 : string -> message or comment to show in the teach pendant
+            % Out 1 : int -> if message_is_comment is set to True (or 1) the message will appear only as a comment in the code
+            if nargin < 3
+                message_is_comment = 0;
+            end
+            check_connection(this);
+            command = 'RunMessage';
+            send_line(this, command);
+            send_int(this, message_is_comment);
+            send_line(this, strrep(strrep(message,'\r\n','<<br>>'),'\n','<<br>>'))
+            prog_status = rec_int(this);
+            check_status(this);
+        end        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
+        function Render(this, always_render)
+            % Renders the scene. This function turns off rendering unless always_render is set to true.
+            if nargin < 2
+                always_render = 0;
+            end
+            auto_render = int32(~always_render);
+            check_connection(this);
+            command = 'Render';
+            send_line(this, command);
+            send_int(this, auto_render);
+            check_status(this);
+        end
+        function ncollisions = Collision(this)
+            % Returns the number of pairs of objects that are currently in collision state.
+            check_connection(this);
+            command = 'Collision';
+            send_line(this, command);
+            ncollisions = rec_int(this);
+            check_status(this);
+        end
+        function setSimulationSpeed(this, speed)
+            % Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed.
+            check_connection(this);
+            command = 'SimulateSpeed';
+            send_line(this, command);
+            send_int(this, speed*1000);
+            check_status(this);
+        end
+        function setRunMode(this, run_mode)
+            % Sets the behavior of the script. By default, robodk shows the path simulation for movement instructions (run_mode=1).
+            % Setting the run_mode to 2 allows to perform a quick check to see if the path is feasible.
+            % In   1 : int = RUNMODE
+            % RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)
+            % RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements
+            % RUNMODE_MAKE_ROBOTPROG=3  makes the robot program
+            % RUNMODE_RUN_REAL=4        moves the real robot is it is connected
+            if nargin < 2
+                run_mode = 1;
+            end
+            check_connection(this);
+            command = 'S_RunMode';
+            send_line(this, command);
+            send_int(this, run_mode);
+            check_status(this);
+        end
+        function run_mode = RunMode(this)
+            % Gets the behavior of the script. By default, robodk shows the path simulation for movement instructions (run_mode=1).
+            % If run_mode = 2, the script is performing a quick check to see if the path is feasible (usually managed by the GUI).
+            % If run_mode = 3, the script is generating the robot program (usually managed by the GUI).
+            % Out  1 : int = RUNMODE
+            % RUNMODE_SIMULATE=1        performs the simulation moving the robot (default)
+            % RUNMODE_QUICKVALIDATE=2   performs a quick check to validate the robot movements
+            % RUNMODE_MAKE_ROBOTPROG=3  makes the robot program
+            % RUNMODE_RUN_REAL=4        moves the real robot is it is connected
+            check_connection(this);
+            command = 'G_RunMode';
+            send_line(this, command);
+            run_mode = rec_int(this);
+            check_status(this);
+        end
+        function value = getParam(this, param)
+            % Gets a global parameter from the RoboDK station.
+            % In  1 : string = parameter
+            % Out 1 : string = value
+            % Available parameters:
+            % PATH_OPENSTATION = folder path of the current .stn file
+            % FILE_OPENSTATION = file path of the current .stn file
+            % PATH_DESKTOP = folder path of the user's folder
+            % PATH_LIBRARY = library path
+            if nargin < 2
+                param = 'PATH_OPENSTATION';
+            end
+            check_connection(this);
+            command = 'G_Param';
+            send_line(this, command);
+            send_line(this, param);         
+            value = rec_line(this);
+            check_status(this);
+        end
+        function ShowSequence(this, matrix)
+            % Displays a sequence of joints
+            % In  1 : joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix
+            RobolinkItem(this, 0).ShowSequence(matrix);
+        end
+        function xyz = LaserTracker_Measure(this, estimate, search)
+            % Takes a laser tracker measurement with respect to the reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
+            % Returns the XYZ coordinates of target if it was found. Othewise it retuns the vector [0;0;0].
+            if nargin < 2
+                estimate = [0; 0; 0];
+            end
+            if nargin < 3
+                search = 0;
+            end
+            check_connection(this);
+            command = 'MeasLT';
+            send_line(this, command);
+            send_xyz(this, estimate);
+            send_int(this, search);
+            xyz = rec_xyz(this);
+            check_status(this);
+        end
+        function [collision, itempicked, xyz] = Collision_Line(this, p1, p2, ref)
+            % Checks the collision between a line and the station. The line is composed by 2 points.
+            % In  1 : p1 -> start point of the line
+            % In  2 : p2 -> end point of the line
+            % In  3 : pose (optional) -> reference of the 2 points
+            % Out 1 : collision -> True if there is a collision, False otherwise
+            % Out 2 : item -> Item collided
+            % Out 3 : point -> collision point (station reference)
+            if nargin < 4
+                ref = eye(4);
+            end
+            p1abs = ref*[p1(1:3);1];
+            p2abs = ref*[p2(1:3);1];            
+            check_connection(this);
+            command = 'CollisionLine';
+            send_line(this, command);
+            send_xyz(this, p1abs);
+            send_xyz(this, p2abs);
+            itempicked = rec_item(this);
+            xyz = rec_xyz(this);
+            collision = itempicked.Valid();
+            check_status(this);
+        end
+   end
+end
+##### SOURCE END #####
+--></body></html>
