@@ -938,7 +938,7 @@ namespace RoboDk.API
         /// <param name="collisionCheck">Check for collisions: will set to 1 or 0</param>
         /// <param name="flags">Reserved for future compatibility</param>
         /// <param name="timeoutSec">Maximum time to wait for the result (in seconds)</param>
-        /// <param name="time_step">Time step for time-based calculation (ListJointsType must be set to TimeBased)</param>
+        /// <param name="time_step">Time step in seconds for time-based calculation (ListJointsType must be set to TimeBased)</param>
         /// <returns>List of InstructionListJointsResult.</returns>
         InstructionListJointsResult GetInstructionListJoints(
             double mmStep = 10.0,

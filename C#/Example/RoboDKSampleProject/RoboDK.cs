@@ -4336,6 +4336,42 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Set the selection in the tree
+    /// </summary>
+    /// <returns></returns>
+    public void SetSelectedItems(List<Item> item_list)
+    {
+        _require_build(8896);
+        _check_connection();
+        _send_Line("S_Selection");
+        _send_Int(item_list.Count);
+        for (int i = 0; i < item_list.Count; i++)
+        {
+            _send_Item(item_list[i]);
+        }
+        _check_status();
+    }
+
+    /// <summary>
+    /// Merge multiple object items as one. Source objects are not deleted and a new object is created.
+    /// </summary>
+    /// <returns>New item</returns>
+    public Item MergeItems(List<Item> item_list)
+    {
+        _require_build(8896);
+        _check_connection();
+        _send_Line("MergeItems");
+        _send_Int(item_list.Count);
+        for (int i = 0; i < item_list.Count; i++)
+        {
+            _send_Item(item_list[i]);
+        }
+        Item newitem = _recv_Item();
+        _check_status();
+        return newitem;
+    }
+
+    /// <summary>
     /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
     /// </summary>
     /// <returns>IS9283 Program</returns>

@@ -627,7 +627,7 @@ class Robolink:
     def _verify_connection(self):
         """Verify that we are connected to the RoboDK API server"""
         
-        use_new_version = False
+        use_new_version = True
         if use_new_version:
             self._send_line('RDK_API')
             self._send_array([])
@@ -654,7 +654,7 @@ class Robolink:
             return True
             
         if self.BUILD < build_required:
-            raise Exception("This function is unavailable. Update RoboDK to use this function through the API")
+            raise Exception("This function is unavailable. Update RoboDK to use this function through the API: https://robodk.com/download")
         return True
             
     
@@ -2526,6 +2526,36 @@ class Robolink:
             item_list.append(self._rec_item())
         self._check_status()
         return item_list
+        
+    def setSelection(self, list_items=[]):
+        """Set the selection in the tree
+        
+        :param list list_items: List of items to set as selected"""
+        self._require_build(8896)
+        self._check_connection()
+        command = 'S_Selection'
+        self._send_line(command)
+        nitems = self._send_int(len(list_items))
+        for itm in list_items:
+            self._send_item(itm)
+        self._check_status()
+        
+    def MergeItems(self, list_items=[]):
+        """Merge multiple object items as one. Source objects are not deleted and a new object is created.
+        
+        :param list list_items: List of items to set as selected
+        :return: New object created
+        :rtype: :class:`.Item`"""
+        self._require_build(8896)
+        self._check_connection()
+        command = 'MergeItems'
+        self._send_line(command)
+        nitems = self._send_int(len(list_items))
+        for itm in list_items:
+            self._send_item(itm)
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem
         
     def Popup_ISO9283_CubeProgram(self, robot=0):
         """Popup the menu to create the ISO9283 cube program (Utilities-Create Cube ISO)

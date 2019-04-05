@@ -779,6 +779,18 @@ namespace RoboDk.API
         List<IItem> GetSelectedItems();
 
         /// <summary>
+        /// Set the selection in the tree
+        /// </summary>
+        /// <returns></returns>
+        void SetSelectedItems(List<IItem> item_list);
+
+        /// <summary>
+        /// Merge multiple object items as one. Source objects are not deleted and a new object is created.
+        /// </summary>
+        /// <returns>New item</returns>
+        IItem MergeItems(List<IItem> item_list);
+
+        /// <summary>
         /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
         /// </summary>
         /// <returns>IS9283 Program</returns>

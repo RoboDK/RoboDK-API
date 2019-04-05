@@ -1669,6 +1669,36 @@ namespace RoboDk.API
             return listItems;
         }
 
+        /// <inheritdoc />
+        public void SetSelectedItems(List<IItem> item_list)
+        {
+            RequireBuild(8896);
+            check_connection();
+            send_line("S_Selection");
+            send_int(item_list.Count);
+            for (int i = 0; i < item_list.Count; i++)
+            {
+                send_item(item_list[i]);
+            }
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public IItem MergeItems(List<IItem> item_list)
+        {
+            RequireBuild(8896);
+            check_connection();
+            send_line("MergeItems");
+            send_int(item_list.Count);
+            for (int i = 0; i < item_list.Count; i++)
+            {
+                send_item(item_list[i]);
+            }
+            IItem newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
         public IItem Popup_ISO9283_CubeProgram(IItem robot = null)
         {
             RequireBuild(5177);
