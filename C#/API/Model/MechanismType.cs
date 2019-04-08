@@ -85,6 +85,11 @@ namespace RoboDk.API.Model
         /// <summary>
         /// Scara robot (4 axes)
         /// </summary>
-        T_SCARA = 9
+        T_SCARA = 9,
+        
+        /// <summary>
+        /// Gripper (2-finger gripper)
+        /// </summary>
+        T_GRIPPER = 10
     }
 }

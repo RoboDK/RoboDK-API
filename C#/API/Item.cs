@@ -1497,7 +1497,7 @@ namespace RoboDk.API
                 flags, timeoutSec, time_step);
             result.ErrorMessage = errorMessage;
 
-            var numberOfJoints = GetLink().Joints().Length;
+            var numberOfJoints = GetLink(ItemType.Robot).Joints().Length;
             for (var colId = 0; colId < jointList.Cols; colId++)
             {
                 var joints = new double[numberOfJoints];

@@ -1594,6 +1594,7 @@ public class RoboDK
     public const int MAKE_ROBOT_6DOF = 7;
     public const int MAKE_ROBOT_7DOF = 8;
     public const int MAKE_ROBOT_SCARA = 9;
+    public const int MAKE_ROBOT_GRIPPER = 10;
 
     // Path Error bit mask
     public const int ERROR_KINEMATIC = 1;          // One or more points is not reachable
