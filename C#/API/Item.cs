@@ -1488,8 +1488,7 @@ namespace RoboDk.API
             int timeoutSec = 3600,
             double time_step = 0.2)
         {
-            InstructionListJointsResult result =
-                new InstructionListJointsResult {JointList = new List<InstructionListJointsResult.JointsResult>()};
+            var result = new InstructionListJointsResult {JointList = new List<InstructionListJointsResult.JointsResult>()};
 
             string errorMessage;
             Mat jointList;
@@ -1498,7 +1497,7 @@ namespace RoboDk.API
                 flags, timeoutSec, time_step);
             result.ErrorMessage = errorMessage;
 
-            var numberOfJoints = GetLink(ItemType.Robot).Joints().Length;
+            var numberOfJoints = GetLink().Joints().Length;
             for (var colId = 0; colId < jointList.Cols; colId++)
             {
                 var joints = new double[numberOfJoints];
@@ -1507,19 +1506,50 @@ namespace RoboDk.API
                     joints[rowId] = jointList[rowId, colId];
                 }
 
-                int jointError = (int) jointList[numberOfJoints, colId];
-                ErrorPathType errorType = (ErrorPathType) Convert.ToUInt32(jointError.ToString(), 2);
-                var maxLinearStep = jointList[numberOfJoints + 1, colId];
-                var maxJointStep = jointList[numberOfJoints + 2, colId];
+                var jointError = (int) jointList[numberOfJoints, colId];
+                var errorType = (ErrorPathType) Convert.ToUInt32(jointError.ToString(), 2);
+                var linearStep = jointList[numberOfJoints + 1, colId];
+                var jointStep = jointList[numberOfJoints + 2, colId];
                 var moveId = (int) jointList[numberOfJoints + 3, colId];
+
+                var timeStep = 0.0;
+                var speeds = new double[0];
+                var accelerations = new double[0];
+
+                if ((int)flags >= 2)
+                {
+                    timeStep = jointList[numberOfJoints + 4, colId];
+                    speeds = new double[numberOfJoints];
+                    var speedRowId = numberOfJoints + 8;
+                    var i = 0;
+                    for (var rowId = speedRowId; rowId < speedRowId + numberOfJoints; rowId++, i++)
+                    {
+                        speeds[i] = jointList[rowId, colId];
+                    }
+                }
+
+                if ((int)flags >= 3)
+                {
+                    accelerations = new double[numberOfJoints];
+                    var accelerationRowId = numberOfJoints + 8 + numberOfJoints;
+                    var i = 0;
+                    for (var rowId = accelerationRowId; rowId < accelerationRowId + numberOfJoints; rowId++, i++)
+                    {
+                        accelerations[i] = jointList[rowId, colId];
+                    }
+                }
+
                 result.JointList.Add(
                     new InstructionListJointsResult.JointsResult
                     {
                         Joints = joints,
+                        Speeds = speeds,
+                        Accelerations = accelerations,
+                        MoveId = moveId,
                         Error = errorType,
-                        MaxLinearStep = maxLinearStep,
-                        MaxJointStep = maxJointStep,
-                        MoveId = moveId
+                        LinearStep = linearStep,
+                        JointStep = jointStep,
+                        TimeStep = timeStep
                     }
                 );
             }

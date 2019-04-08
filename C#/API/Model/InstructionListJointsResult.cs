@@ -38,9 +38,24 @@ namespace RoboDk.API.Model
             #region Properties
 
             /// <summary>
+            /// Identifies the Target (Frame) to which the position belongs too.
+            /// </summary>
+            public int MoveId { get; set; }
+
+            /// <summary>
             /// Joint positions (array length = number of axis)
             /// </summary>
             public double[] Joints { get; set; }
+
+            /// <summary>
+            /// Joint Speeds (for each joint), empty if ListJointsType flag less than 2
+            /// </summary>
+            public double[] Speeds { get; set; }
+
+            /// <summary>
+            /// Joint Accelerations (for each joint), empty if ListJointsType flag less than 3
+            /// </summary>
+            public double[] Accelerations { get; set; }
 
             /// <summary>
             /// Various error flags for the calculated joint position.
@@ -48,24 +63,24 @@ namespace RoboDk.API.Model
             public ErrorPathType Error { get; set; }
 
             /// <summary>
-            /// True if joint position is causing a collition.
+            /// True if joint position is causing a collision.
             /// </summary>
             public bool HasCollision => Error.HasFlag(ErrorPathType.Collision);
 
             /// <summary>
+            /// Time between joint positions
+            /// </summary>
+            public double TimeStep { get; set; }
+
+            /// <summary>
             /// Maximum step in millimeters for linear movements (millimeters)
             /// </summary>
-            public double MaxLinearStep { get; set; }
+            public double LinearStep { get; set; }
 
             /// <summary>
             /// Maximum step for joint movements (degrees)
             /// </summary>
-            public double MaxJointStep { get; set; }
-
-            /// <summary>
-            /// Identifies the Target (Frame) to which the position belongs too.
-            /// </summary>
-            public int MoveId { get; set; }
+            public double JointStep { get; set; }
 
             #endregion
         }
