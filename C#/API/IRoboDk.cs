@@ -149,6 +149,20 @@ namespace RoboDk.API
         /// <param name="windowState">Window state to be set.</param>
         void SetWindowState(WindowState windowState = WindowState.Normal);
 
+
+        /// <summary>
+        /// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
+        /// </summary>
+        /// <param name="tocopy">Item to copy</param>
+        void Copy(IItem tocopy);
+
+        /// <summary>
+        /// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (optional)</param>
+        /// <returns>New item created</returns>
+        IItem Paste(IItem paste_to = null);
+
         /// <summary>
         /// Load a file and attaches it to parent and returns the newly added IItem. 
         /// </summary>

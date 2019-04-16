@@ -562,6 +562,26 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void Copy(IItem tocopy)
+        {
+            check_connection();
+            send_line("Copy");
+            send_item(tocopy);
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public IItem Paste(IItem paste_to = null)
+        {
+            check_connection();
+            send_line("Paste");
+            send_item(paste_to);
+            IItem newitem = rec_item();
+            check_status();
+            return newitem;
+        }
+
+        /// <inheritdoc />
         public IItem AddFile(string filename, IItem parent = null)
         {
             if (!File.Exists(filename))
