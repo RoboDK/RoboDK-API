@@ -1641,6 +1641,8 @@ public class RoboDK
     public const int EVENT_CREATED_ISOCUBE = 6;
     public const int EVENT_SELECTION_3D_CHANGED = 7;
     public const int EVENT_3DVIEW_MOVED = 8;
+    public const int EVENT_ROBOT_MOVED = 9;
+    public const int EVENT_KEY = 10;
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;
@@ -2728,9 +2730,12 @@ public class RoboDK
                 Console.WriteLine("Feature Type and ID");
                 Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
             }
-            else
+            else if (evt == EVENT_KEY) 
             {
-                // no additional data is sent
+                int key_press = _recv_Int(_COM_EVT); // 1 = key pressed, 0 = key released
+                int key_id = _recv_Int(_COM_EVT); // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
+                int modifiers = _recv_Int(_COM_EVT); // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
+                Console.WriteLine("Key " + key_id.ToString() + " " + ((key_press > 0) ? "Pressed" : "Released") + ". Modifiers: " + modifiers.ToString());
             }
             SampleRoboDkEvent(evt, itm);
         }
