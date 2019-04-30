@@ -51,7 +51,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Media;
-using System.Threading.Tasks;
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -2573,62 +2572,6 @@ namespace RoboDk.API
                     _roboDk = null;
                 }
             }
-        }
-    }
-
-    internal static class RoboDKAsyncSendReceive
-    {
-        internal static int SendData(this Socket s, byte[] data, int len, SocketFlags flags)
-        {
-            var n = s.Send(data, len, flags);
-            Debug.Assert(n == len);
-            return n;
-        }
-
-        internal static int SendData(this Socket s, byte[] data)
-        {
-            return s.SendData(data, data.Length, SocketFlags.None);
-        }
-
-        internal static int ReceiveDataTask(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
-        {
-            Debug.Assert((offset + len) <= data.Length);
-            var receivedBytes = 0;
-            while (receivedBytes < len)
-            {
-                var n = s.Receive(data, offset + receivedBytes, len - receivedBytes, flags);
-                if (n <= 0)
-                {
-                    // socket closed.
-                    return 0;
-                }
-                receivedBytes += n;
-            }
-
-            return receivedBytes;
-        }
-
-        internal static int ReceiveData(this Socket s, byte[] data, int offset, int len, SocketFlags flags)
-        {
-            // Only execute as Task if we run on the main UI Thread
-            if (Thread.CurrentThread == System.Windows.Application.Current?.Dispatcher?.Thread )
-            {
-                // TASK.RUN
-                var receiveTask = Task.Run(() => ReceiveDataTask(s, data, offset, len, flags));
-                receiveTask.Wait();
-                return receiveTask.Result;
-            }
-            else
-            {
-                // Any other background thread. Call receive synchronously
-                return ReceiveDataTask(s, data, offset, len, flags);
-            }
-
-        }
-
-        internal static int ReceiveData(this Socket s, byte[] data, int len, SocketFlags flags)
-        {
-            return s.ReceiveData(data, 0, len, flags);
         }
     }
 }
