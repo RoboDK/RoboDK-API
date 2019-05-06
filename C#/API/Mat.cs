@@ -41,6 +41,7 @@
 #region Namespaces
 
 using System;
+using System.Collections.Generic;
 using RoboDk.API.Exceptions;
 
 #endregion
@@ -793,12 +794,35 @@ namespace RoboDk.API
 
         public override string ToString() // Function returns matrix as a string
         {
-            var s = "";
-            for (var i = 0; i < _rows; i++)
+            return ToString(true);
+        }
+
+        /// <summary>
+        /// Returns the Matrix string (XYZWPR using the functino ToTxyzRxyz() or matrix values)
+        /// </summary>
+        /// <param name="string_as_xyzabc"></param>
+        /// <returns></returns>
+        public string ToString(bool string_as_xyzabc = true)                           // Function returns matrix as a string
+        {
+            string s = "";
+            string_as_xyzabc = string_as_xyzabc && IsHomogeneous();
+            if (string_as_xyzabc)
             {
-                for (var j = 0; j < _cols; j++)
-                    s += string.Format("{0,5:0.00}", _mat[i, j]) + " ";
-                s += "\r\n";
+                var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };
+                var units = new List<string>() { "mm", "mm", "mm", "deg", "deg", "deg" };
+
+                var values = this.ToTxyzRxyz();
+                for (int j = 0; j < 6; j++) s += letter[j] + String.Format("{0,6:0.000}", values[j]) + " " + units[j] + " , ";
+                s = s.Remove(s.Length - 3);
+            }
+            else
+            {
+                for (var i = 0; i < _rows; i++)
+                {
+                    for (var j = 0; j < _cols; j++)
+                        s += string.Format("{0,5:0.00}", _mat[i, j]) + " ";
+                    s += "\r\n";
+                }
             }
             return s;
         }
@@ -821,7 +845,7 @@ namespace RoboDk.API
             return t;
         }
 
-        public static Mat StupidMultiply(Mat m1, Mat m2) // Stupid matrix multiplication
+        public static Mat MultiplyMatSimple(Mat m1, Mat m2)
         {
             if (m1._cols != m2._rows)
                 throw new MatException("Wrong dimensions of matrix!");
@@ -874,7 +898,7 @@ namespace RoboDk.API
 
         public static Mat operator *(Mat m1, Mat m2)
         {
-            return StrassenMultiply(m1, m2);
+            return Multiply(m1, m2);
         }
 
         public static Mat operator *(double n, Mat m)
@@ -1004,7 +1028,7 @@ namespace RoboDk.API
                 C[i, j] = A[ya + i, xa + j];
         }
 
-        private static Mat StrassenMultiply(Mat A, Mat B) // Smart matrix multiplication
+        private static Mat Multiply(Mat A, Mat B) // Smart matrix multiplication
         {
             if (A._cols != B._rows)
                 throw new MatException("Wrong dimension of matrix!");

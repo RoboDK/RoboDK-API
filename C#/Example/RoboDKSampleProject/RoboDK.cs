@@ -1078,10 +1078,21 @@ public class Mat // simple matrix class for homogeneous operations
         return matrix;
     }*/
 
-    public override string ToString()                           // Function returns matrix as a string
+    
+    public override string ToString()
+    {
+        return ToString(true);
+    }
+
+    /// <summary>
+    /// Returns the Matrix string (XYZWPR using the functino ToTxyzRxyz() or matrix values)
+    /// </summary>
+    /// <param name="string_as_xyzabc"></param>
+    /// <returns></returns>
+    public string ToString(bool string_as_xyzabc)                           // Function returns matrix as a string
     {
         string s = "";
-        bool string_as_xyzabc = IsHomogeneous();
+        string_as_xyzabc = string_as_xyzabc && IsHomogeneous();
         if (string_as_xyzabc)
         {
             var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };
@@ -1327,7 +1338,7 @@ public class Mat // simple matrix class for homogeneous operations
                 C[i, j] = f[l, 1 + 1][i - h, j - h] - f[l, 1 + 2][i - h, j - h] + f[l, 1 + 3][i - h, j - h] + f[l, 1 + 6][i - h, j - h];
     }
 
-    public static Mat MultiplyMatSimple(Mat m1, Mat m2)                  // Stupid matrix multiplication
+    public static Mat MultiplyMatSimple(Mat m1, Mat m2)
     {
         if (m1.cols != m2.rows) throw new MatException("Wrong matrix dimensions to allow multiplication!");
 
@@ -1338,7 +1349,7 @@ public class Mat // simple matrix class for homogeneous operations
                     result[i, j] += m1[i, k] * m2[k, j];
         return result;
     }
-    private static Mat Multiply(double n, Mat m)                          // Multiplication by constant n
+    private static Mat Multiply(double n, Mat m)
     {
         Mat r = new Mat(m.rows, m.cols);
         for (int i = 0; i < m.rows; i++)

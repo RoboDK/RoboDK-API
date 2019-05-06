@@ -1,13 +1,14 @@
-RoboDK API for C#
+RoboDK API for .NET
 =================
 
-With the RoboDK API for C# it is possible to simulate and program any industrial robot using C# programming language. This avoids using vendor-specific programming languages.
+With the RoboDK API for .NET you can simulate and program any industrial robot using C# or Visual Basic. The RoboDK API allows you to program industrial robots without learning vendor-specific programming languages.
 
 Requirements
 ============
 
  * RoboDK Software: https://robodk.com/download
  * RoboDK API for C# (GitHub): https://github.com/RoboDK/RoboDK-API/tree/master/C%23
+ * RoboDK API on GitHub (main page): https://github.com/RoboDK/RoboDK-API
 
 Example
 =======
@@ -56,8 +57,8 @@ Video Overview
 Other
 =====
 
-A partial implementation of the RoboDK API for Visual Basic is also available:
- * RoboDK API for VB .Net: https://robodk.com/doc/examples/RoboDK-Visual-Basic-VB.Net-SampleProject.zip
+A partial implementation of the RoboDK API for Visual Basic is also available, however, it is recommended to use the Nuget package in Visual Basic:
+ * RoboDK API for VB .Net: https://github.com/RoboDK/RoboDK-API/tree/master/Visual%20Basic
 
 Supported robots
 ================
