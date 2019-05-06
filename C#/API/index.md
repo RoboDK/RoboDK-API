@@ -6,9 +6,9 @@ With the RoboDK API for .NET you can simulate and program any industrial robot u
 Requirements
 ============
 
- * RoboDK Software: https://robodk.com/download
- * RoboDK API for C# (GitHub): https://github.com/RoboDK/RoboDK-API/tree/master/C%23
- * RoboDK API on GitHub (main page): https://github.com/RoboDK/RoboDK-API
+ * RoboDK Software: [https://robodk.com/download](https://robodk.com/download)
+ * RoboDK API for C# (GitHub): [https://github.com/RoboDK/RoboDK-API/tree/master/C%23](https://github.com/RoboDK/RoboDK-API/tree/master/C%23)
+ * RoboDK API on GitHub (main page): [https://github.com/RoboDK/RoboDK-API](https://github.com/RoboDK/RoboDK-API)
 
 Example
 =======
@@ -46,7 +46,7 @@ For more information about robot post processors:
  * https://robodk.com/doc/en/PythonAPI/postprocessor.html
 
 For more Examples:
- * https://robodk.com/doc/en/PythonAPI/examples.html
+ * [https://robodk.com/doc/en/PythonAPI/examples.html](https://robodk.com/doc/en/PythonAPI/examples.html)
 
  
 Video Overview
