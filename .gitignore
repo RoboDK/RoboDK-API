@@ -1,8 +1,4 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/.vs
+﻿/.vs
 /C#/API/.vs/RoboDkApi/v15
 /C#/API/bin/Debug
 /C#/API/obj

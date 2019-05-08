@@ -76,8 +76,28 @@ namespace RoboDk.API.Model
         PathNearSingularity = 0x8, // 0b1000
 
         /// <summary>
+        /// A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
+        /// </summary>
+        PathFlipAxis = 0b10000, // 0b10000
+
+        /// <summary>
         /// Collision detected
         /// </summary>
-        Collision = 0x20 // 0b100000
+        Collision = 0x20, // 0b100000
+
+        /// <summary>
+        /// The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
+        /// </summary>
+        WristSingularity = 0b1000000,
+
+        /// <summary>
+        /// The robot reached an Elbow singularity: Joint 3 is fully extended
+        /// </summary>
+        ElbowSingularity = 0b10000000,
+
+        /// <summary>
+        /// The robot reached a Shoulder singularity: the wrist is too close to axis 1
+        /// </summary>
+        ShoulderSingularity = 0b100000000
     }
 }

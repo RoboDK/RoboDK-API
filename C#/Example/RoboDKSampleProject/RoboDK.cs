@@ -1078,10 +1078,21 @@ public class Mat // simple matrix class for homogeneous operations
         return matrix;
     }*/
 
-    public override string ToString()                           // Function returns matrix as a string
+    
+    public override string ToString()
+    {
+        return ToString(true);
+    }
+
+    /// <summary>
+    /// Returns the Matrix string (XYZWPR using the functino ToTxyzRxyz() or matrix values)
+    /// </summary>
+    /// <param name="string_as_xyzabc"></param>
+    /// <returns></returns>
+    public string ToString(bool string_as_xyzabc)                           // Function returns matrix as a string
     {
         string s = "";
-        bool string_as_xyzabc = IsHomogeneous();
+        string_as_xyzabc = string_as_xyzabc && IsHomogeneous();
         if (string_as_xyzabc)
         {
             var letter = new List<string>() { "X=", "Y=", "Z=", "Rx=", "Ry=", "Rz=" };
@@ -1327,7 +1338,7 @@ public class Mat // simple matrix class for homogeneous operations
                 C[i, j] = f[l, 1 + 1][i - h, j - h] - f[l, 1 + 2][i - h, j - h] + f[l, 1 + 3][i - h, j - h] + f[l, 1 + 6][i - h, j - h];
     }
 
-    public static Mat MultiplyMatSimple(Mat m1, Mat m2)                  // Stupid matrix multiplication
+    public static Mat MultiplyMatSimple(Mat m1, Mat m2)
     {
         if (m1.cols != m2.rows) throw new MatException("Wrong matrix dimensions to allow multiplication!");
 
@@ -1338,7 +1349,7 @@ public class Mat // simple matrix class for homogeneous operations
                     result[i, j] += m1[i, k] * m2[k, j];
         return result;
     }
-    private static Mat Multiply(double n, Mat m)                          // Multiplication by constant n
+    private static Mat Multiply(double n, Mat m)
     {
         Mat r = new Mat(m.rows, m.cols);
         for (int i = 0; i < m.rows; i++)
@@ -1641,6 +1652,8 @@ public class RoboDK
     public const int EVENT_CREATED_ISOCUBE = 6;
     public const int EVENT_SELECTION_3D_CHANGED = 7;
     public const int EVENT_3DVIEW_MOVED = 8;
+    public const int EVENT_ROBOT_MOVED = 9;
+    public const int EVENT_KEY = 10;
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;
@@ -2728,9 +2741,12 @@ public class RoboDK
                 Console.WriteLine("Feature Type and ID");
                 Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
             }
-            else
+            else if (evt == EVENT_KEY) 
             {
-                // no additional data is sent
+                int key_press = _recv_Int(_COM_EVT); // 1 = key pressed, 0 = key released
+                int key_id = _recv_Int(_COM_EVT); // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
+                int modifiers = _recv_Int(_COM_EVT); // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
+                Console.WriteLine("Key " + key_id.ToString() + " " + ((key_press > 0) ? "Pressed" : "Released") + ". Modifiers: " + modifiers.ToString());
             }
             SampleRoboDkEvent(evt, itm);
         }
