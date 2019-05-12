@@ -2595,6 +2595,11 @@ public class RoboDK
                 return = install_path + "\\bin\\RoboDK.exe";
             }
         }*/
+        string default_path = "C:\\RoboDK\\bin\\RoboDK.exe";
+        if (File.Exists(default_path))
+        {
+            return default_path;
+        }
         return null;
     }
 
