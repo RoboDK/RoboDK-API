@@ -138,6 +138,7 @@ WINDOWSTATE_MAXIMIZED   = 3
 WINDOWSTATE_FULLSCREEN  = 4
 WINDOWSTATE_CINEMA      = 5
 WINDOWSTATE_FULLSCREEN_CINEMA= 6
+WINDOWSTATE_VIDEO       = 7
 
 # Instruction program call type:
 INSTRUCTION_CALL_PROGRAM = 0
@@ -176,6 +177,7 @@ FLAG_ROBODK_MENUCONNECT_ACTIVE = 2048
 FLAG_ROBODK_WINDOWKEYS_ACTIVE = 4096
 FLAG_ROBODK_TREE_VISIBLE = 8192
 FLAG_ROBODK_REFERENCES_VISIBLE = 16384
+FLAG_ROBODK_STATUSBAR_VISIBLE = 32768
 FLAG_ROBODK_NONE = 0x00
 FLAG_ROBODK_ALL = 0xFFFF
 FLAG_ROBODK_MENU_ACTIVE_ALL = FLAG_ROBODK_MENU_ACTIVE | FLAG_ROBODK_MENUFILE_ACTIVE | FLAG_ROBODK_MENUEDIT_ACTIVE | FLAG_ROBODK_MENUPROGRAM_ACTIVE | FLAG_ROBODK_MENUTOOLS_ACTIVE | FLAG_ROBODK_MENUUTILITIES_ACTIVE | FLAG_ROBODK_MENUCONNECT_ACTIVE
@@ -283,22 +285,37 @@ class Robolink:
     .. seealso:: :func:`~robolink.Robolink.Item`
     
     """
-    APPLICATION_DIR = ''    # file path to the robodk program (executable). On as an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
-    SAFE_MODE = 1           # checks that provided items exist in memory
-    AUTO_UPDATE = 0         # if AUTO_UPDATE is zero, the scene is rendered after every function call
-    TIMEOUT = 10             # timeout for communication, in seconds
-    COM = None              # tcpip com
-    IP = 'localhost'        # IP address of the simulator (localhost if it is the same computer), otherwise, use RL = Robolink('yourip') to set to a different IP
-    ARGUMENTS = []        # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
-    PORT_START = 20500      # port to start looking for app connection
-    PORT_END = 20500        # port to stop looking for app connection
-    PORT = -1
-    BUILD = 0              # This variable holds the build id and is used for version checking
+    
+    # checks that provided items exist in memory and poses are homogeneous
+    SAFE_MODE = 1           
+    
+    # if AUTO_UPDATE is 1, updating and rendering objects the 3D the scene will be delayed until 100 ms after the last call (this value can be changed in Tools-Options-Other-API Render delay, or also using the RoboDK.Command('AutoRenderDelay', value) and RoboDK.Command('AutoRenderDelayMax', value)
+    AUTO_UPDATE = 0      
+    
+    # IP address of the simulator (localhost if it is the same computer), otherwise, use RL = Robolink('yourip') to set to a different IP
+    IP = 'localhost'
+    
+    # port to start looking for the RoboDK API connection (Tools-Options-Other-RoboDK API)
+    PORT_START = 20500 
+    
+    # port to stop looking for the RoboDK API connection    
+    PORT_END = 20502
+    
+    # timeout for communication, in seconds
+    TIMEOUT = 10
+    
+    # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
+    APPLICATION_DIR = ''    
+    
+    COM = None        # tcpip com    
+    ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
+    PORT = -1         # current port
+    BUILD = 0         # This variable holds the build id and is used for version checking
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def _setTimeout(self, timeout_sec=30):
         """Set the communication timeout (in seconds)."""
         # Change the default timeout here, in seconds:
-        self.TIMEOUT = 30 # in seconds
+        self.TIMEOUT = timeout_sec # in seconds
         self.COM.settimeout(self.TIMEOUT)
         
     def _is_connected(self):
@@ -630,7 +647,7 @@ class Robolink:
         use_new_version = True
         if use_new_version:
             self._send_line('RDK_API')
-            self._send_array([])
+            self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
             response = self._rec_line()
             ver_api = self._rec_int()
             self.BUILD = self._rec_int()
@@ -789,6 +806,9 @@ class Robolink:
             robot = RDK.Item('', ITEM_TYPE_ROBOT)   # the first available robot
 
         """
+        if type(name) is not str:
+            raise Exception("Invalid name: provide a name as a string. Item names are visible in the RoboDK tree.")
+            
         self._check_connection()
         if itemtype is None:
             command = 'G_Item'
@@ -1057,24 +1077,42 @@ class Robolink:
         self._send_item(item)
         self._check_status()
 
-    def Paste(self, paste_to=0):
+    def Paste(self, paste_to=0, paste_times=1):
         """Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
         
         :param paste_to: Item to attach the copied item (optional)
-        :type paste_to: :class:`.Item`        
+        :type paste_to: :class:`.Item`    
+        :param int paste_times: number of times to paste the item (returns a list if greater than 1)
         :return: New item created
         :rtype: :class:`.Item`
         
         .. seealso:: :func:`~robolink.Robolink.Copy`
         
         """
-        self._check_connection()
-        command = 'Paste'
-        self._send_line(command)
-        self._send_item(paste_to)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        if paste_times > 1:
+            self._require_build(10500)
+            self._check_connection()
+            command = 'PastN'
+            self._send_line(command)
+            self._send_item(paste_to)
+            self._send_int(paste_times)
+            ntimes = self._rec_int()
+            list_items = []
+            for i in range(ntimes):
+                newitem = self._rec_item()
+                list_items.append(newitem)
+                
+            self._check_status()
+            return list_items
+            
+        else:
+            self._check_connection()
+            command = 'Paste'
+            self._send_line(command)
+            self._send_item(paste_to)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     def AddFile(self, filename, parent=0):
         """Load a file and attach it to parent (if provided). The call returns the newly added :class:`.Item`. If the new file is an object and it is attached to a robot it will be automatically converted to a tool.

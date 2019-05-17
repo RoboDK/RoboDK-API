@@ -581,6 +581,24 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public List<IItem> Paste(IItem paste_to, int paste_times)
+        {
+            check_connection();
+            send_line("PastN");
+            send_item(paste_to);
+            send_int(paste_times);
+            int ntimes = rec_int();
+            List<IItem> list_items = new List<IItem>();
+            for (int i = 0; i < ntimes; i++)
+            {
+                IItem newitem = rec_item();
+                list_items.Add(newitem);
+            }
+            check_status();
+            return list_items;
+        }
+
+        /// <inheritdoc />
         public IItem AddFile(string filename, IItem parent = null)
         {
             if (!File.Exists(filename))
