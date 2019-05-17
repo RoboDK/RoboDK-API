@@ -1077,24 +1077,42 @@ class Robolink:
         self._send_item(item)
         self._check_status()
 
-    def Paste(self, paste_to=0):
+    def Paste(self, paste_to=0, paste_times=1):
         """Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
         
         :param paste_to: Item to attach the copied item (optional)
-        :type paste_to: :class:`.Item`        
+        :type paste_to: :class:`.Item`    
+        :param int paste_times: number of times to paste the item (returns a list if greater than 1)
         :return: New item created
         :rtype: :class:`.Item`
         
         .. seealso:: :func:`~robolink.Robolink.Copy`
         
         """
-        self._check_connection()
-        command = 'Paste'
-        self._send_line(command)
-        self._send_item(paste_to)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        if paste_times > 1:
+            self._require_build(10500)
+            self._check_connection()
+            command = 'PastN'
+            self._send_line(command)
+            self._send_item(paste_to)
+            self._send_int(paste_times)
+            ntimes = self._rec_int()
+            list_items = []
+            for i in range(ntimes):
+                newitem = self._rec_item()
+                list_items.append(newitem)
+                
+            self._check_status()
+            return list_items
+            
+        else:
+            self._check_connection()
+            command = 'Paste'
+            self._send_line(command)
+            self._send_item(paste_to)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     def AddFile(self, filename, parent=0):
         """Load a file and attach it to parent (if provided). The call returns the newly added :class:`.Item`. If the new file is an object and it is attached to a robot it will be automatically converted to a tool.
