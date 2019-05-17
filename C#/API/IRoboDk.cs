@@ -164,6 +164,14 @@ namespace RoboDk.API
         IItem Paste(IItem paste_to = null);
 
         /// <summary>
+        /// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item</param>
+        /// <param name="paste_times">Number of times to replicate the copied object</param>
+        /// <returns>New item created</returns>
+        List<IItem> Paste(IItem paste_to, int paste_times);
+
+        /// <summary>
         /// Load a file and attaches it to parent and returns the newly added IItem. 
         /// </summary>
         /// <param name="filename">

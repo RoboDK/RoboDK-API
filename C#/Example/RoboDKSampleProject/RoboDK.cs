@@ -3026,7 +3026,7 @@ public class RoboDK
     /// </summary>
     /// <param name="paste_to">Item to attach the copied item (optional)</param>
     /// <returns>New item created</returns>
-    public Item Paste(Item paste_to=null)
+    public Item Paste(Item paste_to = null)
     {
         _check_connection();
         _send_Line("Paste");
@@ -3034,6 +3034,29 @@ public class RoboDK
         Item newitem = _recv_Item();
         _check_status();
         return newitem;
+    }
+
+    /// <summary>
+    /// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
+    /// </summary>
+    /// <param name="paste_to">Item to attach the copied item</param>
+    /// <param name="paste_times">Number of times to replicate the copied object</param>
+    /// <returns>New item created</returns>
+    public List<Item> Paste(Item paste_to, int paste_times)
+    {
+        _check_connection();
+        _send_Line("PastN");
+        _send_Item(paste_to);
+        _send_Int(paste_times);
+        int ntimes = _recv_Int();
+        List<Item> list_items = new List<Item>();
+        for (int i=0; i<ntimes; i++)
+        {
+            Item newitem = _recv_Item();
+            list_items.Add(newitem);
+        }        
+        _check_status();
+        return list_items;
     }
 
 
