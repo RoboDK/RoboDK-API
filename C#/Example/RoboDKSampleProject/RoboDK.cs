@@ -5746,18 +5746,18 @@ public class RoboDK
         /// Sets the speed and/or the acceleration of a robot.
         /// </summary>
         /// <param name="speed_linear">linear speed in mm/s (-1 = no change)</param>
-        /// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
+        /// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
-        public void setSpeed(double speed_linear, double accel_linear = -1, double speed_joints = -1, double accel_joints = -1)
+        public void setSpeed(double speed_linear, double speed_joints = -1, double accel_linear = -1, double accel_joints = -1)
         {
             link._check_connection();
             link._send_Line("S_Speed4");
             link._send_Item(this);
             double[] speed_accel = new double[4];
             speed_accel[0] = speed_linear;
-            speed_accel[1] = accel_linear;
-            speed_accel[2] = speed_joints;
+            speed_accel[1] = speed_joints;
+            speed_accel[2] = accel_linear;
             speed_accel[3] = accel_joints;
             link._send_Array(speed_accel);
             link._check_status();
