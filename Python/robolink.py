@@ -239,7 +239,7 @@ DISPLAY_REF_PYZ= 0b100000000
 def RoboDKInstallFound():
     """Check if RoboDK is installed"""    
     path_install = getPathRoboDK()
-    return os.File.Exists(path_install)
+    return os.path.exists(path_install)
 
 def getPathRoboDK(): 
     """RoboDK's executable/binary file"""
@@ -253,16 +253,24 @@ def getPathRoboDK():
         return "~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
     else:
         # Windows assumed  
-        import winreg        
+        if sys.version_info[0] < 3:
+            import _winreg
+        else:
+            import winreg as _winreg
         
         # Try to get the value from the Windows registry:
         try:
+        #if True:
             # Open the key and return the handle object.
-            hKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "Software\\RoboDK")            
+            try:
+                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_64KEY)
+            except FileNotFoundError:
+                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)                
+            
             # Read the value.                      
-            result = winreg.QueryValueEx(hKey, "INSTDIR")            
+            result = _winreg.QueryValueEx(hKey, "INSTDIR")            
             # Close the handle object.
-            winreg.CloseKey(hKey)            
+            _winreg.CloseKey(hKey)            
             # Return only the value from the resulting tuple (value, type_as_int).
             return result[0].replace("\\","/") + "/bin/RoboDK.exe"        
         except:# FileNotFoundError:
@@ -311,6 +319,9 @@ class Robolink:
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     PORT = -1         # current port
     BUILD = 0         # This variable holds the build id and is used for version checking
+    
+    # Remember last status message
+    LAST_STATUS_MESSAGE = ''
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def _setTimeout(self, timeout_sec=30):
         """Set the communication timeout (in seconds)."""
@@ -341,26 +352,27 @@ class Robolink:
         """This procedure checks the status of the connection"""
         status = self._rec_int()
         if status > 0 and status < 10:
-            strproblems = 'Unknown error'
+            self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
-                strproblems = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
+                self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
             elif status == 2: #output warning
-                strproblems = self._rec_line()
-                print('WARNING: ' + strproblems)
-                #warn(strproblems)# does not show where is the problem...
+                self.LAST_STATUS_MESSAGE = self._rec_line()
+                print('WARNING: ' + self.LAST_STATUS_MESSAGE)
+                #warn(self.LAST_STATUS_MESSAGE)# does not show where is the problem...
                 return 0
             elif status == 3: #output error
-                strproblems = self._rec_line()
+                self.LAST_STATUS_MESSAGE = self._rec_line()
                 raise Exception(strproblems)
             elif status == 9:
-                strproblems = 'Invalid license. Contact us at: www.robodk.com'
-            print(strproblems)
-            raise Exception(strproblems)
+                self.LAST_STATUS_MESSAGE = 'Invalid license. Contact us at: www.robodk.com'
+            print(self.LAST_STATUS_MESSAGE)
+            raise Exception(self.LAST_STATUS_MESSAGE)
         elif status == 0:
             # everything is OK
-            status = status;
+            self.LAST_STATUS_MESSAGE = ''
         else:
-            raise Exception('Problems running function')
+            self.LAST_STATUS_MESSAGE = 'Problems running function'
+            raise Exception(self.LAST_STATUS_MESSAGE)
         return status
 
     def _check_color(self, color):
@@ -4441,6 +4453,8 @@ class Item():
         if transfer_status > 0:
             transfer_ok = True
             
+        self.LAST_STATUS_MESSAGE = prog_log_str
+            
         return success, prog_log_str, transfer_ok
     
     def setRunType(self, program_run_type):
@@ -4817,6 +4831,7 @@ class Item():
         program_time = values[1]
         program_distance = values[2]
         valid_program = values[3]
+        self.LAST_STATUS_MESSAGE = readable_msg
         return valid_instructions, program_time, program_distance, valid_program, readable_msg
         
     def InstructionList(self):
