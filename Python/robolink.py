@@ -312,6 +312,9 @@ class Robolink:
     # timeout for communication, in seconds
     TIMEOUT = 10
     
+    # activate nodelay option (faster, requires more resources)
+    NODELAY = False
+    
     # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     APPLICATION_DIR = ''    
     
@@ -636,11 +639,14 @@ class Robolink:
         else:
             self.APPLICATION_DIR = getPathRoboDK()
             
+        if ('/API_NODELAY' in self.ARGUMENTS or '-API_NODELAY' in self.ARGUMENTS):
+            self.NODELAY = True
+            
         if port is not None:
             self.PORT_START = port
             self.PORT_END = port
             self.ARGUMENTS.append("-PORT=%i" % port)
-            
+                        
         elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
             from socket import socket
             with socket() as s:
@@ -704,6 +710,9 @@ class Robolink:
             import socket
             #self.COM.close()
             self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if self.NODELAY:
+                self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                
             self.COM.connect((self.IP, self.PORT))                
             connected = self._is_connected()
             if connected > 0:
@@ -752,6 +761,9 @@ class Robolink:
         for i in range(2):
             for port in range(self.PORT_START,self.PORT_END+1):
                 self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self.NODELAY:
+                    self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    
                 self.COM.settimeout(1)
                 try:
                     self.COM.connect((self.IP, port))                
@@ -4934,3 +4946,15 @@ class Item():
         line = self.link._rec_line()
         self.link._check_status()
         return line
+        
+        
+        
+        
+#if __name__ == "__main__":    
+#    RDK = Robolink(args="-API_NODELAY")
+#    #RDK = Robolink()
+#    tic()
+#    itm = RDK.Item('')
+#    for i in range(1000):
+#        itm.Pose()
+#    print(toc())
