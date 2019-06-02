@@ -1082,6 +1082,12 @@ class Mat(object):
                     rows = rows.copy().rows
                 m = len(rows)
                 transpose = 0
+                if isinstance(rows,list) and len(rows) == 0:
+                    # Check empty matrix
+                    self.rows = [[]]
+                    n = 0
+                    return
+                    
                 if not isinstance(rows[0],list):
                     rows = [rows]
                     transpose = 1
@@ -1166,7 +1172,7 @@ class Mat(object):
             idx2 = idx[1]
             if isinstance(idx1,int) and isinstance(idx2,int):
                 return self.rows[idx1][idx2]
-            matsize =self.size();
+            matsize =self.size()
             if isinstance(idx1,slice):
                 indices1 = idx1.indices(matsize[0])
                 rg1 = range(*indices1)
@@ -1196,7 +1202,7 @@ class Mat(object):
         elif isinstance(item, list):
             item = Mat(item)
         
-        matsize = self.size();
+        matsize = self.size()
         if isinstance(idx,int):#integer A[1]
             idx1 = idx
             idx2 = 0
@@ -1225,7 +1231,7 @@ class Mat(object):
         #newn = int(abs((rg2.stop-rg2.start)/rg2.step))
         newm = rg1
         newn = rg2
-        itmsz = item.size();
+        itmsz = item.size()
         if len(newm) != itmsz[0] or len(newn) != itmsz[1]:
             raise Exception(MatrixError, "Submatrix indices does not match the new matrix sizes",itmsz[0],"x",itmsz[1],"<-",newm,"x",newn)
         #newmat = Mat(newm,newn)
@@ -1264,7 +1270,11 @@ class Mat(object):
         """Returns the size of a matrix (m,n).
         Dim can be set to 0 to return m (rows) or 1 to return n (columns)"""
         m = len(self.rows)
-        n = len(self.rows[0])
+        if m > 0:
+            n = len(self.rows[0])
+        else:
+            n = 0
+
         if dim is None:
             return (m, n)
         elif dim==0:
@@ -1693,178 +1703,181 @@ def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec = 2)
     sys.stdout.flush()
 
 
-#----------------------------------------------------
-#--------       MessageBox class      ---------------
-# inspired from:
-# http://stackoverflow.com/questions/10057672/correct-way-to-implement-a-custom-popup-tkinter-dialog-box
-
-#------------------
+#------------------------------------------------------
+#--------       TKinter dependencies    ---------------
+_tkinter_available = True
 if sys.version_info[0] < 3:
     # Python 2.X only:
-    import Tkinter as tkinter
-    import tkFileDialog as filedialog
+    try:
+        import Tkinter as tkinter
+        import tkFileDialog as filedialog
+    except:
+        _tkinter_available = False
 else:
     # Python 3.x only
-    import tkinter
-    from tkinter import filedialog
+    try:
+        import tkinter
+        from tkinter import filedialog
+    except ModuleNotFoundError:
+        _tkinter_available = False
 #------------------
 
 #------------------
-
-def getOpenFile(path_preference="C:/RoboDK/Library/"):
-    """Pop up a file dialog window to select a file to open."""
-    root = tkinter.Tk()
-    root.withdraw()
-    file_path = filedialog.askopenfilename(initialdir=path_preference)
-    # same as: file_path = tkinter.filedialog.askopenfilename()
-    return file_path
-    
-def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...'):
-    """Pop up a file dialog window to select a file to save."""
-    options = {}
-    options['initialdir'] = path_preference
-    options['title'] = strtitle
-    #options['defaultextension'] = '.txt'
-    #options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
-    options['initialfile'] = strfile
-    #options['parent'] = root
-    root = tkinter.Tk()
-    root.withdraw()
-    file_path = filedialog.asksaveasfile(**options)
-    #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
-    return file_path
-    
-def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
-    """Ask the user to select a folder to save a program or other file"""   
-    tkinter.Tk().withdraw()
-    dirname = filedialog.askdirectory(initialdir=path_programs, title=popup_msg)
-    if len(dirname) < 1:
-        dirname = None
+if _tkinter_available:
+    def getOpenFile(path_preference="C:/RoboDK/Library/"):
+        """Pop up a file dialog window to select a file to open."""
+        root = tkinter.Tk()
+        root.withdraw()
+        file_path = filedialog.askopenfilename(initialdir=path_preference)
+        # same as: file_path = tkinter.filedialog.askopenfilename()
+        return file_path
         
-    return dirname
-    
-class MessageBox(object):
-
-    def __init__(self, msg, b1, b2, frame, t, entry):
-
-        root = self.root = tkinter.Tk()
-        root.title('Message')
-        self.msg = str(msg)
-        # ctrl+c to copy self.msg
-        root.bind('<Control-c>', func=self.to_clip)
-        # remove the outer frame if frame=False
-        if not frame: root.overrideredirect(True)
-        # default values for the buttons to return
-        self.b1_return = True
-        self.b2_return = False
-        # if b1 or b2 is a tuple unpack into the button text & return value
-        if isinstance(b1, tuple): b1, self.b1_return = b1
-        if isinstance(b2, tuple): b2, self.b2_return = b2
-        # main frame
-        frm_1 = tkinter.Frame(root)
-        frm_1.pack(ipadx=2, ipady=2)
-        # the message
-        message = tkinter.Label(frm_1, text=self.msg)
-        message.pack(padx=8, pady=8)
-        # if entry=True create and set focus
-        if entry is not None:
-            if entry == True:
-                entry = ''
-            self.entry = tkinter.Entry(frm_1)
-            self.entry.pack()
-            self.entry.insert(0, entry)
-            self.entry.focus_set()
-        # button frame
-        frm_2 = tkinter.Frame(frm_1)
-        frm_2.pack(padx=4, pady=4)
-        # buttons
-        btn_1 = tkinter.Button(frm_2, width=8, text=b1)
-        btn_1['command'] = self.b1_action
-        btn_1.pack(side='left')
-        if not entry: btn_1.focus_set()
-        btn_2 = tkinter.Button(frm_2, width=8, text=b2)
-        btn_2['command'] = self.b2_action
-        btn_2.pack(side='left')
-        # the enter button will trigger the focused button's action
-        btn_1.bind('<KeyPress-Return>', func=self.b1_action)
-        btn_2.bind('<KeyPress-Return>', func=self.b2_action)
-        # roughly center the box on screen
-        # for accuracy see: http://stackoverflow.com/a/10018670/1217270
-        root.update_idletasks()
-        xp = (root.winfo_screenwidth() // 2) - (root.winfo_width() // 2)
-        yp = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
-        geom = (root.winfo_width(), root.winfo_height(), xp, yp)
-        root.geometry('{0}x{1}+{2}+{3}'.format(*geom))
-        # call self.close_mod when the close button is pressed
-        root.protocol("WM_DELETE_WINDOW", self.close_mod)
-        # a trick to activate the window (on windows 7)
-        root.deiconify()
-        # if t is specified: call time_out after t seconds
-        if t: root.after(int(t*1000), func=self.time_out)
-
-    def b1_action(self, event=None):
-        try: x = self.entry.get()
-        except AttributeError:
-            self.returning = self.b1_return
-            self.root.quit()
-        else:
-            if x:
-                self.returning = x
-                self.root.quit()
-
-    def b2_action(self, event=None):
-        self.returning = self.b2_return
-        self.root.quit()
-
-    # remove this function and the call to protocol
-    # then the close button will act normally
-    def close_mod(self):
-        pass
-
-    def time_out(self):
-        try: x = self.entry.get()
-        except AttributeError: self.returning = None
-        else: self.returning = x
-        finally: self.root.quit()
-
-    def to_clip(self, event=None):
-        self.root.clipboard_clear()
-        self.root.clipboard_append(self.msg)       
+    def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...'):
+        """Pop up a file dialog window to select a file to save."""
+        options = {}
+        options['initialdir'] = path_preference
+        options['title'] = strtitle
+        #options['defaultextension'] = '.txt'
+        #options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
+        options['initialfile'] = strfile
+        #options['parent'] = root
+        root = tkinter.Tk()
+        root.withdraw()
+        file_path = filedialog.asksaveasfile(**options)
+        #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
+        return file_path
         
-        
-def mbox(msg, b1='OK', b2='Cancel', frame=True, t=False, entry=None):
-    """Create an instance of MessageBox, and get data back from the user.
-    
-    :param msg: string to be displayed
-    :type msg: str
-    :param b1: left button text, or a tuple (<text for button>, <to return on press>)
-    :type b1: str, tuple
-    :param b2: right button text, or a tuple (<text for button>, <to return on press>)
-    :type b2: str, tuple
-    :param frame: include a standard outerframe: True or False
-    :type frame: bool
-    :param t: time in seconds (int or float) until the msgbox automatically closes
-    :type t: int, float
-    :param entry: include an entry widget that will provide its contents returned. Provide text to fill the box
-    :type entry: None, bool, str
-    
-    Example:
-        
-        .. code-block:: python
+    def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
+        """Ask the user to select a folder to save a program or other file"""   
+        tkinter.Tk().withdraw()
+        dirname = filedialog.askdirectory(initialdir=path_programs, title=popup_msg)
+        if len(dirname) < 1:
+            dirname = None
             
-        name = mbox('Enter your name', entry=True)
-        name = mbox('Enter your name', entry='default')
-        if name:
-            print("Value: " + name)
+        return dirname
         
-        value = mbox('Male or female?', ('male', 'm'), ('female', 'f'))
-        mbox('Process done')
+    class MessageBox(object):
+
+        def __init__(self, msg, b1, b2, frame, t, entry):
+
+            root = self.root = tkinter.Tk()
+            root.title('Message')
+            self.msg = str(msg)
+            # ctrl+c to copy self.msg
+            root.bind('<Control-c>', func=self.to_clip)
+            # remove the outer frame if frame=False
+            if not frame: root.overrideredirect(True)
+            # default values for the buttons to return
+            self.b1_return = True
+            self.b2_return = False
+            # if b1 or b2 is a tuple unpack into the button text & return value
+            if isinstance(b1, tuple): b1, self.b1_return = b1
+            if isinstance(b2, tuple): b2, self.b2_return = b2
+            # main frame
+            frm_1 = tkinter.Frame(root)
+            frm_1.pack(ipadx=2, ipady=2)
+            # the message
+            message = tkinter.Label(frm_1, text=self.msg)
+            message.pack(padx=8, pady=8)
+            # if entry=True create and set focus
+            if entry is not None:
+                if entry == True:
+                    entry = ''
+                self.entry = tkinter.Entry(frm_1)
+                self.entry.pack()
+                self.entry.insert(0, entry)
+                self.entry.focus_set()
+            # button frame
+            frm_2 = tkinter.Frame(frm_1)
+            frm_2.pack(padx=4, pady=4)
+            # buttons
+            btn_1 = tkinter.Button(frm_2, width=8, text=b1)
+            btn_1['command'] = self.b1_action
+            btn_1.pack(side='left')
+            if not entry: btn_1.focus_set()
+            btn_2 = tkinter.Button(frm_2, width=8, text=b2)
+            btn_2['command'] = self.b2_action
+            btn_2.pack(side='left')
+            # the enter button will trigger the focused button's action
+            btn_1.bind('<KeyPress-Return>', func=self.b1_action)
+            btn_2.bind('<KeyPress-Return>', func=self.b2_action)
+            # roughly center the box on screen
+            # for accuracy see: http://stackoverflow.com/a/10018670/1217270
+            root.update_idletasks()
+            xp = (root.winfo_screenwidth() // 2) - (root.winfo_width() // 2)
+            yp = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
+            geom = (root.winfo_width(), root.winfo_height(), xp, yp)
+            root.geometry('{0}x{1}+{2}+{3}'.format(*geom))
+            # call self.close_mod when the close button is pressed
+            root.protocol("WM_DELETE_WINDOW", self.close_mod)
+            # a trick to activate the window (on windows 7)
+            root.deiconify()
+            # if t is specified: call time_out after t seconds
+            if t: root.after(int(t*1000), func=self.time_out)
+
+        def b1_action(self, event=None):
+            try: x = self.entry.get()
+            except AttributeError:
+                self.returning = self.b1_return
+                self.root.quit()
+            else:
+                if x:
+                    self.returning = x
+                    self.root.quit()
+
+        def b2_action(self, event=None):
+            self.returning = self.b2_return
+            self.root.quit()
+
+        # remove this function and the call to protocol
+        # then the close button will act normally
+        def close_mod(self):
+            pass
+
+        def time_out(self):
+            try: x = self.entry.get()
+            except AttributeError: self.returning = None
+            else: self.returning = x
+            finally: self.root.quit()
+
+        def to_clip(self, event=None):
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.msg)       
+            
+            
+    def mbox(msg, b1='OK', b2='Cancel', frame=True, t=False, entry=None):
+        """Create an instance of MessageBox, and get data back from the user.
         
-    """
-    msgbox = MessageBox(msg, b1, b2, frame, t, entry)
-    msgbox.root.mainloop()
-    # the function pauses here until the mainloop is quit
-    msgbox.root.destroy()
-    return msgbox.returning
+        :param msg: string to be displayed
+        :type msg: str
+        :param b1: left button text, or a tuple (<text for button>, <to return on press>)
+        :type b1: str, tuple
+        :param b2: right button text, or a tuple (<text for button>, <to return on press>)
+        :type b2: str, tuple
+        :param frame: include a standard outerframe: True or False
+        :type frame: bool
+        :param t: time in seconds (int or float) until the msgbox automatically closes
+        :type t: int, float
+        :param entry: include an entry widget that will provide its contents returned. Provide text to fill the box
+        :type entry: None, bool, str
+        
+        Example:
+            
+            .. code-block:: python
+                
+            name = mbox('Enter your name', entry=True)
+            name = mbox('Enter your name', entry='default')
+            if name:
+                print("Value: " + name)
+            
+            value = mbox('Male or female?', ('male', 'm'), ('female', 'f'))
+            mbox('Process done')
+            
+        """
+        msgbox = MessageBox(msg, b1, b2, frame, t, entry)
+        msgbox.root.mainloop()
+        # the function pauses here until the mainloop is quit
+        msgbox.root.destroy()
+        return msgbox.returning
 
 
