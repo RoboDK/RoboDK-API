@@ -83,7 +83,7 @@ classdef Robolink < handle
         SAFE_MODE = 1;   % checks that provided items exist in memory
         AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
         PORT_START = 20500; % port to start looking for app connection
-        PORT_END   = 20510; % port to stop looking for app connection
+        PORT_END   = 20500; % port to stop looking for app connection
         PORT = -1;
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    

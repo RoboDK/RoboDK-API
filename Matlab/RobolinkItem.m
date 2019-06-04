@@ -466,8 +466,15 @@ classdef RobolinkItem < handle
             % In  2 (optional): blocking -> True if we want the instruction to wait until the robot finished the movement (default=True)
             if nargin < 3
                 blocking = 1;
-            end   
-            this.link.moveX(target,this,1,blocking);
+            end
+            if this.type == this.link.ITEM_TYPE_PROGRAM
+                if class(target) ~= class(this)
+                    error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
+                end
+                this.addMoveJ(target)
+            else
+                this.link.moveX(target,this,1,blocking);
+            end
         end
         function MoveL(this, target, blocking)
             % Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements.
@@ -475,8 +482,15 @@ classdef RobolinkItem < handle
             % In  2 (optional): blocking -> True if we want the instruction to wait until the robot finished the movement (default=True)
             if nargin < 3
                 blocking = 1;
-            end  
-            this.link.moveX(target,this,2,blocking);
+            end
+            if this.type == this.link.ITEM_TYPE_PROGRAM
+                if class(target) ~= class(this)
+                    error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
+                end
+                this.addMoveL(target)
+            else
+                this.link.moveX(target,this,2,blocking);
+            end
         end
         function collision = MoveJ_Test(this, j1, j2, minstep_deg)
             % Checks if a joint movement is free of collision.
@@ -619,6 +633,30 @@ classdef RobolinkItem < handle
             this.link.send_int(2);
             this.link.check_status();
         end    
+        function ShowInstructions(this, display)
+            % Show or hide instruction items of a program in the RoboDK tree
+            if nargin < 2
+                display = 1;
+            end
+            this.link.check_connection();
+            command = 'Prog_ShowIns';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_int(display);   
+            this.link.check_status();
+        end
+        function ShowTargets(this, display)
+            % Show or hide targets of a program in the RoboDK tree
+            if nargin < 2
+                display = 1;
+            end
+            this.link.check_connection();
+            command = 'Prog_ShowTargets';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_int(display);
+            this.link.check_status();
+        end
         function nins = InstructionCount(this)
             % Returns the number of instructions of a program.        
             this.link.check_connection();

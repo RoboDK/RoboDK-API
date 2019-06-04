@@ -239,7 +239,7 @@ DISPLAY_REF_PYZ= 0b100000000
 def RoboDKInstallFound():
     """Check if RoboDK is installed"""    
     path_install = getPathRoboDK()
-    return os.File.Exists(path_install)
+    return os.path.exists(path_install)
 
 def getPathRoboDK(): 
     """RoboDK's executable/binary file"""
@@ -253,16 +253,24 @@ def getPathRoboDK():
         return "~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
     else:
         # Windows assumed  
-        import winreg        
+        if sys.version_info[0] < 3:
+            import _winreg
+        else:
+            import winreg as _winreg
         
         # Try to get the value from the Windows registry:
         try:
+        #if True:
             # Open the key and return the handle object.
-            hKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "Software\\RoboDK")            
+            try:
+                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_64KEY)
+            except FileNotFoundError:
+                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)                
+            
             # Read the value.                      
-            result = winreg.QueryValueEx(hKey, "INSTDIR")            
+            result = _winreg.QueryValueEx(hKey, "INSTDIR")            
             # Close the handle object.
-            winreg.CloseKey(hKey)            
+            _winreg.CloseKey(hKey)            
             # Return only the value from the resulting tuple (value, type_as_int).
             return result[0].replace("\\","/") + "/bin/RoboDK.exe"        
         except:# FileNotFoundError:
@@ -270,6 +278,75 @@ def getPathRoboDK():
             
         return "C:/RoboDK/bin/RoboDK.exe"
 
+
+def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
+    """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
+    
+    :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
+    :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
+    :param int pid: Process ID (optional)
+    :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
+    :param int area_allowed: Areas allowed (default is 15:no constrain)
+    :param int timeout: Timeout to abort attempting to embed the window        
+    
+    .. code-block:: python
+        :caption: Example to dock/embed a Python window in RoboDK
+    
+        from tkinter import *
+        from robolink import *
+        import threading    
+
+        # Create a new window
+        window = tkinter.Tk()
+        
+        # Close the window
+        def onClose():
+            window.destroy()
+            quit(0)
+
+        # Trigger Select button
+        # IMPORTANT: We need to run the action on a separate thread because
+        # (otherwise, if we want to interact with RoboDK window it will freeze)
+        def on_btnSelect():
+            def thread_btnSelect():
+                # Run button action (example to select an item and display its name)
+                RDK = Robolink()
+                item = RDK.ItemUserPick('Select an item')
+                if item.Valid():
+                    RDK.ShowMessage("You selected the item: " + item.Name())
+                
+            threading.Thread(target=thread_btnSelect).start()
+        
+        # Set the window title (must be unique for the docking to work, try to be creative)
+        window_title = 'RoboDK API Docked Window'
+        window.title(window_title)
+        
+        # Delete the window when we close it
+        window.protocol("WM_DELETE_WINDOW", onClose)
+        
+        # Add a button (Select action)
+        btnSelect = Button(window, text='Trigger on_btnSelect', height=5, width=60, command=on_btnSelect)
+        btnSelect.pack(fill=X)
+        
+        # Embed the window
+        EmbedWindow(window_title)
+        
+        # Run the window event loop. This is like an app and will block until we close the window
+        window.mainloop()
+        """
+    import threading
+    def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
+        # it is important to run this on a parallel thread to not block the main window events in Python
+        rdk = Robolink()
+        if rdk.EmbedWindow(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
+            print("Window docked successfully: " + window_name)
+        else:
+            print("Failed to dock window: " + window_name)
+        
+    t = threading.Thread(target=t_dock, args = (window_name, docked_name, size_w, size_h, pid, area_add, area_allowed, timeout))
+    t.start()
+        
+        
 class Robolink:
     """The Robolink class is the link to to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
     Any interaction is made through \"items\" (Item() objects). An item is an object in the
@@ -304,6 +381,9 @@ class Robolink:
     # timeout for communication, in seconds
     TIMEOUT = 10
     
+    # activate nodelay option (faster, requires more resources)
+    NODELAY = False
+    
     # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     APPLICATION_DIR = ''    
     
@@ -311,6 +391,9 @@ class Robolink:
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     PORT = -1         # current port
     BUILD = 0         # This variable holds the build id and is used for version checking
+    
+    # Remember last status message
+    LAST_STATUS_MESSAGE = ''
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def _setTimeout(self, timeout_sec=30):
         """Set the communication timeout (in seconds)."""
@@ -341,26 +424,27 @@ class Robolink:
         """This procedure checks the status of the connection"""
         status = self._rec_int()
         if status > 0 and status < 10:
-            strproblems = 'Unknown error'
+            self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
-                strproblems = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
+                self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
             elif status == 2: #output warning
-                strproblems = self._rec_line()
-                print('WARNING: ' + strproblems)
-                #warn(strproblems)# does not show where is the problem...
+                self.LAST_STATUS_MESSAGE = self._rec_line()
+                print('WARNING: ' + self.LAST_STATUS_MESSAGE)
+                #warn(self.LAST_STATUS_MESSAGE)# does not show where is the problem...
                 return 0
             elif status == 3: #output error
-                strproblems = self._rec_line()
-                raise Exception(strproblems)
+                self.LAST_STATUS_MESSAGE = self._rec_line()
+                raise Exception(self.LAST_STATUS_MESSAGE)
             elif status == 9:
-                strproblems = 'Invalid license. Contact us at: www.robodk.com'
-            print(strproblems)
-            raise Exception(strproblems)
+                self.LAST_STATUS_MESSAGE = 'Invalid license. Contact us at: www.robodk.com'
+            print(self.LAST_STATUS_MESSAGE)
+            raise Exception(self.LAST_STATUS_MESSAGE)
         elif status == 0:
             # everything is OK
-            status = status;
+            self.LAST_STATUS_MESSAGE = ''
         else:
-            raise Exception('Problems running function')
+            self.LAST_STATUS_MESSAGE = 'Problems running function'
+            raise Exception(self.LAST_STATUS_MESSAGE)
         return status
 
     def _check_color(self, color):
@@ -624,11 +708,14 @@ class Robolink:
         else:
             self.APPLICATION_DIR = getPathRoboDK()
             
+        if ('/API_NODELAY' in self.ARGUMENTS or '-API_NODELAY' in self.ARGUMENTS):
+            self.NODELAY = True
+            
         if port is not None:
             self.PORT_START = port
             self.PORT_END = port
             self.ARGUMENTS.append("-PORT=%i" % port)
-            
+                        
         elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
             from socket import socket
             with socket() as s:
@@ -692,6 +779,9 @@ class Robolink:
             import socket
             #self.COM.close()
             self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if self.NODELAY:
+                self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                
             self.COM.connect((self.IP, self.PORT))                
             connected = self._is_connected()
             if connected > 0:
@@ -740,6 +830,9 @@ class Robolink:
         for i in range(2):
             for port in range(self.PORT_START,self.PORT_END+1):
                 self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self.NODELAY:
+                    self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    
                 self.COM.settimeout(1)
                 try:
                     self.COM.connect((self.IP, port))                
@@ -2141,13 +2234,13 @@ class Robolink:
             
         self._check_status()
         
-    def CalibrateTool(self, poses_xyzwpr, format=EULER_RX_RY_RZ, algorithm=CALIBRATE_TCP_BY_POINT, robot=None, tool=None):
+    def CalibrateTool(self, poses_xyzwpr, input_format=EULER_RX_RY_RZ, algorithm=CALIBRATE_TCP_BY_POINT, robot=None, tool=None):
         """Calibrate a TCP given a list of poses/joints and following a specific algorithm/method. 
         Tip: Provide the list of joints instead of poses to maximize accuracy for calibrated robots.
         
         :param poses_xyzwpr: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
         :type poses_xyzwpr: :class:`.Mat` or a list of list of float
-        :param int format: Euler format. Optionally, use JOINT_FORMAT and provide the robot.
+        :param int input_format: Euler format. Optionally, use JOINT_FORMAT and provide the robot.
         :param int algorithm: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_TCP_...
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
@@ -2171,7 +2264,7 @@ class Robolink:
         command = 'CalibTCP3'
         self._send_line(command)
         self._send_matrix(poses_xyzwpr)
-        self._send_int(format)
+        self._send_int(input_format)
         if type(algorithm) != list:
             algorithm = [algorithm]
             
@@ -2184,7 +2277,8 @@ class Robolink:
         errorstats = self._rec_array()
         errors = self._rec_matrix()           
         self._check_status()
-        errors = errors[:,1].tolist()
+        if errors.size(1) > 0:
+            errors = errors[:,1].tolist()
         return TCPxyz.tolist(), errorstats.tolist(), errors
         
     def CalibrateReference(self, joints_points, method=CALIBRATE_FRAME_3P_P1_ON_X, use_joints=False, robot=None):
@@ -2702,16 +2796,22 @@ class Robolink:
         self._check_status()
         return result
         
-    def EmbedWindow(self, docked_name, window_name, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=100):
+    def EmbedWindow(self, window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
         """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
         
-        :param str docked_name: Name of the docked tab
-        :param str window_name: The name of the window currently open
+        :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
+        :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
         :param int pid: Process ID (optional)
         :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
         :param int area_allowed: Areas allowed (default is 15:no constrain)
         :param int timeout: Timeout to abort attempting to embed the window        
+        
+        .. seealso:: Use the static function: :func:`~robolink.EmbedWindow` (this function should usually be called on a separate thread)
+        
         """
+        if not docked_name:
+            docked_name = window_name
+            
         self._check_connection()
         command = 'WinProcDock'
         self._send_line(command)
@@ -3953,7 +4053,7 @@ class Item():
         self.link._check_status()
         return status
         
-    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=4):
+    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=10):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded 0 if it failed.
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -3966,7 +4066,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
         trycount = 0
-        refresh_rate = 0.5
+        refresh_rate = 2
         self.Connect()
         tic()
         timer1 = toc()
@@ -3975,19 +4075,21 @@ class Item():
             con_status, status_msg = self.ConnectedState()
             print(status_msg)
             if con_status == ROBOTCOM_READY:
-                print(status_msg)
                 break
-            elif con_status == ROBOTCOM_DISCONNECTED:
+                
+            elif con_status < 0:
                 print('Trying to reconnect...')
+                self.Disconnect()
+                pause(refresh_rate)
                 self.Connect()
+                
             if toc() - timer1 > wait_connection:
                 timer1 = toc()
-                self.Disconnect()
                 trycount = trycount + 1
                 if trycount >= max_attempts:
                     print('Failed to connect: Timed out')
                     break
-                print('Retrying connection...')
+
             pause(refresh_rate)
         return con_status
 
@@ -4391,7 +4493,7 @@ class Item():
         values.append(tool_mass)
         if tool_cog is not None:
             values += tool_cog            
-        self.link._send_array(values);
+        self.link._send_array(values)
         self.link._check_status()
     
     def FilterProgram(self, filestr):
@@ -4440,6 +4542,8 @@ class Item():
         transfer_ok = False
         if transfer_status > 0:
             transfer_ok = True
+            
+        self.LAST_STATUS_MESSAGE = prog_log_str
             
         return success, prog_log_str, transfer_ok
     
@@ -4817,6 +4921,7 @@ class Item():
         program_time = values[1]
         program_distance = values[2]
         valid_program = values[3]
+        self.LAST_STATUS_MESSAGE = readable_msg
         return valid_instructions, program_time, program_distance, valid_program, readable_msg
         
     def InstructionList(self):
@@ -4919,3 +5024,9 @@ class Item():
         line = self.link._rec_line()
         self.link._check_status()
         return line
+        
+        
+        
+        
+#if __name__ == "__main__":    
+#    pass
