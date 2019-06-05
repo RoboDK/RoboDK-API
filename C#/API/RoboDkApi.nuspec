@@ -2,14 +2,16 @@
 <package >
   <metadata>
     <id>RoboDkApi</id>
-    <version>3.8.0</version>
+    <version>3.8.3</version>
     <title>RoboDK API</title>
     <authors>RoboDK</authors>
     <projectUrl>https://robodk.com/</projectUrl>
     <iconUrl>https://robodk.com/favicon.ico</iconUrl>
+    <license type="file">license.txt</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>The RoboDK API allows you to interact with RoboDK Software. RoboDK Software allows you to simulate and program industrial robots for any manufacturing operation. Program any industrial robot arm using the same development environment.</description>
+    <description>The RoboDK API allows you to interact with industrial robots and RoboDK Software. RoboDK Software allows you to simulate and program industrial robots for any manufacturing operation. Program any industrial robot arm under the same development environment.</description>
     <copyright>Copyright 2019</copyright>
     <tags>Simulation Industrial Robot Arm Offline Programming ABB Fanuc KUKA Motoman Yaskawa Denso Kawasaki Universal Robots 3D CAD CAM Manufacturing</tags>
+    <summary>The RoboDK API allows you to automate industrial robot programming. You can also and interact with RoboDK software for simulation and offline programming</summary>
   </metadata>
 </package>
