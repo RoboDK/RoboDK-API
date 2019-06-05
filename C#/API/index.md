@@ -59,6 +59,8 @@ Other
 
 A partial implementation of the RoboDK API for Visual Basic is also available, however, it is recommended to use the Nuget package in Visual Basic:
  * RoboDK API for VB .Net: https://github.com/RoboDK/RoboDK-API/tree/master/Visual%20Basic
+ 
+The RoboDK API is also available in Python, C++ (based on Qt libraries) and Matlab
 
 Supported robots
 ================
