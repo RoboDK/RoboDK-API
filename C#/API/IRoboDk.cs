@@ -108,6 +108,12 @@ namespace RoboDk.API
         void Disconnect();
 
         /// <summary>
+        /// Get RoboDK's main window handle
+        /// </summary>
+        /// <returns></returns>
+        IntPtr GetWindowHandle();
+
+        /// <summary>
         /// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
         /// </summary>
         /// <returns>True of event connection to RoboDK could be established.</returns>

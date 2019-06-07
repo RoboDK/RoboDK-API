@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>RoboDkApi</id>
-    <version>3.8.3</version>
+    <version>3.8.4</version>
     <title>RoboDK API</title>
     <authors>RoboDK</authors>
     <projectUrl>https://robodk.com/</projectUrl>
@@ -15,4 +15,8 @@
     <description>With RoboDK API allows you to interact with industrial robots and RoboDK Software. RoboDK Software allows you to simulate and program industrial robots for any manufacturing operation, such as robot machining, inspection or pick and place applications. You can esily program and debug any industrial robot arm under the same development environment.</description>
     <tags>Simulation Industrial Robot Arm Offline Programming ABB Fanuc KUKA Motoman Yaskawa Denso Kawasaki Universal Robots 3D CAD CAM Manufacturing Machining Inspection Pick Place Industry 4.0</tags>
   </metadata>
+  <files>
+    <file src="bin\Release\*.*" target="lib/net45" />
+    <file src="license.txt" target="" />
+  </files>
 </package>
