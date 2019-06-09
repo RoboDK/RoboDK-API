@@ -541,15 +541,25 @@ classdef Robolink < handle
             check_status(this);
         end
 
-        function ShowMessage(this, message)
+        function ShowMessage(this, message, popup)
             % Shows or raises the RoboDK window
+            if (nargin < 3)
+                popup = 1;
+            end                
             check_connection(this);
-            command = 'ShowMessage';
-            send_line(this, command);
-            send_line(this, message);
-            this.COM.Timeout = 3600; % wait up to 1 hour user to hit OK
-            check_status(this);
-            this.COM.Timeout = this.TIMEOUT;
+            if popup > 0
+                command = 'ShowMessage';
+                send_line(this, command);
+                send_line(this, message);
+                this.COM.Timeout = 3600; % wait up to 1 hour user to hit OK
+                check_status(this);
+                this.COM.Timeout = this.TIMEOUT;
+            else
+                command = 'ShowMessageStatus';
+                send_line(this, command);
+                send_line(this, message);
+                check_status(this);
+            end
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
