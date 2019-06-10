@@ -29,6 +29,8 @@ Partial Class Form1
 		Me.Label1 = New System.Windows.Forms.Label()
 		Me.notifybar = New System.Windows.Forms.Label()
 		Me.RoboDkPanel = New System.Windows.Forms.Panel()
+		Me.Rad_Integrate = New System.Windows.Forms.RadioButton()
+		Me.Rad_Show = New System.Windows.Forms.RadioButton()
 		Me.SuspendLayout()
 		'
 		'btnLoadFile
@@ -64,7 +66,7 @@ Partial Class Form1
 		Me.btnRunTestProgram.Name = "btnRunTestProgram"
 		Me.btnRunTestProgram.Size = New System.Drawing.Size(145, 75)
 		Me.btnRunTestProgram.TabIndex = 3
-		Me.btnRunTestProgram.Text = "Dummy"
+		Me.btnRunTestProgram.Text = "Run Test Program"
 		Me.btnRunTestProgram.UseVisualStyleBackColor = True
 		'
 		'Label1
@@ -79,7 +81,7 @@ Partial Class Form1
 		'notifybar
 		'
 		Me.notifybar.AutoSize = True
-		Me.notifybar.Location = New System.Drawing.Point(14, 376)
+		Me.notifybar.Location = New System.Drawing.Point(12, 328)
 		Me.notifybar.Name = "notifybar"
 		Me.notifybar.Size = New System.Drawing.Size(54, 13)
 		Me.notifybar.TabIndex = 5
@@ -89,14 +91,39 @@ Partial Class Form1
 		'
 		Me.RoboDkPanel.Location = New System.Drawing.Point(440, 12)
 		Me.RoboDkPanel.Name = "RoboDkPanel"
-		Me.RoboDkPanel.Size = New System.Drawing.Size(348, 433)
+		Me.RoboDkPanel.Size = New System.Drawing.Size(395, 289)
 		Me.RoboDkPanel.TabIndex = 6
+		'
+		'Rad_Integrate
+		'
+		Me.Rad_Integrate.AutoSize = True
+		Me.Rad_Integrate.Location = New System.Drawing.Point(176, 296)
+		Me.Rad_Integrate.Name = "Rad_Integrate"
+		Me.Rad_Integrate.RightToLeft = System.Windows.Forms.RightToLeft.No
+		Me.Rad_Integrate.Size = New System.Drawing.Size(153, 17)
+		Me.Rad_Integrate.TabIndex = 7
+		Me.Rad_Integrate.Text = "Integrate RoboDK Window"
+		Me.Rad_Integrate.UseVisualStyleBackColor = True
+		'
+		'Rad_Show
+		'
+		Me.Rad_Show.AutoSize = True
+		Me.Rad_Show.Checked = True
+		Me.Rad_Show.Location = New System.Drawing.Point(176, 273)
+		Me.Rad_Show.Name = "Rad_Show"
+		Me.Rad_Show.Size = New System.Drawing.Size(96, 17)
+		Me.Rad_Show.TabIndex = 8
+		Me.Rad_Show.TabStop = True
+		Me.Rad_Show.Text = "Show RoboDK"
+		Me.Rad_Show.UseVisualStyleBackColor = True
 		'
 		'Form1
 		'
 		Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
 		Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-		Me.ClientSize = New System.Drawing.Size(800, 450)
+		Me.ClientSize = New System.Drawing.Size(865, 353)
+		Me.Controls.Add(Me.Rad_Show)
+		Me.Controls.Add(Me.Rad_Integrate)
 		Me.Controls.Add(Me.RoboDkPanel)
 		Me.Controls.Add(Me.notifybar)
 		Me.Controls.Add(Me.Label1)
@@ -118,4 +145,6 @@ Partial Class Form1
 	Friend WithEvents Label1 As Label
 	Friend WithEvents notifybar As Label
 	Friend WithEvents RoboDkPanel As Panel
+	Friend WithEvents Rad_Integrate As RadioButton
+	Friend WithEvents Rad_Show As RadioButton
 End Class

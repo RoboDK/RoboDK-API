@@ -1,0 +1,15 @@
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDK API Demo.exe.config
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDK API Demo.exe
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDK API Demo.pdb
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDK API Demo.xml
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDkApi.dll
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\bin\Debug\RoboDkApi.pdb
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.vbprojAssemblyReference.cache
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.Form1.resources
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.Resources.resources
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.vbproj.GenerateResource.cache
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.vbproj.CoreCompileInputs.cache
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDKAPIDemo.vbproj.CopyComplete
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDK API Demo.exe
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDK API Demo.xml
+C:\Users\Admin123\source\repos\RoboDKVBAPIDemo\WindowsApp4\obj\Debug\RoboDK API Demo.pdb
