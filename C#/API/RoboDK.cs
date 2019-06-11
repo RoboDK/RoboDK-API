@@ -225,6 +225,52 @@ namespace RoboDk.API
             }
             return rdkList;
         }
+
+        /// <summary>
+        /// Check if RoboDK was installed from RoboDK's official installer
+        /// </summary>
+        /// <returns></returns>
+        public static bool RoboDKInstallFound()
+        {
+            return RoboDKInstallPath() != null;
+        }
+
+        /// <summary>
+        /// Return the RoboDK install path according to the registry (saved by RoboDK installer)
+        /// </summary>
+        /// <returns></returns>
+        public static string RoboDKInstallPath()
+        {
+            using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
+            {
+                // key now points to the 64-bit key
+                var installPath = regKey?.GetValue("INSTDIR").ToString();
+                if (!string.IsNullOrEmpty(installPath))
+                {
+                    return installPath + "\\bin\\RoboDK.exe";
+                }
+            }
+
+            /*
+            // .Net 2.0
+            RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RoboDK", false);
+            if (regKey is RegistryKey) // check if the registry was opened
+            {
+                install_path = regKey.GetValue("INSTDIR").ToString();
+                regKey.Close();
+                if (install_path != null)
+                {
+                    return = install_path + "\\bin\\RoboDK.exe";
+                }
+            }*/
+            string default_path = "C:\\RoboDK\\bin\\RoboDK.exe";
+            if (File.Exists(default_path))
+            {
+                return default_path;
+            }
+            return null;
+        }
         #endregion
 
         #region Public Methods
@@ -348,16 +394,7 @@ namespace RoboDk.API
             // No application path is given. Check the registry.
             if (string.IsNullOrEmpty(ApplicationDir))
             {
-                using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-                using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
-                {
-                    // key now points to the 64-bit key
-                    var installPath = regKey?.GetValue("INSTDIR").ToString();
-                    if (!string.IsNullOrEmpty(installPath))
-                    {
-                        ApplicationDir = installPath + "\\bin\\RoboDK.exe";
-                    }
-                }
+                ApplicationDir = RoboDKInstallPath();
             }
 
             // Still no application path. User Default installation directory
@@ -420,6 +457,24 @@ namespace RoboDk.API
                 }
             }
             return serverPortIsOpen;
+        }
+
+        /// <inheritdoc />
+        public IntPtr GetWindowHandle()
+        {
+            // Retrieve the wain window handle
+            if (Process != null)
+            {
+                return Process.MainWindowHandle;
+            }
+            else
+            {
+                RequireBuild(7750);
+                // RoboDK was not started from this application.
+                // In that case, we can retrieve the window pointer by using a specific RoboDK command
+                string str_window_id = Command("MainWindow_ID");
+                return new IntPtr(Convert.ToInt32(str_window_id));
+            }
         }
 
         /// <inheritdoc />
@@ -1247,19 +1302,19 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public string Command(string cmd, bool value = false)
+        public string Command(string cmd, bool value)
         {
             return Command(cmd, value ? "1" : "0");
         }
 
         /// <inheritdoc />
-        public string Command(string cmd, int value = 0)
+        public string Command(string cmd, int value)
         {
             return Command(cmd, value.ToString());
         }
 
         /// <inheritdoc />
-        public string Command(string cmd, double value = 0.0)
+        public string Command(string cmd, double value)
         {
             return Command(cmd, value.ToString("0.######"));
         }
