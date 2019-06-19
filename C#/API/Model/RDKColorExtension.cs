@@ -15,7 +15,7 @@ namespace RoboDk.API.Model
     {
         public static double[] ToRoboDKColorArray(this Color color)
         {
-            return new double[] {color.ScR, color.ScG, color.ScB, color.ScA};
+            return new[] { color.R / 255.0, color.G / 255.0, color.B / 255.0, color.A / 255.0 };
         }
 
         public static Color FromRoboDKColorArray(this double[] array)
@@ -23,10 +23,10 @@ namespace RoboDk.API.Model
             Debug.Assert(array.Length == 4);
             var color = new Color
             {
-                ScR = (float)array[0],
-                ScG = (float)array[1],
-                ScB = (float)array[2],
-                ScA = (float)array[3]
+                R = (byte)(array[0] * 255.0),
+                G = (byte)(array[1] * 255.0),
+                B = (byte)(array[2] * 255.0),
+                A = (byte)(array[3] * 255.0)
             };
             return color;
         }

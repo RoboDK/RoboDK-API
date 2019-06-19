@@ -724,10 +724,12 @@ namespace RoboDk.API
         ///     Sets the speed and/or the acceleration of a robot.
         /// </summary>
         /// <param name="speedLinear">linear speed in mm/s (-1 = no change)</param>
+        /// <param name="accelLinear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="speedJoints">joint speed in deg/s (-1 = no change)</param>
-        /// <param name="accelLinear">linear acceleration in mm/s2 (-1 = no change)</param>        
         /// <param name="accelJoints">joint acceleration in deg/s2 (-1 = no change)</param>
-        void SetSpeed(double speedLinear, double speedJoints = -1, double accelLinear = -1, double accelJoints = -1);
+        void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1,
+            double accelJoints = -1);
+
 
         /// <summary>
         ///     Sets the robot movement smoothing accuracy (also known as zone data value).
