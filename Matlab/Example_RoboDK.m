@@ -131,7 +131,7 @@ target = RDK.AddTarget('Home', ref, robot);
 target.setAsJointTarget();
 target.setJoints(jhome)
 % Add joint movement into the program
-prog.addMoveJ(target);
+prog.MoveJ(target);
 
 % Generate a sequence of targets and move along the targets (linear move)
 angleY = 0;
@@ -144,7 +144,7 @@ for dy=600:-100:100
     pose(1:3,1:3) = Hhome(1:3,1:3);
     pose = pose*roty(angleY*pi/180);
     target.setPose(pose);
-    prog.addMoveL(target);
+    prog.MoveL(target);
     angleY = angleY + 20;
 end
 
@@ -318,4 +318,37 @@ joints4 = robot.SolveIK(H_tcp_wrt_frame*transl(0,0,-100));
 % Set the robot at the new position calculated
 robot.setJoints(joints4);
 
+%% Example to add targets to a program and use circular motion
+RDK = Robolink();
+robot = RDK.Item('',RDK.ITEM_TYPE_ROBOT);
+
+% Get the current robot pose:
+pose0 = robot.Pose();
+
+% Add a new program:
+prog = RDK.AddProgram('TestProgram');
+
+% Create a linear move to the current robot position (MoveC is defined by 3
+% points)
+target0 = RDK.AddTarget('First Point');
+target0.setAsCartesianTarget(); % default behavior
+target0.setPose(pose0);
+prog.MoveL(target0);
+
+% Calculate the circular move:
+pose1 = pose0*transl(50,0,0);
+pose2 = pose0*transl(50,50,0);
+
+% Add the first target for the circular move
+target1 = RDK.AddTarget('Second Point');
+target1.setAsCartesianTarget();
+target1.setPose(pose1);
+
+% Add the second target for the circular move
+target2 = RDK.AddTarget('Third Point');
+target2.setAsCartesianTarget();
+target2.setPose(pose2);
+
+% Add the circular move instruction:
+prog.MoveC(target1, target2)
 

@@ -382,6 +382,49 @@ classdef Robolink < handle
                 itemrobot.WaitMove();
             end
         end
+        function moveC(this, target1, target2, itemrobot, blocking)
+            % Performs a circular movement. Use robot.MoveC instead
+            % self._check_connection();
+            itemrobot.WaitMove(); % checks connection
+            command = 'MoveC';
+            send_line(this, command);
+            send_int(this, 3);
+            if numel(target1) == 1 % target1 is an item
+                send_int(this, 3);
+                send_array(this, []);
+                send_item(this, target1);
+            elseif size(target1,1) == 1 || size(target1,2) == 1 % target1 are joints
+                send_int(this, 1);
+                send_array(this, target1);
+                send_item(this, RobolinkItem(this, 0));
+            elseif numel(target1) == 16 % target1 is a pose
+                send_int(this, 2);
+                send_array(this, target1);
+                send_item(this, RobolinkItem(this, 0));
+            else
+                error('Invalid input value for target 1');
+            end                
+            if numel(target2) == 1 % target1 is an item
+                send_int(this, 3);
+                send_array(this, []);
+                send_item(this, target2);
+            elseif size(target2,1) == 1 || size(target2,2) == 1 % target2 are joints
+                send_int(this, 1);
+                send_array(this, target2);
+                send_item(this, RobolinkItem(this, 0));
+            elseif numel(target2) == 16 % target2 is a pose
+                send_int(this, 2);
+                send_array(this, target2);
+                send_item(this, RobolinkItem(this, 0));
+            else
+                error('Invalid input value for target 2');
+            end
+            send_item(this, itemrobot);
+            check_status(this);
+            if blocking
+                itemrobot.WaitMove();
+            end
+        end        
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     methods
