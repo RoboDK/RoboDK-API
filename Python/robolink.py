@@ -288,52 +288,7 @@ def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area
     :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
     :param int area_allowed: Areas allowed (default is 15:no constrain)
     :param int timeout: Timeout to abort attempting to embed the window        
-    
-    .. code-block:: python
-        :caption: Example to dock/embed a Python window in RoboDK
-    
-        from tkinter import *
-        from robolink import *
-        import threading    
-
-        # Create a new window
-        window = tkinter.Tk()
-        
-        # Close the window
-        def onClose():
-            window.destroy()
-            quit(0)
-
-        # Trigger Select button
-        # IMPORTANT: We need to run the action on a separate thread because
-        # (otherwise, if we want to interact with RoboDK window it will freeze)
-        def on_btnSelect():
-            def thread_btnSelect():
-                # Run button action (example to select an item and display its name)
-                RDK = Robolink()
-                item = RDK.ItemUserPick('Select an item')
-                if item.Valid():
-                    RDK.ShowMessage("You selected the item: " + item.Name())
-                
-            threading.Thread(target=thread_btnSelect).start()
-        
-        # Set the window title (must be unique for the docking to work, try to be creative)
-        window_title = 'RoboDK API Docked Window'
-        window.title(window_title)
-        
-        # Delete the window when we close it
-        window.protocol("WM_DELETE_WINDOW", onClose)
-        
-        # Add a button (Select action)
-        btnSelect = Button(window, text='Trigger on_btnSelect', height=5, width=60, command=on_btnSelect)
-        btnSelect.pack(fill=X)
-        
-        # Embed the window
-        EmbedWindow(window_title)
-        
-        # Run the window event loop. This is like an app and will block until we close the window
-        window.mainloop()
-        """
+    """
     import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
         # it is important to run this on a parallel thread to not block the main window events in Python
@@ -496,6 +451,23 @@ class Robolink:
         itemtype = struct.unpack('>i',buffer2)
         return Item(self,item[0], itemtype[0])
         
+    def _send_bytes(self, data):
+        """Sends a byte array"""
+        if isinstance(data,str):
+            data = bytes(data,'utf-8')
+        if not isinstance(data,bytes):
+            data = bytes(data)
+            
+        self.COM.send(struct.pack('>I',len(data)))#q=unsigned long long (64 bits), d=float64
+        self.COM.send(data)
+
+    def _rec_bytes(self):
+        """Receives a byte array"""
+        buffer = self.COM.recv(4)
+        bytes_len = struct.unpack('>I',buffer)#q=unsigned long long (64 bits), d=float64
+        data = self.COM.recv(bytes_len[0])
+        return data
+        
     def _send_ptr(self, ptr_h):
         """Sends a generic pointer"""
         self.COM.send(struct.pack('>Q',ptr_h))#q=unsigned long long (64 bits), d=float64
@@ -616,7 +588,8 @@ class Robolink:
             cnt = 0
             for j in range(size2):
                 for i in range(size1):
-                    mat[i,j] = matnums[cnt]
+                    #mat[i,j] = matnums[cnt]
+                    mat.rows[i][j] = matnums[cnt]
                     cnt = cnt + 1
         else:
             mat = Mat(0,0)
@@ -1965,11 +1938,12 @@ class Robolink:
         self._check_status()
         return params
         
-    def getParam(self, param='PATH_OPENSTATION'):
+    def getParam(self, param='PATH_OPENSTATION', str_type=True):
         """Get a global or a station parameter from the open RoboDK station.
         Station parameters can also be modified manually by right clicking the station item and selecting "Station parameters"
         
         :param str param: name of the parameter
+        :param bool str_type: True to retrieve a string parameter (False for binary/bytes type)
         :return: value of the parameter.
         :rtype: str, float or None if the parameter is unknown
         
@@ -1983,31 +1957,46 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.setParam`, :func:`~robolink.Robolink.getParams`
         """    
         self._check_connection()
-        command = 'G_Param'
-        self._send_line(command)
-        self._send_line(param)
-        value = self._rec_line()
-        self._check_status()
-        if value.startswith('UNKNOWN '):
-            return None
-        try:
-            return float(value) # automatically convert int, long and float
-        except ValueError:
+        if str_type:
+            command = 'G_Param'
+            self._send_line(command)
+            self._send_line(param)
+            value = self._rec_line()
+            self._check_status()
+            if value.startswith('UNKNOWN '):
+                return None
+            try:
+                return float(value) # automatically convert int, long and float
+            except ValueError:
+                return value
+        else:
+            command = 'G_DataParam'
+            self._send_line(command)
+            self._send_line(param)
+            value = self._rec_bytes()
+            self._check_status()
             return value
         
     def setParam(self, param, value):
         """Set a station parameter. If the parameters exists, it will be updated. Otherwise, it will be added to the station.
         
         :param str param: name of the parameter
-        :param str value: value of the parameter        
+        :param str value: value of the parameter (value type can be str or bytes)
         
         .. seealso:: :func:`~robolink.Robolink.getParam`
         """    
         self._check_connection()
-        command = 'S_Param'
-        self._send_line(command)
-        self._send_line(str(param))
-        self._send_line(str(value).replace('\n',' '))
+        if isinstance(value,bytes):            
+            command = 'S_DataParam'
+            self._send_line(command)
+            self._send_line(str(param))
+            self._send_bytes(value)            
+        else:
+            command = 'S_Param'
+            self._send_line(command)
+            self._send_line(str(param))
+            self._send_line(str(value).replace('\n',' '))
+            
         self._check_status()
         
     def Command(self, cmd, value=''):
@@ -2808,6 +2797,51 @@ class Robolink:
         
         .. seealso:: Use the static function: :func:`~robolink.EmbedWindow` (this function should usually be called on a separate thread)
         
+        .. code-block:: python
+            :caption: Example to embed a window as a docked RoboDK window
+        
+            from tkinter import *
+            from robolink import *
+            import threading    
+
+            # Create a new window
+            window = tkinter.Tk()
+            
+            # Close the window
+            def onClose():
+                window.destroy()
+                quit(0)
+
+            # Trigger Select button
+            # IMPORTANT: We need to run the action on a separate thread because
+            # (otherwise, if we want to interact with RoboDK window it will freeze)
+            def on_btnSelect():
+                def thread_btnSelect():
+                    # Run button action (example to select an item and display its name)
+                    RDK = Robolink()
+                    item = RDK.ItemUserPick('Select an item')
+                    if item.Valid():
+                        RDK.ShowMessage("You selected the item: " + item.Name())
+                    
+                threading.Thread(target=thread_btnSelect).start()
+            
+            # Set the window title (must be unique for the docking to work, try to be creative!)
+            window_title = 'RoboDK API Docked Window'
+            window.title(window_title)
+            
+            # Delete the window when we close it
+            window.protocol("WM_DELETE_WINDOW", onClose)
+            
+            # Add a button (Select action)
+            btnSelect = Button(window, text='Trigger on_btnSelect', height=5, width=60, command=on_btnSelect)
+            btnSelect.pack(fill=X)
+            
+            # Embed the window
+            EmbedWindow(window_title)
+            
+            # Run the window event loop. This is like an app and will block until we close the window
+            window.mainloop()
+
         """
         if not docked_name:
             docked_name = window_name
@@ -3004,6 +3038,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_item(parent)
         self.link._check_status()
+        return parent
         
     def setParentStatic(self, parent):
         """Attaches the item to another parent while maintaining the current absolute position in the station.
@@ -3135,6 +3170,7 @@ class Item():
         self.link._send_int(visible)
         self.link._send_int(visible_frame)
         self.link._check_status()
+        return self
 
     def Name(self):
         """Returns the item name. The name of the item is always displayed in the RoboDK station tree. 
@@ -3166,6 +3202,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_line(name)
         self.link._check_status()
+        return self
         
     def setValue(self, varname, value):
         """Set a specific property name to a given value. This is reserved for internal purposes and future compatibility.
@@ -3223,6 +3260,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_pose(pose)
         self.link._check_status()
+        return self
 
     def Pose(self):
         """Returns the relative position (pose) of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent.
@@ -3278,6 +3316,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_pose(pose)
         self.link._check_status()
+        return self
 
     def PoseAbs(self):
         """Return the position (:class:`.Mat`) of this item given the pose with respect to the absolute reference frame (station reference)
@@ -3569,6 +3608,7 @@ class Item():
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._check_status()
+        return self
     
     def setAsJointTarget(self):
         """Sets a target as a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
@@ -3580,6 +3620,7 @@ class Item():
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._check_status()
+        return self
     
     #"""Robot item calls"""
     def Joints(self):
@@ -3673,6 +3714,7 @@ class Item():
         self.link._send_array(joints)
         self.link._send_item(self)
         self.link._check_status()
+        return self
         
     def ObjectLink(self, link_id=0):
         """Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
@@ -3717,6 +3759,7 @@ class Item():
         self.link._send_array(joints)
         self.link._send_item(self)
         self.link._check_status()
+        return self
         
     def JointLimits(self):
         """Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type).
@@ -3765,6 +3808,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_item(robot)
         self.link._check_status()
+        return self
         
     def setPoseFrame(self, frame):
         """Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
@@ -3785,6 +3829,7 @@ class Item():
             self.link._send_pose(frame)
         self.link._send_item(self)
         self.link._check_status()
+        return self
         
     def setPoseTool(self, tool):
         """Set the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
@@ -3804,6 +3849,7 @@ class Item():
             self.link._send_pose(tool)        
         self.link._send_item(self)
         self.link._check_status()
+        return self
         
     def PoseTool(self):
         """Returns the pose (:class:`.Mat`) of the robot tool (TCP) with respect to the robot flange
@@ -4138,6 +4184,7 @@ class Item():
         self.link._send_line(ftp_user)
         self.link._send_line(ftp_pass)
         self.link._check_status()
+        return self
         
     def ConnectedState(self):
         """Check connection status with a real robobt
@@ -4253,7 +4300,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        self.link.MoveC(target1, target2, self, blocking)
+        if self.type == ITEM_TYPE_PROGRAM:
+            if type(target1) != Item or type(target2) != Item:
+                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
+            self.addMoveC(target1, target2)
+            
+        else:
+            self.link.MoveC(target1, target2, self, blocking)
     
     def MoveJ_Test(self, j1, j2, minstep_deg=-1):
         """Checks if a joint movement is feasible and free of collision (if collision checking is activated).
@@ -4325,6 +4378,7 @@ class Item():
         self.link._send_item(self)
         self.link._send_array([float(speed_linear), float(speed_joints), float(accel_linear), float(accel_joints)])
         self.link._check_status()
+        return self
     
     def setAcceleration(self, accel_linear):
         """Sets the linear acceleration of a robot in mm/s2
@@ -4334,6 +4388,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setSpeedJoints`, :func:`~robolink.Item.setAccelerationJoints`
         """
         self.setSpeed(-1,-1,accel_linear,-1)
+        return self
     
     def setSpeedJoints(self, speed_joints):
         """Sets the joint speed of a robot in deg/s for rotary joints and mm/s for linear joints
@@ -4343,6 +4398,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setAccelerationJoints`
         """
         self.setSpeed(-1,speed_joints,-1,-1)
+        return self
     
     def setAccelerationJoints(self, accel_joints):
         """Sets the joint acceleration of a robot
@@ -4351,7 +4407,8 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setSpeedJoints`
         """
-        self.setSpeed(-1,-1,-1,accel_joints)   
+        self.setSpeed(-1,-1,-1,accel_joints)  
+        return self        
     
     def setRounding(self, rounding_mm):
         """Sets the rounding accuracy to smooth the edges of corners. In general, it is recommended to allow a small approximation near the corners to maintain a constant speed. 
@@ -4369,6 +4426,7 @@ class Item():
         self.link._send_int(rounding_mm*1000);
         self.link._send_item(self)
         self.link._check_status()
+        return self
     
     def setZoneData(self, zonedata):
         """Obsolete. Use :func:`~robolink.Item.setRounding` instead."""
@@ -4741,7 +4799,7 @@ class Item():
         self.link._check_status()
     
     def addMoveL(self, itemtarget):
-        """Adds a new robot linear move instruction to a program. This function is obsolete. Use MoveL instead.
+        """Adds a new linear move instruction to a program. This function is obsolete. Use MoveL instead.
         
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
@@ -4754,6 +4812,22 @@ class Item():
         self.link._send_item(itemtarget)
         self.link._send_item(self)
         self.link._send_int(2)
+        self.link._check_status()
+        
+    def addMoveC(self, itemtarget1, itemtarget2):
+        """Adds a new circular move instruction to a program (This function is obsolete. Use MoveL instead.)
+        
+        :param itemtarget: target item to move to
+        :type itemtarget: :class:`.Item`
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`
+        """
+        self.link._check_connection()
+        command = 'Add_INSMOVEC'
+        self.link._send_line(command)
+        self.link._send_item(itemtarget1)
+        self.link._send_item(itemtarget2)
+        self.link._send_item(self)
         self.link._check_status()
         
     def ShowInstructions(self, show=True):
@@ -5026,7 +5100,13 @@ class Item():
         return line
         
         
-        
-        
-#if __name__ == "__main__":    
-#    pass
+if __name__ == "__main__":    
+    RDK = Robolink()
+    r = RDK.Item('',ITEM_TYPE_ROBOT)
+    p = r.Pose()
+    prog = RDK.AddProgram('Test')
+    prog.MoveL(RDK.AddTarget("First Point").setAsCartesianTarget().setPose(p))
+    p1 = p*transl(50,0,0)
+    p2 = p*transl(50,50,0)
+    prog.MoveC(RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p1), RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p2))
+    #pass

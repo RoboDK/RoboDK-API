@@ -484,12 +484,28 @@ classdef RobolinkItem < handle
                 blocking = 1;
             end
             if this.type == this.link.ITEM_TYPE_PROGRAM
-                if class(target) ~= class(this)
+                if ~isa(target, class(this))
                     error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
                 end
-                this.addMoveL(target)
+                this.addMoveL(target);
             else
                 this.link.moveX(target,this,2,blocking);
+            end
+        end
+        function MoveC(this, target1, target2, blocking)
+            % Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements.
+            % In  1 : joints/pose/item -> target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or an item (item pointer)
+            % In  2 (optional): blocking -> True if we want the instruction to wait until the robot finished the movement (default=True)
+            if nargin < 4
+                blocking = 1;
+            end
+            if this.type == this.link.ITEM_TYPE_PROGRAM
+                if ~isa(target1, class(this)) || ~isa(target2, class(this))
+                    error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
+                end
+                this.addMoveC(target1,target2);
+            else
+                this.link.moveC(target1,target2,this,blocking);
             end
         end
         function collision = MoveJ_Test(this, j1, j2, minstep_deg)
@@ -623,7 +639,7 @@ classdef RobolinkItem < handle
             this.link.check_status();
         end
         function addMoveL(this, itemtarget)
-            % Adds a new "Move Linear" instruction to a program.
+            % (Obsolete, use MoveL instead) Adds a new "Move Linear" instruction to a program.
             % In  1 : item -> target to move to          
             this.link.check_connection();
             command = 'Add_INSMOVE';
@@ -632,7 +648,19 @@ classdef RobolinkItem < handle
             this.link.send_item(this);
             this.link.send_int(2);
             this.link.check_status();
-        end    
+        end  
+        function addMoveC(this, itemtarget1, itemtarget2)
+            % (Obsolete, use MoveC instead) Adds a new "Move Circular" instruction to a program.
+            % In  1 : item -> target to move to (via point)
+            % In  2 : item -> target to move to (final point)
+            this.link.check_connection();
+            command = 'Add_INSMOVEC';
+            this.link.send_line(command);
+            this.link.send_item(itemtarget1);
+            this.link.send_item(itemtarget2);
+            this.link.send_item(this);
+            this.link.check_status();
+        end  
         function ShowInstructions(this, display)
             % Show or hide instruction items of a program in the RoboDK tree
             if nargin < 2
