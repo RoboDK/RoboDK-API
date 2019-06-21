@@ -1058,7 +1058,8 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1, double accelJoints = -1)
+        public void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1,
+            double accelJoints = -1)
         {
             Link.check_connection();
             var command = "S_Speed4";
@@ -1066,8 +1067,8 @@ namespace RoboDk.API
             Link.send_item(this);
             var speedAccel = new double[4];
             speedAccel[0] = speedLinear;
-            speedAccel[1] = speedJoints;
-            speedAccel[2] = accelLinear;
+            speedAccel[1] = accelLinear;
+            speedAccel[2] = speedJoints;
             speedAccel[3] = accelJoints;
             Link.send_array(speedAccel);
             Link.check_status();
