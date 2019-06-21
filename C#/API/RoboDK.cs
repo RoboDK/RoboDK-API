@@ -79,7 +79,7 @@ namespace RoboDk.API
 
         private bool _disposed;
 
-        private Socket _socket; // tcpip com
+        private BufferedSocketAdapter _bufferedSocket; // tcpip com
         private RoboDKEventSource _roboDkEventSource;
 
         #endregion
@@ -168,8 +168,8 @@ namespace RoboDk.API
 
         internal int ReceiveTimeout
         {
-            get { return _socket.ReceiveTimeout; }
-            set { _socket.ReceiveTimeout = value; }
+            get { return _bufferedSocket.ReceiveTimeout; }
+            set { _bufferedSocket.ReceiveTimeout = value; }
         }
 
         /// <summary>
@@ -299,13 +299,13 @@ namespace RoboDk.API
             //return _socket.Connected;//does not work well
             // See:
             // https://stackoverflow.com/questions/2661764/how-to-check-if-a-socket-is-connected-disconnected-in-c
-            if (_socket == null)
+            if (_bufferedSocket == null)
             {
                 return false;
             }
 
-            var part1 = _socket.Poll(10000, SelectMode.SelectRead);
-            var part2 = _socket.Available == 0;
+            var part1 = _bufferedSocket.Poll(10000, SelectMode.SelectRead);
+            var part2 = _bufferedSocket.Available == 0;
 
             // s.Poll returns true if:
             //  - connection is closed, reset, terminated or pending(meaning no active connection)
@@ -322,9 +322,9 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void Disconnect()
         {
-            if (_socket != null && _socket.Connected)
+            if (_bufferedSocket != null && _bufferedSocket.Connected)
             {
-                _socket.Disconnect(false);
+                _bufferedSocket.Disconnect(false);
             }
         }
 
@@ -344,8 +344,8 @@ namespace RoboDk.API
                 int port;
                 for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
                 {
-                    _socket = ConnectToRoboDK(RoboDKServerIpAdress, port);
-                    if (_socket != null)
+                    _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAdress, port);
+                    if (_bufferedSocket != null)
                     {
                         connected = true;
                         break;
@@ -495,9 +495,12 @@ namespace RoboDk.API
                 throw new RdkException("event socket already open.");
             }
 
-            var socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-            socketEvents.SendTimeout = 1000;
-            socketEvents.ReceiveTimeout = 1000;
+            var socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+            {
+                SendTimeout = 1000,
+                ReceiveTimeout = 1000
+            };
+
             try
             {
                 socketEvents.Connect(RoboDKServerIpAdress, RoboDKServerPort);
@@ -511,18 +514,20 @@ namespace RoboDk.API
             {
                 return null;
             }
-            send_line("RDK_EVT", socketEvents);
-            send_int(0, socketEvents);
-            string response = rec_line(socketEvents);
-            int verEvt = rec_int(socketEvents);
-            int status = rec_int(socketEvents);
+
+            var bufferedSocketAdapter = new BufferedSocketAdapter(socketEvents);
+            send_line("RDK_EVT", bufferedSocketAdapter);
+            send_int(0, bufferedSocketAdapter);
+            var response = rec_line(bufferedSocketAdapter);
+            var verEvt = rec_int(bufferedSocketAdapter);
+            var status = rec_int(bufferedSocketAdapter);
             if (response != "RDK_EVT" || status != 0)
             {
                 return null;
             }
             socketEvents.ReceiveTimeout = 3600 * 1000;
 
-            return _roboDkEventSource = new RoboDKEventSource(this, socketEvents);
+            return _roboDkEventSource = new RoboDKEventSource(this, bufferedSocketAdapter);
         }
 
         /// <inheritdoc />
@@ -588,7 +593,7 @@ namespace RoboDk.API
             var command = "QUIT";
             send_line(command);
             check_status();
-            _socket.Disconnect(false);
+            _bufferedSocket.Disconnect(false);
             Process = null;
         }
 
@@ -828,9 +833,9 @@ namespace RoboDk.API
             send_int((int)itemType);
 
             // wait up to 1 hour for user input
-            _socket.ReceiveTimeout = 3600 * 1000;
+            _bufferedSocket.ReceiveTimeout = 3600 * 1000;
             var item = rec_item();
-            _socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+            _bufferedSocket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return item;
         }
@@ -880,9 +885,9 @@ namespace RoboDk.API
                 var command = "ShowMessage";
                 send_line(command);
                 send_line(message);
-                _socket.ReceiveTimeout = 3600 * 1000;
+                _bufferedSocket.ReceiveTimeout = 3600 * 1000;
                 check_status();
-                _socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+                _bufferedSocket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             }
             else
             {
@@ -1116,7 +1121,7 @@ namespace RoboDk.API
                 // Tag3: send check state
                 buffer = sendIntToBuffer((int)checkState[i], buffer);
             }
-            _socket.SendData(buffer.ToArray());
+            _bufferedSocket.SendData(buffer.ToArray());
  
             int nok = rec_int();
             check_status();
@@ -1879,7 +1884,7 @@ namespace RoboDk.API
             {
                 if (disposing)
                 {
-                    _socket?.Dispose();
+                    _bufferedSocket?.Dispose();
                 }
 
                 _disposed = true;
@@ -1890,7 +1895,7 @@ namespace RoboDk.API
 
         #region Private Methods
 
-        private Socket ConnectToRoboDK(string ipAdress, int port)
+        private BufferedSocketAdapter ConnectToRoboDK(string ipAdress, int port)
         {
             bool connected = false;
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
@@ -1919,10 +1924,10 @@ namespace RoboDk.API
             if (!connected)
             {
                 socket.Dispose();
-                socket = null;
+                return null;
             }
 
-            return socket;
+            return new BufferedSocketAdapter(socket);
         }
 
         #endregion
@@ -1932,7 +1937,7 @@ namespace RoboDk.API
         //Returns 1 if connection is valid, returns 0 if connection is invalid
         internal bool is_connected()
         {
-            return _socket.Connected;
+            return _bufferedSocket.Connected;
         }
 
         /// <summary>
@@ -2007,10 +2012,10 @@ namespace RoboDk.API
         }
 
         //Sends a string of characters with a \\n
-        internal void send_line(string line, Socket sckt=null)
+        internal void send_line(string line, BufferedSocketAdapter sckt=null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             line = line.Replace('\n', ' '); // one new line at the end only!
             var data = Encoding.UTF8.GetBytes(line + "\n");
@@ -2024,19 +2029,19 @@ namespace RoboDk.API
             }
         }
 
-        internal string rec_line(Socket sckt = null)
+        internal string rec_line(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             //Receives a string. It reads until if finds LF (\\n)
             var buffer = new byte[1];
-            var bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
+            var bytesread = sckt.ReceiveData(buffer, 1);
             var line = "";
             while (bytesread > 0 && buffer[0] != '\n')
             {
                 line = line + Encoding.UTF8.GetString(buffer);
-                bytesread = sckt.ReceiveData(buffer, 1, SocketFlags.None);
+                bytesread = sckt.ReceiveData(buffer, 1);
             }
 
             return line;
@@ -2063,7 +2068,7 @@ namespace RoboDk.API
             Array.Reverse(bytes);
             try
             {
-                _socket.SendData(bytes);
+                _bufferedSocket.SendData(bytes);
             }
             catch
             {
@@ -2097,15 +2102,15 @@ namespace RoboDk.API
 
 
         //Receives an item pointer
-        internal IItem rec_item(Socket sckt = null)
+        internal IItem rec_item(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             var buffer1 = new byte[8];
             var buffer2 = new byte[4];
-            var read1 = sckt.ReceiveData(buffer1, 8, SocketFlags.None);
-            var read2 = sckt.ReceiveData(buffer2, 4, SocketFlags.None);
+            var read1 = sckt.ReceiveData(buffer1, 8);
+            var read2 = sckt.ReceiveData(buffer2, 4);
             if (read1 != 8 || read2 != 4)
             {
                 return null;
@@ -2132,14 +2137,14 @@ namespace RoboDk.API
             }
 
             Array.Reverse(bytes);
-            _socket.SendData(bytes);
+            _bufferedSocket.SendData(bytes);
         }
 
         ///Receives a generic pointer
         internal long rec_ptr()
         {
             var bytes = new byte[8];
-            var read = _socket.ReceiveData(bytes, 8, SocketFlags.None);
+            var read = _bufferedSocket.ReceiveData(bytes, 8);
             if (read != 8)
             {
                 throw new Exception("Something went wrong");
@@ -2169,17 +2174,17 @@ namespace RoboDk.API
                     cnt = cnt + 1;
                 }
 
-            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
+            _bufferedSocket.SendData(bytesarray, 8 * nvalues);
         }
 
-        internal Mat rec_pose(Socket sckt = null)
+        internal Mat rec_pose(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             var pose = new Mat(4, 4);
             var bytes = new byte[16 * 8];
-            var nbytes = sckt.ReceiveData(bytes, 16 * 8, SocketFlags.None);
+            var nbytes = sckt.ReceiveData(bytes, 16 * 8);
             if (nbytes != 16 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -2205,17 +2210,17 @@ namespace RoboDk.API
             {
                 var bytes = BitConverter.GetBytes(xyzpos[i]);
                 Array.Reverse(bytes);
-                _socket.SendData(bytes, 8, SocketFlags.None);
+                _bufferedSocket.SendData(bytes, 8);
             }
         }
 
-        internal void rec_xyz(double[] xyzpos, Socket sckt = null)
+        internal void rec_xyz(double[] xyzpos, BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             var bytes = new byte[3 * 8];
-            var nbytes = sckt.ReceiveData(bytes, 3 * 8, SocketFlags.None);
+            var nbytes = sckt.ReceiveData(bytes, 3 * 8);
             if (nbytes != 3 * 8)
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
@@ -2230,10 +2235,10 @@ namespace RoboDk.API
             }
         }
 
-        internal void send_int(int number, Socket sckt = null)
+        internal void send_int(int number, BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             var bytes = BitConverter.GetBytes(number);
             Array.Reverse(bytes); // convert from big endian to little endian
@@ -2258,13 +2263,13 @@ namespace RoboDk.API
             return buffer;
         }
 
-        internal int rec_int(Socket sckt=null)
+        internal int rec_int(BufferedSocketAdapter sckt=null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
             
             var bytes = new byte[4];
-            var read = sckt.ReceiveData(bytes, 4, SocketFlags.None);
+            var read = sckt.ReceiveData(bytes, 4);
             if (read < 4)
             {
                 return 0;
@@ -2293,7 +2298,7 @@ namespace RoboDk.API
                 Array.Copy(onedouble, 0, bytesarray, i * 8, 8);
             }
 
-            _socket.SendData(bytesarray, 8 * nvalues, SocketFlags.None);
+            _bufferedSocket.SendData(bytesarray, 8 * nvalues);
         }
         // sends a list of doubles
         internal void send_arrayList(List<double> values)
@@ -2307,17 +2312,17 @@ namespace RoboDk.API
         }
 
         // Receives an array of doubles
-        internal double[] rec_array(Socket sckt = null)
+        internal double[] rec_array(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
-                sckt = _socket;
+                sckt = _bufferedSocket;
 
             var nvalues = rec_int(sckt);
             if (nvalues > 0)
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * 8];
-                var read = sckt.ReceiveData(bytes, nvalues * 8, SocketFlags.None);
+                var read = sckt.ReceiveData(bytes, nvalues * 8);
                 for (var i = 0; i < nvalues; i++)
                 {
                     var onedouble = new byte[8];
@@ -2357,7 +2362,7 @@ namespace RoboDk.API
                 }
             }
 
-            _socket.SendData(sendBuffer, sendBuffer.Length, SocketFlags.None);
+            _bufferedSocket.SendData(sendBuffer, sendBuffer.Length);
         }
 
         // receives a 2 dimensional matrix (nxm)
@@ -2375,7 +2380,7 @@ namespace RoboDk.API
                 var toReceive = Math.Min(recvsize, bufferSize);
                 while (toReceive > 0)
                 {
-                    var nbytesok = _socket.ReceiveData(bytes, received, toReceive, SocketFlags.None);
+                    var nbytesok = _bufferedSocket.ReceiveData(bytes, received, toReceive);
                     if (nbytesok <= 0)
                     {
                         throw new RdkException(
@@ -2567,20 +2572,20 @@ namespace RoboDk.API
             {
                 var tempRoboDK = _roboDK;
                 _roboDK = null;
-                tempRoboDK._socket.Close();
-                tempRoboDK._socket.Dispose();
+                tempRoboDK._bufferedSocket.Close();
+                tempRoboDK._bufferedSocket.Dispose();
             }
         }
 
         private sealed class RoboDKEventSource : IRoboDKEventSource
         {
             private RoboDK _roboDk;
-            private Socket _socketEvents;
+            private BufferedSocketAdapter _bufferedSocketAdapter;
 
-            public RoboDKEventSource(RoboDK roboDK, Socket socketEvents)
+            public RoboDKEventSource(RoboDK roboDK, BufferedSocketAdapter bufferedSocketAdapter)
             {
                 // over this socket we will receive events from RoboDK
-                _socketEvents = socketEvents;
+                _bufferedSocketAdapter = bufferedSocketAdapter;
 
                 // create a new connection
                 // communication happens asynchronously.
@@ -2588,24 +2593,24 @@ namespace RoboDk.API
                 _roboDk = (RoboDK)roboDK.NewLink();
             }
 
-            public bool Connected => _socketEvents.Connected;
+            public bool Connected => _bufferedSocketAdapter.Connected;
 
             public EventResult WaitForEvent(int timeout = 1000)
             {
-                if (_socketEvents == null)
+                if (_bufferedSocketAdapter == null)
                 {
                     throw new RdkException("Event channel has already been closed");
                 }
 
                 try
                 {
-                    _socketEvents.ReceiveTimeout = timeout;
-                    var eventType = (EventType)_roboDk.rec_int(_socketEvents);
-                    var item = _roboDk.rec_item(_socketEvents);
+                    _bufferedSocketAdapter.ReceiveTimeout = timeout;
+                    var eventType = (EventType)_roboDk.rec_int(_bufferedSocketAdapter);
+                    var item = _roboDk.rec_item(_bufferedSocketAdapter);
 
                     if (eventType == EventType.Selection3DChanged)
                     {
-                        var data = _roboDk.rec_array(_socketEvents);
+                        var data = _roboDk.rec_array(_bufferedSocketAdapter);
                         var poseAbs = new Mat(data, true);
                         var xyzijk = data.Skip(16).Take(6).ToArray(); // { data[16], data[17], data[18], data[19], data[20], data[21] };
                         var clickedOffset = new Mat(xyzijk);
@@ -2637,11 +2642,12 @@ namespace RoboDk.API
 
             public void Close()
             {
-                if (_socketEvents != null)
+                if (_bufferedSocketAdapter != null)
                 {
                     _roboDk.Dispose();
-                    _socketEvents.Close();
-                    _socketEvents = null;
+                    _bufferedSocketAdapter.Close();
+                    _bufferedSocketAdapter.Dispose();
+                    _bufferedSocketAdapter = null;
                     _roboDk = null;
                 }
             }
