@@ -926,6 +926,38 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public bool ConnectionParams(out string robotIp, out int port, out string remote_path, out string ftp_user, out string ftp_pass)
+        {
+            Link.check_connection();
+            var command = "ConnectParams";
+            Link.send_line(command);
+            Link.send_item(this);
+            robotIp = Link.rec_line();
+            port = Link.rec_int();
+            remote_path = Link.rec_line();
+            ftp_user = Link.rec_line();
+            ftp_pass = Link.rec_line();
+            Link.check_status();
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool SetConnectionParams(string robotIp, int port, string remote_path, string ftp_user, string ftp_pass)
+        {             
+            Link.check_connection();
+            var command = "setConnectParams";
+            Link.send_line(command);
+            Link.send_item(this);
+            Link.send_line(robotIp);
+            Link.send_int(port);
+            Link.send_line(remote_path);
+            Link.send_line(ftp_user);
+            Link.send_line(ftp_pass);
+            Link.check_status();
+            return true;
+        }
+
+        /// <inheritdoc />
         public bool Disconnect()
         {
             Link.check_connection();

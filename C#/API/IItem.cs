@@ -576,6 +576,28 @@ namespace RoboDk.API
         bool Connect(string robotIp = "");
 
         /// <summary>
+        /// Returns the robot connection parameters
+        /// </summary>
+        /// <param name="robotIp"></param>
+        /// <param name="port"></param>
+        /// <param name="remote_path"></param>
+        /// <param name="ftp_user"></param>
+        /// <param name="ftp_pass"></param>
+        /// <returns></returns>
+        bool ConnectionParams(out string robotIp, out int port, out string remote_path, out string ftp_user, out string ftp_pass);
+
+        /// <summary>
+        /// Retrieve robot connection parameters
+        /// </summary>
+        /// <param name="robotIp"></param>
+        /// <param name="port"></param>
+        /// <param name="remote_path"></param>
+        /// <param name="ftp_user"></param>
+        /// <param name="ftp_pass"></param>
+        /// <returns></returns>
+        bool SetConnectionParams(string robotIp, int port, string remote_path, string ftp_user, string ftp_pass);
+
+        /// <summary>
         ///     Disconnect from a real robot (when the robot driver is used)
         /// </summary>
         /// <returns>

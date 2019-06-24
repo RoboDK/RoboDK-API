@@ -54,6 +54,7 @@
     <Compile Include="CollisionPair.cs" />
     <Compile Include="IItem.cs" />
     <Compile Include="IRoboDkEventSource.cs" />
+    <Compile Include="Model\BufferedSocketAdapter.cs" />
     <Compile Include="Model\InstructionListJointsResult.cs" />
     <Compile Include="Model\ViewPoseType.cs" />
     <Compile Include="Model\ListJointsType.cs" />
