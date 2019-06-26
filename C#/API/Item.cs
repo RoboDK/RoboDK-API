@@ -1099,8 +1099,8 @@ namespace RoboDk.API
             Link.send_item(this);
             var speedAccel = new double[4];
             speedAccel[0] = speedLinear;
-            speedAccel[1] = accelLinear;
-            speedAccel[2] = speedJoints;
+            speedAccel[1] = speedJoints;
+            speedAccel[2] = accelLinear;
             speedAccel[3] = accelJoints;
             Link.send_array(speedAccel);
             Link.check_status();
