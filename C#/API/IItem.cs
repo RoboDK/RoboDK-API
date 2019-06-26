@@ -738,16 +738,11 @@ namespace RoboDk.API
         int MoveL_Test(double[] j1, double[] j2, double minstepDeg = -1);
 
         /// <summary>
-        ///     Sets the speed and/or the acceleration of a robot.
-        /// </summary>
-        /// <param name="speed">speed -> speed in mm/s (-1 = no change)</param>
-        /// <param name="accel">acceleration (optional) -> acceleration in mm/s2 (-1 = no change)</param>
-        /// <summary>
-        ///     Sets the speed and/or the acceleration of a robot.
+        /// Sets the speed and/or the acceleration of a robot.
         /// </summary>
         /// <param name="speedLinear">linear speed in mm/s (-1 = no change)</param>
-        /// <param name="accelLinear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="speedJoints">joint speed in deg/s (-1 = no change)</param>
+        /// <param name="accelLinear">linear acceleration in mm/s2 (-1 = no change)</param>
         /// <param name="accelJoints">joint acceleration in deg/s2 (-1 = no change)</param>
         void SetSpeed(double speedLinear, double accelLinear = -1, double speedJoints = -1,
             double accelJoints = -1);

@@ -50,8 +50,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CollisionItem.cs" />
-    <Compile Include="CollisionPair.cs" />
+    <Compile Include="Model\CollisionItem.cs" />
+    <Compile Include="Model\CollisionPair.cs" />
     <Compile Include="IItem.cs" />
     <Compile Include="IRoboDkEventSource.cs" />
     <Compile Include="Model\BufferedSocketAdapter.cs" />
@@ -84,14 +84,12 @@
     <Compile Include="Exceptions\RdkException.cs" />
     <Compile Include="Model\ReferenceCalibrationType.cs" />
     <Compile Include="RoboDK.cs" />
-    <Compile Include="RoboDKLink.cs" />
     <Compile Include="Model\RoboDkWindowFlags.cs" />
     <Compile Include="Model\RunMode.cs" />
     <Compile Include="Model\SprayGunStates.cs" />
     <Compile Include="Model\TcpCalibrationType.cs" />
     <Compile Include="Model\UpdateResult.cs" />
     <Compile Include="Model\WindowState.cs" />
-    <Compile Include="SocketExtension.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="api\index.md" />
