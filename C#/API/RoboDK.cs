@@ -44,6 +44,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -1290,7 +1291,7 @@ namespace RoboDk.API
             var command = "S_Param";
             send_line(command);
             send_line(parameter);
-            send_line(value.ToString());
+            send_line(value.ToString(CultureInfo.InvariantCulture));
             check_status();
         }
 
@@ -1315,13 +1316,14 @@ namespace RoboDk.API
         /// <inheritdoc />
         public string Command(string cmd, int value)
         {
-            return Command(cmd, value.ToString());
+            return Command(cmd, value.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <inheritdoc />
         public string Command(string cmd, double value)
         {
-            return Command(cmd, value.ToString("0.######"));
+            var valueAsString = value.ToString(CultureInfo.InvariantCulture);
+            return Command(cmd, valueAsString);
         }
 
         /// <inheritdoc />

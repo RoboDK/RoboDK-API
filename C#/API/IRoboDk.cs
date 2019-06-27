@@ -591,7 +591,7 @@ namespace RoboDk.API
         /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
         /// </summary>
         /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
-        /// <param name="value">Comand value</param>
+        /// <param name="value">Command value</param>
         /// <returns></returns>
         string Command(string cmd, bool value);
 
@@ -599,9 +599,17 @@ namespace RoboDk.API
         /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
         /// </summary>
         /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
-        /// <param name="value">Comand value</param>
+        /// <param name="value">Command value</param>
         /// <returns></returns>
         string Command(string cmd, double value);
+
+        /// <summary>
+        /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+        /// </summary>
+        /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
+        /// <param name="value">Command value</param>
+        /// <returns></returns>
+        string Command(string cmd, int value);
 
         /// <summary>
         /// Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the
