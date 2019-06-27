@@ -41,8 +41,8 @@ The RoboDK API can be used with a free RoboDK license.
 Documentation
 -------------
 
- * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
- * [RoboDK API reference (based on Python)](https://robodk.com/doc/en/PythonAPI/index.html)
+ * [Introduction to the RoboDK API] (https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
+ * [RoboDK API reference (based on Python)] (https://robodk.com/doc/en/PythonAPI/index.html)
  * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
  * [C++ version of the API] (https://robodk.com/doc/en/CppAPI/index.html)
  * [C# version of the API (NuGet)] (https://robodk.com/doc/en/CsAPI/index.html)
