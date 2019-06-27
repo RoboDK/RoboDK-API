@@ -6,13 +6,23 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
+AXIS_POINT_1 = 'FLAT MILL 12 D 150length'
+AXIS_POINT_2 = 'FOAM BIT - D20xR10x250x300 6T'
+
+# Set the following variable to False to not move the TCP
+# (only a reorientation of the Z axis will be done)
+PROJECT_POINT = True
+
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+
 from robolink import *    # API to communicate with RoboDK
 from robodk import *      # basic matrix operations
 
 RDK = Robolink()
-
-AXIS_POINT_1 = 'CalibTool 1'
-AXIS_POINT_2 = 'CalibTool 2'
 
 # Get TCP to project
 tcpitem = RDK.ItemUserPick('Select a tool to calibrate Z axis', ITEM_TYPE_TOOL)
@@ -66,10 +76,14 @@ angle_error = angle3(axis_v12, TCP_Zvect) * 180 / pi
 msg_angle_error = 'Z angle error = %.3f deg' % angle_error
 print(msg_angle_error)
 H_TCP_OK = eye(4)
-H_TCP_OK[0:3,3] = TCP_OK
+if PROJECT_POINT:
+    H_TCP_OK[0:3,3] = TCP_OK
+else:
+    H_TCP_OK[0:3,3] = P_TCP
+    
 H_TCP_OK[0:3,2] = axis_v12
-x_axis = cross(TCP_Yvect, axis_v12)
-y_axis = cross(axis_v12, x_axis)
+x_axis = normalize3(cross(TCP_Yvect, axis_v12))
+y_axis = normalize3(cross(axis_v12, x_axis))
 H_TCP_OK[0:3,0] = x_axis
 H_TCP_OK[0:3,1] = y_axis
 
@@ -81,6 +95,8 @@ print(msg_newtcp)
 answer = mbox(msg_newtcp + '\n\n' + msg_proj_error+ '\n' + msg_angle_error + '\n\nUpdate TCP?')
 if answer == True:
     tcpitem.setPoseTool(H_TCP_OK)
+
+
 
 
 

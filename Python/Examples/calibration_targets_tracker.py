@@ -145,7 +145,7 @@ if ANG_MIN is None or ANG_MAX is None:
     ANG_MIN = ang_min_robot.tolist()
     ANG_MAX = ang_max_robot.tolist()
     # limit joint axes from -180 to +180 (no need to go farther for calibration)
-    for i in range(len(ANG_MIN)):
+    for i in [0,3,5]:
         ANG_MIN[i] = max(ANG_MIN[i], -180)
         ANG_MAX[i] = min(ANG_MAX[i],  180)
         
