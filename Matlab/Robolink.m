@@ -722,6 +722,20 @@ classdef Robolink < handle
             newitem = rec_item(this);
             check_status(this);
         end
+        function newitem = AddMachiningProject(this, name, itemrobot)
+            % Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
+            if nargin < 3
+                itemrobot = RobolinkItem(this);
+            end
+            check_connection(this);
+            command = 'Add_MACHINING';
+            send_line(this, command);
+            send_line(this, name);
+            send_item(this, itemrobot);
+            newitem = rec_item(this);
+            check_status(this);
+        end
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function prog_status = RunProgram(this, fcn_param)
             % Adds a function call in the program output. RoboDK will handle the syntax when the code is generated for a specific robot. If the program exists it will also run the program in simulate mode.

@@ -323,6 +323,25 @@ classdef RobolinkItem < handle
             this.link.send_array(scale);
             this.link.check_status();
         end
+        function [newprog, status] = setMachiningParameters(this, ncfile, part, params)
+            % Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+            if nargin < 4
+                params = '';
+            end
+            this.link.check_connection();
+            command = 'S_MachiningParams';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.check_status();
+            this.link.send_line(ncfile);
+            this.link.send_item(part);
+            this.link.send_line(params);
+            set(this.link.COM,'Timeout', 3600);            
+            newprog = this.link.rec_item();
+            set(this.link.COM,'Timeout', this.link.TIMEOUT);            
+            status = this.link.rec_int()/1000.0;
+            this.link.check_status();            
+        end
         function setAsCartesianTarget(this)
             % Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
             this.link.check_connection();

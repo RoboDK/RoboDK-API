@@ -212,7 +212,7 @@ RDK.Item('Replace objects').RunProgram();
 % Verify if a joint movement from j1 to j2 is free of colllision
 j1 = [-100, -50, -50, -50, -50, -50];
 j2 = [100, 50, 50, 50, 50, 50];
-collision = robot.MoveJ_Collision(j1, j2, 1);
+collision = robot.MoveJ_Test(j1, j2, 1);
 disp(collision)
 % Activate the trace to see what path the robot tries to make
 % To activate the trace: Tools->Trace->Active (ALT+T)
