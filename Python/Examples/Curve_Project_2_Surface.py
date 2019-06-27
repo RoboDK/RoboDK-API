@@ -11,7 +11,7 @@ RDK = Robolink()
 FlipNormals = False
 
 # Set the type of projection
-ProjectionType = PROJECTION_RECALC
+ProjectionType = PROJECTION_ALONG_NORMAL_RECALC
 # Available values include:
 #PROJECTION_NONE                = 0 # No curve projection
 #PROJECTION_CLOSEST             = 1 # The projection will be the closest point on the surface
@@ -66,14 +66,15 @@ while True:
 
     RDK.AddCurve(curve_points_proj, new_object, True, PROJECTION_NONE)
 
-# Add all points, projected as desired
-point_list, name_feature = object_features.GetPoints(FEATURE_POINT, curve_id)
-npoints = len(curve_points)
+# Add all points projected
+point_list, name_feature = object_features.GetPoints(FEATURE_POINT)
+npoints = len(point_list)
 print("Adding %i points" % npoints)
 if npoints > 0:    
     #RDK.AddPoints(point_list, new_object, True, PROJECTION_ALONG_NORMAL_RECALC)
-    curve_points = RDK.ProjectPoints(curve_points, object_surface, ProjectionType)
-    RDK.AddCurve(curve_points, new_object, True, PROJECTION_NONE)
+    point_list_proj = RDK.ProjectPoints(point_list, object_surface, ProjectionType)
+    RDK.AddPoints(point_list_proj, new_object, True, PROJECTION_NONE)
+    #RDK.AddCurve(curve_points, new_object, True, PROJECTION_NONE)
 
 # Set the curve width
 new_object.setValue('DISPLAY','LINEW=2')

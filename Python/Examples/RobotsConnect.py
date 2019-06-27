@@ -23,8 +23,9 @@ for i in range(nrobots):
     RDK.ShowMessage("Trying to connect to %s..." % robot_name, False)
     success = robot.ConnectSafe()
     if success > 0:
-        RDK.ShowMessage("Connection with %s succeeded. Moving robot Home" % robot_name, False)
-        robot.MoveJ(robot.JointsHome())
+        RDK.ShowMessage("Connection with %s succeeded." % robot_name, False)
+        #RDK.ShowMessage("Connection with %s succeeded. Moving robot Home" % robot_name, False)
+        #robot.MoveJ(robot.JointsHome())
     else:
         RDK.ShowMessage("Connection with %s Failed" % robot_name, False)
         pause(2)

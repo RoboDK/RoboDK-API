@@ -19,5 +19,5 @@ for prog in proglist:
     if prog_name.lower().startswith('main'):
         continue
     
-    print("Stopping Program: " + progname)
+    print("Stopping Program: " + prog_name)
     prog.Stop()

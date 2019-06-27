@@ -22,23 +22,23 @@ from robolink import *    # RoboDK API
 from robodk import *      # Robot toolbox
 RDK = Robolink()
 
+# Ask the user to select the object
+obj = RDK.ItemUserPick("Select the object or the tool to filter curves") # we can optionally filter by ITEM_TYPE_OBJECT or ITEM_TYPE_TOOL (not both)
+# Exit if the user selects cancel
+if not obj.Valid():
+    quit()
+
 # Ask the user to enter the filter size
 if FilterNormalSamples <= 0:
-    str_avg_filter = mbox("Enter the filter size (as the number of points/normals used for the average filter).\nFor example, if the filter size is 10 units, the 10 closest normals are used to average each individual normal.", entry="10")
+    str_avg_filter = mbox("Enter the filter size (the number of points/normals used for the average filter).\nFor example, if the filter size is 10 units, the 10 closest normals are used to average each individual normal.", entry="10")
     if not str_avg_filter:
         # The user selected cancel
         quit()
     # Convert the user input to an integer
     FilterNormalSamples = int(str_avg_filter)
     if FilterNormalSamples <=0:
-        raise Exception("Invalid Filter sample. Enter a value >= 1")
-
-        
-# Ask the user to select the object
-obj = RDK.ItemUserPick("Select the object of the tool with the curves") # we can optionally filter by ITEM_TYPE_OBJECT or ITEM_TYPE_TOOL (not both)
-# Exit if the user selects cancel
-if not obj.Valid():
-    quit()
+        RDK.ShowMessage("Invalid Filter value. Enter a value >= 1", False)
+        raise Exception(msg)
 
 # Iterate through all object curves, extract the curve points and average the normals
 curve_id = 0
@@ -52,7 +52,9 @@ while True:
     if np == 0 or len(points[0]) < 6:
         break
         
-    print("Filtering: " + name_feature)
+    msg = "Filtering: " + name_feature
+    print(msg)
+    RDK.ShowMessage(msg, False)
     curve_id = curve_id + 1
     
     # For each point, average the normals in the range of points [-FilterNormalSamples/2 ; +FilterNormalSamples/2] 

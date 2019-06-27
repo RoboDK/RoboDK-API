@@ -11,9 +11,26 @@ from robodk import *      # basic matrix operations
 # Start RoboDK API
 RDK = Robolink()
 
-# Iterate through all programs and set them to "Run on robot" if they match a specific rule
-# Rule = Program name must start with "Curve"
+# Retrieve all robots as pointers
+robots = RDK.ItemList(ITEM_TYPE_ROBOT, False)
+
+# Iterate through all robots trying to connect, if success then move to the home position.
+# Note: The home position can be updated per robot
+# Note: The robot movement and connection can be non blocking if it is started on a separate tread with a different Robolink object
+nrobots = len(robots)
+for i in range(nrobots):
+    robot = robots[i]
+    robot_name = robot.Name()
+    RDK.ShowMessage("Disconnecting robot %s..." % robot_name, False)
+    robot.Disconnect()
+    # robot.Disconnect() # calling disconnect twice in a row will force stop (same as double click)
+    
+
+# Iterate through all programs and uncheck the "Run on robot" option
 programs = RDK.ItemList(ITEM_TYPE_PROGRAM, False)
 for prog in programs:
-    if prog.Name().startswith("Curve"):        
-        prog.setRunType(PROGRAM_RUN_ON_SIMULATOR)
+    prog.setRunType(PROGRAM_RUN_ON_SIMULATOR)
+    #if prog.Name().startswith("Curve"):        
+    #    prog.setRunType(PROGRAM_RUN_ON_SIMULATOR)
+
+        
