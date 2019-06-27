@@ -611,7 +611,7 @@ namespace RoboDk.API
 		/// Check connection status with a real robot.
 		/// </summary>
 		/// <returns>Status contains connection status code enum, Message contains error info if status is not "Ready".</returns>
-		(RobotConnectionStatus Status, string Message) ConnectedState();
+		RobotConnectionType ConnectedState();
 
 		/// <summary>
 		///     Disconnect from a real robot (when the robot driver is used)

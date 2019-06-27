@@ -12,13 +12,13 @@ namespace TesterProject
     {
         static void Main(string[] args)
         {
-			int b = 1;
+			
 			RoboDK RDK = new RoboDK();
 			bool status = false;
 			//The first connect opens roboDK
 			status = RDK.Connect();
 			Console.WriteLine("Connect status: " + status.ToString());
-
+            int b = 1;
         }
     }
 }

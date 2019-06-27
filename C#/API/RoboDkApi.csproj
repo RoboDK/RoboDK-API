@@ -59,6 +59,7 @@
     <Compile Include="IRoboDkEventSource.cs" />
     <Compile Include="Model\BufferedSocketAdapter.cs" />
     <Compile Include="Model\InstructionListJointsResult.cs" />
+    <Compile Include="Model\RobotConnectionType.cs" />
     <Compile Include="Model\ViewPoseType.cs" />
     <Compile Include="Model\ListJointsType.cs" />
     <Compile Include="Model\RDKColorExtension.cs" />

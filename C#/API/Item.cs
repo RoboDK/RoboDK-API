@@ -949,7 +949,7 @@ namespace RoboDk.API
 			int tryCount = 0;
 			int refreshRate = 500; // [ms]
 			var waitSpan = new TimeSpan(0, 0, waitConnection);
-			(RobotConnectionStatus Status, string Message) connectionStatus;
+            RobotConnectionType connectionStatus;
 			Connect(robotIp);
 			var timer = new Stopwatch();
 			timer.Start();
@@ -958,12 +958,12 @@ namespace RoboDk.API
 			while (true)
 			{
 				connectionStatus = ConnectedState();
-				Console.WriteLine(connectionStatus.Message);
-				if (connectionStatus.Status == RobotConnectionStatus.Ready)
+                Console.WriteLine(connectionStatus); //.Message);
+				if (connectionStatus == RobotConnectionType.Ready)
 				{
 					break;
 				}
-				else if (connectionStatus.Status == RobotConnectionStatus.Disconnected)
+				else if (connectionStatus == RobotConnectionType.Disconnected)
 				{
 					Console.WriteLine("Trying to reconnect...");
 					Connect(robotIp);
@@ -985,7 +985,7 @@ namespace RoboDk.API
 				System.Threading.Thread.Sleep(refreshRate);
 			}
 
-			return connectionStatus.Status == RobotConnectionStatus.Ready;
+			return connectionStatus == RobotConnectionType.Ready;
 		}
 
 		/// <inheritdoc />
@@ -1020,16 +1020,16 @@ namespace RoboDk.API
 		}
 
 		/// <inheritdoc />
-		public (RobotConnectionStatus Status, string Message) ConnectedState()
+		public RobotConnectionType ConnectedState()
 		{
 			Link.check_connection();
 			var command = "ConnectedState";
 			Link.send_line(command);
 			Link.send_item(this);
-			int status = Link.rec_int();
+            RobotConnectionType status = (RobotConnectionType) Link.rec_int();
 			var message = Link.rec_line();
 			Link.check_status();
-			return ((RobotConnectionStatus)status, message);
+            return status;//((RobotConnectionStatus)status, message);
 		}
 
 		/// <inheritdoc />
