@@ -7,8 +7,9 @@ from robodk import *      # basic matrix operations
 RDK = Robolink()
 
 # Get the robot and the program available in the open station:
-robot = RDK.Item('', ITEM_TYPE_ROBOT)
+# robot = RDK.Item('', ITEM_TYPE_ROBOT)
 prog = RDK.ItemUserPick('Select a Program', ITEM_TYPE_PROGRAM)
+robot = prog.getLink(ITEM_TYPE_ROBOT)
 
 # Get the list of instructions (for internal use)
 #inslist, status = prog.InstructionList()

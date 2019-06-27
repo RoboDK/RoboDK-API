@@ -13,7 +13,7 @@ if not prog.Valid():
 
 # Ask the user to enter a function call that will be added after each movement:
 print("Program selected: " + prog.Name())
-ins_call = mbox("Enter a program call to add after each movement", entry="SynchRobot")
+ins_call = mbox("Program selected:\n" + prog.Name() + "\n\nEnter a program call to add after each movement instruction", entry="SynchRobot")
 if not ins_call:
     print("Operation cancelled")
     quit()
