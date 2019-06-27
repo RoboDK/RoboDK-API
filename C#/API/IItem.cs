@@ -206,13 +206,20 @@ namespace RoboDk.API
         /// <param name="name"></param>
         void SetName(string name);
 
-        /// <summary>
-        ///     Sets the local position (pose) of an object, target or reference frame. For example, the position of an
-        ///     object/frame/target with respect to its parent.
-        ///     If a robot is provided, it will set the pose of the end efector.
-        /// </summary>
-        /// <param name="pose">4x4 homogeneous matrix</param>
-        void SetPose(Mat pose);
+		/// <summary>
+		/// Sets the tool mass and center of gravity. This is only used with accurate robots to improve accuracy.
+		/// </summary>
+		/// <param name="toolMass">Tool weigth in Kg.</param>
+		/// <param name="toolCOG">Tool center of gravity as [x,y,z] with respect to the robot flange.</param>
+		void setParamRobotTool(double toolMass, double[] toolCOG);
+
+		/// <summary>
+		///     Sets the local position (pose) of an object, target or reference frame. For example, the position of an
+		///     object/frame/target with respect to its parent.
+		///     If a robot is provided, it will set the pose of the end efector.
+		/// </summary>
+		/// <param name="pose">4x4 homogeneous matrix</param>
+		void SetPose(Mat pose);
 
         /// <summary>
         ///     Returns the local position (pose) of an object, target or reference frame. For example, the position of an
@@ -575,36 +582,45 @@ namespace RoboDk.API
         /// <returns>status -> true if connected successfully, false if connection failed</returns>
         bool Connect(string robotIp = "");
 
-        /// <summary>
-        /// Returns the robot connection parameters
-        /// </summary>
-        /// <param name="robotIp"></param>
-        /// <param name="port"></param>
-        /// <param name="remote_path"></param>
-        /// <param name="ftp_user"></param>
-        /// <param name="ftp_pass"></param>
-        /// <returns></returns>
-        bool ConnectionParams(out string robotIp, out int port, out string remote_path, out string ftp_user, out string ftp_pass);
+		/// <summary>
+		/// Connect to a real robot and wait for a connection to succeed.
+		/// </summary>
+		/// <param name="robotIp">Robot IP. Leave blank to use the robot's connection params.</param>
+		/// <param name="maxAttempts">Maximum connection attemps before reporting an unsuccessful connection.</param>
+		/// <param name="waitConnection">Time to wait in seconds between connection attempts.</param>
+		/// <returns>True if connected successfully, else false.</returns>
+		bool ConnectSafe(string robotIp = "", int maxAttempts = 5, int waitConnection = 4);
 
-        /// <summary>
-        /// Retrieve robot connection parameters
-        /// </summary>
-        /// <param name="robotIp"></param>
-        /// <param name="port"></param>
-        /// <param name="remote_path"></param>
-        /// <param name="ftp_user"></param>
-        /// <param name="ftp_pass"></param>
-        /// <returns></returns>
-        bool SetConnectionParams(string robotIp, int port, string remote_path, string ftp_user, string ftp_pass);
+		/// <summary>
+		/// Returns the robot connection parameters.
+		/// </summary>
+		/// <returns>Robot IP, Robot Port, FTP Path, FTP Username, FTP Password</returns>
+		(string RobotIP, int Port, string RemotePath, string FTPUser, string FTPPass) ConnectionParams();
 
-        /// <summary>
-        ///     Disconnect from a real robot (when the robot driver is used)
-        /// </summary>
-        /// <returns>
-        ///     status -> true if disconnected successfully, false if it failed. It can fail if it was previously disconnected
-        ///     manually for example.
-        /// </returns>
-        bool Disconnect();
+		/// <summary>
+		/// Set the robot connection parameters.
+		/// </summary>
+		/// <param name="robotIP">IP address of robot.</param>
+		/// <param name="port">Port of robot.</param>
+		/// <param name="remotePath">FTP path to connect to.</param>
+		/// <param name="ftpUser">FTP username</param>
+		/// <param name="ftpPass">FTP password</param>
+		void setConnectionParams(string robotIP, int port, string remotePath, string ftpUser, string ftpPass);
+
+		/// <summary>
+		/// Check connection status with a real robot.
+		/// </summary>
+		/// <returns>Status contains connection status code enum, Message contains error info if status is not "Ready".</returns>
+		(RobotConnectionStatus Status, string Message) ConnectedState();
+
+		/// <summary>
+		///     Disconnect from a real robot (when the robot driver is used)
+		/// </summary>
+		/// <returns>
+		///     status -> true if disconnected successfully, false if it failed. It can fail if it was previously disconnected
+		///     manually for example.
+		/// </returns>
+		bool Disconnect();
 
         /// <summary>
         /// Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.

@@ -12,21 +12,12 @@ namespace TesterProject
     {
         static void Main(string[] args)
         {
-
-            RoboDK RDK = new RoboDK
-            {
-                RoboDKServerStartPort = 20500,
-                RoboDKServerEndPort = 20500
-            };
-            bool status = RDK.Connect();
-            Console.WriteLine("Connect status: " + status.ToString());
-            Console.WriteLine("Last status message: " + RDK.LastStatusMessage);
-
-            var robot = RDK.GetItemByName("", RoboDk.API.Model.ItemType.Robot);
-            robot.Connect();
-            //robot.;
-
-            int b = 1;
+			int b = 1;
+			RoboDK RDK = new RoboDK();
+			bool status = false;
+			//The first connect opens roboDK
+			status = RDK.Connect();
+			Console.WriteLine("Connect status: " + status.ToString());
 
         }
     }

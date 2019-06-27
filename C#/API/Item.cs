@@ -42,6 +42,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows.Media;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
@@ -351,10 +352,27 @@ namespace RoboDk.API
             Link.check_status();
         }
 
-        // add more methods
+		/// <inheritdoc />
+		public void setParamRobotTool(double toolMass = 5, double[] toolCOG = null)
+		{
+			Link.check_connection();
+			var command = "S_ParamCalibTool";
+			Link.send_line(command);
+			Link.send_item(this);
+			var values = new List<double>();
+			values.Add(toolMass);
+			if (toolCOG != null)
+			{
+				values.AddRange(toolCOG);
+			}
+			Link.send_arrayList(values);
+			Link.check_status();
+		}
 
-        /// <inheritdoc />
-        public void SetPose(Mat pose)
+		// add more methods
+
+		/// <inheritdoc />
+		public void SetPose(Mat pose)
         {
             Link.check_connection();
             var command = "S_Hlocal";
@@ -925,40 +943,97 @@ namespace RoboDk.API
             return status != 0;
         }
 
-        /// <inheritdoc />
-        public bool ConnectionParams(out string robotIp, out int port, out string remote_path, out string ftp_user, out string ftp_pass)
-        {
-            Link.check_connection();
-            var command = "ConnectParams";
-            Link.send_line(command);
-            Link.send_item(this);
-            robotIp = Link.rec_line();
-            port = Link.rec_int();
-            remote_path = Link.rec_line();
-            ftp_user = Link.rec_line();
-            ftp_pass = Link.rec_line();
-            Link.check_status();
-            return true;
-        }
+		/// <inheritdoc />
+		public bool ConnectSafe(string robotIp = "", int maxAttempts = 5, int waitConnection = 4)
+		{
+			int tryCount = 0;
+			int refreshRate = 500; // [ms]
+			var waitSpan = new TimeSpan(0, 0, waitConnection);
+			(RobotConnectionStatus Status, string Message) connectionStatus;
+			Connect(robotIp);
+			var timer = new Stopwatch();
+			timer.Start();
+			var attemptStart = timer.Elapsed;
+			System.Threading.Thread.Sleep(refreshRate);
+			while (true)
+			{
+				connectionStatus = ConnectedState();
+				Console.WriteLine(connectionStatus.Message);
+				if (connectionStatus.Status == RobotConnectionStatus.Ready)
+				{
+					break;
+				}
+				else if (connectionStatus.Status == RobotConnectionStatus.Disconnected)
+				{
+					Console.WriteLine("Trying to reconnect...");
+					Connect(robotIp);
+				}
 
-        /// <inheritdoc />
-        public bool SetConnectionParams(string robotIp, int port, string remote_path, string ftp_user, string ftp_pass)
-        {             
-            Link.check_connection();
-            var command = "setConnectParams";
-            Link.send_line(command);
-            Link.send_item(this);
-            Link.send_line(robotIp);
-            Link.send_int(port);
-            Link.send_line(remote_path);
-            Link.send_line(ftp_user);
-            Link.send_line(ftp_pass);
-            Link.check_status();
-            return true;
-        }
+				if (timer.Elapsed - attemptStart > waitSpan)
+				{
+					attemptStart = timer.Elapsed;
+					Disconnect();
+					tryCount++;
+					if (tryCount >= maxAttempts)
+					{
+						Console.WriteLine("Failed to connect: Timed out");
+						break;
+					}
+					Console.WriteLine("Retrying connection, attempt #" + (tryCount + 1));
+				}
 
-        /// <inheritdoc />
-        public bool Disconnect()
+				System.Threading.Thread.Sleep(refreshRate);
+			}
+
+			return connectionStatus.Status == RobotConnectionStatus.Ready;
+		}
+
+		/// <inheritdoc />
+		public (string RobotIP, int Port, string RemotePath, string FTPUser, string FTPPass) ConnectionParams()
+		{
+			Link.check_connection();
+			var command = "ConnectParams";
+			Link.send_line(command);
+			Link.send_item(this);
+			var robotIP = Link.rec_line();
+			var port = Link.rec_int();
+			var remotePath = Link.rec_line();
+			var ftpUser = Link.rec_line();
+			var ftpPass = Link.rec_line();
+			Link.check_status();
+			return (robotIP, port, remotePath, ftpUser, ftpPass);
+		}
+
+		/// <inheritdoc />
+		public void setConnectionParams(string robotIP, int port, string remotePath, string ftpUser, string ftpPass)
+		{
+			Link.check_connection();
+			var command = "setConnectParams";
+			Link.send_line(command);
+			Link.send_item(this);
+			Link.send_line(robotIP);
+			Link.send_int(port);
+			Link.send_line(remotePath);
+			Link.send_line(ftpUser);
+			Link.send_line(ftpPass);
+			Link.check_status();
+		}
+
+		/// <inheritdoc />
+		public (RobotConnectionStatus Status, string Message) ConnectedState()
+		{
+			Link.check_connection();
+			var command = "ConnectedState";
+			Link.send_line(command);
+			Link.send_item(this);
+			int status = Link.rec_int();
+			var message = Link.rec_line();
+			Link.check_status();
+			return ((RobotConnectionStatus)status, message);
+		}
+
+		/// <inheritdoc />
+		public bool Disconnect()
         {
             Link.check_connection();
             var command = "Disconnect";
