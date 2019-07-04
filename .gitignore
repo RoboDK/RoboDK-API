@@ -1,4 +1,4 @@
-﻿/.vs
+/.vs
 /C#/API/.vs/RoboDkApi/v15
 /C#/API/bin/Debug
 /C#/API/obj
@@ -9,3 +9,4 @@ doxygen_output
 _site
 packages
 /C#/API/log.txt
+C#/API/TesterProject/bin/
