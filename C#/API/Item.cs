@@ -1584,66 +1584,6 @@ namespace RoboDk.API
             return errors;
         }
 
-        /// <summary>
-        /// Convert the error number returned by RoboDK to error flags
-        /// </summary>
-        /// <param name="evalue"></param>
-        /// <returns></returns>
-        private ErrorPathType JointErrorType(int evalue)
-        {
-            ErrorPathType flags = 0;
-            if (evalue % 10000000 > 999999)
-            {
-                // "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
-                flags |= ErrorPathType.PathFlipAxis;                
-            }
-            if (evalue % 1000000 > 99999)
-            {
-                // Collision detected.
-                flags |= ErrorPathType.Collision;                
-            }
-            if (evalue % 1000 > 99)
-            {
-                // Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
-                flags |= ErrorPathType.WristSingularity;
-                flags |= ErrorPathType.PathSingularity;
-            }
-            else if (evalue % 10000 > 999)
-            {
-                if (evalue % 10000 > 3999)
-                {
-                    // The robot is too close to the front/back singularity (wrist close to axis 1).
-                    flags |= ErrorPathType.ShoulderSingularity;
-                    flags |= ErrorPathType.PathSingularity;
-                }
-                else if (evalue % 10000 > 1999)
-                {
-                    flags |= ErrorPathType.ElbowSingularity;
-                    flags |= ErrorPathType.PathSingularity;
-                    // Joint 3 is too close the elbow singularity.
-                }
-                else
-                {
-                    // Joint 5 is too close to a singularity (0 degrees).
-                    flags |= ErrorPathType.WristSingularity;
-                    flags |= ErrorPathType.PathSingularity;
-                    flags |= ErrorPathType.PathNearSingularity;
-                }
-            }
-            if (evalue % 10 > 0)
-            {
-                // There is no solution available to complete the path.
-                flags |= ErrorPathType.PathLimit;
-            }
-            if (evalue % 100 > 9)
-            {
-                // The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.
-                flags |= ErrorPathType.PathLimit;
-                flags |= ErrorPathType.Kinematic;
-            }
-            return flags;
-        }
-
         /// <inheritdoc />
         public InstructionListJointsResult GetInstructionListJoints(
             double mmStep = 10.0,
@@ -1673,8 +1613,7 @@ namespace RoboDk.API
                 }
 
                 var jointError = (int) jointList[numberOfJoints, colId];
-                //var errorType = (ErrorPathType) Convert.ToUInt32(jointError.ToString(), 2);
-                var errorType = JointErrorType(jointError);
+                var errorType = JointErrorTypeHelper.ConvertErrorCodeToJointErrorType(jointError);
                 var linearStep = jointList[numberOfJoints + 1, colId];
                 var jointStep = jointList[numberOfJoints + 2, colId];
                 var moveId = (int) jointList[numberOfJoints + 3, colId];
@@ -1708,16 +1647,16 @@ namespace RoboDk.API
 
                 result.JointList.Add(
                     new InstructionListJointsResult.JointsResult
-                    {
-                        Joints = joints,
-                        Speeds = speeds,
-                        Accelerations = accelerations,
-                        MoveId = moveId,
-                        Error = errorType,
-                        LinearStep = linearStep,
-                        JointStep = jointStep,
-                        TimeStep = timeStep
-                    }
+                    (
+                        moveId,
+                        joints,
+                        speeds,
+                        accelerations,
+                        errorType,
+                        linearStep,
+                        jointStep,
+                        timeStep
+                    )
                 );
             }
 
