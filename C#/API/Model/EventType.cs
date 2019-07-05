@@ -87,7 +87,18 @@ namespace RoboDk.API.Model
         /// <summary>
         /// The user moved the position of the camera in the 3D view (ViewPose)
         /// </summary>
-        Moved3DView = 8
+        Moved3DView = 8,
+
+        /// <summary>
+        /// The Robot has changed it's position
+        /// </summary>
+        RobotMoved = 9,
+
+        /// <summary>
+        /// Key pressed event.
+        /// More information about the event parameter can be found here: <see cref="KeyPressedEventResult"/>
+        /// </summary>
+        KeyPressed = 10
     }
 }
 

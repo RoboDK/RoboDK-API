@@ -63,4 +63,47 @@ namespace RoboDk.API
 
         public Mat ClickedOffset { get; }
     }
+
+    public class KeyPressedEventResult : EventResult
+    {
+        public enum KeyPressState
+        {
+            Released = 0,
+            Pressed = 1
+        }
+
+        /// <summary>
+        /// Key pressed event.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="keyId">Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum </param>
+        /// <param name="keyState">Pressed or Released</param>
+        /// <param name="modifiers">Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum </param>
+        public KeyPressedEventResult(
+            IItem item,
+            int keyId,          
+            KeyPressState keyState,
+            int modifiers)     
+            : base(EventType.KeyPressed, item)
+        {
+            KeyId = keyId;
+            KeyState = keyState;
+            Modifiers = modifiers;
+        }
+
+        /// <summary>
+        /// Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum 
+        /// </summary>
+        public int KeyId { get; }
+
+        /// <summary>
+        /// Is key pressed or released
+        /// </summary>
+        public KeyPressState KeyState { get; }
+
+        /// <summary>
+        /// Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum 
+        /// </summary>
+        public int Modifiers { get; }
+    }
 }

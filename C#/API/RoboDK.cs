@@ -2610,29 +2610,58 @@ namespace RoboDk.API
                     var eventType = (EventType)_roboDk.rec_int(_bufferedSocketAdapter);
                     var item = _roboDk.rec_item(_bufferedSocketAdapter);
 
-                    if (eventType == EventType.Selection3DChanged)
+                    // We are in context of an asynchronous background thread
+                    // Do not try to read any items properties or call any other RoboDK method.
+                    // e.g.:    itemName = item.Name(); -> Call may conflict with other RoboDK Calls running in the main thread!!!
+
+                    Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
+
+                    switch (eventType)
                     {
-                        var data = _roboDk.rec_array(_bufferedSocketAdapter);
-                        var poseAbs = new Mat(data, true);
-                        var xyzijk = data.Skip(16).Take(6).ToArray(); // { data[16], data[17], data[18], data[19], data[20], data[21] };
-                        var clickedOffset = new Mat(xyzijk);
-                        var featureType = (ObjectSelectionType)Convert.ToInt32(data[22]);
-                        var featureId = Convert.ToInt32(data[23]);
+                        case EventType.NoEvent:
+                        case EventType.SelectionTreeChanged:
+                        case EventType.ItemMoved:
+                        case EventType.ReferencePicked:
+                        case EventType.ReferenceReleased:
+                        case EventType.ToolModified:
+                        case EventType.IsoCubeCreated:
+                        case EventType.Moved3DView:
+                        case EventType.RobotMoved:
+                            return new EventResult(eventType, item);
 
-                        Debug.WriteLine($"Additional event data - Absolute position (PoseAbs):");
-                        Debug.WriteLine($"{poseAbs}");
-                        Debug.WriteLine($"Selected Point: {xyzijk[0]}, {xyzijk[1]}, {xyzijk[2]}");  // point selected in relative coordinates
-                        Debug.WriteLine($"Normal Vector : {xyzijk[3]}, {xyzijk[4]}, {xyzijk[5]}");
-                        Debug.WriteLine($"Feature Type:{featureType} and ID:{featureId}");
+                        case EventType.Selection3DChanged:
+                            var data = _roboDk.rec_array(_bufferedSocketAdapter);
+                            var poseAbs = new Mat(data, true);
+                            var xyzijk = data.Skip(16).Take(6).ToArray(); // { data[16], data[17], data[18], data[19], data[20], data[21] };
+                            var clickedOffset = new Mat(xyzijk);
+                            var featureType = (ObjectSelectionType)Convert.ToInt32(data[22]);
+                            var featureId = Convert.ToInt32(data[23]);
 
-                        return new SelectionChangedEventResult(item, featureType, featureId, clickedOffset);
+                            Debug.WriteLine($"Additional event data - Absolute position (PoseAbs):");
+                            Debug.WriteLine($"{poseAbs}");
+                            Debug.WriteLine($"Selected Point: {xyzijk[0]}, {xyzijk[1]}, {xyzijk[2]}");  // point selected in relative coordinates
+                            Debug.WriteLine($"Normal Vector : {xyzijk[3]}, {xyzijk[4]}, {xyzijk[5]}");
+                            Debug.WriteLine($"Feature Type:{featureType} and ID:{featureId}");
+
+                            return new SelectionChangedEventResult(item, featureType, featureId, clickedOffset);
+
+                        case EventType.KeyPressed:
+                            var keyStateParam = _roboDk.rec_int(_bufferedSocketAdapter);  // 1 = key pressed, 0 = key released
+                            var keyId = _roboDk.rec_int(_bufferedSocketAdapter);          // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
+                            var modifiers = _roboDk.rec_int(_bufferedSocketAdapter);      // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
+
+                            var keyState = keyStateParam > 0 ? KeyPressedEventResult.KeyPressState.Pressed : KeyPressedEventResult.KeyPressState.Released;
+                            Debug.WriteLine($"Key_id({keyId}) {keyState.ToString()}  Modifiers: 0x{modifiers:X8}");
+
+                            return new KeyPressedEventResult(item, keyId, keyState, modifiers);
+
+                        default:
+                            Debug.WriteLine($"unknown RoboDK Event: {eventType}");
+                            // In debug target we fail -> Exception.
+                            // In Release we send a NoEvent event
+                            Debug.Fail($"unknown RoboDK Event: {eventType}");
+                            return new EventResult(EventType.NoEvent, null);
                     }
-                    else
-                    {
-                        // no additional data is sent
-                    }
-
-                    return new EventResult(eventType, item);
                 }
                 catch (Exception)
                 {
