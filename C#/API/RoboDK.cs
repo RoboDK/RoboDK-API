@@ -112,6 +112,12 @@ namespace RoboDk.API
 
         #region Properties
 
+        /// <summary>
+        /// Name of the RoboDK instance.
+        /// In case of multiple instances the name can help to identify the instance.
+        /// </summary>
+        public string Name { get; set; }
+
         public Func<IItem, IItem> ItemInterceptFunction { set; get; } = item => item;
 
         /// <summary>
@@ -163,7 +169,7 @@ namespace RoboDk.API
         public bool StartHidden { get; set; }
 
         /// <summary>
-        /// TCP Port to which RoboDK is connected.
+        /// TCP Server Port to which this instance is connected to.
         /// </summary>
         public int RoboDKServerPort { get; private set; }
 

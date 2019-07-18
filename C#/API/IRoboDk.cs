@@ -55,10 +55,22 @@ namespace RoboDk.API
     {
         #region Properties
 
+        /// <summary>
+        /// Name of the RoboDK instance.
+        /// In case of multiple instances the name can help to identify the instance.
+        /// </summary>
+        string Name { get; set; }
+
         Process Process { get; }
         string LastStatusMessage { get; } // holds any warnings for the last call
 
         string ApplicationDir { get; }
+
+        /// <summary>
+        /// TCP Server Port to which this instance is connected to.
+        /// </summary>
+        int RoboDKServerPort { get; }
+
 
         /// <summary>
         /// Allows to install a function which can intercept all interface methods.
