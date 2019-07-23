@@ -173,6 +173,11 @@ namespace RoboDk.API
         /// </summary>
         public int RoboDKServerPort { get; private set; }
 
+        /// <summary>
+        /// TCP Client Port
+        /// </summary>
+        public int RoboDKClientPort => _bufferedSocket.LocalPort;
+
         internal int ReceiveTimeout
         {
             get { return _bufferedSocket.ReceiveTimeout; }
@@ -285,10 +290,13 @@ namespace RoboDk.API
         /// <inheritdoc />
         public IRoboDK NewLink()
         {
-            var rdk = new RoboDK()
+            var rdk = new RoboDK
             {
                 RoboDKServerStartPort = this.RoboDKServerStartPort,
-                RoboDKServerEndPort = this.RoboDKServerEndPort
+                RoboDKServerEndPort = this.RoboDKServerEndPort,
+                Name = this.Name,
+                Process = this.Process,
+                ItemInterceptFunction = this.ItemInterceptFunction
             };
             rdk.Connect();
             return rdk;

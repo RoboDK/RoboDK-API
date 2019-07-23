@@ -71,6 +71,10 @@ namespace RoboDk.API
         /// </summary>
         int RoboDKServerPort { get; }
 
+        /// <summary>
+        /// TCP Client Port
+        /// </summary>
+        int RoboDKClientPort { get; }
 
         /// <summary>
         /// Allows to install a function which can intercept all interface methods.
