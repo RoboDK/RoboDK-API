@@ -1147,11 +1147,11 @@ class Mat(object):
         
             .. code-block:: python
         
-            >>> transl(10,20,30).Rows()
-            [[1, 0, 0, 10], [0, 1, 0, 20], [0, 0, 1, 30], [0, 0, 0, 1]]
-            
-            >>> transl(10,20,30).Cols()
-            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [10, 20, 30, 1]]
+                >>> transl(10,20,30).Rows()
+                [[1, 0, 0, 10], [0, 1, 0, 20], [0, 0, 1, 30], [0, 0, 0, 1]]
+                
+                >>> transl(10,20,30).Cols()
+                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [10, 20, 30, 1]]
         """
         return self.tr().rows
         
@@ -1287,11 +1287,14 @@ class Mat(object):
     def catV(self,mat2):
         """Concatenate with another matrix (vertical concatenation)"""
         if not isinstance(mat2, Mat):
-            raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
+            #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
+            return self.catH(Mat(mat2).tr())
+
         sz1 = self.size()
         sz2 = mat2.size()
         if sz1[1] != sz2[1]:
             raise Exception(MatrixError, "Horizontal size of matrices does not match")
+
         newmat = Mat(sz1[0]+sz2[0],sz1[1])
         newmat[0:sz1[0],:] = self
         newmat[sz1[0]:,:] = mat2        
@@ -1300,11 +1303,14 @@ class Mat(object):
     def catH(self,mat2):
         """Concatenate with another matrix (horizontal concatenation)"""
         if not isinstance(mat2, Mat):
-            raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
+            #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
+            return self.catH(Mat(mat2))
+
         sz1 = self.size()
         sz2 = mat2.size()
         if sz1[0] != sz2[0]:
             raise Exception(MatrixError, "Horizontal size of matrices does not match")
+
         newmat = Mat(sz1[0],sz1[1]+sz2[1])
         newmat[:,:sz1[1]] = self
         newmat[:,sz1[1]:] = mat2   
@@ -1433,14 +1439,18 @@ class Mat(object):
         return Offset(self, x, y, z, rx, ry, rz)        
     
     def invH(self):
-        """Calculates the inverse of a homogeneous matrix"""
+        """Returns the inverse of this pose (homogeneous matrix assumed)"""
         if not self.isHomogeneous():
             raise Exception(MatrixError, "Pose matrix is not homogeneous. invH() can only compute the inverse of a homogeneous matrix")
         Hout = self.tr()
         Hout[3,0:3] = Mat([[0,0,0]]);
         Hout[0:3,3] = (Hout[0:3,0:3]*self[0:3,3])*(-1)
         return Hout
-        
+    
+    def inv(self):
+        """Returns the inverse of this pose (homogeneous matrix assumed)"""
+        return self.invH()
+    
     def tolist(self):
         """Returns the first column of the matrix as a list"""
         return tr(self).rows[0]
@@ -1478,6 +1488,7 @@ class Mat(object):
         self[0,3] = newpos[0]
         self[1,3] = newpos[1]
         self[2,3] = newpos[2]
+        return self
         
     def setVX(self, v_xyz):
         """Sets the VX vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
@@ -1485,6 +1496,7 @@ class Mat(object):
         self[0,0] = v_xyz[0]
         self[1,0] = v_xyz[1]
         self[2,0] = v_xyz[2]
+        return self
         
     def setVY(self, v_xyz):
         """Sets the VY vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
@@ -1492,13 +1504,25 @@ class Mat(object):
         self[0,1] = v_xyz[0]
         self[1,1] = v_xyz[1]
         self[2,1] = v_xyz[2]
+        return self
         
     def setVZ(self, v_xyz):
         """Sets the VZ vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
         self[0,2] = v_xyz[0]
         self[1,2] = v_xyz[1]
-        self[2,2] = v_xyz[2]    
+        self[2,2] = v_xyz[2]
+        return self
+        
+    def translationPose(self):
+        """Return the translation pose of this matrix. The rotation returned is set to identity (assumes that a 4x4 homogeneous matrix is being used)"""
+        return transl(self.Pos())
+        
+    def rotationPose(self):
+        """Return the rotation pose of this matrix. The position returned is set to [0,0,0] (assumes that a 4x4 homogeneous matrix is being used)"""
+        mat_rotation = Mat(self)
+        mat_rotation.setPos([0,0,0])
+        return mat_rotation
         
     def SaveCSV(self, strfile):
         """Save the :class:`.Mat` Matrix to a CSV (Comma Separated Values) file. The file can be easily opened as a spreadsheet such as Excel.
@@ -1865,13 +1889,13 @@ if _tkinter_available:
             
             .. code-block:: python
                 
-            name = mbox('Enter your name', entry=True)
-            name = mbox('Enter your name', entry='default')
-            if name:
-                print("Value: " + name)
-            
-            value = mbox('Male or female?', ('male', 'm'), ('female', 'f'))
-            mbox('Process done')
+                name = mbox('Enter your name', entry=True)
+                name = mbox('Enter your name', entry='default')
+                if name:
+                    print("Value: " + name)
+                
+                value = mbox('Male or female?', ('male', 'm'), ('female', 'f'))
+                mbox('Process done')
             
         """
         msgbox = MessageBox(msg, b1, b2, frame, t, entry)

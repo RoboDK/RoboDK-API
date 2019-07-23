@@ -278,6 +278,65 @@ def getPathRoboDK():
             
         return "C:/RoboDK/bin/RoboDK.exe"
 
+        
+        
+def import_install(module_name, pip_name=None, rdk=None):
+    """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
+    Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
+    
+    .. code-block:: python
+        :caption: Example to embed a window as a docked RoboDK window
+        
+        # If you want to install opencv for Python and pyserial you should use:
+        import_install("opencv", "opencv-python", RDK)
+        import_install("serial", "pyserial", RDK)
+    
+        # If the name of the module matches the package you can just pass the name of the module. 
+        # Example:
+        import_install("xlrd", rdk=RDK)
+         
+    """
+    try:
+        exec('import ' + module_name, globals())
+        return
+
+    except ImportError:
+        import os
+        import sys
+        import subprocess
+        import io
+        
+        def execute(cmd):
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)#, universal_newlines=True)
+            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+                # display line output
+                line = line.strip()
+                print(line)
+                if rdk:
+                    rdk.ShowMessage(line, False)
+
+        if pip_name is None:
+            pip_name = module_name
+
+        msg = "Installing required module: " + module_name + " ..."
+        print(msg)
+        
+        if rdk:
+            rdk.ShowMessage(msg, False)
+            
+        try:     
+            cmd = sys.executable + ' -m pip install ' + pip_name
+            #os.system(cmd)
+            execute(cmd)
+            exec('import ' + module_name, globals())
+
+        except:
+            msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
+            print(msg)
+            if rdk:
+                rdk.ShowMessage(msg, True)
+            
+            raise Exception(msg)
 
 def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
     """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
@@ -287,7 +346,53 @@ def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area
     :param int pid: Process ID (optional)
     :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
     :param int area_allowed: Areas allowed (default is 15:no constrain)
-    :param int timeout: Timeout to abort attempting to embed the window        
+    :param int timeout: Timeout to abort attempting to embed the window    
+
+    .. code-block:: python
+        :caption: Example to embed a window as a docked RoboDK window
+    
+        from tkinter import *
+        from robolink import *
+        import threading    
+
+        # Create a new window
+        window = tkinter.Tk()
+        
+        # Close the window
+        def onClose():
+            window.destroy()
+            quit(0)
+
+        # Trigger Select button
+        # IMPORTANT: We need to run the action on a separate thread because
+        # (otherwise, if we want to interact with RoboDK window it will freeze)
+        def on_btnSelect():
+            def thread_btnSelect():
+                # Run button action (example to select an item and display its name)
+                RDK = Robolink()
+                item = RDK.ItemUserPick('Select an item')
+                if item.Valid():
+                    RDK.ShowMessage("You selected the item: " + item.Name())
+                
+            threading.Thread(target=thread_btnSelect).start()
+        
+        # Set the window title (must be unique for the docking to work, try to be creative!)
+        window_title = 'RoboDK API Docked Window'
+        window.title(window_title)
+        
+        # Delete the window when we close it
+        window.protocol("WM_DELETE_WINDOW", onClose)
+        
+        # Add a button (Select action)
+        btnSelect = Button(window, text='Trigger on_btnSelect', height=5, width=60, command=on_btnSelect)
+        btnSelect.pack(fill=X)
+        
+        # Embed the window
+        EmbedWindow(window_title)
+        
+        # Run the window event loop. This is like an app and will block until we close the window
+        window.mainloop()
+    
     """
     import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
@@ -414,6 +519,7 @@ class Robolink:
 
     def _send_line(self, string=None):
         """Sends a string of characters with a \\n"""
+        string = string.replace('\n','<br>')
         if sys.version_info[0] < 3:
             self.COM.send(bytes(string+'\n')) # Python 2.x only
         else:
@@ -464,8 +570,12 @@ class Robolink:
     def _rec_bytes(self):
         """Receives a byte array"""
         buffer = self.COM.recv(4)
-        bytes_len = struct.unpack('>I',buffer)#q=unsigned long long (64 bits), d=float64
-        data = self.COM.recv(bytes_len[0])
+        bytes_len = struct.unpack('>I',buffer)[0]#q=unsigned long long (64 bits), d=float64
+        data = b''
+        bytes_remaining = bytes_len
+        while bytes_remaining > 0:
+            data += self.COM.recv(bytes_remaining)
+            bytes_remaining = bytes_len - len(data)
         return data
         
     def _send_ptr(self, ptr_h):
@@ -1930,10 +2040,9 @@ class Robolink:
         for i in range(nparam):
             param = self._rec_line()
             value = self._rec_line()
-            try:
+            if value.replace('.','',1).isnumeric():
                 value = float(value) # automatically convert int, long and float
-            except ValueError:
-                value = value
+                
             params.append([param, value])
         self._check_status()
         return params
@@ -1965,10 +2074,12 @@ class Robolink:
             self._check_status()
             if value.startswith('UNKNOWN '):
                 return None
-            try:
-                return float(value) # automatically convert int, long and float
-            except ValueError:
-                return value
+            
+            if value.replace('.','',1).isnumeric():
+                value = float(value) # automatically convert int, long and float
+            
+            return value
+            
         else:
             command = 'G_DataParam'
             self._send_line(command)
@@ -2230,7 +2341,7 @@ class Robolink:
         :param poses_xyzwpr: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
         :type poses_xyzwpr: :class:`.Mat` or a list of list of float
         :param int input_format: Euler format. Optionally, use JOINT_FORMAT and provide the robot.
-        :param int algorithm: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_TCP_...
+        :param int algorithm: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_TCP ...
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
         :param tool: provide a tool item to store the calibration data with that tool (the TCP is not updated, only the calibration joints)
@@ -2264,11 +2375,11 @@ class Robolink:
         TCPxyz = self._rec_array()
         self.COM.settimeout(self.TIMEOUT)
         errorstats = self._rec_array()
-        errors = self._rec_matrix()           
+        errors = self._rec_matrix()
         self._check_status()
         if errors.size(1) > 0:
-            errors = errors[:,1].tolist()
-        return TCPxyz.tolist(), errorstats.tolist(), errors
+            errors = errors[:,1].list()
+        return TCPxyz.list(), errorstats.list(), errors
         
     def CalibrateReference(self, joints_points, method=CALIBRATE_FRAME_3P_P1_ON_X, use_joints=False, robot=None):
         """Calibrate a reference frame given a number of points and following a specific algorithm/method. 
@@ -2276,7 +2387,7 @@ class Robolink:
         
         :param joints_points: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
         :type joints_points: :class:`.Mat` or a list of list of float
-        :param int method: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_FRAME_...
+        :param int method: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_FRAME ...
         :param bool use_joints: use points or joint values (bool): Set to True if joints_points is a list of joints
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
@@ -2797,51 +2908,6 @@ class Robolink:
         
         .. seealso:: Use the static function: :func:`~robolink.EmbedWindow` (this function should usually be called on a separate thread)
         
-        .. code-block:: python
-            :caption: Example to embed a window as a docked RoboDK window
-        
-            from tkinter import *
-            from robolink import *
-            import threading    
-
-            # Create a new window
-            window = tkinter.Tk()
-            
-            # Close the window
-            def onClose():
-                window.destroy()
-                quit(0)
-
-            # Trigger Select button
-            # IMPORTANT: We need to run the action on a separate thread because
-            # (otherwise, if we want to interact with RoboDK window it will freeze)
-            def on_btnSelect():
-                def thread_btnSelect():
-                    # Run button action (example to select an item and display its name)
-                    RDK = Robolink()
-                    item = RDK.ItemUserPick('Select an item')
-                    if item.Valid():
-                        RDK.ShowMessage("You selected the item: " + item.Name())
-                    
-                threading.Thread(target=thread_btnSelect).start()
-            
-            # Set the window title (must be unique for the docking to work, try to be creative!)
-            window_title = 'RoboDK API Docked Window'
-            window.title(window_title)
-            
-            # Delete the window when we close it
-            window.protocol("WM_DELETE_WINDOW", onClose)
-            
-            # Add a button (Select action)
-            btnSelect = Button(window, text='Trigger on_btnSelect', height=5, width=60, command=on_btnSelect)
-            btnSelect.pack(fill=X)
-            
-            # Embed the window
-            EmbedWindow(window_title)
-            
-            # Run the window event loop. This is like an app and will block until we close the window
-            window.mainloop()
-
         """
         if not docked_name:
             docked_name = window_name
@@ -3117,7 +3183,8 @@ class Item():
         return parent
 
     def Childs(self):
-        """Return a list of the childs items (list of :class:`.Item`) that are attached to this item.
+        """Return a list of the childs items (list of :class:`.Item`) that are attached to this item. 
+        Exceptionally, if Childs is called on a program it will return the list of subprograms called by this program.
         
         .. seealso:: :func:`~robolink.Item.Parent`
         """
@@ -3432,24 +3499,52 @@ class Item():
         self.link._check_status()
         return color.tolist()
     
-    def Scale(self, scale):
+    def Scale(self, scale, pre_mult=None, post_mult=None):
         """Apply a scale to an object to make it bigger or smaller.
         The scale can be uniform (if scale is a float value) or per axis (if scale is an array/list [scale_x, scale_y, scale_z]).
         
         :param scale: scale parameter (1 means no change)
-        :type scale: float or list of 3 float [scale_x, scale_y, scale_z]"""
-        self.link._check_connection()
-        if isinstance(scale,float) or isinstance(scale,int):
-            scale = [scale, scale, scale]
-        elif len(scale) > 3:
-            scale = scale[:3]
-        elif len(scale) < 3:
-            raise Exception("scale must be a single value or a 3-vector value")
-        command = 'Scale'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array(scale)
-        self.link._check_status()
+        :type scale: float or list of 3 float [scale_x, scale_y, scale_z]
+        :param pre_mult: pre multiplication to apply before the scaling(optional)
+        :param post_mult: post multiplication to apply after the scaling (optional)"""
+        if pre_mult is not None or post_mult is not None:
+            if pre_mult is None:
+                pre_mult = eye(4)
+            if post_mult is None:
+                post_mult = invH(pre_mult)
+            
+            self.link._check_connection()
+            if isinstance(scale,float) or isinstance(scale,int):
+                scale = [scale, scale, scale]
+            elif len(scale) > 3:
+                scale = scale[:3]
+            elif len(scale) < 3:
+                raise Exception("scale must be a single value or a 3-vector value")
+                
+            command = 'TrScale'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(scale)
+            self.link._send_pose(pre_mult)
+            self.link._send_pose(post_mult)
+            status = self.link._rec_int()
+            self.link._check_status()
+            return status > 0
+        
+        else:
+            self.link._check_connection()
+            if isinstance(scale,float) or isinstance(scale,int):
+                scale = [scale, scale, scale]
+            elif len(scale) > 3:
+                scale = scale[:3]
+            elif len(scale) < 3:
+                raise Exception("scale must be a single value or a 3-vector value")
+            command = 'Scale'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(scale)
+            self.link._check_status()
+            return None
         
     #"""Object specific calls"""
     def AddShape(self, triangle_points):
@@ -4610,7 +4705,7 @@ class Item():
         
         :param int program_run_type: Use "PROGRAM_RUN_ON_SIMULATOR" to set the program to run on the simulator only or "PROGRAM_RUN_ON_ROBOT" to force the program to run on the robot
         
-        .. seealso:: :func:`~robolink.Robolink.setRunMode`
+        .. seealso:: :func:`~robolink.Robolink.setRunMode` :func:`~robolink.Item.RunType`
         """
         self.link._check_connection()
         command = 'S_ProgRunType'
@@ -4618,6 +4713,19 @@ class Item():
         self.link._send_item(self)
         self.link._send_int(program_run_type)
         self.link._check_status()
+        
+    def RunType(self):
+        """Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+        
+        .. seealso:: :func:`~robolink.Robolink.setRunMode` :func:`~robolink.Item.setRunType`
+        """
+        self.link._check_connection()
+        command = 'G_ProgRunType'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        program_run_type = self.link._rec_int()
+        self.link._check_status()
+        return program_run_type
     
     def RunProgram(self, prog_parameters=None):
         """Obsolete. Use :func:`~robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility."""
@@ -4975,7 +5083,7 @@ class Item():
         valid_ratio: This is a ratio from [0.00 to 1.00] showing if the path can be fully completed without any problems (1.0 means the path 100% feasible) or 
         valid_ratio is <1.0 if there were problems along the path.
         
-        valid_ration will be < 0 if Update is called on a machining project and the machining project can't be achieved successfully.
+        valid_ratio will be < 0 if Update is called on a machining project and the machining project can't be achieved successfully.
         
         readable_msg: a readable message as a string
         
@@ -5017,7 +5125,7 @@ class Item():
         self.link._check_status()
         return insmat, errors
           
-    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0, time_step=0.2):
+    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0, time_step=0.1):
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
         
         :param float mm_step: step in mm to split the linear movements
@@ -5036,7 +5144,7 @@ class Item():
         It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG. 
         Use list(:class:`~robodk.Mat`) to extract each column in a list. The ERROR is returned as an int but it needs to be interpreted as a binary number.
         
-        status (int): Status is 0 if the no problems arised. Otherwise it returns the number of instructions that can be successfully executed. If status is negative it means that one or more targets are not defined (missing target item).
+        status (int): Status is 0 if no problems arised. Otherwise it returns the number of instructions that can be successfully executed. If status is negative it means that one or more targets are not defined (missing target item).
                 
         .. code-block:: python
             :caption: Error bit masks
@@ -5062,7 +5170,8 @@ class Item():
             self.link._send_line('')
             joint_list = self.link._rec_matrix()
         else:
-            self.link._send_line(save_to_file)        
+            self.link._send_line(save_to_file)
+            
         error_code = self.link._rec_int()
         self.link.COM.settimeout(self.link.TIMEOUT)
         error_msg = self.link._rec_line()
@@ -5100,13 +5209,13 @@ class Item():
         return line
         
         
-if __name__ == "__main__":    
-    RDK = Robolink()
-    r = RDK.Item('',ITEM_TYPE_ROBOT)
-    p = r.Pose()
-    prog = RDK.AddProgram('Test')
-    prog.MoveL(RDK.AddTarget("First Point").setAsCartesianTarget().setPose(p))
-    p1 = p*transl(50,0,0)
-    p2 = p*transl(50,50,0)
-    prog.MoveC(RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p1), RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p2))
-    #pass
+#if __name__ == "__main__":    
+#    RDK = Robolink()
+#    r = RDK.Item('',ITEM_TYPE_ROBOT)
+#    p = r.Pose()
+#    prog = RDK.AddProgram('Test')
+#    prog.MoveL(RDK.AddTarget("First Point").setAsCartesianTarget().setPose(p))
+#    p1 = p*transl(50,0,0)
+#    p2 = p*transl(50,50,0)
+#    prog.MoveC(RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p1), RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p2))
+#    #pass
