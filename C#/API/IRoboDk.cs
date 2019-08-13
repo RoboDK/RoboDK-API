@@ -207,6 +207,14 @@ namespace RoboDk.API
         IItem AddFile(string filename, IItem parent = null);
 
         /// <summary>
+        /// Add Text to 3D View
+        /// </summary>
+        /// <param name="text">Text to add to the scene</param>
+        /// <param name="parent">item to attach the newly added text object (optional)</param>
+        /// <returns></returns>
+        IItem AddText(string text, IItem parent = null);
+
+        /// <summary>
         /// Add a new target that can be reached with a robot.
         /// </summary>
         /// <param name="name">Target name</param>

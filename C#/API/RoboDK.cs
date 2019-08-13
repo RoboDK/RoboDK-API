@@ -681,17 +681,32 @@ namespace RoboDk.API
                 throw new FileNotFoundException(filename);
             }
 
+            return AddItem(filename, parent);
+        }
+
+        /// <inheritdoc />
+        public IItem AddText(string text, IItem parent = null)
+        {
+            var textItem = AddItem("", parent);
+            textItem.SetName(text);
+            return textItem;
+        }
+
+
+        private IItem AddItem(string filename, IItem parent = null)
+        {
             check_connection();
             var command = "Add";
             send_line(command);
             send_line(filename);
             send_item(parent);
             ReceiveTimeout = 3600 * 1000;
-            var newitem = rec_item();
+            var newItem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
-            return newitem;
+            return newItem;
         }
+
 
         /// <inheritdoc />
         public IItem AddTarget(string name, IItem parent = null, IItem robot = null)
