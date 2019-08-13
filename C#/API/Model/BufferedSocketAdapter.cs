@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 
 #endregion
@@ -42,6 +43,8 @@ namespace RoboDk.API
         #endregion
 
         #region Properties
+
+        public int LocalPort => ((IPEndPoint)_socket.LocalEndPoint).Port;
 
         internal int ReceiveTimeout
         {
