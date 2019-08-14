@@ -52,6 +52,8 @@ ITEM_TYPE_MACHINING=11
 ITEM_TYPE_BALLBARVALIDATION=12
 ITEM_TYPE_CALIBPROJECT=13
 ITEM_TYPE_VALID_ISO9283=14
+ITEM_TYPE_FOLDER=17
+ITEM_TYPE_ROBOT_ARM=18
 
 # Instruction types
 INS_TYPE_INVALID = -1
@@ -1463,7 +1465,7 @@ class Robolink:
             projected_points = list(projected_points)
         return projected_points
         
-    def CloseStation():
+    def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
         self._check_connection()
         self._send_line('Remove')
@@ -2960,8 +2962,11 @@ class Item():
         else:
             return "RoboDK item (INVALID)"
             
-    def __cmp__(self, item2):
-        return self.item - item2.item
+    def __eq__(self, other):
+        return self.item == other.item
+
+    def __ne__(self, other):
+        return self.item != other.item
     
     def equals(self, item2):
         """Returns True if an item is the same as this item :class:`.Item`
