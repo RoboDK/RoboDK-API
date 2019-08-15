@@ -438,7 +438,7 @@ class Robolink:
     PORT_START = 20500 
     
     # port to stop looking for the RoboDK API connection    
-    PORT_END = 20502
+    PORT_END = 20500
     
     # timeout for communication, in seconds
     TIMEOUT = 10
@@ -914,6 +914,10 @@ class Robolink:
         connected = 0
         for i in range(2):
             for port in range(self.PORT_START,self.PORT_END+1):
+                # Prevent warning message by closing the previous socket
+                if self.COM:
+                    self.COM.close()
+                    
                 self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if self.NODELAY:
                     self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -925,12 +929,14 @@ class Robolink:
                     if connected > 0:
                         self.COM.settimeout(self.TIMEOUT)
                         break
+                        
                 except:
                     connected = connected
 
             if connected > 0:# if status is closed, try to open application
                 self.PORT = port
-                break;
+                break
+                
             elif i == 0:            
                 if self.IP != 'localhost':
                     break;
@@ -948,6 +954,7 @@ class Robolink:
 
         if connected > 0 and not self._verify_connection():
             connected = 0
+            
         return connected
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
