@@ -1,9 +1,14 @@
 RoboDK API for Python
 ======================
 
+This package allows you to interact with RoboDK software for simulation and programming industrial robots. With the RoboDK API for Python it is possible to simulate and program any industrial robot using Python programming language. The RoboDK API provides an alternative to using vendor-specific programming languages. 
+
+![Python programming in RoboDK](./Python-Programming-RoboDK)
+
 Full package description on [Python PyPi](https://pypi.python.org/pypi/robodk/)
 
-Read the [RoboDK API description](../README.md) for more information
+Read the [RoboDK API description](../README.md) for more information.
+
 
 Requirements
 ------------
@@ -70,3 +75,10 @@ robot.RunCode('Program_Done')
 # Move back to the reference target:
 robot.MoveL(target)
 ```
+
+App loader Plug-In
+-----------------
+Once you have a script working in Python you can easily set it up as an App using the App loader plugin. RoboDK Apps allow you to customize the RoboDK environment for simulation and offline programming. 
+RoboDK Apps can be easily distributed for production. More information here:
+* https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginAppLoader
+
