@@ -3,7 +3,7 @@ RoboDK API for Python
 
 This package allows you to interact with RoboDK software for simulation and programming industrial robots. With the RoboDK API for Python it is possible to simulate and program any industrial robot using Python programming language. The RoboDK API provides an alternative to using vendor-specific programming languages. 
 
-![Python programming in RoboDK](./Python-Programming-RoboDK)
+![Python programming in RoboDK](./Python-Programming-RoboDK.png)
 
 Full package description on [Python PyPi](https://pypi.python.org/pypi/robodk/)
 
