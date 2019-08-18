@@ -82,3 +82,10 @@ Once you have a script working in Python you can easily set it up as an App usin
 RoboDK Apps can be easily distributed for production. More information here:
 * https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginAppLoader
 
+
+Linting (source-code checker)
+-----------------------------
+Pylint is a source-code, bug and quality checker for Python programming. Pylint is integrated by default when using RoboDK's default settings (VScode/VScodium text editor). 
+
+If you prefer using other text editors you can use the pylint_robodk module with Pylint for linting. The following argument must be passed to pylint to activate this feature:
+* --load-plugins=pylint_robodk
