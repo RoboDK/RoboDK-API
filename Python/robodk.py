@@ -1315,9 +1315,14 @@ class Mat(object):
         newmat[:,:sz1[1]] = self
         newmat[:,sz1[1]:] = mat2   
         return newmat
-    def __eq__(self, mat):
+    def __eq__(self, other):
         """Test equality"""
-        return (mat.rows == self.rows)
+        if other is None:
+            return False
+        return (other.rows == self.rows)
+        
+    def __ne__(self, other):
+        return not (self == other)
         
     def __add__(self, mat):
         """Add a matrix to this matrix and
@@ -1756,13 +1761,13 @@ if _tkinter_available:
         # same as: file_path = tkinter.filedialog.askopenfilename()
         return file_path
         
-    def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...'):
+    def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to save."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
-        #options['defaultextension'] = '.txt'
-        #options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
+        options['defaultextension'] = defaultextension #'.txt'
+        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
         options['initialfile'] = strfile
         #options['parent'] = root
         root = tkinter.Tk()

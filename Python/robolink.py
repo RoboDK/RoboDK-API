@@ -2970,9 +2970,13 @@ class Item():
             return "RoboDK item (INVALID)"
             
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.item == other.item
 
     def __ne__(self, other):
+        if other is None:
+            return True
         return self.item != other.item
     
     def equals(self, item2):
@@ -3289,22 +3293,8 @@ class Item():
         :param str varname: property name
         :param str value: property value
         
-        .. seealso:: :func:`~robolink.Robolink.Command`
+        .. seealso:: :func:`~robolink.Robolink.Command`, :func:`~robolink.Item.setParam`
         
-        Example:
-        
-        .. code-block:: python
-            
-            # How to change the display style of an object (color as AARRGGBB):
-            obj = RDK.ItemUserPick('Select an object to change the style', ITEM_TYPE_OBJECT)
-            obj.setValue('Display','PARTICLE=CUBE(0.2,0.2,0.2) COLOR=#FF771111')
-            
-            # Another way to change display style of points:
-            obj.setValue('Display','PARTICLE=SPHERE(4,8) COLOR=red')
-            
-            # How to change the size of displayed curves:
-            obj.setValue('Display','LINEW=4')            
-
         """
         self.link._check_connection()
         if isinstance(value, Mat):
@@ -3636,7 +3626,7 @@ class Item():
             RDK = Robolink()          # Start RoboDK API
 
             # Ask the user to select an object
-            obj = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
+            OBJECT = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
             
             while True:
                 is_selected, feature_type, feature_id = OBJECT.SelectedFeature()
@@ -4837,14 +4827,14 @@ class Item():
         self.link._check_status()
         
     def setDO(self, io_var, io_value):
-        """Set a digital output to a given value. This can also be used to set any variables to a desired value.
+        """Set a Digital Output (DO). This command can also be used to set any generic variables to a desired value.
         
-        :param io_var: digital output (string or number)
+        :param io_var: Digital Output (string or number)
         :type io_var: str or int
         :param io_value: value
         :type io_value: str, int or float
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setAO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
         """
         self.link._check_connection()
         command = 'setDO'
@@ -4853,6 +4843,58 @@ class Item():
         self.link._send_line(str(io_var))
         self.link._send_line(str(io_value))
         self.link._check_status()
+        
+    def setAO(self, io_var, io_value):
+        """Set an Analog Output (AO).
+        
+        :param io_var: Analog Output (string or number)
+        :type io_var: str or int
+        :param io_value: value
+        :type io_value: str, int or float
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
+        """
+        self.link._check_connection()
+        command = 'setAO'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        self.link._send_line(str(io_value))
+        self.link._check_status()
+        
+    def getDI(self, io_var):
+        """Get a Digital Input (DI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (1=True, 0=False). This function returns an empty string if the script is not executed on the robot.
+        
+        :param io_var: Digital Input (string or number)
+        :type io_var: str or int
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getAI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
+        """
+        self.link._check_connection()
+        command = 'getDI'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        io_value = self.link._rec_line()
+        self.link._check_status()
+        return io_value
+        
+    def getAI(self, io_var):
+        """Get an Analog Input (AI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (0-1 or other range depending on the robot driver). This function returns an empty string if the script is not executed on the robot.
+        
+        :param io_var: Analog Input (string or number)
+        :type io_var: str or int
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
+        """
+        self.link._check_connection()
+        command = 'getAI'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        io_value = self.link._rec_line()
+        self.link._check_status()
+        return io_value
     
     def waitDI(self, io_var, io_value, timeout_ms=-1):
         """Wait for an digital input io_var to attain a given value io_value. Optionally, a timeout can be provided.
@@ -5197,16 +5239,47 @@ class Item():
         :param str value: Comand value (optional, not all commands require a value) 
         
         .. code-block:: python
-            :caption: Example commands
+            :caption: Example to expand or collapse an item in the tree
             
             from robolink import *
             RDK = Robolink()      # Start the RoboDK API
             
             # How to change the number of threads using by the RoboDK application:
-            robot = RDK.Item("", ITEM_TYPE_ROBOT)
+            item = RDK.ItemUserPick("Select an item")
+            
+            item.setParam("Tree", "Expand")
+            pause(2)
+            item.setParam("Tree", "Collapse")
+            
+
+        .. code-block:: python
+            :caption: Example to change the post processor
+            
+            robot = RDK.ItemUserPick("Select a robot", ITEM_TYPE_ROBOT)
             
             # Set the robot post processor (name of the py file in the posts folder)
             robot.setParam("PostProcessor", "Fanuc_RJ3")
+            
+        
+        .. code-block:: python
+            :caption: Example to change display style
+            
+            # How to change the display style of an object (color as AARRGGBB):
+            obj = RDK.ItemUserPick('Select an object to change the style', ITEM_TYPE_OBJECT)
+            
+            # Display points as simple dots given a certain size (suitable for fast rendering or large point clouds)
+            # Color is defined as AARRGGBB
+            obj.setValue('Display', 'POINTSIZE=4 COLOR=#FF771111')
+
+            # Display each point as a cube of a given size in mm
+            obj.setValue('Display','PARTICLE=CUBE(0.2,0.2,0.2) COLOR=#FF771111')
+
+            # Another way to change display style of points to display as a sphere (size,rings):
+            obj.setValue('Display','PARTICLE=SPHERE(4,8) COLOR=red')
+
+            # Example to change the size of displayed curves:
+            obj.setValue('Display','LINEW=4')   
+        
         
         .. seealso:: :func:`~robolink.Robolink.setParam`
         """    
