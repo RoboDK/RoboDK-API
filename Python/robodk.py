@@ -1753,11 +1753,18 @@ else:
 
 #------------------
 if _tkinter_available:
-    def getOpenFile(path_preference="C:/RoboDK/Library/"):
+    def getOpenFile(path_preference="C:/RoboDK/Library/", strfile = '', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to open."""
+        options = {}
+        options['initialdir'] = path_preference
+        options['title'] = strtitle
+        options['defaultextension'] = defaultextension #'.txt'
+        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['initialfile'] = strfile
         root = tkinter.Tk()
         root.withdraw()
-        file_path = filedialog.askopenfilename(initialdir=path_preference)
+        root.attributes("-topmost", True)    
+        file_path = filedialog.askopenfilename(**options)
         # same as: file_path = tkinter.filedialog.askopenfilename()
         return file_path
         
@@ -1772,13 +1779,16 @@ if _tkinter_available:
         #options['parent'] = root
         root = tkinter.Tk()
         root.withdraw()
+        root.attributes("-topmost", True)    
         file_path = filedialog.asksaveasfile(**options)
         #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
         return file_path
         
     def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
         """Ask the user to select a folder to save a program or other file"""   
-        tkinter.Tk().withdraw()
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)    
         dirname = filedialog.askdirectory(initialdir=path_programs, title=popup_msg)
         if len(dirname) < 1:
             dirname = None

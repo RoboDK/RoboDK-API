@@ -106,10 +106,11 @@ ROBOTCOM_UNKNOWN        = -1000
 CALIBRATE_TCP_BY_POINT = 0
 CALIBRATE_TCP_BY_PLANE = 1
 # Reference frame calibration methods 
-CALIBRATE_FRAME_3P_P1_ON_X = 0 # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
-CALIBRATE_FRAME_3P_P1_ORIGIN = 1 # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
-CALIBRATE_FRAME_6P = 2 # Calibrate by 6 points
-CALIBRATE_TURNTABLE = 3 # Calibrate turntable
+CALIBRATE_FRAME_3P_P1_ON_X = 0      # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
+CALIBRATE_FRAME_3P_P1_ORIGIN = 1    # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
+CALIBRATE_FRAME_6P = 2              # Calibrate by 6 points
+CALIBRATE_TURNTABLE = 3             # Calibrate turntable
+CALIBRATE_TURNTABLE_2X = 4          # Calibrate a 2 axis turntable
 
 
 # projection types (for AddCurve)
@@ -238,6 +239,19 @@ DISPLAY_REF_PXY= 0b001000000
 DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
+
+class TargetReachError(Exception):
+    """Unable to reach desired target or destination error."""
+    pass
+    
+class StoppedError(Exception):
+    """The user stopped the operation by selecting Escape key or moving the robot"""
+    pass
+    
+class InputError(Exception):
+    """Invalid input parameters provided to the API. Provide input as stated in the documentation."""
+    pass
+    
 def RoboDKInstallFound():
     """Check if RoboDK is installed"""    
     path_install = getPathRoboDK()
@@ -485,7 +499,11 @@ class Robolink:
     def _check_status(self):
         """This procedure checks the status of the connection"""
         status = self._rec_int()
-        if status > 0 and status < 10:
+        if status == 0:
+            # everything is OK
+            self.LAST_STATUS_MESSAGE = ''
+        
+        elif status > 0 and status < 10:
             self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
                 self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
@@ -501,12 +519,27 @@ class Robolink:
                 self.LAST_STATUS_MESSAGE = 'Invalid license. Contact us at: www.robodk.com'
             print(self.LAST_STATUS_MESSAGE)
             raise Exception(self.LAST_STATUS_MESSAGE)
-        elif status == 0:
-            # everything is OK
-            self.LAST_STATUS_MESSAGE = ''
+            
+        elif status < 100:
+            # Since RoboDK 4.0 we raise dedicated errors
+            self.LAST_STATUS_MESSAGE = self._rec_line()
+            if status == 10:                        
+                raise TargetReachError(self.LAST_STATUS_MESSAGE)
+                
+            elif status == 11:
+                raise StoppedError(self.LAST_STATUS_MESSAGE)
+            
+            elif status == 12:
+                raise InputError(self.LAST_STATUS_MESSAGE)                                
+            
+            else:
+                # Generic error exception
+                raise Exception(self.LAST_STATUS_MESSAGE)
+                
         else:
             self.LAST_STATUS_MESSAGE = 'Problems running function'
             raise Exception(self.LAST_STATUS_MESSAGE)
+            
         return status
 
     def _check_color(self, color):
@@ -2154,7 +2187,9 @@ class Robolink:
         self._send_line(command)
         self._send_line(str(cmd))
         self._send_line(str(value).replace('\n','<br>'))
+        self.COM.settimeout(3600)
         line = self._rec_line()
+        self.COM.settimeout(self.TIMEOUT)        
         self._check_status()
         return line
         
@@ -4177,9 +4212,9 @@ class Item():
         pose_filtered = self.link._rec_pose()
         joints_filtered = self.link._rec_array()
         self.link._check_status()
-        return pose_filtered, joints_filtered
-    
-    def Connect(self, robot_ip = ''):
+        return pose_filtered, joints_filtered    
+
+    def Connect(self, robot_ip = '', blocking = True):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -4188,15 +4223,16 @@ class Item():
         .. seealso:: :func:`~robolink.Item.ConnectSafe`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Item.Disconnect`, :func:`~robolink.Robolink.setRunMode`
         """
         self.link._check_connection()
-        command = 'Connect'
+        command = 'Connect2'
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_line(robot_ip)        
+        self.link._send_int(1 if blocking else 0)        
         status = self.link._rec_int()
         self.link._check_status()
         return status
         
-    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=10):
+    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=4, callback_abort=None):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded 0 if it failed.
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -4205,24 +4241,36 @@ class Item():
         :type max_attempts: int
         :param wait_connection: time to wait in seconds between connection attempts
         :type wait_connection: float
+        :param callback_abort: function pointer that returns true if we should abort the connection operation
+        :type callback_abort: function
         
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
         trycount = 0
-        refresh_rate = 2
-        self.Connect()
+        refresh_rate = 0.2
+        self.Connect(blocking=False)
         tic()
         timer1 = toc()
         pause(refresh_rate)
         while True:
-            con_status, status_msg = self.ConnectedState()
-            print(status_msg)
-            if con_status == ROBOTCOM_READY:
-                break
+            # Wait up to 2 seconds to see the connected state
+            for i in range(10):
+                con_status, status_msg = self.ConnectedState()
+                print(status_msg)
+                if con_status == ROBOTCOM_READY:
+                    return con_status
+
+                if callback_abort is not None and callback_abort():
+                    return con_status
+
+                pause(refresh_rate)
                 
-            elif con_status < 0:
+            if con_status < 0:
                 print('Trying to reconnect...')
                 self.Disconnect()
+                if callback_abort is not None and callback_abort():
+                    return con_status
+
                 pause(refresh_rate)
                 self.Connect()
                 
@@ -4233,9 +4281,11 @@ class Item():
                     print('Failed to connect: Timed out')
                     break
 
+            if callback_abort is not None and callback_abort():
+                return con_status
             pause(refresh_rate)
-        return con_status
 
+        return con_status
         
     def ConnectionParams(self):
         """Returns the robot connection parameters

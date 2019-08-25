@@ -1747,7 +1747,12 @@ public class RoboDK
     {
         int status = _recv_Int();
         LAST_STATUS_MESSAGE = "";
-        if (status > 0 && status < 10)
+        if (status == 0)
+        {
+            // everything is OK
+            //status = status
+        }
+        else if (status > 0 && status < 10)
         {
             LAST_STATUS_MESSAGE = "Unknown error";
             if (status == 1)
@@ -1772,11 +1777,10 @@ public class RoboDK
             }
             //print(strproblems);
             throw new RDKException(LAST_STATUS_MESSAGE); //raise Exception(strproblems)
-        }
-        else if (status == 0)
-        {
-            // everything is OK
-            //status = status
+        } else if (status < 100) {
+            // since RoboDK 4.0 we have dedicated Exception types
+            LAST_STATUS_MESSAGE = _recv_Line();
+            throw new RDKException(LAST_STATUS_MESSAGE);
         }
         else
         {

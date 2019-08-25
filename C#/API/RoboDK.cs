@@ -2019,11 +2019,38 @@ namespace RoboDk.API
                         LastStatusMessage = "Invalid license. Contact us at: info@robodk.com";
                         throw new RdkException(LastStatusMessage);
                     }
+                case 10:
+                    {
+                        // Target reach error
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
+                case 11:
+                    {
+                        // Stopped by user
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
+                case 12:
+                    {
+                        // Invalid input exception
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
                 default:
-
-                    //raise Exception('Problems running function');
-                    LastStatusMessage = "Unknown problem running RoboDK API function";
-                    throw new RdkException(LastStatusMessage);
+                    {
+                        if (status > 0 && status < 100)
+                        {
+                            // dedicated exception with message
+                            LastStatusMessage = rec_line();
+                            throw new RdkException(LastStatusMessage);
+                        }
+                        else { 
+                            //raise Exception('Problems running function');
+                            LastStatusMessage = "Unknown problem running RoboDK API function";
+                            throw new RdkException(LastStatusMessage);
+                        }
+                    }
             }
         }
 
