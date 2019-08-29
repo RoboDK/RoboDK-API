@@ -186,6 +186,10 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void Delete()
         {
+            if (ItemId == 0)
+            {
+                throw new RdkException("Item does not exist");
+            }
             Link.check_connection();
             var command = "Remove";
             Link.send_line(command);
