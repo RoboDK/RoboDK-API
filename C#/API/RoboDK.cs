@@ -112,6 +112,12 @@ namespace RoboDk.API
 
         #region Properties
 
+        /// <summary>
+        /// Name of the RoboDK instance.
+        /// In case of multiple instances the name can help to identify the instance.
+        /// </summary>
+        public string Name { get; set; }
+
         public Func<IItem, IItem> ItemInterceptFunction { set; get; } = item => item;
 
         /// <summary>
@@ -163,9 +169,14 @@ namespace RoboDk.API
         public bool StartHidden { get; set; }
 
         /// <summary>
-        /// TCP Port to which RoboDK is connected.
+        /// TCP Server Port to which this instance is connected to.
         /// </summary>
         public int RoboDKServerPort { get; private set; }
+
+        /// <summary>
+        /// TCP Client Port
+        /// </summary>
+        public int RoboDKClientPort => _bufferedSocket.LocalPort;
 
         internal int ReceiveTimeout
         {
@@ -279,10 +290,13 @@ namespace RoboDk.API
         /// <inheritdoc />
         public IRoboDK NewLink()
         {
-            var rdk = new RoboDK()
+            var rdk = new RoboDK
             {
                 RoboDKServerStartPort = this.RoboDKServerStartPort,
-                RoboDKServerEndPort = this.RoboDKServerEndPort
+                RoboDKServerEndPort = this.RoboDKServerEndPort,
+                Name = this.Name,
+                Process = this.Process,
+                ItemInterceptFunction = this.ItemInterceptFunction
             };
             rdk.Connect();
             return rdk;
@@ -667,17 +681,32 @@ namespace RoboDk.API
                 throw new FileNotFoundException(filename);
             }
 
+            return AddItem(filename, parent);
+        }
+
+        /// <inheritdoc />
+        public IItem AddText(string text, IItem parent = null)
+        {
+            var textItem = AddItem("", parent);
+            textItem.SetName(text);
+            return textItem;
+        }
+
+
+        private IItem AddItem(string filename, IItem parent = null)
+        {
             check_connection();
             var command = "Add";
             send_line(command);
             send_line(filename);
             send_item(parent);
             ReceiveTimeout = 3600 * 1000;
-            var newitem = rec_item();
+            var newItem = rec_item();
             ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
-            return newitem;
+            return newItem;
         }
+
 
         /// <inheritdoc />
         public IItem AddTarget(string name, IItem parent = null, IItem robot = null)
@@ -1990,11 +2019,38 @@ namespace RoboDk.API
                         LastStatusMessage = "Invalid license. Contact us at: info@robodk.com";
                         throw new RdkException(LastStatusMessage);
                     }
+                case 10:
+                    {
+                        // Target reach error
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
+                case 11:
+                    {
+                        // Stopped by user
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
+                case 12:
+                    {
+                        // Invalid input exception
+                        LastStatusMessage = rec_line();
+                        throw new RdkException(LastStatusMessage);
+                    }
                 default:
-
-                    //raise Exception('Problems running function');
-                    LastStatusMessage = "Unknown problem running RoboDK API function";
-                    throw new RdkException(LastStatusMessage);
+                    {
+                        if (status > 0 && status < 100)
+                        {
+                            // dedicated exception with message
+                            LastStatusMessage = rec_line();
+                            throw new RdkException(LastStatusMessage);
+                        }
+                        else { 
+                            //raise Exception('Problems running function');
+                            LastStatusMessage = "Unknown problem running RoboDK API function";
+                            throw new RdkException(LastStatusMessage);
+                        }
+                    }
             }
         }
 

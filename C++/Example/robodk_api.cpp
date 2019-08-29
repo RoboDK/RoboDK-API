@@ -3056,7 +3056,10 @@ bool RoboDK::_check_connection(){
 
 bool RoboDK::_check_status(){
     qint32 status = _recv_Int();
-    if (status > 0 && status < 10) {
+    if (status == 0) {
+        // everything is OK
+        //status = status
+    } else if (status > 0 && status < 10) {
         QString strproblems("Unknown error");
         if (status == 1) {
             strproblems = "Invalid item provided: The item identifier provided is not valid or it does not exist.";
@@ -3072,9 +3075,9 @@ bool RoboDK::_check_status(){
         }
         //print(strproblems);
         //throw new RDKException(strproblems); //raise Exception(strproblems)
-    } else if (status == 0) {
-        // everything is OK
-        //status = status
+    } else if (status < 100){
+        QString strproblems = _recv_Line();
+        qDebug() << "RoboDK API ERROR: " << strproblems;
     } else  {
         //throw new RDKException("Communication problems with the RoboDK API"); //raise Exception('Problems running function');
         qDebug() << "Communication problems with the RoboDK API";

@@ -55,10 +55,26 @@ namespace RoboDk.API
     {
         #region Properties
 
+        /// <summary>
+        /// Name of the RoboDK instance.
+        /// In case of multiple instances the name can help to identify the instance.
+        /// </summary>
+        string Name { get; set; }
+
         Process Process { get; }
         string LastStatusMessage { get; } // holds any warnings for the last call
 
         string ApplicationDir { get; }
+
+        /// <summary>
+        /// TCP Server Port to which this instance is connected to.
+        /// </summary>
+        int RoboDKServerPort { get; }
+
+        /// <summary>
+        /// TCP Client Port
+        /// </summary>
+        int RoboDKClientPort { get; }
 
         /// <summary>
         /// Allows to install a function which can intercept all interface methods.
@@ -189,6 +205,14 @@ namespace RoboDk.API
         /// <param name="parent">item to attach the newly added object (optional)</param>
         /// <returns></returns>
         IItem AddFile(string filename, IItem parent = null);
+
+        /// <summary>
+        /// Add Text to 3D View
+        /// </summary>
+        /// <param name="text">Text to add to the scene</param>
+        /// <param name="parent">item to attach the newly added text object (optional)</param>
+        /// <returns></returns>
+        IItem AddText(string text, IItem parent = null);
 
         /// <summary>
         /// Add a new target that can be reached with a robot.

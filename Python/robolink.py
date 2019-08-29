@@ -52,6 +52,8 @@ ITEM_TYPE_MACHINING=11
 ITEM_TYPE_BALLBARVALIDATION=12
 ITEM_TYPE_CALIBPROJECT=13
 ITEM_TYPE_VALID_ISO9283=14
+ITEM_TYPE_FOLDER=17
+ITEM_TYPE_ROBOT_ARM=18
 
 # Instruction types
 INS_TYPE_INVALID = -1
@@ -104,10 +106,11 @@ ROBOTCOM_UNKNOWN        = -1000
 CALIBRATE_TCP_BY_POINT = 0
 CALIBRATE_TCP_BY_PLANE = 1
 # Reference frame calibration methods 
-CALIBRATE_FRAME_3P_P1_ON_X = 0 # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
-CALIBRATE_FRAME_3P_P1_ORIGIN = 1 # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
-CALIBRATE_FRAME_6P = 2 # Calibrate by 6 points
-CALIBRATE_TURNTABLE = 3 # Calibrate turntable
+CALIBRATE_FRAME_3P_P1_ON_X = 0      # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
+CALIBRATE_FRAME_3P_P1_ORIGIN = 1    # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
+CALIBRATE_FRAME_6P = 2              # Calibrate by 6 points
+CALIBRATE_TURNTABLE = 3             # Calibrate turntable
+CALIBRATE_TURNTABLE_2X = 4          # Calibrate a 2 axis turntable
 
 
 # projection types (for AddCurve)
@@ -236,6 +239,19 @@ DISPLAY_REF_PXY= 0b001000000
 DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
+
+class TargetReachError(Exception):
+    """Unable to reach desired target or destination error."""
+    pass
+    
+class StoppedError(Exception):
+    """The user stopped the operation by selecting Escape key or moving the robot"""
+    pass
+    
+class InputError(Exception):
+    """Invalid input parameters provided to the API. Provide input as stated in the documentation."""
+    pass
+    
 def RoboDKInstallFound():
     """Check if RoboDK is installed"""    
     path_install = getPathRoboDK()
@@ -436,7 +452,7 @@ class Robolink:
     PORT_START = 20500 
     
     # port to stop looking for the RoboDK API connection    
-    PORT_END = 20502
+    PORT_END = 20500
     
     # timeout for communication, in seconds
     TIMEOUT = 10
@@ -483,7 +499,11 @@ class Robolink:
     def _check_status(self):
         """This procedure checks the status of the connection"""
         status = self._rec_int()
-        if status > 0 and status < 10:
+        if status == 0:
+            # everything is OK
+            self.LAST_STATUS_MESSAGE = ''
+        
+        elif status > 0 and status < 10:
             self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
                 self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
@@ -499,12 +519,27 @@ class Robolink:
                 self.LAST_STATUS_MESSAGE = 'Invalid license. Contact us at: www.robodk.com'
             print(self.LAST_STATUS_MESSAGE)
             raise Exception(self.LAST_STATUS_MESSAGE)
-        elif status == 0:
-            # everything is OK
-            self.LAST_STATUS_MESSAGE = ''
+            
+        elif status < 100:
+            # Since RoboDK 4.0 we raise dedicated errors
+            self.LAST_STATUS_MESSAGE = self._rec_line()
+            if status == 10:                        
+                raise TargetReachError(self.LAST_STATUS_MESSAGE)
+                
+            elif status == 11:
+                raise StoppedError(self.LAST_STATUS_MESSAGE)
+            
+            elif status == 12:
+                raise InputError(self.LAST_STATUS_MESSAGE)                                
+            
+            else:
+                # Generic error exception
+                raise Exception(self.LAST_STATUS_MESSAGE)
+                
         else:
             self.LAST_STATUS_MESSAGE = 'Problems running function'
             raise Exception(self.LAST_STATUS_MESSAGE)
+            
         return status
 
     def _check_color(self, color):
@@ -912,6 +947,10 @@ class Robolink:
         connected = 0
         for i in range(2):
             for port in range(self.PORT_START,self.PORT_END+1):
+                # Prevent warning message by closing the previous socket
+                if self.COM:
+                    self.COM.close()
+                    
                 self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if self.NODELAY:
                     self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -923,12 +962,14 @@ class Robolink:
                     if connected > 0:
                         self.COM.settimeout(self.TIMEOUT)
                         break
+                        
                 except:
                     connected = connected
 
             if connected > 0:# if status is closed, try to open application
                 self.PORT = port
-                break;
+                break
+                
             elif i == 0:            
                 if self.IP != 'localhost':
                     break;
@@ -946,6 +987,7 @@ class Robolink:
 
         if connected > 0 and not self._verify_connection():
             connected = 0
+            
         return connected
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1463,7 +1505,7 @@ class Robolink:
             projected_points = list(projected_points)
         return projected_points
         
-    def CloseStation():
+    def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
         self._check_connection()
         self._send_line('Remove')
@@ -2145,7 +2187,9 @@ class Robolink:
         self._send_line(command)
         self._send_line(str(cmd))
         self._send_line(str(value).replace('\n','<br>'))
+        self.COM.settimeout(3600)
         line = self._rec_line()
+        self.COM.settimeout(self.TIMEOUT)        
         self._check_status()
         return line
         
@@ -2960,8 +3004,15 @@ class Item():
         else:
             return "RoboDK item (INVALID)"
             
-    def __cmp__(self, item2):
-        return self.item - item2.item
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return self.item == other.item
+
+    def __ne__(self, other):
+        if other is None:
+            return True
+        return self.item != other.item
     
     def equals(self, item2):
         """Returns True if an item is the same as this item :class:`.Item`
@@ -3277,22 +3328,8 @@ class Item():
         :param str varname: property name
         :param str value: property value
         
-        .. seealso:: :func:`~robolink.Robolink.Command`
+        .. seealso:: :func:`~robolink.Robolink.Command`, :func:`~robolink.Item.setParam`
         
-        Example:
-        
-        .. code-block:: python
-            
-            # How to change the display style of an object (color as AARRGGBB):
-            obj = RDK.ItemUserPick('Select an object to change the style', ITEM_TYPE_OBJECT)
-            obj.setValue('Display','PARTICLE=CUBE(0.2,0.2,0.2) COLOR=#FF771111')
-            
-            # Another way to change display style of points:
-            obj.setValue('Display','PARTICLE=SPHERE(4,8) COLOR=red')
-            
-            # How to change the size of displayed curves:
-            obj.setValue('Display','LINEW=4')            
-
         """
         self.link._check_connection()
         if isinstance(value, Mat):
@@ -3624,7 +3661,7 @@ class Item():
             RDK = Robolink()          # Start RoboDK API
 
             # Ask the user to select an object
-            obj = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
+            OBJECT = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
             
             while True:
                 is_selected, feature_type, feature_id = OBJECT.SelectedFeature()
@@ -4175,9 +4212,9 @@ class Item():
         pose_filtered = self.link._rec_pose()
         joints_filtered = self.link._rec_array()
         self.link._check_status()
-        return pose_filtered, joints_filtered
-    
-    def Connect(self, robot_ip = ''):
+        return pose_filtered, joints_filtered    
+
+    def Connect(self, robot_ip = '', blocking = True):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -4186,15 +4223,16 @@ class Item():
         .. seealso:: :func:`~robolink.Item.ConnectSafe`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Item.Disconnect`, :func:`~robolink.Robolink.setRunMode`
         """
         self.link._check_connection()
-        command = 'Connect'
+        command = 'Connect2'
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_line(robot_ip)        
+        self.link._send_int(1 if blocking else 0)        
         status = self.link._rec_int()
         self.link._check_status()
         return status
         
-    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=10):
+    def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=4, callback_abort=None):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded 0 if it failed.
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -4203,24 +4241,36 @@ class Item():
         :type max_attempts: int
         :param wait_connection: time to wait in seconds between connection attempts
         :type wait_connection: float
+        :param callback_abort: function pointer that returns true if we should abort the connection operation
+        :type callback_abort: function
         
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
         trycount = 0
-        refresh_rate = 2
-        self.Connect()
+        refresh_rate = 0.2
+        self.Connect(blocking=False)
         tic()
         timer1 = toc()
         pause(refresh_rate)
         while True:
-            con_status, status_msg = self.ConnectedState()
-            print(status_msg)
-            if con_status == ROBOTCOM_READY:
-                break
+            # Wait up to 2 seconds to see the connected state
+            for i in range(10):
+                con_status, status_msg = self.ConnectedState()
+                print(status_msg)
+                if con_status == ROBOTCOM_READY:
+                    return con_status
+
+                if callback_abort is not None and callback_abort():
+                    return con_status
+
+                pause(refresh_rate)
                 
-            elif con_status < 0:
+            if con_status < 0:
                 print('Trying to reconnect...')
                 self.Disconnect()
+                if callback_abort is not None and callback_abort():
+                    return con_status
+
                 pause(refresh_rate)
                 self.Connect()
                 
@@ -4231,9 +4281,11 @@ class Item():
                     print('Failed to connect: Timed out')
                     break
 
+            if callback_abort is not None and callback_abort():
+                return con_status
             pause(refresh_rate)
-        return con_status
 
+        return con_status
         
     def ConnectionParams(self):
         """Returns the robot connection parameters
@@ -4825,14 +4877,14 @@ class Item():
         self.link._check_status()
         
     def setDO(self, io_var, io_value):
-        """Set a digital output to a given value. This can also be used to set any variables to a desired value.
+        """Set a Digital Output (DO). This command can also be used to set any generic variables to a desired value.
         
-        :param io_var: digital output (string or number)
+        :param io_var: Digital Output (string or number)
         :type io_var: str or int
         :param io_value: value
         :type io_value: str, int or float
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setAO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
         """
         self.link._check_connection()
         command = 'setDO'
@@ -4841,6 +4893,58 @@ class Item():
         self.link._send_line(str(io_var))
         self.link._send_line(str(io_value))
         self.link._check_status()
+        
+    def setAO(self, io_var, io_value):
+        """Set an Analog Output (AO).
+        
+        :param io_var: Analog Output (string or number)
+        :type io_var: str or int
+        :param io_value: value
+        :type io_value: str, int or float
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
+        """
+        self.link._check_connection()
+        command = 'setAO'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        self.link._send_line(str(io_value))
+        self.link._check_status()
+        
+    def getDI(self, io_var):
+        """Get a Digital Input (DI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (1=True, 0=False). This function returns an empty string if the script is not executed on the robot.
+        
+        :param io_var: Digital Input (string or number)
+        :type io_var: str or int
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getAI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
+        """
+        self.link._check_connection()
+        command = 'getDI'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        io_value = self.link._rec_line()
+        self.link._check_status()
+        return io_value
+        
+    def getAI(self, io_var):
+        """Get an Analog Input (AI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (0-1 or other range depending on the robot driver). This function returns an empty string if the script is not executed on the robot.
+        
+        :param io_var: Analog Input (string or number)
+        :type io_var: str or int
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
+        """
+        self.link._check_connection()
+        command = 'getAI'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(io_var))
+        io_value = self.link._rec_line()
+        self.link._check_status()
+        return io_value
     
     def waitDI(self, io_var, io_value, timeout_ms=-1):
         """Wait for an digital input io_var to attain a given value io_value. Optionally, a timeout can be provided.
@@ -5185,16 +5289,47 @@ class Item():
         :param str value: Comand value (optional, not all commands require a value) 
         
         .. code-block:: python
-            :caption: Example commands
+            :caption: Example to expand or collapse an item in the tree
             
             from robolink import *
             RDK = Robolink()      # Start the RoboDK API
             
             # How to change the number of threads using by the RoboDK application:
-            robot = RDK.Item("", ITEM_TYPE_ROBOT)
+            item = RDK.ItemUserPick("Select an item")
+            
+            item.setParam("Tree", "Expand")
+            pause(2)
+            item.setParam("Tree", "Collapse")
+            
+
+        .. code-block:: python
+            :caption: Example to change the post processor
+            
+            robot = RDK.ItemUserPick("Select a robot", ITEM_TYPE_ROBOT)
             
             # Set the robot post processor (name of the py file in the posts folder)
             robot.setParam("PostProcessor", "Fanuc_RJ3")
+            
+        
+        .. code-block:: python
+            :caption: Example to change display style
+            
+            # How to change the display style of an object (color as AARRGGBB):
+            obj = RDK.ItemUserPick('Select an object to change the style', ITEM_TYPE_OBJECT)
+            
+            # Display points as simple dots given a certain size (suitable for fast rendering or large point clouds)
+            # Color is defined as AARRGGBB
+            obj.setValue('Display', 'POINTSIZE=4 COLOR=#FF771111')
+
+            # Display each point as a cube of a given size in mm
+            obj.setValue('Display','PARTICLE=CUBE(0.2,0.2,0.2) COLOR=#FF771111')
+
+            # Another way to change display style of points to display as a sphere (size,rings):
+            obj.setValue('Display','PARTICLE=SPHERE(4,8) COLOR=red')
+
+            # Example to change the size of displayed curves:
+            obj.setValue('Display','LINEW=4')   
+        
         
         .. seealso:: :func:`~robolink.Robolink.setParam`
         """    

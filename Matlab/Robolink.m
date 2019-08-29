@@ -119,7 +119,9 @@ classdef Robolink < handle
             if ~isempty(lastwarn)
                 error(lastwarn)
             end
-            if status > 0 && status < 10
+            if status == 0
+                % everything is OK
+            elseif status > 0 && status < 10
                 strproblems = 'Unknown error';
                 switch status
                     case 1
@@ -141,8 +143,10 @@ classdef Robolink < handle
                 end
                 fprintf([strproblems,'\n']);
                 error(strproblems);
-            elseif status == 0
-                % everything is OK
+            elseif status < 100
+                strproblems = rec_line(this);
+                fprintf([strproblems,'\n']);
+                error(strproblems);
             else
                 disp(status)
                 error('connection problems');
@@ -651,7 +655,9 @@ classdef Robolink < handle
             send_line(this, command);
             send_line(this, filename);
             send_item(this, parent);
+            this.COM.Timeout = 3600;
             newitem = rec_item(this);
+            this.COM.Timeout = this.TIMEOUT;
             check_status(this);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
