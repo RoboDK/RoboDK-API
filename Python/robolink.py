@@ -323,6 +323,9 @@ def import_install(module_name, pip_name=None, rdk=None):
         import io
         
         def execute(cmd):
+            print("Running command:")
+            print(cmd)
+            print("...")
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)#, universal_newlines=True)
             for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
                 # display line output
@@ -3112,6 +3115,9 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddFile`, :func:`~robolink.Robolink.Item`
         """
+        if self.item == 0:
+            raise InputError("Item is not valid or was already deleted")
+        
         self.link._check_connection()
         command = 'Remove'
         self.link._send_line(command)

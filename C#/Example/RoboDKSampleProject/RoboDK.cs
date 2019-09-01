@@ -4627,6 +4627,10 @@ public class RoboDK
         /// </summary>
         public void Delete()
         {
+            if (item == 0)
+            {
+                throw new RDKException("This item doesn't exist: Invalid or previously deleted item.");
+            }
             link._check_connection();
             link._send_Line("Remove");
             link._send_Item(this);
