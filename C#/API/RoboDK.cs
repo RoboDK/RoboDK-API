@@ -1885,7 +1885,7 @@ namespace RoboDk.API
 
 
 
-        public void AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
+        public IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
             var target = AddTarget(targetName, robotBase);
             if (target == null)
@@ -1903,6 +1903,8 @@ namespace RoboDk.API
 
             //target
             pgm.AddMoveJ(target);
+
+            return target;
         }
 
         #endregion
@@ -2670,7 +2672,7 @@ namespace RoboDk.API
                     // Do not try to read any items properties or call any other RoboDK method.
                     // e.g.:    itemName = item.Name(); -> Call may conflict with other RoboDK Calls running in the main thread!!!
 
-                    Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
+                    //Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
 
                     switch (eventType)
                     {
