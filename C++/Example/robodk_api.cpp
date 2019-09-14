@@ -2382,8 +2382,7 @@ Item RoboDK::AddStation(QString name)
 /// </summary>
 void RoboDK::CloseStation(){
     _check_connection();
-    _send_Line("Remove");
-    _send_Item(new Item(this));
+    _send_Line("RemoveStn");
     _check_status();
 }
 

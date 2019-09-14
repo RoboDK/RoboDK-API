@@ -3210,9 +3210,9 @@ public class RoboDK
     /// </summary>
     public void CloseStation()
     {
+        _require_build(12939);
         _check_connection();
-        _send_Line("Remove");
-        _send_Item(new Item(this));
+        _send_Line("RemoveStn");
         _check_status();
     }
 

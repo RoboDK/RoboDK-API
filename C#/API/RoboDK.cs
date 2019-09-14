@@ -1023,8 +1023,9 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void CloseStation()
         {
+            RequireBuild(12939);
             check_connection();
-            var command = "Remove";
+            var command = "RemoveStn";
             send_line(command);
             send_item(new Item(this));
             ReceiveTimeout = 3600 * 1000;
