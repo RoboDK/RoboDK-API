@@ -760,7 +760,11 @@ class Robolink:
         """Performs a linear or joint movement. Use MoveJ or MoveL instead."""
         #self._check_connection();
         itemrobot.WaitMove()# checks connection
-        command = 'MoveX'
+        if blocking:
+            command = 'MoveXb'
+        else:
+            command = 'MoveX'
+            
         self._send_line(command)
         self._send_int(movetype)
         if isinstance(target,Item):# target is an item
@@ -781,13 +785,20 @@ class Robolink:
         self._send_item(itemrobot)
         self._check_status()
         if blocking:
-            itemrobot.WaitMove()
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
             
     def MoveC(self, target1, target2, itemrobot, blocking=True):
         """Performs a circular movement. Use robot.MoveC instead."""
         #self._check_connection();
         itemrobot.WaitMove()# checks connection
-        command = 'MoveC'
+        if blocking:
+            command = 'MoveCb'
+        else:
+            command = 'MoveC'
+            
         self._send_line(command)
         self._send_int(3)
         if isinstance(target1,Item):# target1 is an item
@@ -823,7 +834,10 @@ class Robolink:
         self._send_item(itemrobot)
         self._check_status()
         if blocking:
-            itemrobot.WaitMove()
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None):
@@ -4664,7 +4678,7 @@ class Item():
         self.link._send_item(self)
         self.link._check_status()
     
-    def WaitMove(self, timeout=300):
+    def WaitMove(self, timeout=360000):
         """Waits (blocks) until the robot finishes its movement.
         
         :param float timeout: Maximum time to wait for robot to finish its movement (in seconds)

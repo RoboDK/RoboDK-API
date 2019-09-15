@@ -2166,8 +2166,13 @@ public class RoboDK
     // private move type, to be used by public methods (MoveJ  and MoveL)
     void moveX(Item target, double[] joints, Mat mat_target, Item itemrobot, int movetype, bool blocking = true)
     {
+        _require_build(12939);
         itemrobot.WaitMove();
-        _send_Line("MoveX");
+        if (blocking){
+            _send_Line("MoveXb");
+        } else {
+            _send_Line("MoveX");
+        }
         _send_Int(movetype);
         if (target != null)
         {
@@ -2193,16 +2198,23 @@ public class RoboDK
         }
         _send_Item(itemrobot);
         _check_status();
-        if (blocking)
-        {
-            itemrobot.WaitMove();
+        if (blocking){
+            _COM.ReceiveTimeout = (int)(360000 * 1000.0);
+            _check_status();//will wait here;
+            _COM.ReceiveTimeout = _TIMEOUT;
+            //itemrobot.WaitMove();
         }
     }
     // private move type, to be used by public methods (MoveJ  and MoveL)
     void moveC_private(Item target1, double[] joints1, Mat mat_target1, Item target2, double[] joints2, Mat mat_target2, Item itemrobot, bool blocking = true)
     {
+        _require_build(12939);
         itemrobot.WaitMove();
-        _send_Line("MoveC");
+        if (blocking){
+            _send_Line("MoveCb");
+        } else {
+            _send_Line("MoveC");
+        }
         _send_Int(3);
         if (target1 != null)
         {
@@ -2254,7 +2266,10 @@ public class RoboDK
         _check_status();
         if (blocking)
         {
-            itemrobot.WaitMove();
+            _COM.ReceiveTimeout = (int)(360000 * 1000.0);
+            _check_status();//will wait here;
+            _COM.ReceiveTimeout = _TIMEOUT;
+            //itemrobot.WaitMove();
         }
     }
 
