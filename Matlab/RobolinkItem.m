@@ -639,19 +639,26 @@ classdef RobolinkItem < handle
             set(this.link.COM,'Timeout', this.link.TIMEOUT);            
             this.link.check_status();   
         end   
-        function setSpeed(this, speed, accel)
+        function setSpeed(this, speed_linear, speed_joints, accel_linear, accel_joints)
             % Sets the speed and/or the acceleration of a robot.
-            % In  1 : speed -> speed in mm/s (-1 = no change)
-            % In  2 : accel (optional) -> acceleration in mm/s2 (-1 = no change)
-            if nargin < 2
-                accel = -1;
+            % In  1 : speed_linear: linear speed -> speed in mm/s (-1 = no change)
+            % In  2 : speed_joints: joint speed (optional) -> acceleration in mm/s2 (-1 = no change)
+            % In  3 : accel_linear: linear acceleration (optional) -> acceleration in mm/s2 (-1 = no change)
+            % In  4 : accel_joints: joint acceleration (optional) -> acceleration in deg/s2 (-1 = no change)
+            if nargin < 3
+                speed_joints = -1;
             end
+            if nargin < 4
+                accel_linear = -1;
+            end
+            if nargin < 5
+                accel_joints = -1;
+            end            
             this.link.check_connection();
-            command = 'S_Speed';
+            command = 'S_Speed4';
             this.link.send_line(command);
-            this.link.send_int(speed*1000);
-            this.link.send_int(accel*1000);
             this.link.send_item(this);
+            this.link.send_array([speed_linear, speed_joints, accel_linear, accel_joints]);            
             this.link.check_status();            
         end
         function setZoneData(this, zonedata)
