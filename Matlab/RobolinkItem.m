@@ -479,6 +479,75 @@ classdef RobolinkItem < handle
             this.link.check_status();
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function status = Connect(this, robot_ip, blocking)
+            % Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
+            % In  1 : Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
+            % Out 1 : Status (1 if success)
+            if nargin < 2
+                robot_ip = '';
+            end
+            if nargin < 3
+                blocking = 1;
+            end
+            this.link.check_connection();
+            command = 'Connect2';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_line(robot_ip);
+            this.link.send_int(blocking);
+            status = this.link.rec_int();
+            this.link.check_status();
+        end
+        function [robot_ip, port, remote_path, ftp_user, ftp_pass] = ConnectionParams(this)
+            % Retrieve robot connection parameters
+            this.link.check_connection();
+            command = 'ConnectParams';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            robot_ip = this.link.rec_line();
+            port = this.link.rec_int();
+            remote_path = this.link.rec_line();
+            ftp_user = this.link.rec_line();
+            ftp_pass = this.link.rec_line();
+        end        
+        function itm = setConnectionParams(this, robot_ip, port, remote_path, ftp_user, ftp_pass)
+            % Retrieve robot connection parameters
+            this.link.check_connection();
+            command = 'setConnectParams';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_line(robot_ip);
+            this.link.send_int(port);
+            this.link.send_line(remote_path);
+            this.link.send_line(ftp_user);
+            this.link.send_line(ftp_pass);
+            this.link.check_status();
+            itm = this;
+        end        
+        function [robotcom_status, status_msg] = ConnectedState(this)
+            % Check connection status with a real robobt
+            % Out 1 : status code -> (int) ROBOTCOM_READY if the robot is ready to move, otherwise, status message will provide more information about the issue
+            % Out 2 : status message -> Message description of the robot status
+            this.link.check_connection();
+            command = 'ConnectedState';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            robotcom_status = this.link.rec_int();
+            status_msg = this.link.rec_line();            
+            this.link.check_status();
+        end
+        function status = Disconnect(this)
+            % Disconnect from a real robot (when the robot driver is used)
+            % Returns 1 if it disconnected successfully, 0 if it failed. It can fail if it was previously disconnected manually for example.
+            % Out 1 : Status (1 if success)
+            this.link.check_connection();
+            command = 'Disconnect';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            status = this.link.rec_int();
+            this.link.check_status();
+        end
+        
         function MoveJ(this, target, blocking)
             % Moves a robot to a specific target ("Move Joint" mode). This function blocks until the robot finishes its movements.
             % In  1 : joints/pose/item -> target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or an item (item pointer)
