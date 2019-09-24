@@ -2285,12 +2285,12 @@ void RoboDK::Save(const QString &filename, const Item *itemsave){
 /// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
 /// <param name="color">Color of the added shape</param>
 /// <returns>added object/shape (use item.Valid() to check if item is valid.)</returns>
-Item RoboDK::AddShape(Mat *trianglePoints, Item *addTo, bool shapeOverride, Color *color)
+Item RoboDK::AddShape(tMatrix2D *trianglePoints, Item *addTo, bool shapeOverride, Color *color)
 {
     double colorArray[4] = {color->r,color->g,color->b,color->a};
     _check_connection();
     _send_Line("AddShape3");
-    _send_Array(trianglePoints);
+    _send_Matrix2D(trianglePoints);
     _send_Item(addTo);
     _send_Int(shapeOverride? 1 : 0);
     _send_Array(colorArray,4);
@@ -2315,11 +2315,11 @@ Item RoboDK::AddShape(Mat *trianglePoints, Item *addTo, bool shapeOverride, Colo
 ///     point normal and recalculate the normal vector on the surface projected.
 /// </param>
 /// <returns>added object/curve (use item.Valid() to check if item is valid.)</returns>
-Item RoboDK::AddCurve(Mat *curvePoints, Item *referenceObject, bool addToRef, int ProjectionType)
+Item RoboDK::AddCurve(tMatrix2D *curvePoints, Item *referenceObject, bool addToRef, int ProjectionType)
 {
     _check_connection();
     _send_Line("AddWire");
-    _send_Array(curvePoints);
+    _send_Matrix2D(curvePoints);
     _send_Item(referenceObject);
     _send_Int(addToRef ? 1:0);
     _send_Int(ProjectionType);
@@ -2336,11 +2336,11 @@ Item RoboDK::AddCurve(Mat *curvePoints, Item *referenceObject, bool addToRef, in
 /// <param name="addToRef">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
 /// <param name="projectionType">Type of projection.Use the PROJECTION_* flags.</param>
 /// <returns>added object/shape (0 if failed)</returns>
-Item RoboDK::AddPoints(Mat *points, Item *referenceObject, bool addToRef, int ProjectionType)
+Item RoboDK::AddPoints(tMatrix2D *points, Item *referenceObject, bool addToRef, int ProjectionType)
 {
     _check_connection();
     _send_Line("AddPoints");
-    _send_Array(points);
+    _send_Matrix2D(points);
     _send_Item(referenceObject);
     _send_Int(addToRef? 1 : 0);
     _send_Int(ProjectionType);Item newitem = _recv_Item();
@@ -2348,16 +2348,15 @@ Item RoboDK::AddPoints(Mat *points, Item *referenceObject, bool addToRef, int Pr
     return newitem;
 }
 
-Mat RoboDK::ProjectPoints(Mat *points, Item objectProject, int ProjectionType)
+void RoboDK::ProjectPoints(tMatrix2D *points, tMatrix2D **projected, Item objectProject, int ProjectionType)
 {
     _check_connection();
     _send_Line("ProjectPoints");
-    _send_Array(points);
+    _send_Matrix2D(points);
     _send_Item(objectProject);
-    _send_Int(ProjectionType);
-    Mat projectedPoints = _recv_Pose();
+    _send_Int(ProjectionType);    
+    _recv_Matrix2D(projected);
     _check_status();
-    return projectedPoints;
 }
 
 /// <summary>
@@ -3055,7 +3054,10 @@ bool RoboDK::_check_connection(){
 
 bool RoboDK::_check_status(){
     qint32 status = _recv_Int();
-    if (status > 0 && status < 10) {
+    if (status == 0) {
+        // everything is OK
+        //status = status
+    } else if (status > 0 && status < 10) {
         QString strproblems("Unknown error");
         if (status == 1) {
             strproblems = "Invalid item provided: The item identifier provided is not valid or it does not exist.";
@@ -3071,9 +3073,9 @@ bool RoboDK::_check_status(){
         }
         //print(strproblems);
         //throw new RDKException(strproblems); //raise Exception(strproblems)
-    } else if (status == 0) {
-        // everything is OK
-        //status = status
+    } else if (status < 100){
+        QString strproblems = _recv_Line();
+        qDebug() << "RoboDK API ERROR: " << strproblems;
     } else  {
         //throw new RDKException("Communication problems with the RoboDK API"); //raise Exception('Problems running function');
         qDebug() << "Communication problems with the RoboDK API";
