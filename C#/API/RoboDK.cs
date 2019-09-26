@@ -662,13 +662,17 @@ namespace RoboDk.API
             send_line("PastN");
             send_item(paste_to);
             send_int(paste_times);
+            ReceiveTimeout = paste_times * 1000;
             int ntimes = rec_int();
+
             List<IItem> list_items = new List<IItem>();
             for (int i = 0; i < ntimes; i++)
             {
                 IItem newitem = rec_item();
                 list_items.Add(newitem);
             }
+
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return list_items;
         }
@@ -1886,7 +1890,7 @@ namespace RoboDk.API
 
 
 
-        public void AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
+        public IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
             var target = AddTarget(targetName, robotBase);
             if (target == null)
@@ -1904,6 +1908,8 @@ namespace RoboDk.API
 
             //target
             pgm.AddMoveJ(target);
+
+            return target;
         }
 
         #endregion
@@ -2685,7 +2691,7 @@ namespace RoboDk.API
                     // Do not try to read any items properties or call any other RoboDK method.
                     // e.g.:    itemName = item.Name(); -> Call may conflict with other RoboDK Calls running in the main thread!!!
 
-                    Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
+                    //Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
 
                     switch (eventType)
                     {

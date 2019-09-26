@@ -884,7 +884,7 @@ namespace RoboDk.API
         /// <param name="joints"></param>
         /// <param name="robotBase"></param>
         /// <param name="robot"></param>
-        void AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null);
+        IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null);
 
         #endregion
     }
