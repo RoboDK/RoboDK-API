@@ -48,6 +48,15 @@ classdef Robolink < handle
         % Program execution type
         PROGRAM_RUN_ON_SIMULATOR=1;  % Set the program to run on the simulator
         PROGRAM_RUN_ON_ROBOT=2;      % Set the program to run on the robot
+        
+        % Robot connection status
+        ROBOTCOM_PROBLEMS       = -3;
+        ROBOTCOM_DISCONNECTED   = -2;
+        ROBOTCOM_NOT_CONNECTED  = -1;
+        ROBOTCOM_READY          = 0;
+        ROBOTCOM_WORKING        = 1;
+        ROBOTCOM_WAITING        = 2;
+        ROBOTCOM_UNKNOWN        = -1000;
 
         % TCP calibration types
         CALIBRATE_TCP_BY_POINT = 0;

@@ -1800,7 +1800,7 @@ if _tkinter_available:
         def __init__(self, msg, b1, b2, frame, t, entry):
 
             root = self.root = tkinter.Tk()
-            root.title('Message')
+            root.title('Input')
             self.msg = str(msg)
             # ctrl+c to copy self.msg
             root.bind('<Control-c>', func=self.to_clip)
@@ -1850,7 +1850,7 @@ if _tkinter_available:
             # call self.close_mod when the close button is pressed
             root.protocol("WM_DELETE_WINDOW", self.close_mod)
             # a trick to activate the window (on windows 7)
-            root.deiconify()
+            #root.deiconify()
             # if t is specified: call time_out after t seconds
             if t: root.after(int(t*1000), func=self.time_out)
 
@@ -1914,6 +1914,15 @@ if _tkinter_available:
             
         """
         msgbox = MessageBox(msg, b1, b2, frame, t, entry)
+        
+        try:
+            from robolink import getPathIcon
+            iconpath = getPathIcon()
+            msgbox.root.iconbitmap(iconpath)  
+        except:
+            print("RoboDK's Robolink module not found")
+        
+        msgbox.root.attributes("-topmost", True)           
         msgbox.root.mainloop()
         # the function pauses here until the mainloop is quit
         msgbox.root.destroy()

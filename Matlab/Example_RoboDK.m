@@ -24,7 +24,9 @@ RDK = Robolink;
 path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 1
-RDK.AddFile([path,'Example 01 - Pick and place.rdk']);
+% RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
+RDK.AddFile([path,'Example-06.b-Pick and place 2 tables.rdk']);
+
 
 % Display a list of all items
 fprintf('Available items in the station:\n');

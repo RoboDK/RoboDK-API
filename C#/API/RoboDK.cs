@@ -1023,8 +1023,9 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void CloseStation()
         {
+            RequireBuild(12939);
             check_connection();
-            var command = "Remove";
+            var command = "RemoveStn";
             send_line(command);
             send_item(new Item(this));
             ReceiveTimeout = 3600 * 1000;
@@ -2470,9 +2471,13 @@ namespace RoboDk.API
         internal void MoveX(IItem target, double[] joints, Mat matTarget, IItem itemrobot, int movetype,
             bool blocking = true)
         {
+            RequireBuild(12939);
             itemrobot.WaitMove();
-            var command = "MoveX";
-            send_line(command);
+            if (blocking){
+                send_line("MoveXb");
+            } else {
+                send_line("MoveX");
+            }  
             send_int(movetype);
             if (target != null)
             {
@@ -2501,7 +2506,10 @@ namespace RoboDk.API
             check_status();
             if (blocking)
             {
-                itemrobot.WaitMove();
+                //itemrobot.WaitMove();
+                ReceiveTimeout = 360000 * 1000;
+                check_status();//will wait here;
+                ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             }
         }
 
@@ -2509,9 +2517,13 @@ namespace RoboDk.API
         internal void moveC_private(IItem target1, double[] joints1, Mat matTarget1, IItem target2, double[] joints2,
             Mat matTarget2, IItem itemrobot, bool blocking = true)
         {
+            RequireBuild(12939);
             itemrobot.WaitMove();
-            var command = "MoveC";
-            send_line(command);
+            if (blocking){
+                send_line("MoveCb");
+            } else {
+                send_line("MoveC");
+            }            
             send_int(3);
             if (target1 != null)
             {
@@ -2565,7 +2577,10 @@ namespace RoboDk.API
             check_status();
             if (blocking)
             {
-                itemrobot.WaitMove();
+                //itemrobot.WaitMove();
+                ReceiveTimeout = 360000 * 1000;
+                check_status();//will wait here;
+                ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             }
         }
 

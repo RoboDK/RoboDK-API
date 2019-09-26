@@ -251,6 +251,10 @@ class StoppedError(Exception):
 class InputError(Exception):
     """Invalid input parameters provided to the API. Provide input as stated in the documentation."""
     pass
+
+class LicenseError(Exception):
+    """Invalid RoboDK license to use the requested feature."""
+    pass    
     
 def RoboDKInstallFound():
     """Check if RoboDK is installed"""    
@@ -293,7 +297,13 @@ def getPathRoboDK():
             print("RoboDK was not installed properly. Install RoboDK from www.robodk.com/download.")
             
         return "C:/RoboDK/bin/RoboDK.exe"
-
+        
+def getPathIcon():
+    iconpath = getPathRoboDK()
+    if iconpath.endswith(".exe"):
+        iconpath = iconpath[:-4]        
+    iconpath = iconpath + '.ico'
+    return iconpath
         
         
 def import_install(module_name, pip_name=None, rdk=None):
@@ -519,7 +529,7 @@ class Robolink:
                 self.LAST_STATUS_MESSAGE = self._rec_line()
                 raise Exception(self.LAST_STATUS_MESSAGE)
             elif status == 9:
-                self.LAST_STATUS_MESSAGE = 'Invalid license. Contact us at: www.robodk.com'
+                self.LAST_STATUS_MESSAGE = 'Invalid license. Purchase a license online (www.robodk.com) or contact us at info@robodk.com.'
             print(self.LAST_STATUS_MESSAGE)
             raise Exception(self.LAST_STATUS_MESSAGE)
             
@@ -533,7 +543,10 @@ class Robolink:
                 raise StoppedError(self.LAST_STATUS_MESSAGE)
             
             elif status == 12:
-                raise InputError(self.LAST_STATUS_MESSAGE)                                
+                raise InputError(self.LAST_STATUS_MESSAGE)   
+
+            elif status == 13:
+                raise LicenseError(self.LAST_STATUS_MESSAGE)                   
             
             else:
                 # Generic error exception
@@ -747,7 +760,11 @@ class Robolink:
         """Performs a linear or joint movement. Use MoveJ or MoveL instead."""
         #self._check_connection();
         itemrobot.WaitMove()# checks connection
-        command = 'MoveX'
+        if blocking:
+            command = 'MoveXb'
+        else:
+            command = 'MoveX'
+            
         self._send_line(command)
         self._send_int(movetype)
         if isinstance(target,Item):# target is an item
@@ -768,13 +785,20 @@ class Robolink:
         self._send_item(itemrobot)
         self._check_status()
         if blocking:
-            itemrobot.WaitMove()
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
             
     def MoveC(self, target1, target2, itemrobot, blocking=True):
         """Performs a circular movement. Use robot.MoveC instead."""
         #self._check_connection();
         itemrobot.WaitMove()# checks connection
-        command = 'MoveC'
+        if blocking:
+            command = 'MoveCb'
+        else:
+            command = 'MoveC'
+            
         self._send_line(command)
         self._send_int(3)
         if isinstance(target1,Item):# target1 is an item
@@ -810,7 +834,10 @@ class Robolink:
         self._send_item(itemrobot)
         self._check_status()
         if blocking:
-            itemrobot.WaitMove()
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None):
@@ -1510,9 +1537,9 @@ class Robolink:
         
     def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
+        self._require_build(12938)
         self._check_connection()
-        self._send_line('Remove')
-        self._send_item(None)
+        self._send_line('RemoveStn')
         self._check_status()
         
     def Save(self, filename, itemsave=0):
@@ -4585,17 +4612,32 @@ class Item():
         """Obsolete. Use :func:`~robolink.Item.setRounding` instead."""
         self.setRounding(zonedata)
     
-    def ShowSequence(self, matrix):
-        """Displays a sequence of joints in RoboDK and displays a slider.
+    def ShowSequence(self, matrix, display_type=-1, timeout=-1):
+        """Displays a sequence of joints or poses in RoboDK.
         
-        :param matrix: list of joints as a matrix or as a list of joint arrays. An sequence of instructions is also supported (same sequence that was supported with RoKiSim).
+        :param matrix: list of joints as a matrix or as a list of joint arrays. A sequence of instructions is also supported (same sequence that was supported with RoKiSim).
         :type matrix: list of list of float or a matrix of joints as a :class:`.Mat`"""
-        self.link._check_connection()
-        command = 'Show_Seq'
-        self.link._send_line(command)
-        self.link._send_matrix(matrix);
-        self.link._send_item(self)
-        self.link._check_status()
+        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == Mat):
+            # poses assumed
+            self.link._check_connection()        
+            command = 'Show_SeqPoses'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array([display_type, timeout])
+            self.link._send_int(len(matrix))
+            for pose in matrix:
+                self.link._send_pose(pose)               
+            
+            self.link._check_status()
+            
+        else:
+            # list of joints as a Mat assumed
+            self.link._check_connection()        
+            command = 'Show_Seq'
+            self.link._send_line(command)
+            self.link._send_matrix(matrix)
+            self.link._send_item(self)
+            self.link._check_status()
     
     def Busy(self):
         """Checks if a robot or program is currently running (busy or moving).
@@ -4636,7 +4678,7 @@ class Item():
         self.link._send_item(self)
         self.link._check_status()
     
-    def WaitMove(self, timeout=300):
+    def WaitMove(self, timeout=360000):
         """Waits (blocks) until the robot finishes its movement.
         
         :param float timeout: Maximum time to wait for robot to finish its movement (in seconds)
@@ -5104,6 +5146,20 @@ class Item():
         ins_id = self.link._rec_int()
         self.link._check_status()
         return ins_id
+        
+    def InstructionDelete(self, ins_id=0):
+        """Delete an instruction of a program
+        
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`
+        """
+        self.link._check_connection()
+        command = 'Prog_DelIns'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_int(ins_id)  
+        success = self.link._rec_int() > 0
+        self.link._check_status()
+        return success
     
     def Instruction(self, ins_id=-1):
         """Return the current program instruction or the instruction given the instruction id (if provided).
