@@ -662,13 +662,17 @@ namespace RoboDk.API
             send_line("PastN");
             send_item(paste_to);
             send_int(paste_times);
+            ReceiveTimeout = paste_times * 1000;
             int ntimes = rec_int();
+
             List<IItem> list_items = new List<IItem>();
             for (int i = 0; i < ntimes; i++)
             {
                 IItem newitem = rec_item();
                 list_items.Add(newitem);
             }
+
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
             check_status();
             return list_items;
         }
