@@ -19,6 +19,7 @@ namespace TesterProject
 			status = RDK.Connect();
 			Console.WriteLine("Connect status: " + status.ToString());
             int b = 1;
+            //RDK.CloseStation();
         }
     }
 }

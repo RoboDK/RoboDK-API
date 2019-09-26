@@ -1031,10 +1031,7 @@ namespace RoboDk.API
             check_connection();
             var command = "RemoveStn";
             send_line(command);
-            send_item(new Item(this));
-            ReceiveTimeout = 3600 * 1000;
             check_status();
-            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
         }
 
         /// <inheritdoc />
