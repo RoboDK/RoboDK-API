@@ -1051,7 +1051,7 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void MoveJ(IItem itemtarget, bool blocking = true)
         {
-            if (itemtarget.GetItemType() == ItemType.Program)
+            if (this.GetItemType() == ItemType.Program)
             {
                 AddMoveJ(itemtarget);
             }
@@ -1076,7 +1076,7 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void MoveL(IItem itemtarget, bool blocking = true)
         {
-            if (itemtarget.GetItemType() == ItemType.Program)
+            if (this.GetItemType() == ItemType.Program)
             {
                 AddMoveL(itemtarget);
             }
