@@ -448,7 +448,57 @@ class Robolink:
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
     :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
     
-    .. seealso:: :func:`~robolink.Robolink.Item`
+    
+    .. code-block:: python
+        :caption: Example of a RoboDK API initialization
+        
+        from robolink import *
+
+        # Connect to the RoboDK API
+        RDK = Robolink()
+        
+        # Retrieve all items and print their names
+        list_items = RDK.ItemList()
+        for item in list_items:
+            print(item.Name())   
+
+    .. code-block:: python
+        :caption: Force starting a new RoboDK hidden instance and output debug information
+        
+        from robolink import *
+        
+        # Connect to the RoboDK API
+        RDK = Robolink(args=["-NEWINSTANCE", "-NOUI", "-SKIPINI", "-EXIT_LAST_COM"])
+        
+        # Add a reference frame
+        RDK.AddFrame("My reference frame")
+        RDK.setPose(transl(100,200,300) * rotz(pi/2))
+        
+        # Retrieve all items and print their names (just a reference frame)
+        list_items = RDK.ItemList()
+        for item in list_items:
+            print(item.Name())   
+            
+        # Close RoboDK
+        RDK.CloseRoboDK()
+
+        # Example command line arguments:
+        # -NEWINSTANCE: Forces using a new instance
+        # -NOUI: Run RoboDK behind the scenes (without OpenGL context)
+        # -SKIPINI: Skip using RoboDK's INI settings (global settings), this provides a faster startup
+        # -EXIT_LAST_COM: Exit RoboDK when the last API client connected closes
+        # -DEBUG: Run in debug mode (outputs information in the console)
+        #
+        # Follow these steps to see an extended list of command line arguments:
+        # 1- Select Tools-Run Script
+        # 2- Select ShowCommands
+        # 
+        # More information here:
+        #    https://robodk.com/doc/en/RoboDK-API.html#CommandLine
+    
+    .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Item.Name`, :func:`~robolink.Item.setPose`, :func:`~robolink.Robolink.CloseRoboDK`
+    
+    .. seealso:: :func:`~robolink.Robolink.AddFile`, :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Robolink.AddProgram`
     
     """
     
@@ -476,6 +526,7 @@ class Robolink:
     # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     APPLICATION_DIR = ''    
     
+    DEBUG = False     # Debug output through console
     COM = None        # tcpip com    
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     PORT = -1         # current port
@@ -845,7 +896,9 @@ class Robolink:
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
         In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
-        In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe)."""
+        In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
+        
+        """
         if type(args) is str:
             args = [args]
             
@@ -873,6 +926,11 @@ class Robolink:
                 self.PORT_START = port
                 self.PORT_END = port
                 self.ARGUMENTS.append("-PORT=%i" % port)
+                
+        if "-DEBUG" in self.ARGUMENTS or "/DEBUG" in self.ARGUMENTS:
+            self.DEBUG = True
+        elif self.DEBUG:
+            ARGUMENTS.append("-DEBUG")
                 
         self.Connect()
 
@@ -949,10 +1007,15 @@ class Robolink:
             #import time            
             #tstart = time.time()
             
+            def output_reader(proc):
+                for line in iter(proc.stdout.readline, b''):
+                    ln = str(line.decode("utf-8")).strip()
+                    print(ln)            
+            
             from sys import platform as _platform
             p = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
+                p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)             
             else:
                 p = subprocess.Popen(command,stdout=subprocess.PIPE)
                 
@@ -963,6 +1026,13 @@ class Robolink:
                     #telapsed = time.time() - tstart
                     #print("RoboDK startup time: %.3f" % telapsed)
                     break
+            
+            #if self.DEBUG:
+            # Important! Make sure we consume stdout (at least in Debug mode)
+            import threading
+            t = threading.Thread(target=output_reader, args=(p,))
+            t.start()
+            
             
             #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
             #    self._ProcessID = p.pid
@@ -1002,7 +1072,7 @@ class Robolink:
                 
             elif i == 0:            
                 if self.IP != 'localhost':
-                    break;
+                    break
                     
                 try:
                     if self.APPLICATION_DIR == '':
@@ -1043,6 +1113,8 @@ class Robolink:
             ITEM_TYPE_PROGRAM_PYTHON=10     # Python program or macro
                 
         .. seealso:: :func:`~robolink.Robolink.ItemList`, :func:`~robolink.Robolink.ItemUserPick`
+        
+        .. seealso:: :func:`~robolink.Item.Name`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setParent`, :func:`~robolink.Item.setJoints`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`
                 
         Example:
         
@@ -2562,7 +2634,71 @@ class Robolink:
         :param list joints_home: joints for the home position (it can be changed later)        
         :param robot: existing robot in the station to replace it (optional)
         :type robot: :class:`.Item`
-        :param str name: robot name"""
+        :param str name: robot name
+        
+        Example:
+        
+        .. code-block:: python
+        
+            # Start the RoboDK API
+            from robolink import *
+            from robodk import *
+            RDK = Robolink()
+
+            # Define your new robot or mechanism
+            # Example to create a Fanuc LR Mate 200iD robot
+            robot_name = 'Fanuc LR Mate 200iD'
+            DOFs       = 6
+
+            # Define the joints of the robot/mechanism
+            joints_build = [0, 0, 0, 0, 0, 0]
+
+            # Define the home position of the robot/mechanism (default position when you build the mechanism)
+            # This is also the position the robot goes to if you select "Home"
+            joints_home   = [0, 0, 0, 0, 0, 0]
+
+            # Define the robot parameters. The parameters must be provided in the same order they appear 
+            #     in the menu Utilities-Model Mechanism or robot
+            # Some basic mechanisms such as 1 or 2 axis translation/rotation axes don't need any parameters 
+            #     (translation/rotation will happen around the Z axis)
+            #parameters = []
+            parameters = [330, 50, 0, 330, 35, 335, 80, 0, -90, 0, 0, 0, 0]
+
+            # Define the joint sense (set to +1 or -1 for each axis (+1 is used as a reference for the ABB IRB120 robot)
+            joints_senses   = [+1, +1, -1,  -1, -1, -1] # add -1 as 7th index to account for axis 2 and axis 3 coupling
+
+            # Joint limits (lower limits for each axis)
+            lower_limits  = [-170, -100, -67, -190, -125, -360]
+
+            # Joint limits (upper limits for each axis)
+            upper_limits  = [ 170,  145, 213,  190,  125,  360]
+
+            # Base frame pose (offset the model by applying a base frame transformation)
+            #base_pose   = xyzrpw_2_pose([0, 0, 0, 0, 0, 0])
+            # Fanuc and Motoman robots have the base frame at the intersection of axes 1 and 2
+            base_pose   = xyzrpw_2_pose([0, 0, -330, 0, 0, 0])
+
+            # Tool frame pose (offset the tool flange by applying a tool frame transformation)
+            tool_pose   = xyzrpw_2_pose([0, 0, 0, 0, 0, 0])
+
+            # Retrieve all your items from RoboDK (they should be previously loaded manually or using the API's command RDK.AddFile())
+            list_objects   = []
+            for i in range(DOFs + 1):
+               if i == 0:
+                   itm = RDK.Item(robot_name + ' Base', ITEM_TYPE_OBJECT)
+               else:
+                   itm = RDK.Item(robot_name + ' ' + str(i), ITEM_TYPE_OBJECT)
+
+               list_objects.append(itm)
+
+            # Create the robot/mechanism
+            new_robot = RDK.BuildMechanism(MAKE_ROBOT_6DOF, list_objects, parameters, joints_build, joints_home, joints_senses, lower_limits, upper_limits, base_pose, tool_pose, robot_name)
+            if not new_robot.Valid():
+                print("Failed to create the robot. Check input values.")
+            else:
+                print("Robot/mechanism created: " + new_robot.Name())
+        
+        """
         
         # calculate the number of degrees of freedom
         ndofs = len(list_obj) - 1
@@ -2578,6 +2714,8 @@ class Robolink:
         self._send_pose(base)
         self._send_pose(tool)
         self._send_array(parameters)
+        if len(joints_build) < 12:
+            joints_build += [0]*(12-len(joints_build))
         joints_data = Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
         self._send_matrix(joints_data)
         robot = self._rec_item()
@@ -2587,12 +2725,11 @@ class Robolink:
     #------------------------------------------------------------------
     #----------------------- CAMERA VIEWS ----------------------------
     def Cam2D_Add(self, item_object, cam_params=""):
-        """Open a simulated 2D camera view. Returns a handle pointer that can be used in case more than one simulated view is used. 
-        An example to use this option is available in the SetupCamera2D.py macro.
+        """Open a simulated 2D camera view. Returns a handle pointer that can be used in case more than one simulated view is used.
         
         :param item_object: object to attach the camera
         :type item_object: :class:`.Item`
-        :param str cam_params: Camera parameters as a string. Add one or more of the following commands (in mm and degrees)
+        :param str cam_params: Camera parameters as a string. Add one or more commands as shown in the following example.
         
                         
         Example:
@@ -2600,30 +2737,81 @@ class Robolink:
         .. code-block:: python
                     
             from robolink import *    # API to communicate with RoboDK
+            from robodk import *      # library for basic matrix operations
             RDK = Robolink()
-            
+
             # Close any open 2D camera views
             RDK.Cam2D_Close()
-            
-            # Retrieve the camera reference frame
-            camref = RDK.ItemUserPick('Select a reference frame', ITEM_TYPE_FRAME)
 
-            # set parameters in mm and degrees:
-            # FOV: Field of view in degrees (atan(0.5*height/distance) of the sensor divided by
-            # FOCAL_LENGHT: focal lenght in mm
-            # FAR_LENGHT: maximum working distance (in mm)
-            # SIZE: size of the sensor in pixels
-            # DEPTH: Tag as depth to show the depth image in grey
-            # BG_COLOR: background color (rgb color or named color: AARRGGBB)
-            # LIGHT_AMBIENT: ambient color (rgb color or named color: AARRGGBB)
-            # LIGHT_SPECULAR: specular color (rgb color or named color: AARRGGBB)
-            # LIGHT_DIFFUSE: diffuse color (rgb color or named color: AARRGGBB)
+            camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object)')
+            #camref = RDK.Item('Frame 7',ITEM_TYPE_FRAME)
 
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black')
+            # Set parameters in mm and degrees:
+            #  FOV: Field of view in degrees (atan(0.5*height/distance) of the sensor
+            #  FOCAL_LENGHT: focal lenght in mm
+            #  FAR_LENGHT: maximum working distance (in mm)
+            #  SIZE: size of the window in pixels (fixed) (width x height)
+            #  SNAPSHOT: size of the snapshot image in pixels (width x height)
+            #  BG_COLOR: background color (rgb color or named color: AARRGGBB)
+            #  LIGHT_AMBIENT: ambient color (rgb color or named color: AARRGGBB)
+            #  LIGHT_SPECULAR: specular color (rgb color or named color: AARRGGBB)
+            #  LIGHT_DIFFUSE: diffuse color (rgb color or named color: AARRGGBB)
+            #  DEPTH: Add this flag to create a 32 bit depth map (white=close, black=far)
+            #  NO_TASKBAR: Don't add the window to the task bar
+            #  MINIMIZED: Show the window minimized
+            #  ALWAYS_VISIBLE: Keep the window on top of all other windows
+            #  SHADER_VERTEX: File to a vertex shader (GLSL file)
+            #  SHADER_FRAGMENT: File to a fragment shader (GLSL file)
+
+            # Examples to call Camd2D_Add:
+
+            # Camera without a fixed window size and 1000 mm length
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000')
+
+            # Camera with a fixed window size and 1000 mm length
             cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
+
+            # Camera with a black background
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black')
+
+            # Camera without a fixed window size and high resolution snapshot
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
+
+            # Depth view: 32 bit depth map (white=close, black=far)
             cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 DEPTH')
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
+
+            # Minimized camera
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 MINIMIZED')
+
+            # Do not show the camera window in the taskbar
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 NO_TASKBAR')
+
+            # Customize the light
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=600 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 LIGHT_AMBIENT=red')
+
+            # Provoke a popup and allow the user to enter some parameters
+            cam_id = RDK.Cam2D_Add(camref, 'POPUP')
+
+            # Example to take a snapshot from the camera
+            RDK.Cam2D_Snapshot(RDK.getParam('PATH_OPENSTATION') + "/sample_image.png", cam_id)
+
+            # Special command to retrieve the window ID:
+            win_id = RDK.Command("CamWinID", str(cam_id))
+            # print(str(win_id))
+
+            #-----------------------------------------------------------------------------------
+            # Example to use a customized shader to customize the effect of light
+            # Tip: Use the example: C:/RoboDK/Library/Example-Shader-Customized-Light.rdk
+            # Tip: If you need a fixed light source update the variable light_Position in the shader_fragment.glsl file
+
+            # Get the path to the RoboDK library (usually in C:/RoboDK/Library/)
+            path_library = RDK.getParam("PATH_LIBRARY")
+            file_shader_fragment = path_library + '/Macros/Camera-Shaders/shader_fragment.glsl'
+            file_shader_vertex = path_library + '/Macros/Camera-Shaders/shader_vertex.glsl'
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
+
 
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Snapshot`, :func:`~robolink.Robolink.Cam2D_Close`, :func:`~robolink.Robolink.Cam2D_SetParams`
         """
@@ -4078,7 +4266,7 @@ class Item():
         :type tool_pose: :class:`.Mat`
         :param str tool_name: name of the tool
         
-        .. seealso:: :func:`~robolink.Item.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`
+        .. seealso:: :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`
         """
         self.link._check_connection()
         command = 'AddToolEmpty'

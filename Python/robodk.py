@@ -587,6 +587,17 @@ def Pose_2_Fanuc(H):
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
     
+def Pose_2_Techman(H):
+    """Converts a pose (4x4 matrix) to a Techman XYZWPR target (mm and deg)
+    
+    :param H: pose
+    :type H: :class:`.Mat`
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
+    """
+    xyzwpr = pose_2_xyzrpw(H)
+    return xyzwpr
+    
 def Motoman_2_Pose(xyzwpr):
     """Converts a Motoman target to a pose (4x4 matrix)
     
@@ -596,6 +607,13 @@ def Motoman_2_Pose(xyzwpr):
     
 def Fanuc_2_Pose(xyzwpr):
     """Converts a Motoman target to a pose (4x4 matrix)
+    
+    .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
+    """
+    return xyzrpw_2_pose(xyzwpr)
+    
+def Techman_2_Pose(xyzwpr):
+    """Converts a Techman target to a pose (4x4 matrix)
     
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
@@ -1091,9 +1109,15 @@ class Mat(object):
                 if not isinstance(rows[0],list):
                     rows = [rows]
                     transpose = 1
+                    
                 n = len(rows[0])
                 if any([len(row) != n for row in rows[1:]]):# Validity check
-                    raise Exception(MatrixError, "inconsistent row length")
+                    #raise Exception(MatrixError, "inconsistent row length")
+                    # make the size uniform (fill blanks with zeros)
+                    n = max([len(i) for i in rows])
+                    for row in rows:
+                        row += [0]*(n-len(row))
+                    
                 self.rows = rows
                 if transpose:
                     self.rows = [list(item) for item in zip(*self.rows)]
@@ -1754,7 +1778,7 @@ else:
 #------------------
 if _tkinter_available:
     def getOpenFile(path_preference="C:/RoboDK/Library/", strfile = '', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
-        """Pop up a file dialog window to select a file to open."""
+        """Pop up a file dialog window to select a file to open. Returns a file object opened in read-only mode. Use returned value.name to retrieve the file path."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
@@ -1769,7 +1793,7 @@ if _tkinter_available:
         return file_path
         
     def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
-        """Pop up a file dialog window to select a file to save."""
+        """Pop up a file dialog window to select a file to save. Returns a file object opened in write-only mode. Use returned value.name to retrieve the file path."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
@@ -1784,8 +1808,39 @@ if _tkinter_available:
         #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
         return file_path
         
+    def getOpenFileName(path_preference="C:/RoboDK/Library/", strfile = '', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+        """Pop up a file dialog window to select a file to open. Returns the file path as a string."""
+        options = {}
+        options['initialdir'] = path_preference
+        options['title'] = strtitle
+        options['defaultextension'] = defaultextension #'.txt'
+        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['initialfile'] = strfile
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)    
+        file_path = filedialog.askopenfilename(**options)
+        # same as: file_path = tkinter.filedialog.askopenfilename()
+        return file_path
+        
+    def getSaveFileName(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+        """Pop up a file dialog window to select a file to save. Returns the file path as a string."""
+        options = {}
+        options['initialdir'] = path_preference
+        options['title'] = strtitle
+        options['defaultextension'] = defaultextension #'.txt'
+        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['initialfile'] = strfile
+        #options['parent'] = root
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)    
+        file_path = filedialog.asksaveasfilename(**options)
+        #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
+        return file_path
+        
     def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
-        """Ask the user to select a folder to save a program or other file"""   
+        """Ask the user to select a folder to save a program or other file. Returns the path of the folder as a string."""   
         root = tkinter.Tk()
         root.withdraw()
         root.attributes("-topmost", True)    
@@ -1794,6 +1849,17 @@ if _tkinter_available:
             dirname = None
             
         return dirname
+        
+    def getOpenFolder(path_preference="C:/RoboDK/Library/", strtitle='Open folder ...'):
+        """Pop up a folder dialog window to select a folder to open. Returns the path of the folder as a string."""
+        options = {}
+        options['title'] = strtitle
+        options['initialdir'] = path_preference
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)    
+        file_path = filedialog.askdirectory(**options)
+        return file_path
         
     class MessageBox(object):
 
