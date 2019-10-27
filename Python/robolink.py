@@ -36,6 +36,8 @@
 import struct
 from robodk import *
 from warnings import warn
+from enum import IntFlag
+from enum import IntEnum
 import sys  # Only used to detect python version using sys.version_info
 
 # Tree item types
@@ -240,6 +242,90 @@ DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
 
+class InstructionListJointsFlags(IntEnum):
+    """InstructionListJoints output flag"""
+    Position = 1
+    Speed = 2
+    SpeedAndAcceleration = 3
+    TimeBased = 4
+
+class PathErrorFlags(IntFlag):
+    """Error flags returned by InstructionListJoints"""
+    # none of the flags is set -> No Error
+    NoError = 0
+
+    # One or more points is not reachable
+    Kinematic = 0x1 
+
+    # The path reaches the limit of joint axes
+    PathLimit = 0x2 
+
+    # The robot reached a singularity point
+    PathSingularity = 0x4 
+
+    # The robot is too close to a singularity.
+    # Lower the singularity tolerance to allow the robot to continue. 
+    PathNearSingularity = 0x8 
+
+    # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
+    PathFlipAxis = 0b10000 
+
+    # Collision detected
+    Collision = 0x20 // 0b100000
+
+    # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
+    WristSingularity = 0b1000000
+
+    # The robot reached an Elbow singularity: Joint 3 is fully extended
+    ElbowSingularity = 0b10000000
+
+    # The robot reached a Shoulder singularity: the wrist is too close to axis 1
+    ShoulderSingularity = 0b100000000
+        
+def ConvertErrorCodeToJointErrorType(evalue):
+    """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
+    flags = PathErrorFlags.NoError
+    if (evalue % 10000000 > 999999):
+        # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+        flags |= PathErrorFlags.PathFlipAxis
+
+    if (evalue % 1000000 > 99999):
+        # Collision detected.
+        flags |= PathErrorFlags.Collision
+
+    if (evalue % 1000 > 99):
+        # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
+        flags |= PathErrorFlags.WristSingularity;
+        flags |= PathErrorFlags.PathSingularity;
+
+    elif (evalue % 10000 > 999):
+        if (evalue % 10000 > 3999):
+            # The robot is too close to the front/back singularity (wrist close to axis 1).
+            flags |= PathErrorFlags.ShoulderSingularity
+            flags |= PathErrorFlags.PathSingularity
+
+        elif (evalue % 10000 > 1999):
+            flags |= PathErrorFlags.ElbowSingularity
+            flags |= PathErrorFlags.PathSingularity
+            # Joint 3 is too close the elbow singularity.
+
+        else:
+            # Joint 5 is too close to a singularity (0 degrees).
+            flags |= PathErrorFlags.WristSingularity
+            flags |= PathErrorFlags.PathSingularity
+            flags |= PathErrorFlags.PathNearSingularity
+
+    if (evalue % 10 > 0):
+        # There is no solution available to complete the path.
+        flags |= PathErrorFlags.PathLimit
+
+    if (evalue % 100 > 9):
+        # The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.
+        flags |= PathErrorFlags.PathLimit
+        flags |= PathErrorFlags.Kinematic
+
+    return flags
+
 class TargetReachError(Exception):
     """Unable to reach desired target or destination error."""
     pass
@@ -367,7 +453,7 @@ def import_install(module_name, pip_name=None, rdk=None):
             
             raise Exception(msg)
 
-def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
+def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500, port=None, args=[]):
     """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
     
     :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
@@ -426,7 +512,7 @@ def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area
     import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
         # it is important to run this on a parallel thread to not block the main window events in Python
-        rdk = Robolink()
+        rdk = Robolink(port=port, args=args)
         if rdk.EmbedWindow(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
             print("Window docked successfully: " + window_name)
         else:
