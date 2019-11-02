@@ -11,18 +11,16 @@ classdef RobolinkItem < handle
 % ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
     properties (Constant)    
         % Instruction types
-        INS_TYPE_INVALID = -1;
-        INS_TYPE_MOVE = 0;
-        INS_TYPE_MOVEC = 1;
-        INS_TYPE_CHANGESPEED = 2;
-        INS_TYPE_CHANGEFRAME = 3;
-        INS_TYPE_CHANGETOOL = 4;
-        INS_TYPE_CHANGEROBOT = 5;
-        INS_TYPE_PAUSE = 6;
-        INS_TYPE_EVENT = 7;
-        INS_TYPE_CODE = 8;
-        INS_TYPE_PRINT = 9;
-        
+        INS_TYPE_INVALID = -1;  % Invalid Instruction
+        INS_TYPE_MOVE = 0;      % Linear or Joint move instruction
+        INS_TYPE_MOVEC = 1;     % Circular move instruction
+        INS_TYPE_CHANGESPEED = 2;   % Set Speed Instruction
+        INS_TYPE_CHANGEFRAME = 3;   % Set Reference Frame instruction
+        INS_TYPE_CHANGETOOL = 4;    % Set Tool frame instruction
+        INS_TYPE_PAUSE = 6;         % Pause instruction
+        INS_TYPE_EVENT = 7;         % Event instruction
+        INS_TYPE_CODE = 8;          % Insert code instruction
+        INS_TYPE_PRINT = 9;         % Print instruction        
     end    
     properties
         item = 0; % This value should not be modified. It stores the object pointer
@@ -233,7 +231,7 @@ classdef RobolinkItem < handle
             pose = this.link.rec_pose();
             this.link.check_status();
         end
-        function setHtool(this, pose)
+        function setPoseTool(this, pose)
             % Sets the tool pose of an item.
             % In 2 : 4x4 homogeneous matrix (pose)
             this.link.check_connection();
@@ -243,7 +241,7 @@ classdef RobolinkItem < handle
             this.link.send_pose(pose);
             this.link.check_status();
         end
-        function pose = Htool(this)
+        function pose = PoseTool(this)
             % Gets the tool pose of an item.
             % Out 1 : 4x4 homogeneous matrix (pose)
             this.link.check_connection();
@@ -405,7 +403,7 @@ classdef RobolinkItem < handle
             this.link.send_item(robot);
             this.link.check_status();
         end
-        function setFrame(this, frame)
+        function setPoseFrame(this, frame)
             % Sets the frame of a robot. The frame can be either an item pointer or a 4x4 Matrix.
             % If "frame" is an item pointer, it links the robot to the frame item. If frame is a 4x4 Matrix, it updates the linked pose of the robot frame.
             % In  1 : item/pose -> frame item or 4x4 Matrix (pose of the reference frame)
@@ -442,7 +440,7 @@ classdef RobolinkItem < handle
         function pose = SolveFK(this, joints)
             % Computes the forward kinematics for the specified robot and joints.
             % In  1 : double x n -> joints
-            % Out 1 : 4x4 matrix -> pose of the robot tool with respect to the robot frame
+            % Out 1 : 4x4 matrix -> pose of the robot flange with respect to the base frame
             this.link.check_connection();
             command = 'G_FK';
             this.link.send_line(command);
@@ -453,7 +451,7 @@ classdef RobolinkItem < handle
         end
         function joints = SolveIK(this, pose)
             % Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see Solve_IK_All()).
-            % In  1 : 4x4 matrix -> pose of the robot tool with respect to the robot frame
+            % In  1 : 4x4 matrix -> pose of the robot flange with respect to the base frame
             % Out 1 : double x n -> joints
             this.link.check_connection();
             command = 'G_IK';

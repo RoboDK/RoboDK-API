@@ -109,7 +109,7 @@ robot.setJoints(jhome);
 RDK.Render(0);
 
 % Get the tool pose
-Htcp = tool.Htool();
+Htcp = tool.PoseTool();
 
 % Create a reference frame with respect to the robot base reference
 ref = RDK.AddFrame('Frame macro', frameref);
@@ -118,15 +118,16 @@ Hframe = transl(750,250,500)*roty(pi/2)*rotz(pi);
 ref.setPose(Hframe);
 
 % Set the robot's reference frame as the reference we just cretaed
-robot.setFrame(ref);
+robot.setPoseFrame(ref);
 % Set the tool frame
-robot.setTool(tool);
+robot.setPoseTool(Htcp);
 
 % Get the position of the TCP wrt the robot base
 Hhome = inv(Hframe)*robot.SolveFK(jhome)*Htcp;
 
 % Create a new program "prog"
 prog = RDK.AddProgram('Prog macro');
+
 
 % Create a joint target home
 target = RDK.AddTarget('Home', ref, robot);
@@ -251,7 +252,7 @@ RDK.Item('Replace objects').RunProgram();
 % (1 = RUNMODE_QUICKVALIDATE)
 
 fprintf('Moving by target item...\n');
-robot.setFrame(frametable);
+robot.setPoseFrame(frametable);
 RDK.setSimulationSpeed(10);
 for i=1:2    
     robot.setSpeed(10000,1000);  
