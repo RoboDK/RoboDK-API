@@ -213,18 +213,26 @@ namespace RoboDk.API
 		/// <param name="toolCOG">Tool center of gravity as [x,y,z] with respect to the robot flange.</param>
 		void setParamRobotTool(double toolMass, double[] toolCOG);
 
-		/// <summary>
-		///     Sets the local position (pose) of an object, target or reference frame. For example, the position of an
-		///     object/frame/target with respect to its parent.
-		///     If a robot is provided, it will set the pose of the end efector.
-		/// </summary>
-		/// <param name="pose">4x4 homogeneous matrix</param>
-		void SetPose(Mat pose);
+        /// <summary>
+        /// Send a specific parameter for an item.
+        /// </summary>
+        /// <param name="param">Command name</param>
+        /// <param name="value">Command value (optional, not all commands require a value)</param>
+        /// <returns>Command response</returns>
+        string SetParam(string param, string value = "");
+
+        /// <summary>
+        ///     Sets the local position (pose) of an object, target or reference frame. For example, the position of an
+        ///     object/frame/target with respect to its parent.
+        ///     If a robot is provided, it will set the pose of the end effector.
+        /// </summary>
+        /// <param name="pose">4x4 homogeneous matrix</param>
+        void SetPose(Mat pose);
 
         /// <summary>
         ///     Returns the local position (pose) of an object, target or reference frame. For example, the position of an
         ///     object/frame/target with respect to its parent.
-        ///     If a robot is provided, it will get the pose of the end efector
+        ///     If a robot is provided, it will get the pose of the end effector
         /// </summary>
         /// <returns>4x4 homogeneous matrix (pose)</returns>
         Mat Pose();
