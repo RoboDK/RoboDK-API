@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using RoboDk.API;
 
 
@@ -10,16 +6,16 @@ namespace TesterProject
 {
     class Program
     {
+        // ReSharper disable once UnusedParameter.Local
         static void Main(string[] args)
         {
 			
-			RoboDK RDK = new RoboDK();
-			bool status = false;
+			var rdk = new RoboDK();
+			var status = false;
 			//The first connect opens roboDK
-			status = RDK.Connect();
-			Console.WriteLine("Connect status: " + status.ToString());
-            int b = 1;
-            //RDK.CloseStation();
+			status = rdk.Connect();
+			Console.WriteLine($"Connect status: {status}");
+            //rdk.CloseStation();
         }
     }
 }

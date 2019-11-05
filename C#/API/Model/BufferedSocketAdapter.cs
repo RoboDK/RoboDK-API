@@ -1,9 +1,7 @@
 ﻿#region Namespaces
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
@@ -18,21 +16,30 @@ namespace RoboDk.API
     ///    - Send 0 .. n command parameter
     ///    - Receive Result.
     /// The class buffers all the send parameters in a buffer.
-    /// When the receive function is called, then all the buffered send data is sent in one block.
+    /// When the receive function is called, then all the buffered data is sent in one block.
+    /// Unnecessary copying of the data is avoided. The code is faster but less pretty.
+    /// Do NOT use multi-threaded.
     /// </summary>
     internal sealed class BufferedSocketAdapter : IDisposable
     {
+        #region Constants
+
+        private const int BufferCapacity = 1500; // TCP MTU
+
+        #endregion
+
         #region Fields
 
         private readonly Socket _socket;
+        private readonly byte[] _bufferArray = new byte[BufferCapacity];
+        private int _numberOfBytesInBuffer;
         private bool _disposed;
-        private readonly List<byte> _buffer = new List<byte>(2048);
 
         #endregion
 
         #region Constructors
 
-        internal BufferedSocketAdapter(Socket s)
+        public BufferedSocketAdapter(Socket s)
         {
             _socket = s;
 
@@ -46,15 +53,15 @@ namespace RoboDk.API
 
         public int LocalPort => ((IPEndPoint)_socket.LocalEndPoint).Port;
 
-        internal int ReceiveTimeout
+        public int ReceiveTimeout
         {
             get => _socket.ReceiveTimeout;
             set => _socket.ReceiveTimeout = value;
         }
 
-        internal int Available => _socket.Available;
+        public int Available => _socket.Available;
 
-        internal bool Connected => _socket.Connected;
+        public bool Connected => _socket.Connected;
 
         #endregion
 
@@ -67,36 +74,32 @@ namespace RoboDk.API
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            if (!_disposed)
+            {
+                _socket?.Dispose();
+
+                _disposed = true;
+            }
         }
 
-        #endregion
-
-        #region Internal Methods
-
-        internal void Disconnect(bool reuseSocket)
+        public void Disconnect(bool reuseSocket)
         {
             _socket.Disconnect(reuseSocket);
         }
 
-        internal int SendData(byte[] data, int len)
+        public void SendData(byte[] data)
         {
-            _buffer.AddRange(data.Length == len ? data.ToList() : data.Take(len).ToList());
-            if (_buffer.Count > 1024)
+            if (IsTooBigForBuffer(data))
             {
-                Flush();
+                SendLargeDataUnbuffered(data);
             }
-
-            return len;
+            else
+            {
+                BufferData(data);
+            }
         }
 
-        internal int SendData(byte[] data)
-        {
-            return SendData(data, data.Length);
-        }
-
-        internal int ReceiveData(byte[] data, int offset, int len)
+        public int ReceiveData(byte[] data, int offset, int len)
         {
             Flush();
             Debug.Assert(offset + len <= data.Length);
@@ -116,12 +119,12 @@ namespace RoboDk.API
             return receivedBytes;
         }
 
-        internal int ReceiveData(byte[] data, int len)
+        public int ReceiveData(byte[] data, int len)
         {
             return ReceiveData(data, 0, len);
         }
 
-        internal void Close()
+        public void Close()
         {
             _socket.Close();
         }
@@ -130,27 +133,52 @@ namespace RoboDk.API
 
         #region Private Methods
 
-        private void Flush()
+        private bool IsTooBigForBuffer(byte[] data)
         {
-            if (_buffer.Count > 0)
+            return data.Length > BufferCapacity;
+        }
+
+        private bool HasSufficientBuffer(byte[] data)
+        {
+            var freeBuffer = BufferCapacity - _numberOfBytesInBuffer;
+            return data.Length <= freeBuffer;
+        }
+
+        private void SendLargeDataUnbuffered(byte[] data)
+        {
+            Flush(); // This maintains the correct order.
+            SendToSocket(data, data.Length);
+        }
+
+        private void BufferData(byte[] data)
+        {
+            Debug.Assert(data.Length <= BufferCapacity); // Too large data must be handled by caller.
+
+            if (HasSufficientBuffer(data))
             {
-                var n = _socket.Send(_buffer.ToArray(), _buffer.Count, SocketFlags.None);
-                Debug.Assert(n == _buffer.Count);
-                _buffer.Clear();
+                Array.Copy(data, 0, _bufferArray, _numberOfBytesInBuffer, data.Length);
+                _numberOfBytesInBuffer += data.Length;
+            }
+            else
+            {
+                Flush(); // This maintains the correct order and provides enough buffer.
+                BufferData(data);
             }
         }
 
-        private void Dispose(bool disposing)
+        private void Flush()
         {
-            if (!_disposed)
+            if (_numberOfBytesInBuffer > 0)
             {
-                if (disposing)
-                {
-                    _socket?.Dispose();
-                }
-
-                _disposed = true;
+                SendToSocket(_bufferArray, _numberOfBytesInBuffer);
+                _numberOfBytesInBuffer = 0;
             }
+        }
+
+        private void SendToSocket(byte[] data, int count)
+        {
+            var n = _socket.Send(data, count, SocketFlags.None);
+            Debug.Assert(n == count);
         }
 
         #endregion

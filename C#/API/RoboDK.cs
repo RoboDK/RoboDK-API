@@ -80,6 +80,7 @@ namespace RoboDk.API
 
         private bool _disposed;
 
+        private readonly RoboDkBitConverter _bitConverter = new RoboDkBitConverter();
         private BufferedSocketAdapter _bufferedSocket; // tcpip com
         private RoboDKEventSource _roboDkEventSource;
 
@@ -1135,26 +1136,19 @@ namespace RoboDk.API
             check_connection();
             send_line("Collision_SetPairList");
             int npairs = Math.Min(checkState.Count, collisionPairs.Count);
-            // pre-allocate send buffer
-            // 4: sendIntToBuffer(npairs, buffer);
-            // (npairs * 2 * 8) : see Tag1: Send items
-            // (npairs * 3 * 4) : see Tag2: send joint id's and checkState
-            // 
-            List<byte> buffer = new List<byte>(4 + (npairs * 2 * 8) + (npairs * 3 * 4) );
-            buffer = sendIntToBuffer(npairs, buffer);
+            send_int(npairs);
             for (int i = 0; i < npairs; i++)
             {
                 // Tag1: Send items
-                buffer = sendItemToBuffer(collisionPairs[i].Item1, buffer);
-                buffer = sendItemToBuffer(collisionPairs[i].Item2, buffer);
+                send_item(collisionPairs[i].Item1);
+                send_item(collisionPairs[i].Item2);
                 // Tag2: send id's
-                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId1, buffer);
-                buffer = sendIntToBuffer(collisionPairs[i].RobotLinkId2, buffer);
+                send_int(collisionPairs[i].RobotLinkId1);
+                send_int(collisionPairs[i].RobotLinkId2);
                 // Tag3: send check state
-                buffer = sendIntToBuffer((int)checkState[i], buffer);
+                send_int((int)checkState[i]);
             }
-            _bufferedSocket.SendData(buffer.ToArray());
- 
+
             int nok = rec_int();
             check_status();
             return nok == npairs;
@@ -1436,7 +1430,7 @@ namespace RoboDk.API
             send_xyz(p1);
             send_xyz(p2);
             var item = rec_item();
-            var xyz = new double[] { 0, 0, 0 };
+            var xyz = new double[3];
             rec_xyz(xyz);
             var collision = item.Valid();
             check_status();
@@ -1698,7 +1692,7 @@ namespace RoboDk.API
             }
             send_pose(baseFrame);
             send_pose(tool);
-            send_arrayList(param);
+            send_array(param.ToArray());
             Mat jointsData = new Mat(ndofs, 5);
             for (int i = 0; i < ndofs; i++)
             {
@@ -2074,10 +2068,12 @@ namespace RoboDk.API
         }
 
         //Sends a string of characters with a \\n
-        internal void send_line(string line, BufferedSocketAdapter sckt=null)
+        internal void send_line(string line, BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
             line = line.Replace('\n', ' '); // one new line at the end only!
             var data = Encoding.UTF8.GetBytes(line + "\n");
@@ -2094,7 +2090,9 @@ namespace RoboDk.API
         internal string rec_line(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
             //Receives a string. It reads until if finds LF (\\n)
             var buffer = new byte[1];
@@ -2112,22 +2110,15 @@ namespace RoboDk.API
         //Sends an item pointer
         internal void send_item(IItem item)
         {
-            byte[] bytes;
-            if (item == null)
-            {
-                bytes = BitConverter.GetBytes((ulong)0);
-            }
-            else
-            {
-                bytes = BitConverter.GetBytes(item.ItemId);
-            }
+            var bytes = item == null
+                ? _bitConverter.GetBytes((ulong)0)
+                : _bitConverter.GetBytes(item.ItemId);
 
             if (bytes.Length != 8)
             {
                 throw new RdkException("API error");
             }
 
-            Array.Reverse(bytes);
             try
             {
                 _bufferedSocket.SendData(bytes);
@@ -2138,52 +2129,25 @@ namespace RoboDk.API
             }
         }
 
-        // Same as send_item except it will add the data to the provided buffer 
-        // and return the buffer as result.
-        internal List<byte> sendItemToBuffer(IItem item, List<byte> buffer)
-        {
-            byte[] bytes;
-            if (item == null)
-            {
-                bytes = BitConverter.GetBytes((ulong)0);
-            }
-            else
-            {
-                bytes = BitConverter.GetBytes(item.ItemId);
-            }
-
-            if (bytes.Length != 8)
-            {
-                throw new RdkException("API error");
-            }
-
-            Array.Reverse(bytes);
-            buffer.AddRange(bytes);
-            return buffer;
-        }
-
-
         //Receives an item pointer
         internal IItem rec_item(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
-            var buffer1 = new byte[8];
-            var buffer2 = new byte[4];
-            var read1 = sckt.ReceiveData(buffer1, 8);
-            var read2 = sckt.ReceiveData(buffer2, 4);
-            if (read1 != 8 || read2 != 4)
+            var idBuffer = new byte[8];
+            var typeBuffer = new byte[4];
+            var read1 = sckt.ReceiveData(idBuffer, idBuffer.Length);
+            var read2 = sckt.ReceiveData(typeBuffer, typeBuffer.Length);
+            if (read1 != idBuffer.Length || read2 != typeBuffer.Length)
             {
                 return null;
             }
 
-            Array.Reverse(buffer1);
-            Array.Reverse(buffer2);
-            var itemId = BitConverter.ToInt64(buffer1, 0);
-
-            //Console.WriteLine("Received item: " + item.ToString());
-            var type = (ItemType)BitConverter.ToInt32(buffer2, 0);
+            var itemId = _bitConverter.ToInt64(idBuffer, 0);
+            var type = (ItemType)_bitConverter.ToInt32(typeBuffer, 0);
             var item = new Item(this, itemId, type);
             var itemProxy = ItemInterceptFunction(item);
             return itemProxy;
@@ -2192,28 +2156,21 @@ namespace RoboDk.API
         //Sends an item pointer
         internal void send_ptr(long ptr = 0)
         {
-            var bytes = BitConverter.GetBytes(ptr);
-            if (bytes.Length != 8)
-            {
-                throw new RdkException("RoboDK API error");
-            }
-
-            Array.Reverse(bytes);
+            var bytes = _bitConverter.GetBytes(ptr);
             _bufferedSocket.SendData(bytes);
         }
 
         ///Receives a generic pointer
         internal long rec_ptr()
         {
-            var bytes = new byte[8];
-            var read = _bufferedSocket.ReceiveData(bytes, 8);
-            if (read != 8)
+            var bytes = new byte[sizeof(long)];
+            var read = _bufferedSocket.ReceiveData(bytes, bytes.Length);
+            if (read != sizeof(long))
             {
                 throw new Exception("Something went wrong");
             }
 
-            Array.Reverse(bytes);
-            var ptrH = BitConverter.ToInt64(bytes, 0);
+            var ptrH = _bitConverter.ToInt64(bytes, 0);
             return ptrH;
         }
 
@@ -2224,44 +2181,41 @@ namespace RoboDk.API
                 throw new Exception($"Matrix not Homogenous: {pose.Cols}x{pose.Rows}");
             }
 
-            const int nvalues = 16;
-            var bytesarray = new byte[8 * nvalues];
-            var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
+            {
                 for (var i = 0; i < pose.Rows; i++)
                 {
-                    var onedouble = BitConverter.GetBytes(pose[i, j]);
-                    Array.Reverse(onedouble);
-                    Array.Copy(onedouble, 0, bytesarray, cnt * 8, 8);
-                    cnt = cnt + 1;
+                    var onedouble = _bitConverter.GetBytes(pose[i, j]);
+                    _bufferedSocket.SendData(onedouble);
                 }
-
-            _bufferedSocket.SendData(bytesarray, 8 * nvalues);
+            }
         }
 
         internal Mat rec_pose(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
             var pose = new Mat(4, 4);
-            var bytes = new byte[16 * 8];
-            var nbytes = sckt.ReceiveData(bytes, 16 * 8);
-            if (nbytes != 16 * 8)
+            var numberOfDoubles = pose.Cols * pose.Rows;
+            var bytes = new byte[numberOfDoubles * sizeof(double)];
+            var nbytes = sckt.ReceiveData(bytes, bytes.Length);
+            if (nbytes != numberOfDoubles * sizeof(double))
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
             }
 
             var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
+            {
                 for (var i = 0; i < pose.Rows; i++)
                 {
-                    var onedouble = new byte[8];
-                    Array.Copy(bytes, cnt, onedouble, 0, 8);
-                    Array.Reverse(onedouble);
-                    pose[i, j] = BitConverter.ToDouble(onedouble, 0);
-                    cnt = cnt + 8;
+                    pose[i, j] = _bitConverter.ToDouble(bytes, cnt);
+                    cnt += sizeof(double);
                 }
+            }
 
             return pose;
         }
@@ -2270,40 +2224,39 @@ namespace RoboDk.API
         {
             for (var i = 0; i < 3; i++)
             {
-                var bytes = BitConverter.GetBytes(xyzpos[i]);
-                Array.Reverse(bytes);
-                _bufferedSocket.SendData(bytes, 8);
+                var bytes = _bitConverter.GetBytes(xyzpos[i]);
+                _bufferedSocket.SendData(bytes);
             }
         }
 
         internal void rec_xyz(double[] xyzpos, BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
-            var bytes = new byte[3 * 8];
-            var nbytes = sckt.ReceiveData(bytes, 3 * 8);
-            if (nbytes != 3 * 8)
+            var bytes = new byte[3 * sizeof(double)];
+            var nbytes = sckt.ReceiveData(bytes, bytes.Length);
+            if (nbytes != 3 * sizeof(double))
             {
                 throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
             }
 
             for (var i = 0; i < 3; i++)
             {
-                var onedouble = new byte[8];
-                Array.Copy(bytes, i * 8, onedouble, 0, 8);
-                Array.Reverse(onedouble);
-                xyzpos[i] = BitConverter.ToDouble(onedouble, 0);
+                xyzpos[i] = BitConverter.ToDouble(bytes, i * sizeof(double));
             }
         }
 
         internal void send_int(int number, BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
-            var bytes = BitConverter.GetBytes(number);
-            Array.Reverse(bytes); // convert from big endian to little endian
+            var bytes = _bitConverter.GetBytes(number);
             try
             {
                 sckt.SendData(bytes);
@@ -2314,31 +2267,56 @@ namespace RoboDk.API
             }
         }
 
-        // Same as send_int except it will add the data to the provided buffer 
-        // and returns the buffer as result.
-        internal List<byte> sendIntToBuffer(int number, List<byte> buffer)
-        {
-            var bytes = BitConverter.GetBytes(number);
-            // convert from big endian to little endian
-            Array.Reverse(bytes); 
-            buffer.AddRange(bytes);
-            return buffer;
-        }
-
-        internal int rec_int(BufferedSocketAdapter sckt=null)
+        internal int rec_int(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
-            
-            var bytes = new byte[4];
-            var read = sckt.ReceiveData(bytes, 4);
-            if (read < 4)
+            }
+
+            var bytes = new byte[sizeof(int)];
+            var read = sckt.ReceiveData(bytes, bytes.Length);
+            if (read < sizeof(int))
             {
                 return 0;
             }
 
-            Array.Reverse(bytes); // convert from little endian to big endian
-            return BitConverter.ToInt32(bytes, 0);
+            return _bitConverter.ToInt32(bytes, 0);
+        }
+
+        internal void send_double(double number, BufferedSocketAdapter sckt = null)
+        {
+            if (sckt == null)
+            {
+                sckt = _bufferedSocket;
+            }
+
+            var bytes = _bitConverter.GetBytes(number);
+            try
+            {
+                sckt.SendData(bytes);
+            }
+            catch
+            {
+                throw new RdkException("_socket.Send failed.");
+            }
+        }
+
+        internal double rec_double(BufferedSocketAdapter sckt = null)
+        {
+            if (sckt == null)
+            {
+                sckt = _bufferedSocket;
+            }
+
+            var bytes = new byte[sizeof(double)];
+            var read = sckt.ReceiveData(bytes, bytes.Length);
+            if (read < sizeof(double))
+            {
+                return 0;
+            }
+
+            return _bitConverter.ToDouble(bytes, 0);
         }
 
         // Sends an array of doubles
@@ -2352,45 +2330,30 @@ namespace RoboDk.API
 
             var nvalues = values.Length;
             send_int(nvalues);
-            var bytesarray = new byte[8 * nvalues];
             for (var i = 0; i < nvalues; i++)
             {
-                var onedouble = BitConverter.GetBytes(values[i]);
-                Array.Reverse(onedouble);
-                Array.Copy(onedouble, 0, bytesarray, i * 8, 8);
+                var onedouble = _bitConverter.GetBytes(values[i]);
+                _bufferedSocket.SendData(onedouble);
             }
-
-            _bufferedSocket.SendData(bytesarray, 8 * nvalues);
-        }
-        // sends a list of doubles
-        internal void send_arrayList(List<double> values)
-        {
-            double[] values2 = new double[values.Count];
-            for (int i = 0; i < values.Count; i++)
-            {
-                values2[i] = values[i];
-            }
-            send_array(values2);
         }
 
         // Receives an array of doubles
         internal double[] rec_array(BufferedSocketAdapter sckt = null)
         {
             if (sckt == null)
+            {
                 sckt = _bufferedSocket;
+            }
 
             var nvalues = rec_int(sckt);
             if (nvalues > 0)
             {
                 var values = new double[nvalues];
-                var bytes = new byte[nvalues * 8];
-                var read = sckt.ReceiveData(bytes, nvalues * 8);
+                var bytes = new byte[nvalues * sizeof(double)];
+                var read = sckt.ReceiveData(bytes, bytes.Length);
                 for (var i = 0; i < nvalues; i++)
                 {
-                    var onedouble = new byte[8];
-                    Array.Copy(bytes, i * 8, onedouble, 0, 8);
-                    Array.Reverse(onedouble);
-                    values[i] = BitConverter.ToDouble(onedouble, 0);
+                    values[i] = _bitConverter.ToDouble(bytes, i * sizeof(double));
                 }
 
                 return values;
@@ -2402,29 +2365,16 @@ namespace RoboDk.API
         // sends a 2 dimensional matrix
         internal void send_matrix(Mat mat)
         {
-            var sendBuffer = new byte[mat.Cols * mat.Rows * sizeof(double) /*8*/];
             send_int(mat.Rows);
             send_int(mat.Cols);
-            var index = 0;
             for (var j = 0; j < mat.Cols; j++)
             {
                 for (var i = 0; i < mat.Rows; i++)
                 {
-                    var bytes = BitConverter.GetBytes(mat[i, j]);
-                    // Convert to big Endian.
-                    // Factor 2 performance gain compared to Array.Reverse(onedouble);
-                    sendBuffer[index++] = bytes[7];
-                    sendBuffer[index++] = bytes[6];
-                    sendBuffer[index++] = bytes[5];
-                    sendBuffer[index++] = bytes[4];
-                    sendBuffer[index++] = bytes[3];
-                    sendBuffer[index++] = bytes[2];
-                    sendBuffer[index++] = bytes[1];
-                    sendBuffer[index++] = bytes[0];
+                    var bytes = _bitConverter.GetBytes(mat[i, j]);
+                    _bufferedSocket.SendData(bytes);
                 }
             }
-
-            _bufferedSocket.SendData(sendBuffer, sendBuffer.Length);
         }
 
         // receives a 2 dimensional matrix (nxm)
@@ -2432,38 +2382,27 @@ namespace RoboDk.API
         {
             var size1 = rec_int();
             var size2 = rec_int();
-            var recvsize = size1 * size2 * 8;
+            var recvsize = size1 * size2 * sizeof(double);
             var bytes = new byte[recvsize];
             var mat = new Mat(size1, size2);
-            var bufferSize = 256;
-            var received = 0;
             if (recvsize > 0)
             {
-                var toReceive = Math.Min(recvsize, bufferSize);
-                while (toReceive > 0)
+                var nbytesok = _bufferedSocket.ReceiveData(bytes, 0, recvsize);
+                if (nbytesok != recvsize)
                 {
-                    var nbytesok = _bufferedSocket.ReceiveData(bytes, received, toReceive);
-                    if (nbytesok <= 0)
-                    {
-                        throw new RdkException(
-                            "Can't receive matrix properly"); //raise Exception('Problems running function');
-                    }
-
-                    received = received + nbytesok;
-                    toReceive = Math.Min(recvsize - received, bufferSize);
+                    throw new RdkException("Can't receive matrix properly");
                 }
             }
 
             var cnt = 0;
             for (var j = 0; j < mat.Cols; j++)
+            {
                 for (var i = 0; i < mat.Rows; i++)
                 {
-                    var onedouble = new byte[8];
-                    Array.Copy(bytes, cnt, onedouble, 0, 8);
-                    Array.Reverse(onedouble);
-                    mat[i, j] = BitConverter.ToDouble(onedouble, 0);
-                    cnt = cnt + 8;
+                    mat[i, j] = _bitConverter.ToDouble(bytes, cnt);
+                    cnt += sizeof(double);
                 }
+            }
 
             return mat;
         }

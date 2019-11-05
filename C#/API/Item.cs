@@ -363,20 +363,31 @@ namespace RoboDk.API
 			var command = "S_ParamCalibTool";
 			Link.send_line(command);
 			Link.send_item(this);
-			var values = new List<double>();
-			values.Add(toolMass);
-			if (toolCOG != null)
-			{
-				values.AddRange(toolCOG);
-			}
-			Link.send_arrayList(values);
+            Link.send_double(toolMass);
+            if (toolCOG != null)
+            {
+                Link.send_array(toolCOG);
+            }
 			Link.check_status();
-		}
+        }
 
-		// add more methods
+        /// <inheritdoc />
+        public string SetParam(string param, string value = "")
+        {
+            Link.RequireBuild(7129);
+            Link.check_connection();
+            Link.send_line("ICMD");
+            Link.send_item(this);
+            Link.send_line(param);
+            Link.send_line(value);
+            var response = Link.rec_line();
+            Link.check_status();
+            return response;
+        }
 
-		/// <inheritdoc />
-		public void SetPose(Mat pose)
+
+        /// <inheritdoc />
+        public void SetPose(Mat pose)
         {
             Link.check_connection();
             var command = "S_Hlocal";
