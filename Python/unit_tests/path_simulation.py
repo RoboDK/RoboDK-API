@@ -21,11 +21,10 @@ def setupRoboDK(robotFile):
     global RDK
     global robot
     # Link to the RoboDK API
-    ##def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None):
-    RDK = Robolink()
+    ##def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=True):
+    RDK = Robolink(close_std_out=True)
 
     #---------------- Configure RoboDK ----------------------    
-    print("RoboDK Version: ", RDK.Version())
     RDK.Command("AutoRenderDelay", 50);
     RDK.Command("AutoRenderDelayMax", 300);
     RDK.Render(False);
@@ -50,12 +49,12 @@ def setupRoboDK(robotFile):
     return RDK, robot, tools
 
 def PrintInfo():
+    print("RoboDK Version: ", RDK.Version())
     print("Robot and TCP Setup:")    
     print(robot.Name())
     for tool in tools:
         print(tool.Name(), tool)
     print()
-
 
 #---------------- InstructionListJointsResult ----------------------    
 class InstructionListJointsResult():
@@ -151,14 +150,13 @@ def xyzrp2ToPose(pose):
 
 #---------------- Delete All Targets and RoboDK Program ----------------------
 def DeleteProgramAndTargets():
-    if RDK is None:
-        return
-    items = RDK.ItemList(ITEM_TYPE_TARGET)
-    for item in items:
-        item.Delete()
-    items = RDK.ItemList(ITEM_TYPE_PROGRAM)
-    for item in items:
-        item.Delete()
+    if RDK is not None:
+        items = RDK.ItemList(ITEM_TYPE_TARGET)
+        for item in items:
+            item.Delete()
+        items = RDK.ItemList(ITEM_TYPE_PROGRAM)
+        for item in items:
+            item.Delete()
     
 #---------------- Generate Program for one Step ----------------------    
 def AddStepToProgram(prg, robot, step):

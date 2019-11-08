@@ -100,23 +100,24 @@ def GetTestProgramNearSingularity():
     return Program("Near Singularity", stepList, 0.04)
 
 
-
 class TestInstructionListJoints(unittest.TestCase):
+    RDK = None
+    robot = None
+    tools = None
+    
     def setUp(self):
         self.program = None
+        self.RDK, self.robot, self.tools = setupRoboDK(r"Robot_2TCP.rdk")
         DeleteProgramAndTargets()
-        RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
 
     def tearDown(self):
-        if self.program != None:
-            ##print("tearDown")
-            ##AddJointListResultToRoboDK(self.program)
-            pass
+        if self.RDK is not None:
+            self.RDK.Disconnect()
 
     def GetFramePose(self, step, frame):
-        robot.setPoseTool(step.tcpItem)
-        robot.setJoints(frame.pose)
-        joints = robot.Pose()
+        self.robot.setPoseTool(step.tcpItem)
+        self.robot.setJoints(frame.pose)
+        joints = self.robot.Pose()
         framePose = Pose_2_Staubli(joints)
         return framePose
 
@@ -183,7 +184,7 @@ class TestInstructionListJoints(unittest.TestCase):
         startStep = stepList[stepIdx]
         playbackFrame = startStep.frameList[-1]
         refFramePose = self.GetFramePose(startStep, playbackFrame)
-        print("refFramePose:", refFramePose[:3])
+        ##print("refFramePose:", refFramePose[:3])
         
         endStep = stepList[stepIdx+1]
         for index, playbackFrame in enumerate(endStep.frameList):
@@ -207,22 +208,22 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestIfTargetReached(program)
         ##self.TestStepTime1(program)
 
-    def xxtest_prgoramWithOneStopPoint(self):
+    def test_prgoramWithOneStopPoint(self):
         """Test Robot Program with one stop points"""
         self.program = GetTestProgramOneStopPoint()
         self.TestProgramWithStopPoints(self.program)
 
-    def xxtest_prgoramWithTwoStopPoints(self):
+    def test_prgoramWithTwoStopPoints(self):
         """Test Robot Program with 2 adjacent stop points"""
         self.program = GetTestProgramTwoStopPoints()
         self.TestProgramWithStopPoints(self.program)
         
-    def xxtest_prgoramWithThreeStopPoints(self):
+    def test_prgoramWithThreeStopPoints(self):
         """Test Robot Program with 3 adjacent stop points"""
         self.program = GetTestProgramThreeStopPoints()
         self.TestProgramWithStopPoints(self.program)
         
-    def xxtest_programRotate(self):
+    def test_programRotate(self):
         """Test Rotation around a const cartesian coordinate"""
         self.program = GetTestProgramRotate()
         program = self.program
@@ -236,7 +237,7 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestIfTargetReached(program)
         self.TestIfCartesianCoordinatesAreConst(program, 2)
 
-    def xxtest_nearSingularity1(self):
+    def test_nearSingularity1(self):
         """Test Case Singularity with STEP_MM=1, STEP_DEG=1"""
         self.program = GetTestProgramNearSingularity()
         program = self.program
@@ -249,7 +250,7 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestForMissingMoveIds(program)
         ##AddJointListResultToRoboDK(self.program)
 
-    def xxtest_nearSingularity2(self):
+    def test_nearSingularity2(self):
         """Test Case Singularity with STEP_MM=10, STEP_DEG=10"""
         self.program = GetTestProgramNearSingularity()
         program = self.program
@@ -263,9 +264,6 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestResultMessage(program)
         self.TestForMissingMoveIds(program)
         ##AddJointListResultToRoboDK(self.program)
-        
-    def test_foo(self):        
-        print("")
         
 if __name__ == '__main__':
     unittest.main()
