@@ -8,10 +8,10 @@ from path_simulation import *
 
 
 ## Setup RoboDK and load rdk test file
-RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
+##RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
 ##RDK, robot, tools = setupRoboDK(r"CombiGripper-Robot.rdk")
 ## Print some info about the loaded rdk file
-PrintInfo()
+##PrintInfo()
 
 ##
 ## Test Program to simulate stop points 
@@ -97,7 +97,7 @@ def GetTestProgramNearSingularity():
                 Step("3", MoveType.Frame, 0, framepos2, 10, 0, 0),
                 Step("4", MoveType.Frame, 0, framepos3, 0,    0, 0),
             ]
-    return Program("Near Singularity", stepList, 0.002) # 0.04
+    return Program("Near Singularity", stepList, 0.04)
 
 
 
@@ -105,6 +105,7 @@ class TestInstructionListJoints(unittest.TestCase):
     def setUp(self):
         self.program = None
         DeleteProgramAndTargets()
+        RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
 
     def tearDown(self):
         if self.program != None:
@@ -206,22 +207,22 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestIfTargetReached(program)
         ##self.TestStepTime1(program)
 
-    def test_prgoramWithOneStopPoint(self):
+    def xxtest_prgoramWithOneStopPoint(self):
         """Test Robot Program with one stop points"""
         self.program = GetTestProgramOneStopPoint()
         self.TestProgramWithStopPoints(self.program)
 
-    def test_prgoramWithTwoStopPoints(self):
+    def xxtest_prgoramWithTwoStopPoints(self):
         """Test Robot Program with 2 adjacent stop points"""
         self.program = GetTestProgramTwoStopPoints()
         self.TestProgramWithStopPoints(self.program)
         
-    def test_prgoramWithThreeStopPoints(self):
+    def xxtest_prgoramWithThreeStopPoints(self):
         """Test Robot Program with 3 adjacent stop points"""
         self.program = GetTestProgramThreeStopPoints()
         self.TestProgramWithStopPoints(self.program)
         
-    def test_programRotate(self):
+    def xxtest_programRotate(self):
         """Test Rotation around a const cartesian coordinate"""
         self.program = GetTestProgramRotate()
         program = self.program
@@ -235,7 +236,7 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestIfTargetReached(program)
         self.TestIfCartesianCoordinatesAreConst(program, 2)
 
-    def test_nearSingularity1(self):
+    def xxtest_nearSingularity1(self):
         """Test Case Singularity with STEP_MM=1, STEP_DEG=1"""
         self.program = GetTestProgramNearSingularity()
         program = self.program
@@ -248,7 +249,7 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestForMissingMoveIds(program)
         ##AddJointListResultToRoboDK(self.program)
 
-    def test_nearSingularity2(self):
+    def xxtest_nearSingularity2(self):
         """Test Case Singularity with STEP_MM=10, STEP_DEG=10"""
         self.program = GetTestProgramNearSingularity()
         program = self.program
@@ -262,6 +263,9 @@ class TestInstructionListJoints(unittest.TestCase):
         self.TestResultMessage(program)
         self.TestForMissingMoveIds(program)
         ##AddJointListResultToRoboDK(self.program)
+        
+    def test_foo(self):        
+        print("")
         
 if __name__ == '__main__':
     unittest.main()

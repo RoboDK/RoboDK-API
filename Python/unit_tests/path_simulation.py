@@ -2,10 +2,7 @@ import sys
 
 sys.path.insert(0, "..")
 from robolink import *     
-
 from enum import Enum
-
-
 
 #---------------- Default Speed and Acceleration ----------------------    
 jointSpeed = 225  #[deg/s]
@@ -13,8 +10,12 @@ jointAccel = 400  #[deg/s^2]
 frameSpeed = 2000 #[mm/s]
 frameAccel = 2000 #[mm/s^2]
 
+tools = None
+RDK = None
+robot = None
 
-def setupRoboDK(robotFile = r"CombiGripper-Robot.rdk"):
+
+def setupRoboDK(robotFile):
 #---------------- Load RoboDK ----------------------
     global tools
     global RDK
@@ -150,6 +151,8 @@ def xyzrp2ToPose(pose):
 
 #---------------- Delete All Targets and RoboDK Program ----------------------
 def DeleteProgramAndTargets():
+    if RDK is None:
+        return
     items = RDK.ItemList(ITEM_TYPE_TARGET)
     for item in items:
         item.Delete()

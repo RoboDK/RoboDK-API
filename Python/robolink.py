@@ -613,6 +613,7 @@ class Robolink:
     APPLICATION_DIR = ''    
     
     DEBUG = False     # Debug output through console
+    CLOSE_STD_OUT = False # Close standard output for roboDK (RoboDK console output will no longer be visible)
     COM = None        # tcpip com    
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     PORT = -1         # current port
@@ -977,19 +978,20 @@ class Robolink:
             self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None):
+    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False):
         """A connection is attempted upon creation of the object
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
         In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
-        
+        In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown
         """
         if type(args) is str:
             args = [args]
             
         self.IP = robodk_ip           
         self.ARGUMENTS = args
+        self.CLOSE_STD_OUT = close_std_out
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
         else:
@@ -1115,9 +1117,12 @@ class Robolink:
             
             #if self.DEBUG:
             # Important! Make sure we consume stdout (at least in Debug mode)
-            import threading
-            t = threading.Thread(target=output_reader, args=(p,))
-            t.start()
+            if self.CLOSE_STD_OUT:
+                p.stdout.close()
+            else:
+                import threading
+                t = threading.Thread(target=output_reader, args=(p,))
+                t.start()
             
             
             #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:

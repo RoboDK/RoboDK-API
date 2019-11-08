@@ -10,3 +10,6 @@ _site
 packages
 /C#/API/log.txt
 C#/API/TesterProject/bin/
+Python/__pycache__/
+*.bak
+Python/unit_tests/__pycache__/TestInstructionListJoints.cpython-37.pyc
