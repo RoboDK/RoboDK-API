@@ -4065,6 +4065,19 @@ class Item():
         self.link._send_item(self)
         self.link._check_status()
         return self
+        
+    def isJointTarget(self):
+        """Returns True if a target is a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
+        
+        .. seealso:: :func:`~robolink.Robolink.AddTarget`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setAsCartesianTarget, :func:`~robolink.Item.setAsJointTarget`
+        """
+        self.link._check_connection()
+        command = 'Target_Is_JT'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        isjt = self.link._rec_int()
+        self.link._check_status()
+        return isjt > 0
     
     #"""Robot item calls"""
     def Joints(self):
@@ -5002,6 +5015,7 @@ class Item():
         
         :param int accurate: set to 1 to use the accurate model or 0 to use the nominal model
         
+        .. seealso:: :func:`~robolink.Item.AccuracyActive`
         """
         self.link._check_connection()
         command = 'S_AbsAccOn'
@@ -5009,6 +5023,19 @@ class Item():
         self.link._send_item(self)
         self.link._send_int(accurate)
         self.link._check_status()
+        
+    def AccuracyActive(self, accurate = 1):
+        """Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
+                
+        .. seealso:: :func:`~robolink.Item.setAccuracyActive`
+        """
+        self.link._check_connection()
+        command = 'G_AbsAccOn'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        isaccurate = self.link._rec_int()
+        self.link._check_status()
+        return isaccurate > 0
         
     def setParamRobotTool(self, tool_mass=5, tool_cog=None):
         """Sets the tool mass and center of gravity. This is only used with accurate robots to improve accuracy.
