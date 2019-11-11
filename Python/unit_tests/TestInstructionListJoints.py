@@ -6,13 +6,6 @@ import unittest
 import time
 from path_simulation import *
 
-
-## Setup RoboDK and load rdk test file
-##RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
-##RDK, robot, tools = setupRoboDK(r"CombiGripper-Robot.rdk")
-## Print some info about the loaded rdk file
-##PrintInfo()
-
 ##
 ## Test Program to simulate stop points 
 def GetTestProgramOneStopPoint():
