@@ -6,13 +6,6 @@ import unittest
 import time
 from path_simulation import *
 
-
-## Setup RoboDK and load rdk test file
-RDK, robot, tools = setupRoboDK(r"Robot_2TCP.rdk")
-##RDK, robot, tools = setupRoboDK(r"CombiGripper-Robot.rdk")
-## Print some info about the loaded rdk file
-PrintInfo()
-
 ##
 ## Test Program to simulate stop points 
 def GetTestProgramOneStopPoint():
@@ -97,25 +90,27 @@ def GetTestProgramNearSingularity():
                 Step("3", MoveType.Frame, 0, framepos2, 10, 0, 0),
                 Step("4", MoveType.Frame, 0, framepos3, 0,    0, 0),
             ]
-    return Program("Near Singularity", stepList, 0.002) # 0.04
-
+    return Program("Near Singularity", stepList, 0.04)
 
 
 class TestInstructionListJoints(unittest.TestCase):
+    RDK = None
+    robot = None
+    tools = None
+    
     def setUp(self):
         self.program = None
+        self.RDK, self.robot, self.tools = setupRoboDK(r"Robot_2TCP.rdk")
         DeleteProgramAndTargets()
 
     def tearDown(self):
-        if self.program != None:
-            ##print("tearDown")
-            ##AddJointListResultToRoboDK(self.program)
-            pass
+        if self.RDK is not None:
+            self.RDK.Disconnect()
 
     def GetFramePose(self, step, frame):
-        robot.setPoseTool(step.tcpItem)
-        robot.setJoints(frame.pose)
-        joints = robot.Pose()
+        self.robot.setPoseTool(step.tcpItem)
+        self.robot.setJoints(frame.pose)
+        joints = self.robot.Pose()
         framePose = Pose_2_Staubli(joints)
         return framePose
 
@@ -182,7 +177,7 @@ class TestInstructionListJoints(unittest.TestCase):
         startStep = stepList[stepIdx]
         playbackFrame = startStep.frameList[-1]
         refFramePose = self.GetFramePose(startStep, playbackFrame)
-        print("refFramePose:", refFramePose[:3])
+        ##print("refFramePose:", refFramePose[:3])
         
         endStep = stepList[stepIdx+1]
         for index, playbackFrame in enumerate(endStep.frameList):
