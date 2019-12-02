@@ -1696,6 +1696,47 @@ void Item::setDO(const QString &io_var, const QString &io_value){
     _RDK->_send_Line(io_value);
     _RDK->_check_status();
 }
+/// <summary>
+/// Set an analog Output
+/// </summary>
+/// <param name="io_var">Analog Output</param>
+/// <param name="io_value">Value as a string</param>
+void Item::setAO(const QString &io_var, const QString &io_value){
+    _RDK->_check_connection();
+    _RDK->_send_Line("setAO");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(io_var);
+    _RDK->_send_Line(io_value);
+    _RDK->_check_status();
+}
+
+/// <summary>
+/// Get a Digital Input (DI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (1=True, 0=False). This function returns an empty string if the script is not executed on the robot.
+/// </summary>
+/// <param name="io_var">io_var -> digital input (string or number as a string)</param>
+QString Item::getDI(const QString &io_var){
+    _RDK->_check_connection();
+    _RDK->_send_Line("getDI");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(io_var);
+    QString io_value(_RDK->_recv_Line());
+    _RDK->_check_status();
+    return io_value;
+}
+
+/// <summary>
+/// Get an Analog Input (AI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (0-1 or other range depending on the robot driver). This function returns an empty string if the script is not executed on the robot.
+/// </summary>
+/// <param name="io_var">io_var -> analog input (string or number as a string)</param>
+QString Item::getAI(const QString &io_var){
+    _RDK->_check_connection();
+    _RDK->_send_Line("getAI");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(io_var);
+    QString di_value(_RDK->_recv_Line());
+    _RDK->_check_status();
+    return di_value;
+}
 
 /// <summary>
 /// Waits for an input io_id to attain a given value io_value. Optionally, a timeout can be provided.
@@ -1712,6 +1753,7 @@ void Item::waitDI(const QString &io_var, const QString &io_value, double timeout
     _RDK->_send_Int((int)(timeout_ms * 1000.0));
     _RDK->_check_status();
 }
+
 
 /// <summary>
 /// Add a custom instruction. This instruction will execute a Python file or an executable file.
@@ -2242,6 +2284,31 @@ void RoboDK::ShowMessage(const QString &message, bool popup){
         _check_status();
     }
 
+}
+
+/// <summary>
+/// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
+/// </summary>
+/// <param name="tocopy">Item to copy</param>
+void RoboDK::Copy(const Item &tocopy){
+    _check_connection();
+    _send_Line("Copy");
+    _send_Item(tocopy);
+    _check_status();
+}
+
+/// <summary>
+/// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item.
+/// </summary>
+/// <param name="paste_to">Item to attach the copied item (optional)</param>
+/// <returns>New item created</returns>
+Item RoboDK::Paste(const Item *paste_to){
+    _check_connection();
+    _send_Line("Paste");
+    _send_Item(paste_to);
+    Item newitem = _recv_Item();
+    _check_status();
+    return newitem;
 }
 
 /// <summary>
