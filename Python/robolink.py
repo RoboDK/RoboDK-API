@@ -36,8 +36,6 @@
 import struct
 from robodk import *
 from warnings import warn
-from enum import IntFlag
-from enum import IntEnum
 import sys  # Only used to detect python version using sys.version_info
 
 # Tree item types
@@ -242,89 +240,94 @@ DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
 
-class InstructionListJointsFlags(IntEnum):
-    """InstructionListJoints output flag"""
-    Position = 1
-    Speed = 2
-    SpeedAndAcceleration = 3
-    TimeBased = 4
+if False:
+    # To be added in the future. Requires Python 3.6 or later
+    from enum import IntFlag
+    from enum import IntEnum
 
-class PathErrorFlags(IntFlag):
-    """Error flags returned by InstructionListJoints"""
-    # none of the flags is set -> No Error
-    NoError = 0
-
-    # One or more points is not reachable
-    Kinematic = 0x1 
-
-    # The path reaches the limit of joint axes
-    PathLimit = 0x2 
-
-    # The robot reached a singularity point
-    PathSingularity = 0x4 
-
-    # The robot is too close to a singularity.
-    # Lower the singularity tolerance to allow the robot to continue. 
-    PathNearSingularity = 0x8 
-
-    # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
-    PathFlipAxis = 0b10000 
-
-    # Collision detected
-    Collision = 0x20 // 0b100000
-
-    # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
-    WristSingularity = 0b1000000
-
-    # The robot reached an Elbow singularity: Joint 3 is fully extended
-    ElbowSingularity = 0b10000000
-
-    # The robot reached a Shoulder singularity: the wrist is too close to axis 1
-    ShoulderSingularity = 0b100000000
+    class InstructionListJointsFlags(IntEnum):
+        """InstructionListJoints output flag"""
+        Position = 1
+        Speed = 2
+        SpeedAndAcceleration = 3
+        TimeBased = 4
         
-def ConvertErrorCodeToJointErrorType(evalue):
-    """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
-    flags = PathErrorFlags.NoError
-    if (evalue % 10000000 > 999999):
-        # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
-        flags |= PathErrorFlags.PathFlipAxis
+    class PathErrorFlags(IntFlag):
+        """Error flags returned by InstructionListJoints"""
+        # none of the flags is set -> No Error
+        NoError = 0
 
-    if (evalue % 1000000 > 99999):
-        # Collision detected.
-        flags |= PathErrorFlags.Collision
+        # One or more points is not reachable
+        Kinematic = 0x1 
 
-    if (evalue % 1000 > 99):
-        # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
-        flags |= PathErrorFlags.WristSingularity;
-        flags |= PathErrorFlags.PathSingularity;
+        # The path reaches the limit of joint axes
+        PathLimit = 0x2 
 
-    elif (evalue % 10000 > 999):
-        if (evalue % 10000 > 3999):
-            # The robot is too close to the front/back singularity (wrist close to axis 1).
-            flags |= PathErrorFlags.ShoulderSingularity
-            flags |= PathErrorFlags.PathSingularity
+        # The robot reached a singularity point
+        PathSingularity = 0x4 
 
-        elif (evalue % 10000 > 1999):
-            flags |= PathErrorFlags.ElbowSingularity
-            flags |= PathErrorFlags.PathSingularity
-            # Joint 3 is too close the elbow singularity.
+        # The robot is too close to a singularity.
+        # Lower the singularity tolerance to allow the robot to continue. 
+        PathNearSingularity = 0x8 
 
-        else:
-            # Joint 5 is too close to a singularity (0 degrees).
-            flags |= PathErrorFlags.WristSingularity
-            flags |= PathErrorFlags.PathSingularity
-            flags |= PathErrorFlags.PathNearSingularity
+        # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
+        PathFlipAxis = 0b10000 
 
-    if (evalue % 10 > 0):
-        # There is no solution available to complete the path.
-        flags |= PathErrorFlags.PathLimit
+        # Collision detected
+        Collision = 0x20 // 0b100000
 
-    if (evalue % 100 > 9):
-        # The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.
-        flags |= PathErrorFlags.PathLimit
-        flags |= PathErrorFlags.Kinematic
+        # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
+        WristSingularity = 0b1000000
 
-    return flags
+        # The robot reached an Elbow singularity: Joint 3 is fully extended
+        ElbowSingularity = 0b10000000
+
+        # The robot reached a Shoulder singularity: the wrist is too close to axis 1
+        ShoulderSingularity = 0b100000000
+            
+    def ConvertErrorCodeToJointErrorType(evalue):
+        """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
+        flags = PathErrorFlags.NoError
+        if (evalue % 10000000 > 999999):
+            # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+            flags |= PathErrorFlags.PathFlipAxis
+
+        if (evalue % 1000000 > 99999):
+            # Collision detected.
+            flags |= PathErrorFlags.Collision
+
+        if (evalue % 1000 > 99):
+            # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
+            flags |= PathErrorFlags.WristSingularity;
+            flags |= PathErrorFlags.PathSingularity;
+
+        elif (evalue % 10000 > 999):
+            if (evalue % 10000 > 3999):
+                # The robot is too close to the front/back singularity (wrist close to axis 1).
+                flags |= PathErrorFlags.ShoulderSingularity
+                flags |= PathErrorFlags.PathSingularity
+
+            elif (evalue % 10000 > 1999):
+                flags |= PathErrorFlags.ElbowSingularity
+                flags |= PathErrorFlags.PathSingularity
+                # Joint 3 is too close the elbow singularity.
+
+            else:
+                # Joint 5 is too close to a singularity (0 degrees).
+                flags |= PathErrorFlags.WristSingularity
+                flags |= PathErrorFlags.PathSingularity
+                flags |= PathErrorFlags.PathNearSingularity
+
+        if (evalue % 10 > 0):
+            # There is no solution available to complete the path.
+            flags |= PathErrorFlags.PathLimit
+
+        if (evalue % 100 > 9):
+            # The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.
+            flags |= PathErrorFlags.PathLimit
+            flags |= PathErrorFlags.Kinematic
+
+        return flags
 
 class TargetReachError(Exception):
     """Unable to reach desired target or destination error."""
@@ -613,7 +616,6 @@ class Robolink:
     APPLICATION_DIR = ''    
     
     DEBUG = False     # Debug output through console
-    CLOSE_STD_OUT = False # Close standard output for roboDK (RoboDK console output will no longer be visible)
     COM = None        # tcpip com    
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     PORT = -1         # current port
@@ -978,20 +980,19 @@ class Robolink:
             self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False):
+    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None):
         """A connection is attempted upon creation of the object
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
         In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
-        In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown
+        
         """
         if type(args) is str:
             args = [args]
             
         self.IP = robodk_ip           
         self.ARGUMENTS = args
-        self.CLOSE_STD_OUT = close_std_out
         if robodk_path is not None:
             self.APPLICATION_DIR = robodk_path
         else:
@@ -1117,12 +1118,9 @@ class Robolink:
             
             #if self.DEBUG:
             # Important! Make sure we consume stdout (at least in Debug mode)
-            if self.CLOSE_STD_OUT:
-                p.stdout.close()
-            else:
-                import threading
-                t = threading.Thread(target=output_reader, args=(p,))
-                t.start()
+            import threading
+            t = threading.Thread(target=output_reader, args=(p,))
+            t.start()
             
             
             #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
