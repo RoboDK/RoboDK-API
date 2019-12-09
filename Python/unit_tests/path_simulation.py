@@ -26,19 +26,29 @@ def init_robodk():
     rdk.Command("ToleranceSingularityWrist ", 2.0)  # 2.0    Threshold angle to avoid singularity for joint 5 (deg)
     rdk.Command("ToleranceSingularityElbow ", 3.0)  # 3.0    Threshold angle to avoid singularity for joint 3 (deg)
     rdk.Command("ToleranceSmoothKinematic", 25)  # 25 deg
+
     return rdk
 
 
-def load_file(filename, load_new=False):
+def load_file(filename):
     global robot
     global tools
+
+    is_new_station = True
+    if rdk is not None:
+        old_station_name = rdk.ActiveStation().Name()
+        new_station_name = os.path.splitext(filename)[0]
+        is_new_station = (old_station_name != new_station_name)
+
     robot = rdk.Item("", ITEM_TYPE_ROBOT)
     tools = rdk.ItemList(ITEM_TYPE_TOOL)
-    if not robot.Valid() or load_new:
-        print("Add New")
+    if is_new_station or not robot.Valid():
+        if is_new_station:
+            rdk.CloseStation()
         rdk.AddFile(os.path.realpath(filename))
         robot = rdk.Item("", ITEM_TYPE_ROBOT)
         tools = rdk.ItemList(ITEM_TYPE_TOOL)
+
     return robot, tools
 
 
@@ -53,6 +63,7 @@ def clean_robodk():
 
 
 def print_info():
+    print()
     print("RoboDK Version: ", rdk.Version())
     print("Robot and TCP Setup:")
     print(robot.Name())
@@ -80,29 +91,37 @@ class InstructionListJointsResult:
 
     def add_to_robodk(self):
         rdk.Command("Trace", "Reset")
-        robot.ShowSequence(self.joints[:6, :])
+        n_joints, _ = robot.Joints().size()
+        if n_joints == 1:
+            n_joints = 7  # this is needed because the 1-axis linear robot is returned when actually we want the 7-axis robot
+        sequence = self.joints[:n_joints, :]
+        robot.ShowSequence(sequence)
 
     def print(self):
-        print("InstructionListJointsResult:")
+        print("---- InstructionListJointsResult ------------------------")
         print(" > Error Msg:  ", self.message)
         print(" > Error Code: ", self.error)
+        print(" > Joints:")
         print(self.joints.tr())
 
 
 class PlaybackFrame():
-    def __init__(self, pose, move_id, speed, accel, error, time_step):
-        self.pose = pose
+    def __init__(self, joints, coord, move_id, speed, accel, error, time_step):
+        self.joints = joints
+        self.coord = coord
         self.move_id = move_id
         self.speed = speed
         self.accel = accel
         self.error = error
-        self.errorString = str(ConvertErrorCodeToJointErrorType(self.error))
-        self.errorFlags = ConvertErrorCodeToJointErrorType(self.error)
+        self.error_string = str(ConvertErrorCodeToJointErrorType(self.error))
+        self.error_flags = ConvertErrorCodeToJointErrorType(self.error)
         self.time_step = time_step
 
     def print(self):
-        print(
-            f" > PlaybackFrame id:{self.move_id:2.0f} err:{self.error:.0f} t:{self.time_step:1.3f} v:{self.speed:-3.3f} a:{self.accel:-3.3f} ")
+        joint_string = ", ".join([f"{j[0]:>7.2f}" for j in self.joints.rows])
+        print(f" > PlaybackFrame ||| move_id:{self.move_id:2.0f}",
+              f"| err:{self.error:>1.0f} t:{self.time_step:>4.3f} v:{self.speed:>6.3f} a:{self.accel:>7.3f}",
+              f"| joints: {joint_string} |")
 
 
 MoveType = Enum('MoveType', 'Joint Frame')
@@ -117,15 +136,24 @@ class Step():
         self.speed = speed
         self.accel = accel
         self.blending = blending
-        self.tcpItem = tools[tcp]
-        self.tcpName = tools[tcp].Name()
+        self.tcp_item = tools[tcp]
+        self.tcp_name = tools[tcp].Name()
         self.playback_frames = []
 
     def print(self):
-        print(f"Step {self.name}: {self.move_type}")
+        print(f"Step '{self.name}' ({self.move_type}) ::: ",
+              f"tcp: {self.tcp_name}, blending: {self.blending}, speed: {self.speed:.3f}, accel: {self.accel:.3f}")
         for f in self.playback_frames:
             f.print()
         print()
+
+
+def get_frame_pose(step, playback_frame):
+    robot.setPoseTool(step.tcp_item)
+    robot.setJoints(playback_frame.joints)
+    joints = robot.Pose()
+    framePose = Pose_2_Staubli(joints)
+    return framePose
 
 
 class Program():
@@ -145,7 +173,7 @@ class Program():
             self._add_step(s)
 
     def _add_step(self, step: Step):
-        self.robodk_program.setPoseTool(step.tcpItem)
+        self.robodk_program.setPoseTool(step.tcp_item)
         self.robodk_program.setRounding(step.blending)
 
         target = rdk.AddTarget("Target_" + step.name + "_" + str(step.move_type), 0, robot)
@@ -180,7 +208,7 @@ class Program():
             self.step_mm, self.step_deg, None, COLLISION_OFF, flags, self.step_time)
         result = InstructionListJointsResult(error_code, error_msg, joint_list)
         joints = self.robodk_program.getLink().Joints()
-        n_joints, dummy = joints.size()
+        n_joints, _ = joints.size()
         _, rows = joint_list.size()
         errorIdx = n_joints
         speedIdx = n_joints + 1
@@ -188,16 +216,21 @@ class Program():
         idIdx = n_joints + 3
         timeIdx = n_joints + 4
         for i in range(rows):
-            # def __init__(self, move_id, speed, accel, error, time_step):
-            pose = []
-            for j in range(n_joints):
-                pose.append(joint_list[j, i])
-            result.add_playback_frame(PlaybackFrame(
-                pose, joint_list[idIdx, i], joint_list[speedIdx, i], joint_list[accelIdx, i], joint_list[errorIdx, i], joint_list[timeIdx, i]))
+            result.add_playback_frame(
+                PlaybackFrame(
+                    joints=joint_list[:n_joints, i],
+                    coord=joint_list,
+                    move_id=joint_list[idIdx, i],
+                    speed=joint_list[speedIdx, i],
+                    accel=joint_list[accelIdx, i],
+                    error=joint_list[errorIdx, i],
+                    time_step=joint_list[timeIdx, i]
+                )
+            )
         return result
 
     def print(self):
-        print(f"Program {self.name}:")
+        print(f"\n\n---- Program '{self.name}' ----------------------\n")
         for s in self.steps:
             s.print()
         print()
