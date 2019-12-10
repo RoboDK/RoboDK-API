@@ -40,19 +40,19 @@ def load_file(filename):
         new_station_name = os.path.splitext(filename)[0]
         is_new_station = (old_station_name != new_station_name)
 
-    robot = rdk.Item("", ITEM_TYPE_ROBOT)
+    robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
     tools = rdk.ItemList(ITEM_TYPE_TOOL)
     if is_new_station or not robot.Valid():
         if is_new_station:
             rdk.CloseStation()
         rdk.AddFile(os.path.realpath(filename))
-        robot = rdk.Item("", ITEM_TYPE_ROBOT)
+        robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
         tools = rdk.ItemList(ITEM_TYPE_TOOL)
 
     return robot, tools
 
 
-def clean_robodk():
+def reset_robodk_state():
     if rdk is not None:
         items = rdk.ItemList(ITEM_TYPE_TARGET)
         for item in items:
@@ -60,6 +60,7 @@ def clean_robodk():
         items = rdk.ItemList(ITEM_TYPE_PROGRAM)
         for item in items:
             item.Delete()
+        robot.setJoints(robot.JointsHome())
 
 
 def print_info():
@@ -106,22 +107,30 @@ class InstructionListJointsResult:
 
 
 class PlaybackFrame():
-    def __init__(self, joints, coord, move_id, speed, accel, error, time_step):
+    def __init__(self, joints, coords, move_id, error, mm_step, deg_step, time_step, speeds, accels):
         self.joints = joints
-        self.coord = coord
+        self.coords = coords
         self.move_id = move_id
-        self.speed = speed
-        self.accel = accel
         self.error = error
+        self.mm_step = mm_step
+        self.deg_step = deg_step
+        self.time_step = time_step
+        self.speeds = speeds
+        self.accels = accels
         self.error_string = str(ConvertErrorCodeToJointErrorType(self.error))
         self.error_flags = ConvertErrorCodeToJointErrorType(self.error)
-        self.time_step = time_step
 
     def print(self):
         joint_string = ", ".join([f"{j[0]:>7.2f}" for j in self.joints.rows])
-        print(f" > PlaybackFrame ||| move_id:{self.move_id:2.0f}",
-              f"| err:{self.error:>1.0f} t:{self.time_step:>4.3f} v:{self.speed:>6.3f} a:{self.accel:>7.3f}",
-              f"| joints: {joint_string} |")
+        coord_string = ", ".join([f"{c[0]:>7.2f}" for c in self.coords.rows])
+        speed_string = ", ".join([f"{s[0]:>7.2f}" for s in self.speeds.rows]) if self.speeds is not None else "-"
+        accel_string = ", ".join([f"{a[0]:>7.2f}" for a in self.accels.rows]) if self.accels is not None else "-"
+        print(f" > PlaybackFrame | moveid:{self.move_id:2.0f}",
+              f"| error:{self.error}, dtime:{self.time_step:>6.3f}, dmm:{self.mm_step:>6.2f}, ddeg:{self.deg_step:>6.2f}",
+              f"||| joints: {joint_string}",
+              f"\n\t\t coords: {coord_string}",
+              f"\n\t\t speeds: {speed_string}",
+              f"\n\t\t accels: {accel_string}")
 
 
 MoveType = Enum('MoveType', 'Joint Frame')
@@ -157,17 +166,18 @@ def get_frame_pose(step, playback_frame):
 
 
 class Program():
-    def __init__(self, name, steps, step_time, step_mm=1, step_deg=1):
+    def __init__(self, name, steps, max_time_step, max_mm_step=1, max_deg_step=1,
+                 simulation_type=InstructionListJointsFlags.TimeBased):
         self.name = name
         self.steps = steps
-        self.step_time = step_time
-        self.step_mm = step_mm
-        self.step_deg = step_deg
+        self.max_time_step = max_time_step
+        self.max_mm_step = max_mm_step
+        self.max_deg_step = max_deg_step
+        self.simulation_type = simulation_type
         self.simulation_result = None
         self.robodk_program = None
 
     def load_to_robodk(self):
-        clean_robodk()
         self.robodk_program = rdk.AddProgram("Prg", robot)
         for s in self.steps:
             self._add_step(s)
@@ -203,28 +213,53 @@ class Program():
             move_id = move_id + 1
 
     def _get_simulation_result(self):
-        flags = InstructionListJointsFlags.TimeBased
+        flag = InstructionListJointsFlags.TimeBased
+
         error_msg, joint_list, error_code = self.robodk_program.InstructionListJoints(
-            self.step_mm, self.step_deg, None, COLLISION_OFF, flags, self.step_time)
+            mm_step=self.max_mm_step,
+            deg_step=self.max_deg_step,
+            time_step=self.max_time_step,
+            collision_check=COLLISION_OFF,
+            flags=self.simulation_type)
         result = InstructionListJointsResult(error_code, error_msg, joint_list)
+
         joints = self.robodk_program.getLink().Joints()
         n_joints, _ = joints.size()
         _, rows = joint_list.size()
-        errorIdx = n_joints
-        speedIdx = n_joints + 1
-        accelIdx = n_joints + 2
-        idIdx = n_joints + 3
-        timeIdx = n_joints + 4
+
+        joints = joint_list[:n_joints]
+        errors = joint_list[n_joints]
+        mm_steps = joint_list[n_joints + 1]
+        deg_steps = joint_list[n_joints + 2]
+        move_ids = joint_list[n_joints + 3]
+        time_steps = joint_list[n_joints + 4]
+        coords = joint_list[(n_joints + 5):(n_joints + 8)]
+
+        speeds = None
+        accels = None
+
+        if flag.value >= 2:
+            i_from = n_joints + 8
+            i_to = i_from + n_joints
+            speeds = joint_list[i_from:i_to]
+
+        if flag.value >= 3:
+            i_from = n_joints + 8 + n_joints
+            i_to = i_from + n_joints
+            accels = joint_list[i_from:i_to]
+
         for i in range(rows):
             result.add_playback_frame(
                 PlaybackFrame(
-                    joints=joint_list[:n_joints, i],
-                    coord=joint_list,
-                    move_id=joint_list[idIdx, i],
-                    speed=joint_list[speedIdx, i],
-                    accel=joint_list[accelIdx, i],
-                    error=joint_list[errorIdx, i],
-                    time_step=joint_list[timeIdx, i]
+                    joints=joints[:, i],
+                    coords=coords[:, i],
+                    move_id=move_ids[0, i],
+                    error=errors[0, i],
+                    mm_step=mm_steps[0, i],
+                    deg_step=deg_steps[0, i],
+                    time_step=time_steps[0, i],
+                    speeds=speeds[:, i] if speeds else None,
+                    accels=accels[:, i] if accels else None
                 )
             )
         return result

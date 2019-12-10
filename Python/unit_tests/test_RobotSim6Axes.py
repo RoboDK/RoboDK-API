@@ -1,7 +1,8 @@
 """Test RoboDK InstructionListJoints() for robot with 6 axes"""
 
+from parameterized import parameterized_class
 from path_simulation import *
-from base_tests import TestInstructionListJoints
+from test_RobotSimBase import TestRobotSimBase
 
 
 def get_program_one_stop_point():
@@ -85,7 +86,13 @@ def get_program_near_singularity():
     return Program("Near Singularity", steps, 0.04)
 
 
-class TestInstructionListJoints6(TestInstructionListJoints):
+@parameterized_class(
+    ("test_name", "sim_type"), [
+        ("PosBased", InstructionListJointsFlags.Position),
+        ("TimeBased", InstructionListJointsFlags.TimeBased)
+    ])
+class TestRobotSim6Axes(TestRobotSimBase):
+    sim_type = None
 
     def load_robot_cell(self):
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
@@ -93,37 +100,43 @@ class TestInstructionListJoints6(TestInstructionListJoints):
     def test_one_stop_point(self):
         """Test program with one stop point"""
         self.program = get_program_one_stop_point()
+        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_two_stop_points(self):
         """Test program with 2 adjacent stop points"""
         self.program = get_program_two_step_points()
+        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_three_stop_points(self):
         """Test program with 3 adjacent stop points"""
         self.program = get_program_three_stop_points()
+        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_rotate_in_place(self):
         """Test rotation around a const cartesian coordinate"""
         self.program = get_program_rotate_in_place()
+        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
         self._test_if_cartesian_coordinates_const(2)
 
     def test_near_singularity1(self):
         """Test near singularity with STEP_MM=1, STEP_DEG=1"""
         self.program = get_program_near_singularity()
+        self.program.simulation_type = self.sim_type
         self.program.step_mm = 1
         self.program.step_deg = 1
-        self._test_program(verbose=False, target_reached=False)
+        self._test_program(verbose=False)
 
     def test_near_singularity2(self):
         """Test near singularity with STEP_MM=10, STEP_DEG=10"""
         self.program = get_program_near_singularity()
+        self.program.simulation_type = self.sim_type
         self.program.step_mm = 10
         self.program.step_deg = 10
-        self._test_program(verbose=False, target_reached=False)
+        self._test_program(verbose=False)
 
 
 if __name__ == '__main__':

@@ -3,9 +3,11 @@ Requirements: Python 3.7.4
 additional modules needed:
 nose2 (test runner)
 nose2-html-report (html test report)
+parameterized (parameterized test cases)
 
 pip install nose2
 pip install nose2-html-report
+pip install parameterized
 
 run pure python unittests:
 
