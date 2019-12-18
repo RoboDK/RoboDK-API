@@ -240,6 +240,31 @@ DISPLAY_REF_PXZ= 0b010000000
 DISPLAY_REF_PYZ= 0b100000000
 
 
+VISIBLE_REFERENCE_DEFAULT = -1
+VISIBLE_REFERENCE_ON = 1
+VISIBLE_REFERENCE_OFF = 0
+VISIBLE_ROBOT_NONE = 0
+VISIBLE_ROBOT_FLANGE = 0x01
+VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1
+VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2
+VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3
+VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4
+VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5
+VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6
+VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7
+VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8
+VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9
+VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10
+VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11
+VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12
+VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13
+VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14
+VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15
+VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16
+VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB
+VISIBLE_ROBOT_ALL = 0x7FFFFFFF
+VISIBLE_ROBOT_ALL_REFS = 0x15555555
+
 if False:
     # To be added in the future. Requires Python 3.6 or later
     from enum import IntFlag
@@ -298,8 +323,8 @@ if False:
 
         if (evalue % 1000 > 99):
             # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
-            flags |= PathErrorFlags.WristSingularity;
-            flags |= PathErrorFlags.PathSingularity;
+            flags |= PathErrorFlags.WristSingularity
+            flags |= PathErrorFlags.PathSingularity
 
         elif (evalue % 10000 > 999):
             if (evalue % 10000 > 3999):
@@ -835,7 +860,7 @@ class Robolink:
     def _send_array(self, values):
         """Sends an array of doubles"""
         if not isinstance(values,list):#if it is a Mat() with joints
-            values = (values.tr()).rows[0];          
+            values = (values.tr()).rows[0]
         nval = len(values)
         self._send_int(nval)        
         if nval > 0:
@@ -2195,7 +2220,7 @@ class Robolink:
         :param speed: simulation ratio
         :type speed: float
         
-        .. seealso:: :func:`~robolink.Robolink.SimulationSpeed`
+        .. seealso:: :func:`~robolink.Robolink.SimulationSpeed`, :func:`~robolink.Robolink.SimulationTime`
         """ 
         self._check_connection()
         command = 'SimulateSpeed'
@@ -2211,6 +2236,19 @@ class Robolink:
         """ 
         self._check_connection()
         command = 'GetSimulateSpeed'
+        self._send_line(command)
+        speed = self._rec_int()/1000.0
+        self._check_status()
+        return speed
+        
+    def SimulationTime(self):
+        """Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
+        The simulation time changes depending on the simulation speed. The simulation time is usually faster than the real time (5 times by default).
+        
+        .. seealso:: :func:`~robolink.Robolink.setSimulationSpeed`, :func:`~robolink.Robolink.SimulationSpeed`
+        """ 
+        self._check_connection()
+        command = 'GetSimTime'
         self._send_line(command)
         speed = self._rec_int()/1000.0
         self._check_status()
@@ -2349,6 +2387,10 @@ class Robolink:
         :param str command: Command Name, such as Trace, Threads or Window.
         :param str value: Comand value (optional, not all commands require a value) 
         
+        You can select Tools-Run Script-Show Commands to see all available commands.
+        
+        .. image:: Commands.png
+                       
         .. code-block:: python
             :caption: Example commands
             
@@ -2370,6 +2412,16 @@ class Robolink:
             
             # Reset the trace
             RDK.Command("Trace", "Reset")
+            
+        
+        You can also pass commands through command line when starting RoboDK or when RoboDK is already running (add '-' to the command name). 
+        More information about command line options available in the documentation: https://robodk.com/doc/en/RoboDK-API.html#CommandLine    
+                
+        .. code-block:: python
+            :caption: Example to start RoboDK in Chinese and white background using 6 threads and load a RoboDK project file
+            
+            RoboDK -Lang=zh -ColorBgBottom=white -ColorBgTop=white -Threads=6 "path-to-file.rdk"
+        
         
         .. seealso:: :func:`~robolink.Robolink.setParam`
         """    
@@ -2478,8 +2530,8 @@ class Robolink:
         :return: [collision (True or False), item (collided), point (point of collision with respect to the station)]
         :rtype: [bool, :class:`.Item`, list of float as xyz]
         """
-        p1abs = ref*p1;
-        p2abs = ref*p2;        
+        p1abs = ref*p1
+        p2abs = ref*p2        
         self._check_connection()
         command = 'CollisionLine'
         self._send_line(command)
@@ -3575,14 +3627,61 @@ class Item():
         return visible
 
     def setVisible(self, visible, visible_frame=None):
-        """Sets the item visiblity
+        """Sets the item visiblity. 
         
-        :param visible: Set the object as visible (1/True) or invisible (0/False)
-        :type visible: bool
-        :param visible_frame: Set the reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items)
-        :type visible_frame: bool
+        :param bool visible: Set the object as visible (1/True) or invisible (0/False)
+        :param bool visible_frame: Set the object reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items). When the item is a robot, this variable can specify robot visibility using suitable flags (as shown in the example).
+        
+        Example:
+        
+        .. code-block:: python
+            :caption: Change robot visibility
+            
+            # Retrieve the robot (first robot available)
+            robot = RDK.Item('', ITEM_TYPE_ROBOT)
+            
+            # Show the robot with default settings:
+            robot.setVisible(True, VISIBLE_ROBOT_DEFAULT)
+            
+            # Show the robot and hide all references:
+            robot.setVisible(1, VISIBLE_ROBOT_DEFAULT and not VISIBLE_ROBOT_ALL_REFS)
+            
+            # Show only references (hide the robot):
+            robot.setVisible(1, VISIBLE_ROBOT_ALL_REFS)
+            
+        .. code-block:: python
+            :caption: Available Frame flags
+            
+            # Default values for objects
+            VISIBLE_REFERENCE_DEFAULT = -1
+            VISIBLE_REFERENCE_ON = 1     # For objects and reference frames only
+            VISIBLE_REFERENCE_OFF = 0    # For objects and reference frames only
+            
+            # Available flags to set robot visiblity
+            VISIBLE_ROBOT_NONE = 0
+            VISIBLE_ROBOT_FLANGE = 0x01
+            VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1
+            VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2
+            VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3
+            VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4
+            VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5
+            VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6
+            VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7
+            VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8
+            VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9
+            VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10
+            VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11
+            VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12
+            VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13
+            VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14
+            VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15
+            VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16
+            VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB
+            VISIBLE_ROBOT_ALL = 0x7FFFFFFF
+            VISIBLE_ROBOT_ALL_REFS = 0x15555555
         
         .. seealso:: :func:`~robolink.Item.Visible`
+        
         """        
         if visible_frame is None: 
             visible_frame = -1
@@ -4893,7 +4992,7 @@ class Item():
         self.link._check_connection()
         command = 'S_ZoneData'
         self.link._send_line(command)
-        self.link._send_int(rounding_mm*1000);
+        self.link._send_int(rounding_mm*1000)
         self.link._send_item(self)
         self.link._check_status()
         return self
