@@ -29,7 +29,7 @@ def get_program_one_stop_point():
         Step("9", MoveType.Frame, 0, f9, 10, 0, 0),
     ]
     steps[2].blending = 0
-    return Program("Move to stop point", steps, 0.002)  # 0.055
+    return Program("Move to stop point", steps)
 
 
 def get_program_two_step_points():
@@ -37,7 +37,6 @@ def get_program_two_step_points():
     steps = program.steps
     steps[2].blending = 0
     steps[3].blending = 0
-    program.step_time = 0.033
     return program
 
 
@@ -47,7 +46,6 @@ def get_program_three_stop_points():
     steps[2].blending = 0
     steps[3].blending = 0
     steps[4].blending = 0
-    program.step_time = 0.077
     return program
 
 
@@ -67,7 +65,7 @@ def get_program_rotate_in_place():
         Step("4", MoveType.Frame, 0, f4, 0, 0, 0),
         Step("5", MoveType.Frame, 0, f5, 0, 0, 0),
     ]
-    return Program("Rotate Robot Axis", steps, 0.002)  # 0.02
+    return Program("Rotate Robot Axis", steps)
 
 
 def get_program_near_singularity():
@@ -83,16 +81,18 @@ def get_program_near_singularity():
         Step("3", MoveType.Frame, 0, f3, 10, 0, 0),
         Step("4", MoveType.Frame, 0, f4, 0, 0, 0),
     ]
-    return Program("Near Singularity", steps, 0.04)
+    return Program("Near Singularity", steps)
 
 
 @parameterized_class(
-    ("test_name", "sim_type"), [
-        ("PosBased", InstructionListJointsFlags.Position),
-        ("TimeBased", InstructionListJointsFlags.TimeBased)
+    ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
+        ("PosBased_S", InstructionListJointsFlags.Position, 1, 1, None),
+        ("PosBased_L", InstructionListJointsFlags.Position, 10, 10, None),
+        ("TimeBased_S", InstructionListJointsFlags.TimeBased, None, None, 0.002),
+        ("TimeBased_M", InstructionListJointsFlags.TimeBased, None, None, 0.02),
+        ("TimeBased_L", InstructionListJointsFlags.TimeBased, None, None, 0.2)
     ])
 class TestRobotSim6Axes(TestRobotSimBase):
-    sim_type = None
 
     def load_robot_cell(self):
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
@@ -100,43 +100,33 @@ class TestRobotSim6Axes(TestRobotSimBase):
     def test_one_stop_point(self):
         """Test program with one stop point"""
         self.program = get_program_one_stop_point()
-        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_two_stop_points(self):
         """Test program with 2 adjacent stop points"""
         self.program = get_program_two_step_points()
-        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_three_stop_points(self):
         """Test program with 3 adjacent stop points"""
         self.program = get_program_three_stop_points()
-        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
 
     def test_rotate_in_place(self):
         """Test rotation around a const cartesian coordinate"""
         self.program = get_program_rotate_in_place()
-        self.program.simulation_type = self.sim_type
         self._test_program(verbose=False)
         self._test_if_cartesian_coordinates_const(2)
 
-    def test_near_singularity1(self):
-        """Test near singularity with STEP_MM=1, STEP_DEG=1"""
+    def test_near_singularity(self):
+        """Test near singularity"""
         self.program = get_program_near_singularity()
-        self.program.simulation_type = self.sim_type
-        self.program.step_mm = 1
-        self.program.step_deg = 1
-        self._test_program(verbose=False)
 
-    def test_near_singularity2(self):
-        """Test near singularity with STEP_MM=10, STEP_DEG=10"""
-        self.program = get_program_near_singularity()
-        self.program.simulation_type = self.sim_type
-        self.program.step_mm = 10
-        self.program.step_deg = 10
-        self._test_program(verbose=False)
+        if (self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm > 5
+                or self.sim_type == InstructionListJointsFlags.TimeBased and self.sim_step_time > 0.01):
+            self._test_program(result_success=False, verbose=False)
+        else:
+            self._test_program(verbose=False)
 
 
 if __name__ == '__main__':

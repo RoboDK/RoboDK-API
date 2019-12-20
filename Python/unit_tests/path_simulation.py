@@ -1,5 +1,9 @@
+import sys
 from enum import Enum
 from robolink import *
+
+sys.path.insert(0, "..")
+
 
 JOINT_SPEED = 225  # [deg/s]
 JOINT_ACCEL = 400  # [deg/s^2]
@@ -166,7 +170,7 @@ def get_frame_pose(step, playback_frame):
 
 
 class Program():
-    def __init__(self, name, steps, max_time_step, max_mm_step=1, max_deg_step=1,
+    def __init__(self, name, steps, max_time_step=0.02, max_mm_step=1, max_deg_step=1,
                  simulation_type=InstructionListJointsFlags.TimeBased):
         self.name = name
         self.steps = steps
@@ -192,16 +196,16 @@ class Program():
         if step.move_type == MoveType.Joint:
             target.setJoints(step.pose)
             target.setAsJointTarget()
-            speed = step.speed if step.speed > 0 else JOINT_SPEED
-            accel = step.accel if step.accel > 0 else JOINT_ACCEL
+            speed = step.speed if step.speed > 0.0 else JOINT_SPEED
+            accel = step.accel if step.accel > 0.0 else JOINT_ACCEL
             self.robodk_program.setSpeed(-1, speed, -1, accel)
             self.robodk_program.MoveJ(target)
 
         if step.move_type == MoveType.Frame:
             target.setPose(xyzrp2ToPose(step.pose))
             target.setAsCartesianTarget()
-            speed = step.speed if step.speed > 0 else FRAME_SPEED
-            accel = step.accel if step.accel > 0 else FRAME_ACCEL
+            speed = step.speed if step.speed > 0.0 else FRAME_SPEED
+            accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
             self.robodk_program.setSpeed(speed, -1, accel, -1)
             self.robodk_program.MoveL(target)
 
@@ -265,7 +269,15 @@ class Program():
         return result
 
     def print(self):
-        print(f"\n\n---- Program '{self.name}' ----------------------\n")
+        print(f"\n\n-------------------------------------------------")
+        print(f"\tProgram '{self.name}'")
+        if self.simulation_type == InstructionListJointsFlags.Position:
+            print(f"\t > Position Based (Max mm step: {self.max_mm_step}, Max deg step: {self.max_deg_step})")
+        elif self.simulation_type == InstructionListJointsFlags.TimeBased:
+            print(f"\t > Time Based (Max time step: {self.max_time_step})")
+        else:
+            print(f"\t > Simulation Type: {self.simulation_type}")
+        print(f"\t > Steps:\n")
         for s in self.steps:
             s.print()
         print()

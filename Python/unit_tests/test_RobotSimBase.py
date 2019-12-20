@@ -9,6 +9,11 @@ class TestRobotSimBase(unittest.TestCase):
     tools = None
     program = None
 
+    sim_type = None
+    sim_step_mm = None
+    sim_step_deg = None
+    sim_step_time = None
+
     def load_robot_cell(self):
         raise NotImplementedError
 
@@ -79,21 +84,52 @@ class TestRobotSimBase(unittest.TestCase):
 
     def _test_max_simulation_step(self):
         """Asserts that max simulation steps (mm, deg, time) ar not exceeded"""
+        previous_step = self.program.steps[0]
+        previous_pb_frame = self.program.steps[0].playback_frames[0]
         for step in self.program.steps:
             for index, pb_frame in enumerate(step.playback_frames):
                 if self.program.simulation_type == InstructionListJointsFlags.TimeBased:
                     msg = f"Step {step.name} playback frame {index}, time_step {pb_frame.time_step} not in 'max_time_step' bounds"
                     self.assertLessEqual(pb_frame.time_step, self.program.max_time_step, msg)
                 else:
-                    if step.move_type == MoveType.Joint:
+                    move_type = step.move_type if index != 0 else previous_step.move_type
+                    if move_type == MoveType.Joint:
                         msg_deg = f"Step {step.name} (Joint) playback frame {index}, deg_step {pb_frame.deg_step} not in 'max_deg_step' bounds"
+
+                        # Check if value given in list result is smaller than max for simulation
                         self.assertLessEqual(pb_frame.deg_step, self.program.max_deg_step, msg_deg)
+
+                        # Check if actual step is smaller than max for simulation
+                        actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b
+                                               in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
+                        self.assertLessEqual(actual_deg_step, self.program.max_deg_step, msg_deg)
                     else:
                         msg_mm = f"Step {step.name} (Frame )playback frame {index}, mm_step {pb_frame.mm_step} not in 'max_mm_step' bounds"
+
+                        # Check if value given in list result is smaller than max for simulation
                         self.assertLessEqual(pb_frame.mm_step, self.program.max_mm_step, msg_mm)
 
-    def _test_program(self, playback_frame_errors=True, result_success=True, verbose=False):
+                        # Check if actual step is smaller than max for simulation
+                        actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0]) for c_a, c_b
+                                                   in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
+                        self.assertLessEqual(actual_mm_step, self.program.max_mm_step, msg_mm)
+
+                previous_pb_frame = pb_frame
+            previous_step = step
+
+    def _test_program(self, result_success=True, verbose=False):
         """Loads and simulates program and then asserts various properties on result"""
+
+        # set testing parameters
+        if self.sim_type is InstructionListJointsFlags.Position:
+            self.program.simulation_type = self.sim_type
+            self.program.max_mm_step = self.sim_step_mm
+            self.program.max_deg_step = self.sim_step_deg
+        elif self.sim_type is InstructionListJointsFlags.TimeBased:
+            self.program.simulation_type = self.sim_type
+            self.program.max_time_step = self.sim_step_time
+        elif self.sim_type is None:
+            raise ValueError("No 'sim_type' provided")
 
         self.program.load_to_robodk()
         self.program.simulate()
@@ -102,12 +138,14 @@ class TestRobotSimBase(unittest.TestCase):
             self.program.print()
             self.program.simulation_result.add_to_robodk()
 
-        self._test_max_simulation_step()
-        self._test_for_valid_move_ids()
-        self._test_for_missing_move_ids()
-        self._test_if_stop_points_reached()
+        if not result_success:
+            # other checks don't make sense
+            return
 
-        if result_success:
-            self._test_if_result_message_is_success()
-        if playback_frame_errors:
-            self._test_for_playback_frame_errors()
+        # perform checks on simulation result
+        self._test_if_result_message_is_success()
+        self._test_for_playback_frame_errors()
+        self._test_for_missing_move_ids()
+        self._test_for_valid_move_ids()
+        self._test_max_simulation_step()
+        self._test_if_stop_points_reached()
