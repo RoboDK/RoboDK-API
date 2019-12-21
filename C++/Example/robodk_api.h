@@ -863,6 +863,19 @@ public:
     void ShowMessage(const QString &message, bool popup = true);
 
     /// <summary>
+    /// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
+    /// </summary>
+    /// <param name="tocopy">Item to copy</param>
+    void Copy(const Item &tocopy);
+
+    /// <summary>
+    /// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item.
+    /// </summary>
+    /// <param name="paste_to">Item to attach the copied item (optional)</param>
+    /// <returns>New item created</returns>
+    Item Paste(const Item *paste_to=NULL);
+
+    /// <summary>
     /// Loads a file and attaches it to parent. It can be any file supported by RoboDK.
     /// </summary>
     /// <param name="filename">Absolute path of the file.</param>
