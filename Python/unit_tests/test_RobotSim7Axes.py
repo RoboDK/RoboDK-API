@@ -35,12 +35,12 @@ def get_program_joint(blending):
     return Program("Joint moves with axis 7", steps)
 
 
-def get_program_frame_no7(blending=-1):
+def get_program_frame_no7(blending):
     """Test program with frame moves only and no need for move on axis 7"""
-    j1 = [93.159617, -88.450272, 102.407047, 40.002728, -3.531006, 222.007079, -349.000000]
-    f2 = [-327.415069, -740.090696, 758.628268, -168.883590, 8.659084, 0.839570]
-    f3 = [-451.065405, -763.715914, 784.890641, -168.883590, 8.659084, 0.839570]
-    f4 = [-518.379616, -778.795337, 648.891752, -168.883590, 8.659084, 0.839570]
+    j1 = [93.159617, -88.450272, 102.407047, 40.002728, -3.531006, 222.007079, -350]
+    f2 = [-327.415069, -740.090696, 758.628268, -168.883590, 8.659084, 0.839570, -350]
+    f3 = [-451.065405, -763.715914, 784.890641, -168.883590, 8.659084, 0.839570, -350]
+    f4 = [-518.379616, -778.795337, 648.891752, -168.883590, 8.659084, 0.839570, -350]
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel):
         Step("1", MoveType.Joint, 0, j1, blending, 0, 0),
@@ -51,12 +51,12 @@ def get_program_frame_no7(blending=-1):
     return Program("Frame moves no axis 7", steps)
 
 
-def get_program_frame_needs7(blending=-1):
+def get_program_frame_with7(blending):
     """Test program with frame moves only and need for move on axis 7"""
-    j1 = [93.159617, -88.450272, 102.407047, 40.002728, -3.531006, 222.007079, -349.000000]
-    f2 = [-1182.036279, -765.087880, 701.262027, -168.883590, 8.659084, 0.839570]
-    f3 = [1269.233826, -677.676136, 689.591527, -168.881372, 8.670023, 0.845444]
-    f4 = [-518.379616, -778.795337, 648.891752, -168.883590, 8.659084, 0.839570]
+    j1 = [90, -100, 125, 0, -25, 0, 0]
+    f2 = [-78, -610, 730, 0, -90, -180, 0]
+    f3 = [-78, -610, 730, 0, -90, -180, -100]
+    f4 = [-78, -610, 730, 0, -90, -180, 100]
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel):
         Step("1", MoveType.Joint, 0, j1, blending, 0, 0),
@@ -107,17 +107,23 @@ class TestRobotSim7Axes(TestRobotSimBase):
         self.program = get_program_joint(blending)
         self._test_program(verbose=False)
 
-    @unittest.skip("Frame cannot be positioned with 7th axis yet")
-    def test_frame_no7(self):
+    @parameterized.expand([
+        ("NoBlending", -1),
+        ("Blending", 100),
+    ])
+    def test_frame_no7(self, _, blending):
         """Test program with frame moves, no moves on axis 7 needed"""
-        self.program = get_program_frame_no7()
+        self.program = get_program_frame_no7(blending)
         self._test_program(verbose=False)
         self._test_axis7_not_moving()
 
-    @unittest.skip("Frame cannot be positioned with 7th axis yet")
-    def test_frame_with7(self):
+    @parameterized.expand([
+        ("NoBlending", -1),
+        ("Blending", 100),
+    ])
+    def test_frame_with7(self, _, blending):
         """Test program with frame moves, moves on axis 7 needed"""
-        self.program = get_program_frame_needs7()
+        self.program = get_program_frame_with7(blending)
         self._test_program(verbose=False)
 
 

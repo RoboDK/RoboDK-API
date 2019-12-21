@@ -202,7 +202,10 @@ class Program():
             self.robodk_program.MoveJ(target)
 
         if step.move_type == MoveType.Frame:
-            target.setPose(xyzrp2ToPose(step.pose))
+            target.setPose(xyzrp2ToPose(step.pose[:6]))
+            if len(step.pose) == 7:
+                axis7 = step.pose[6]
+                target.setJoints([0, 0, 0, 0, 0, 0, axis7])
             target.setAsCartesianTarget()
             speed = step.speed if step.speed > 0.0 else FRAME_SPEED
             accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
