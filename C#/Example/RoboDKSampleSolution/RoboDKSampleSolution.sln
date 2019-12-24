@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29509.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboDKSampleSolution", "RoboDKSampleSolution\RoboDKSampleSolution.csproj", "{F4BF113D-6CCE-4A08-9B9C-DEEF4493E97E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F4BF113D-6CCE-4A08-9B9C-DEEF4493E97E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4BF113D-6CCE-4A08-9B9C-DEEF4493E97E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4BF113D-6CCE-4A08-9B9C-DEEF4493E97E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4BF113D-6CCE-4A08-9B9C-DEEF4493E97E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {547A6212-B8E7-4E11-9C85-C8DFF6F6C9CB}
+	EndGlobalSection
+EndGlobal
