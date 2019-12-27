@@ -2354,7 +2354,13 @@ void RoboDK::Save(const QString &filename, const Item *itemsave){
 /// <returns>added object/shape (use item.Valid() to check if item is valid.)</returns>
 Item RoboDK::AddShape(tMatrix2D *trianglePoints, Item *addTo, bool shapeOverride, Color *color)
 {
-    double colorArray[4] = {color->r,color->g,color->b,color->a};
+    double colorArray[4] = {0.6,0.6,0.8,1.0};
+    if (color != NULL){
+        colorArray[0] = color->r;
+        colorArray[1] = color->g;
+        colorArray[2] = color->b;
+        colorArray[3] = color->a;
+    }
     _check_connection();
     _send_Line("AddShape3");
     _send_Matrix2D(trianglePoints);
