@@ -77,6 +77,11 @@ namespace RoboDk.API
         int RoboDKClientPort { get; }
 
         /// <summary>
+        /// Default Socket Timeout in Milliseconds.
+        /// </summary>
+        int DefaultSocketTimeoutMilliseconds { get; set; }
+
+        /// <summary>
         /// Allows to install a function which can intercept all interface methods.
         /// Used for Aspect oriented programming (e.g. Add loging to an Interface).
         /// Example:

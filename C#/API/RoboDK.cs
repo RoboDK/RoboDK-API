@@ -122,7 +122,7 @@ namespace RoboDk.API
         public Func<IItem, IItem> ItemInterceptFunction { set; get; } = item => item;
 
         /// <summary>
-        /// Default Socket send / receive timeout in miliseconds: 10 seconds
+        /// Default Socket send / receive timeout in milliseconds: 10 seconds
         /// </summary>
         public int DefaultSocketTimeoutMilliseconds { get; set; }
 
@@ -1693,7 +1693,7 @@ namespace RoboDk.API
             send_pose(baseFrame);
             send_pose(tool);
             send_array(param.ToArray());
-            Mat jointsData = new Mat(ndofs, 5);
+            Mat jointsData = new Mat(ndofs * 2, 5);
             for (int i = 0; i < ndofs; i++)
             {
                 jointsData[i, 0] = jointsBuild[i];
