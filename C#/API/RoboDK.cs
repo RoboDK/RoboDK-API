@@ -572,11 +572,21 @@ namespace RoboDk.API
                     break;
 
                 case EventType.ItemMoved:
+                    // Obsolete with RoboDK v4.2.0 and later. Use ItemMovedPose instead
                     Console.WriteLine("Event: Item Moved");
                     if (itm.Valid())
                         Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
                     else
                         Console.WriteLine("  -> This should never happen");
+
+                    break;
+
+                case EventType.ItemMovedPose:
+                    Console.WriteLine("Event: Item Moved");
+                    if (itm.Valid())
+                        Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
+                    else
+                        Console.WriteLine("  -> This should never happen");                    
 
                     break;
 
@@ -1478,7 +1488,7 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void setColor(List<IItem> item_list, List<Color> color_list)
+        public void SetColor(List<IItem> item_list, List<Color> color_list)
         {
             RequireBuild(6471);
             int nitm = Math.Min(item_list.Count, color_list.Count);
@@ -1492,6 +1502,22 @@ namespace RoboDk.API
             }
             check_status();
         }
+        public void SetColor(List<IItem> item_list, List<double[]> color_list)
+        {
+            RequireBuild(6471);
+            int nitm = Math.Min(item_list.Count, color_list.Count);
+            check_connection();
+            send_line("S_ColorList2");
+            send_int(nitm);
+            for (int i = 0; i < nitm; i++)
+            {
+                send_item(item_list[i]);
+                send_array(color_list[i]);
+            }
+            check_status();
+        }
+
+
 
         /// <inheritdoc />
         public void ShowAsCollided(List<IItem> item_list, List<bool> collided_list, List<int> robot_link_id = null)
@@ -1693,7 +1719,7 @@ namespace RoboDk.API
             send_pose(baseFrame);
             send_pose(tool);
             send_array(param.ToArray());
-            Mat jointsData = new Mat(ndofs, 5);
+            Mat jointsData = new Mat(12, 5);
             for (int i = 0; i < ndofs; i++)
             {
                 jointsData[i, 0] = jointsBuild[i];
@@ -2634,6 +2660,7 @@ namespace RoboDk.API
                         case EventType.NoEvent:
                         case EventType.SelectionTreeChanged:
                         case EventType.ItemMoved:
+                            // this should never happen
                         case EventType.ReferencePicked:
                         case EventType.ReferenceReleased:
                         case EventType.ToolModified:
@@ -2641,6 +2668,15 @@ namespace RoboDk.API
                         case EventType.Moved3DView:
                         case EventType.RobotMoved:
                             return new EventResult(eventType, item);
+
+                        case EventType.ItemMovedPose:
+                            int nvalues = _roboDk.rec_int(_bufferedSocketAdapter); // this is 16 for RoboDK v4.2.0
+                            Mat pose_rel = _roboDk.rec_pose(_bufferedSocketAdapter);
+                            if (nvalues > 16)
+                            {
+                                // future compatibility
+                            }
+                            return new ItemMovedEventResult(item, pose_rel);
 
                         case EventType.Selection3DChanged:
                             var data = _roboDk.rec_array(_bufferedSocketAdapter);

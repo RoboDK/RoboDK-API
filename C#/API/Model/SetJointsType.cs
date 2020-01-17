@@ -43,67 +43,29 @@
 namespace RoboDk.API.Model
 {
     /// <summary>
-    /// Script execution Mode 
+    /// Type of information returned by InstructionListJoints and GetInstructionListJoints
     /// </summary>
-    public enum EventType
+    public enum SetJointsType
     {
-        NoEvent = 0,
+        /// <summary>
+        /// Default behavior, will saturate the joints and apply the result. This option is used to support older versions of RoboDK.
+        /// </summary>
+        Default = 0,
 
         /// <summary>
-        /// One object (Item) has been selected or deselected from the tree
+        /// setJoints will apply the robot joints in any case. The robot may be displayed in an invalid solution: robot panel values and sliders will not show the correct robot position.
         /// </summary>
-        SelectionTreeChanged = 1,
+        Always = 1,
 
         /// <summary>
-        /// Obsolete after RoboDK v4.2.0: Use ItemMovedPose instead. The location of an object, robot or reference frame was moved
+        /// Will ignore setting robot joints if the joints are invalid (outside joint limits). This is the same as the default behavior with accurate return of saturation state.
         /// </summary>
-        ItemMoved = 2,
+        SaturateIgnore = 2,
 
         /// <summary>
-        /// A reference frame has been picked, or left clicked (any tool, reference frame or object)
+        /// Will saturate the robot joints and apply the closest robot joitns solution.
         /// </summary>
-        ReferencePicked = 3,
-
-        /// <summary>
-        /// A reference frame has been released (any tool or reference frame or object)
-        /// </summary>
-        ReferenceReleased = 4,
-
-        /// <summary>
-        /// A tool has changed (the TCP has been modified)
-        /// </summary>
-        ToolModified = 5,
-
-        /// <summary>
-        /// A new program to follow the ISO 9283 cube has been created
-        /// </summary>
-        IsoCubeCreated = 6,
-
-        /// <summary>
-        /// One object (Item) has been selected or deselected from 3D view
-        /// </summary>
-        Selection3DChanged = 7,
-
-        /// <summary>
-        /// The user moved the position of the camera in the 3D view (ViewPose)
-        /// </summary>
-        Moved3DView = 8,
-
-        /// <summary>
-        /// The Robot has changed it's position
-        /// </summary>
-        RobotMoved = 9,
-
-        /// <summary>
-        /// Key pressed event.
-        /// More information about the event parameter can be found here: <see cref="KeyPressedEventResult"/>
-        /// </summary>
-        KeyPressed = 10,
-
-        /// <summary>
-        /// The location of an object, robot or reference frame was moved, including the relative pose.
-        /// </summary>
-        ItemMovedPose = 11
+        SaturateApply = 3
     }
 }
 

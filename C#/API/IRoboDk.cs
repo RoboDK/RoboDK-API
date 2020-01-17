@@ -677,11 +677,18 @@ namespace RoboDk.API
         void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null);
 
         /// <summary>
-        /// Sets the color for a list of items
+        /// Sets the color for a list of items given the a color object
         /// </summary>
         /// <param name="item_list">list of items</param>
         /// <param name="color_list">list of colors</param>
-        void setColor(List<IItem> item_list, List<Color> color_list);
+        void SetColor(List<IItem> item_list, List<Color> color_list);
+
+        /// <summary>
+        /// Sets the color for a list of items given a 4D, 3D or 1D array of doubles
+        /// </summary>
+        /// <param name="item_list">list of items</param>
+        /// <param name="color_list">list of colors as an array of doubles. Valid colors and alpha channel must be within the range [0-1]. Each array of doubles can be provided as a 4D, 3D or 1D array. Options: [r,g,b,a], [r,g,b], [a]. If you provide [-1,-1,-1,a] only the alpha channel is modified.</param>
+        void SetColor(List<IItem> item_list, List<double[]> color_list);
 
         /// <summary>
         /// Show a list of objects or a robot link as collided (red) or as not collided (normal color)
