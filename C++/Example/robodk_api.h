@@ -2345,18 +2345,17 @@ public:
     /// Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
     /// </summary>
     /// <param name="error_msg">Returns a human readable error message (if any)</param>
-    /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified.
+    /// <param name="joint_list">Returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID] if a file name is not specified</param>
     /// If flags == LISTJOINTS_SPEED: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn]
     /// If flags == LISTJOINTS_ACCEL: [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn] </param>
     /// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
     /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
     /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
-    /// <param name="collision_check">Check for collisions: will set to 1 or 0</param>
-    /// <param name="flags">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and also make it time-based</param>
-    /// <param name="timeout_sec">Maximum time to wait for the result (seconds)</param>
-    /// <param name="time_step">Time step in seconds for time-based calculation (only used if the flag is set to 4)</param>
+    /// <param name="collision_check">Check for collisions</param>
+    /// <param name="result_flag">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and make the splitting time-based.</param>
+    /// <param name="time_step_s">(optional) set the time step in seconds for time based calculation. This value is only used when the result flag is set to 4 (time based).</param>
     /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-    int InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step = 10.0, double deg_step = 5.0, const QString &save_to_file = "");
+    int InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step = 10.0, double deg_step = 5.0, const QString &save_to_file = "", bool collision_check=false, int flags=0, double time_step_s=0.1);
 
     /// <summary>
     /// Disconnect from the RoboDK API. This flushes any pending program generation.
