@@ -73,7 +73,12 @@ namespace RoboDk.API.Model
         /// <summary>
         /// Make the result time-based so that the interval between joint values is provided at constant time steps
         /// </summary>
-        TimeBased = 4
+        TimeBased = 4,
+
+        /// <summary>
+        /// Make the result time-based so that the interval between joint values is provided at constant time steps. Speed and acceleration data is ignored.
+        /// </summary>
+        TimeBasedPosition = 5
     }
 }
 
