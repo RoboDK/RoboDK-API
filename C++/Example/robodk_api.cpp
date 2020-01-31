@@ -661,6 +661,45 @@ void Item::setParentStatic(Item parent) {
 }
 
 /// <summary>
+/// Attach the closest object to the tool. Returns the item that was attached.
+/// </summary>
+/// <returns>Attached item</returns>
+Item Item::AttachClosest() {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Attach_Closest");
+    _RDK->_send_Item(this);
+    Item item_attached = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item_attached;
+}
+
+/// <summary>
+/// Detach the closest object attached to the tool (see also setParentStatic).
+/// </summary>
+/// <returns>Detached item</returns>
+Item Item::DetachClosest(Item parent) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Detach_Closest");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    Item item_detached = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item_detached;
+}
+
+/// <summary>
+/// Detach any object attached to a tool.
+/// </summary>
+void Item::DetachAll(Item parent) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Detach_All");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
+
+
+/// <summary>
 /// Return the parent item of this item
 /// </summary>
 /// <returns>Parent item</returns>

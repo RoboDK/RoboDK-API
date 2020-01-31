@@ -1724,6 +1724,23 @@ public:
     void setParentStatic(Item parent);
 
     /// <summary>
+    /// Attach the closest object to the tool. Returns the item that was attached.
+    /// </summary>
+    /// <returns>Attached item</returns>
+    Item AttachClosest();
+
+    /// <summary>
+    /// Detach the closest object attached to the tool (see also setParentStatic).
+    /// </summary>
+    /// <returns>Detached item</returns>
+    Item DetachClosest(Item parent);
+
+    /// <summary>
+    /// Detach any object attached to a tool.
+    /// </summary>
+    void DetachAll(Item parent);
+
+    /// <summary>
     /// Return the parent item of this item
     /// </summary>
     /// <returns>Parent item</returns>
