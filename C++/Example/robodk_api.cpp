@@ -661,6 +661,45 @@ void Item::setParentStatic(Item parent) {
 }
 
 /// <summary>
+/// Attach the closest object to the tool. Returns the item that was attached.
+/// </summary>
+/// <returns>Attached item</returns>
+Item Item::AttachClosest() {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Attach_Closest");
+    _RDK->_send_Item(this);
+    Item item_attached = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item_attached;
+}
+
+/// <summary>
+/// Detach the closest object attached to the tool (see also setParentStatic).
+/// </summary>
+/// <returns>Detached item</returns>
+Item Item::DetachClosest(Item parent) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Detach_Closest");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    Item item_detached = _RDK->_recv_Item();
+    _RDK->_check_status();
+    return item_detached;
+}
+
+/// <summary>
+/// Detach any object attached to a tool.
+/// </summary>
+void Item::DetachAll(Item parent) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("Detach_All");
+    _RDK->_send_Item(this);
+    _RDK->_send_Item(parent);
+    _RDK->_check_status();
+}
+
+
+/// <summary>
 /// Return the parent item of this item
 /// </summary>
 /// <returns>Parent item</returns>
@@ -1964,13 +2003,17 @@ double Item::Update(int collision_check, int timeout_sec, double *out_nins_time_
 /// <param name="mm_step">Maximum step in millimeters for linear movements (millimeters)</param>
 /// <param name="deg_step">Maximum step for joint movements (degrees)</param>
 /// <param name="save_to_file">Provide a file name to directly save the output to a file. If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.</param>
+/// <param name="collision_check">Check for collisions</param>
+/// <param name="result_flag">set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and make the splitting time-based.</param>
+/// <param name="time_step_s">(optional) set the time step in seconds for time based calculation. This value is only used when the result flag is set to 4 (time based).</param>
 /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
-int Item::InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step, double deg_step, const QString &save_to_file){
+int Item::InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step, double deg_step, const QString &save_to_file, bool collision_check, int result_flag, double time_step_s){
     _RDK->_check_connection();
     _RDK->_send_Line("G_ProgJointList");
     _RDK->_send_Item(this);
-    double step_mm_deg[2] = { mm_step, deg_step };
-    _RDK->_send_Array(step_mm_deg, 2);
+    double step_mm_deg[5] = { mm_step, deg_step, collision_check ? 1.0 : 0.0, (double) result_flag, time_step_s };
+    _RDK->_send_Array(step_mm_deg, 5);
+    _RDK->_TIMEOUT = 3600 * 1000;
     //joint_list = save_to_file;
     if (save_to_file.isEmpty()) {
         _RDK->_send_Line("");
@@ -1980,6 +2023,7 @@ int Item::InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, doub
         joint_list = NULL;
     }
     int error_code = _RDK->_recv_Int();
+    _RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
     error_msg = _RDK->_recv_Line();
     _RDK->_check_status();
     return error_code;

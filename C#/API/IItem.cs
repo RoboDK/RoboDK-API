@@ -485,8 +485,10 @@ namespace RoboDk.API
         ///     Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the
         ///     preferred joints (configuration) to go to that cartesian position.
         /// </summary>
-        /// <param name="joints"></param>
-        void SetJoints(double[] joints);
+        /// <param name="joints">array of joint values, in degrees or mm for linear axes</param>
+        /// <param name="saturate_action">Behavior to saturate or ignore invalid joints (only applicable to robot items)</param>
+        /// <returns>Returns True if the joints are valid (not saturated), False if they are outside the joint limitations.</returns>
+        bool SetJoints(double[] joints, SetJointsType saturate_action=SetJointsType.Default);
 
         /// <summary>
         ///     Returns the joint limits of a robot

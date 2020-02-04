@@ -45,40 +45,27 @@ namespace RoboDk.API.Model
     /// <summary>
     /// Type of information returned by InstructionListJoints and GetInstructionListJoints
     /// </summary>
-    public enum ListJointsType
+    public enum SetJointsType
     {
         /// <summary>
-        /// Same result as Position (fastest)
+        /// Default behavior, will saturate the joints and apply the result. This option is used to support older versions of RoboDK.
         /// </summary>
-        Any = 0,
+        Default = 0,
 
         /// <summary>
-        /// Return the joints position. The returned columns are organized in the following way:
-        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID]
+        /// setJoints will apply the robot joints in any case. The robot may be displayed in an invalid solution: robot panel values and sliders will not show the correct robot position.
         /// </summary>
-        Position = 1,
+        Always = 1,
 
         /// <summary>
-        /// Include the speed information (also includes the time). The returned columns are organized in the following way:
-        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn] 
+        /// Will ignore setting robot joints if the joints are invalid (outside joint limits). This is the same as the default behavior with accurate return of saturation state.
         /// </summary>
-        Speed = 2,
+        SaturateIgnore = 2,
 
         /// <summary>
-        /// Return the speed and acceleration information (also includes the time). The returned columns are organized in the following way:
-        /// [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID,   TIME, X_TCP, Y_TCP, Z_TCP,  Speed_J1, Speed_J2, ..., Speed_Jn,   Accel_J1, Accel_J2, ..., Accel_Jn]
+        /// Will saturate the robot joints and apply the closest robot joitns solution.
         /// </summary>
-        SpeedAndAcceleration = 3,
-
-        /// <summary>
-        /// Make the result time-based so that the interval between joint values is provided at constant time steps
-        /// </summary>
-        TimeBased = 4,
-
-        /// <summary>
-        /// Make the result time-based so that the interval between joint values is provided at constant time steps. Speed and acceleration data is ignored.
-        /// </summary>
-        TimeBasedPosition = 5
+        SaturateApply = 3
     }
 }
 

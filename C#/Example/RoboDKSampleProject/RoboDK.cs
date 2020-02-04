@@ -1645,7 +1645,7 @@ public class RoboDK
 
     // Event types
     public const int EVENT_SELECTION_TREE_CHANGED = 1;
-    public const int EVENT_ITEM_MOVED = 2;
+    public const int EVENT_ITEM_MOVED = 2; // obsolete after RoboDK 4.2.0. Use EVENT_ITEM_MOVED_POSE instead
     public const int EVENT_REFERENCE_PICKED = 3;
     public const int EVENT_REFERENCE_RELEASED = 4;
     public const int EVENT_TOOL_MODIFIED = 5;
@@ -1654,6 +1654,7 @@ public class RoboDK
     public const int EVENT_3DVIEW_MOVED = 8;
     public const int EVENT_ROBOT_MOVED = 9;
     public const int EVENT_KEY = 10;
+    public const int EVENT_ITEM_MOVED_POSE = 11;
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;
@@ -1680,6 +1681,12 @@ public class RoboDK
     public const int VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB;
     public const int VISIBLE_ROBOT_ALL = 0x7FFFFFFF;
     public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
+
+    // Saturate robot joints when using robot.setJoints()
+    public const int SETJOINTS_DEFAULT = 0;         // Default behavior, will saturate the joints and apply the result. This option is used for older versions of RoboDK.
+    public const int SETJOINTS_ALWAYS = 1;          // setJoints will apply the robot joints in any case. The robot may be displayed in an invalid solution: robot panel values and sliders will not show the correct robot position.
+    public const int SETJOINTS_SATURATE_IGNORE = 2; // Will ignore setting robot joints if the joints are invalid (outside joint limits) -> same as default behavior
+    public const int SETJOINTS_SATURATE_APPLY = 3;  // Will saturate the robot joints and apply the closest robot solution
 
 
     public System.Diagnostics.Process PROCESS = null; // pointer to the process
@@ -2704,13 +2711,22 @@ public class RoboDK
     /// <returns></returns>
     public bool SampleRoboDkEvent(int evt, Item itm)
     {
+        Console.WriteLine("");
+        Console.WriteLine("**** New event ****");
+
+        if (itm.Valid())
+        {
+            Console.WriteLine("  Item: " + itm.Name() + " -> Type: " + itm.Type().ToString());
+        }
+        else
+        {
+            //Console.WriteLine("  Item not applicable");
+        }
+
         switch (evt)
         {
             case EVENT_SELECTION_TREE_CHANGED:
                 Console.WriteLine("Event: Selection changed (the tree was selected)");
-                break;
-            case EVENT_SELECTION_3D_CHANGED:
-                Console.WriteLine("Event: Selection changed (the 3D screen was selected)");
                 break;
             case EVENT_ITEM_MOVED:
                 Console.WriteLine("Event: Item Moved");
@@ -2724,15 +2740,57 @@ public class RoboDK
             case EVENT_TOOL_MODIFIED:
                 Console.WriteLine("Event: Tool Modified");
                 break;
+            case EVENT_3DVIEW_MOVED:
+                Console.WriteLine("Event: 3D view moved"); // use ViewPose to retrieve the pose of the camera
+                break;
+            case EVENT_ROBOT_MOVED:
+                Console.WriteLine("Event: Robot moved");
+                break;
+
+            // Important: The following events require consuming additional data from the _COM_EVT buffer
+            case EVENT_SELECTION_3D_CHANGED:
+            {
+                Console.WriteLine("Event: Selection changed");
+                // data contains the following information (24 values):
+                // pose (16), xyz selection (3), ijk normal (3), picked feature id (1), picked id (1)
+                double[] data = _recv_Array(_COM_EVT);
+                Mat pose_abs = new Mat(data, true);
+                double[] xyz = new double[] { data[16], data[17], data[18] };
+                double[] ijk = new double[] { data[19], data[20], data[21] };
+                int feature_type = Convert.ToInt32(data[22]);
+                int feature_id = Convert.ToInt32(data[23]);
+                Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
+                Console.WriteLine(pose_abs.ToString());
+                Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
+                Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
+                Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+                Console.WriteLine("Feature Type and ID");
+                Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
+                break;
+            }
+            case EVENT_KEY:
+            {
+                int key_press = _recv_Int(_COM_EVT); // 1 = key pressed, 0 = key released
+                int key_id = _recv_Int(_COM_EVT); // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
+                int modifiers = _recv_Int(_COM_EVT); // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
+                Console.WriteLine("Event: Key pressed: " + key_id.ToString() + " " + ((key_press > 0) ? "Pressed" : "Released") + ". Modifiers: " + modifiers.ToString());
+                break;
+            }
+            case EVENT_ITEM_MOVED_POSE:
+            {
+                int nvalues = _recv_Int(_COM_EVT);
+                Mat pose_rel = _recv_Pose(_COM_EVT);
+                if (nvalues > 16)
+                {
+                    // future compatibility
+                }
+                Console.WriteLine("Event: item moved. Relative pose: " + pose_rel.ToString());
+                break;
+            }
             default:
                 Console.WriteLine("Unknown event " + evt.ToString());
                 break;
         }
-        if (itm.Valid())
-            Console.WriteLine("  -> " + itm.Name() + " type: " + itm.Type().ToString());
-        else
-            Console.WriteLine("  Unknown item");
-
         return true;
     }
 
@@ -2748,30 +2806,6 @@ public class RoboDK
             int evt;
             Item itm;
             WaitForEvent(out evt, out itm);
-            if (evt == EVENT_SELECTION_3D_CHANGED)
-            {
-                double[] data = _recv_Array(_COM_EVT);
-                Mat pose_abs = new Mat(data, true);
-                double[] xyz = new double[] { data[16], data[17], data[18] };
-                double[] ijk = new double[] { data[19], data[20], data[21] };
-                int feature_type = Convert.ToInt32(data[22]);
-                int feature_id = Convert.ToInt32(data[23]);
-
-                Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
-                Console.WriteLine(pose_abs.ToString());
-                Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
-                Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
-                Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
-                Console.WriteLine("Feature Type and ID");
-                Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
-            }
-            else if (evt == EVENT_KEY) 
-            {
-                int key_press = _recv_Int(_COM_EVT); // 1 = key pressed, 0 = key released
-                int key_id = _recv_Int(_COM_EVT); // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
-                int modifiers = _recv_Int(_COM_EVT); // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
-                Console.WriteLine("Key " + key_id.ToString() + " " + ((key_press > 0) ? "Pressed" : "Released") + ". Modifiers: " + modifiers.ToString());
-            }
             SampleRoboDkEvent(evt, itm);
         }
         Console.WriteLine("Event loop finished");
@@ -4300,7 +4334,7 @@ public class RoboDK
         _send_Pose(base_frame);
         _send_Pose(tool);
         _send_ArrayList(param);
-        Mat joints_data = new Mat(ndofs, 5);
+        Mat joints_data = new Mat(12, 5);
         for (int i = 0; i < ndofs; i++)
         {
             joints_data[i, 0] = joints_build[i];
@@ -5342,14 +5376,34 @@ public class RoboDK
         /// <summary>
         /// Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
         /// </summary>
-        /// <param name="joints"></param>
-        public void setJoints(double[] joints)
+        /// <param name="joints">array of joint values, in degrees or mm for linear axes</param>
+        /// <param name="saturate_action">behavior to saturate or ignore invalid joints (only applicable to robot items)</param>
+        /// <returns>Returns True if the joints are valid (not saturated), False if they are outside the joint limitations.</returns>
+        public bool setJoints(double[] joints, int saturate_action=SETJOINTS_DEFAULT)
         {
-            link._check_connection();
-            link._send_Line("S_Thetas");
-            link._send_Array(joints);
-            link._send_Item(this);
-            link._check_status();
+            if (saturate_action == SETJOINTS_DEFAULT)
+            {
+                // remove this block in future versions (changed on 2020-01-17)
+                // return value for previous versions of RoboDK is always true
+                link._check_connection();
+                link._send_Line("S_Thetas");
+                link._send_Array(joints);
+                link._send_Item(this);
+                link._check_status();
+                return true;
+            }
+            else
+            {
+                link._require_build(14129);
+                link._check_connection();
+                link._send_Line("S_Thetas2");
+                link._send_Array(joints);
+                link._send_Item(this);
+                link._send_Int(saturate_action);
+                bool isvalid = (link._recv_Int() == 1);
+                link._check_status();
+                return isvalid;
+            }
         }
 
         /// <summary>

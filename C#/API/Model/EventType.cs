@@ -55,7 +55,7 @@ namespace RoboDk.API.Model
         SelectionTreeChanged = 1,
 
         /// <summary>
-        /// The location of an object, robot or reference frame was moved
+        /// Obsolete after RoboDK v4.2.0: Use ItemMovedPose instead. The location of an object, robot or reference frame was moved
         /// </summary>
         ItemMoved = 2,
 
@@ -98,7 +98,12 @@ namespace RoboDk.API.Model
         /// Key pressed event.
         /// More information about the event parameter can be found here: <see cref="KeyPressedEventResult"/>
         /// </summary>
-        KeyPressed = 10
+        KeyPressed = 10,
+
+        /// <summary>
+        /// The location of an object, robot or reference frame was moved, including the relative pose.
+        /// </summary>
+        ItemMovedPose = 11
     }
 }
 

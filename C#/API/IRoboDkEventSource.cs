@@ -64,6 +64,23 @@ namespace RoboDk.API
         public Mat ClickedOffset { get; }
     }
 
+    public class ItemMovedEventResult : EventResult
+    {
+        /// <summary>
+        /// Item moved event
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="pose_rel">Relative pose (pose with respect to parent)</param>
+        public ItemMovedEventResult(
+            IItem item,
+            Mat pose_rel) : base(EventType.ItemMovedPose, item)
+        {
+            Pose = pose_rel;
+        }
+
+        public Mat Pose { get; }
+    }
+
     public class KeyPressedEventResult : EventResult
     {
         public enum KeyPressState

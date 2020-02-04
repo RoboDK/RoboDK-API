@@ -796,14 +796,31 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetJoints(double[] joints)
+        public bool SetJoints(double[] joints, SetJointsType saturate_action = SetJointsType.Default)
         {
-            Link.check_connection();
-            var command = "S_Thetas";
-            Link.send_line(command);
-            Link.send_array(joints);
-            Link.send_item(this);
-            Link.check_status();
+            if (saturate_action == SetJointsType.Default)
+            {
+                Link.check_connection();
+                var command = "S_Thetas";
+                Link.send_line(command);
+                Link.send_array(joints);
+                Link.send_item(this);
+                Link.check_status();
+                return true;
+            }
+            else
+            {
+                Link.RequireBuild(14129);
+                Link.check_connection();
+                var command = "S_Thetas2";
+                Link.send_line(command);
+                Link.send_array(joints);
+                Link.send_item(this);
+                Link.send_int((int) saturate_action);
+                bool isvalid = Link.rec_int() == 1;
+                Link.check_status();
+                return isvalid;
+            }
         }
 
         /// <inheritdoc />

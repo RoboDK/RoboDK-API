@@ -276,6 +276,8 @@ namespace ProjectRoboDK
 
             try
             {
+                //bool jnts_valid = ROBOT.setJoints(joints, RoboDK.SETJOINTS_SATURATE_APPLY);
+                //Console.WriteLine("Robot joints are valid: " + jnts_valid.ToString());
                 ROBOT.MoveJ(joints, MOVE_BLOCKING);
             }
             catch (RoboDK.RDKException rdkex)
@@ -922,7 +924,9 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
-            
+            RDK.EventsListen();
+            RDK.EventsLoop();
+
             if (!Check_ROBOT()) { return; }
 
 
