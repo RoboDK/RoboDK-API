@@ -1,3 +1,37 @@
+% Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% http://www.apache.org/licenses/LICENSE-2.0
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+%
+% --------------------------------------------
+% --------------- DESCRIPTION ----------------
+% This file defines the following class:
+%     Robolink()
+%
+% These classes are the objects used to interact with RoboDK and create macros.
+% An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+% Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method) 
+%
+% In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
+%
+% More information about the RoboDK API for Python here:
+%     https://robodk.com/doc/en/RoboDK-API.html
+%     https://robodk.com/doc/en/PythonAPI/index.html
+%
+% More information about RoboDK post processors here:
+%     https://robodk.com/help%PostProcessor
+%
+% Visit the Matrix and Quaternions FAQ for more information about pose/homogeneous transformations
+%     http://www.j3d.org/matrix_faq/matrfaq_latest.html
+%
+% --------------------------------------------
+
 classdef Robolink < handle
 % This class allows to create macros for RoboDK.
 % Any interaction is made through "items". An item is an object in the
@@ -931,7 +965,18 @@ classdef Robolink < handle
             send_line(this, value);
             check_status(this);
         end
-        
+        function response = Command(this, cmd, value)
+            % Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+            check_connection(this);
+            command = 'SCMD';
+            send_line(this, command);
+            send_line(this, cmd);
+            send_line(this, strrep(value, '\n','<br>'));
+            this.COM.Timeout = 3600; % wait up to 1 hour for user input
+            response = rec_line(this);
+            this.COM.Timeout = this.TIMEOUT;
+            check_status(this);
+        end        
         function ShowSequence(this, matrix)
             % Displays a sequence of joints
             % In  1 : joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix
