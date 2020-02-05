@@ -1,3 +1,37 @@
+% Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+% http://www.apache.org/licenses/LICENSE-2.0
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+%
+% --------------------------------------------
+% --------------- DESCRIPTION ----------------
+% This file defines the following class:
+%     RobolinkItem()  (or Item() as used in the Python version of the API)
+%
+% These classes are the objects used to interact with RoboDK and create macros.
+% An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+% Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method) 
+%
+% In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
+%
+% More information about the RoboDK API for Python here:
+%     https://robodk.com/doc/en/RoboDK-API.html
+%     https://robodk.com/doc/en/PythonAPI/index.html
+%
+% More information about RoboDK post processors here:
+%     https://robodk.com/help%PostProcessor
+%
+% Visit the Matrix and Quaternions FAQ for more information about pose/homogeneous transformations
+%     http://www.j3d.org/matrix_faq/matrfaq_latest.html
+%
+% --------------------------------------------
+
 classdef RobolinkItem < handle
 % The Item class represents an item in RoboDK station.
 % An item can be a robot, a frame, a tool, an object, a target, ... (any item visible in the station tree)
@@ -20,7 +54,13 @@ classdef RobolinkItem < handle
         INS_TYPE_PAUSE = 6;         % Pause instruction
         INS_TYPE_EVENT = 7;         % Event instruction
         INS_TYPE_CODE = 8;          % Insert code instruction
-        INS_TYPE_PRINT = 9;         % Print instruction        
+        INS_TYPE_PRINT = 9;         % Print instruction   
+        
+        INSTRUCTION_CALL_PROGRAM = 0;        % Program call
+        INSTRUCTION_INSERT_CODE = 1;         % Insert raw code in the generated program
+        INSTRUCTION_START_THREAD = 2;        % Start a new process
+        INSTRUCTION_COMMENT = 3;             % Add a comment in the code
+        INSTRUCTION_SHOW_MESSAGE = 4;        % Add a message
     end    
     properties
         item = 0; % This value should not be modified. It stores the object pointer
@@ -211,6 +251,26 @@ classdef RobolinkItem < handle
             this.link.check_status();
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function setValue(this, varname, value)
+            % Set a specific variable name to a given value. This is reserved for internal purposes and future compatibility.
+            % In 1 : variable name
+            % In 2 : variable value
+            this.link.check_connection();
+            if isa(value,'double')
+                command = 'S_Gen_Mat';
+                this.link.send_line(command);
+                this.link.send_item(this);
+                this.link.send_line(varname);
+                this.link.send_matrix(value);
+            else
+                command = 'S_Gen_Str';
+                this.link.send_line(command);
+                this.link.send_item(this);
+                this.link.send_line(varname);
+                this.link.send_line(value);
+            end
+            this.link.check_status();
+        end   
         function setPose(this, pose)
             % Sets the local position (pose) of an item. For example, the position of an object/frame/target with respect to its parent.
             % In 1 : 4x4 homogeneous matrix (pose)
@@ -710,6 +770,15 @@ classdef RobolinkItem < handle
 %             end
         end
         function prog_status = RunProgram(this)
+            % Obsolete. Use RunCode Instead.     
+            this.link.check_connection();
+            command = 'RunProg';
+            this.link.send_line(command);
+            this.link.send_item(this);          
+            prog_status = this.link.rec_int();
+            this.link.check_status();
+        end  
+        function prog_status = RunCode(this)
             % Runs a program. It returns the number of instructions that can be executed successfully (a quick check is performed before the program starts)
             % This is a non-blocking call.
             % Out 1 : int -> number of instructions that can be executed        
@@ -720,6 +789,67 @@ classdef RobolinkItem < handle
             prog_status = this.link.rec_int();
             this.link.check_status();
         end  
+        function prog_status = RunInstruction(this, code, run_type)
+            % Add a program call, code, message or comment to the program. Returns 0 if succeeded.
+            % In 1 : int -> the code to insert, program to run, or comment to add.
+            % In 2 : int -> Use INSTRUCTION_* variable to specify if the
+            % code is a program call or just a raw code insert.
+            % Out 1 : int -> number of instructions that can be executed        
+            if nargin < 3
+                run_type = INSTRUCTION_CALL_PROGRAM;
+            end
+            this.link.check_connection();
+            command = 'RunCode2';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_line(strrep(strrep(code,'\r\n','<<br>>'), '\r', '<<br>>'));
+            this.link.send_int(run_type);
+            prog_status = this.link.rec_int();
+            this.link.check_status();
+        end  
+        function Pause(this, time_ms)
+            % Pause instruction for a robot or insert a pause instruction to a program (when generating code offline -offline programming- or when connected to the robot -online programming-).
+            % In 1 : double -> Pause time in milliseconds
+            if nargin < 2
+                time_ms = -1;
+            end
+            this.link.check_connection();
+            command = 'RunPause';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_int(time_ms*1000.0);
+            this.link.check_status();
+        end  
+        function setDO(this, do_variable, do_value)
+            % Set a Digital Output (DO). This command can also be used to set any generic variables to a desired value.
+            % In 1 : str -> Digital Output variable
+            % In 2 : str -> Digital Output value
+            this.link.check_connection();
+            command = 'setDO';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_line(do_variable);
+            this.link.send_line(do_value);
+            this.link.check_status();
+        end  
+        function waitDI(this, di_variable, di_value, timeout_ms)
+            % Wait for an digital input io_var to attain a given value io_value. Optionally, a timeout can be provided.
+            % In 1 : str -> Digital Input variable
+            % In 2 : str -> Digital Input value
+            if nargin < 3
+                timeout_ms = -1;
+            end
+            this.link.check_connection();
+            command = 'waitDI';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_line(di_variable);
+            this.link.send_line(di_value);
+            this.link.send_int(timeout_ms*1000.0);
+            set(this.link.COM,'Timeout', 3600*24*7); % Wait up to 1 week
+            this.link.check_status();
+            set(this.link.COM,'Timeout', this.link.TIMEOUT);            
+        end
         function addMoveJ(this, itemtarget)
             % Adds a new "Move Joint" instruction to a program.
             % In  1 : item -> target to move to         

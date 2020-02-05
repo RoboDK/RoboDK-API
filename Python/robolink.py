@@ -1,4 +1,4 @@
-# Copyright 2015 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -1727,6 +1727,25 @@ class Robolink:
         self._check_connection()
         self._send_line('RemoveStn')
         self._check_status()
+        
+    def Delete(self, item_list):
+        """Remove a list of items.
+        
+        .. seealso:: :func:`~robolink.Item.Delete`, :func:`~robolink.Robolink.CloseStation`
+        """
+        self._require_build(14560)        
+        if type(item_list) is not list:
+            item_list = [item_list]           
+        
+        self._check_connection()
+        command = 'RemoveLst'
+        self._send_line(command)
+        self._send_int(len(item_list))
+        for itm in item_list:
+            self._send_item(itm)
+            itm.item = 0
+            
+        self._check_status()     
         
     def Save(self, filename, itemsave=0):
         """Save an item or a station to a file (formats supported include RDK, STL, ROBOT, TOOL, ...). If no item is provided, the open station is saved.
@@ -5416,7 +5435,9 @@ class Item():
         self.link._send_line(str(io_var))
         self.link._send_line(str(io_value))
         self.link._send_int(timeout_ms*1000)
+        self.link.COM.settimeout(3600*24*7) # wait up to 1 week
         self.link._check_status()
+        self.link.COM.settimeout(self.link.TIMEOUT)        
         
     def customInstruction(self, name, path_run, path_icon="", blocking=1, cmd_run_on_robot=""):
         """Add a custom instruction. This instruction will execute a Python file or an executable file.

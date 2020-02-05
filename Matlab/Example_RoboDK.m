@@ -1,4 +1,7 @@
 % This is an example that uses the RoboDK API for Matlab.
+% This example is not meant to show a specific application, just how to
+% interact with the API
+%
 % This is a .m file (Matlab file).
 % The RoboDK API for Matlab requires the files in this folder.
 % This example requires RoboDK to be running 
