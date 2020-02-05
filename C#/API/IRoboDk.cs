@@ -422,6 +422,11 @@ namespace RoboDk.API
         void CloseStation();
 
         /// <summary>
+        /// Delete a list of items
+        /// </summary>
+        void Delete(List<IItem> item_list);
+
+        /// <summary>
         ///  Adds a new Frame that can be referenced by a robot.
         /// </summary>
         /// <param name="name">name of the reference frame</param>

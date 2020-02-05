@@ -1046,6 +1046,21 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void Delete(List<IItem> item_list)
+        {
+            RequireBuild(12939);
+            check_connection();
+            var command = "RemoveLst";
+            send_line(command);
+            send_int(item_list.Count());
+            foreach (IItem itm in item_list){
+                send_item(itm);
+                // itm.ItemId = 0; // how to make Item a friend class of Robolink in C#?
+            }
+            check_status();
+        }
+
+        /// <inheritdoc />
         public IItem AddFrame(string name, IItem parent = null)
         {
             check_connection();
