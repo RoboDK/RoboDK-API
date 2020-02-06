@@ -122,7 +122,7 @@ namespace RoboDk.API
         public Func<IItem, IItem> ItemInterceptFunction { set; get; } = item => item;
 
         /// <summary>
-        /// Default Socket send / receive timeout in miliseconds: 10 seconds
+        /// Default Socket send / receive timeout in milliseconds: 10 seconds
         /// </summary>
         public int DefaultSocketTimeoutMilliseconds { get; set; }
 
