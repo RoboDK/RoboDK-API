@@ -1033,13 +1033,23 @@ class Robolink:
                         
         elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
             from socket import socket
-            with socket() as s:
-                s.bind(('',0))
-                port = s.getsockname()[1]
+            if sys.version_info.major >= 3:
+                with socket() as s:
+                    s.bind(('',0))
+                    port = s.getsockname()[1]
+                    print("Using available port %i" % port)
+                    self.PORT_START = port
+                    self.PORT_END = port
+                    self.ARGUMENTS.append("-PORT=%i" % port)
+            else:
+                sock = socket()
+                sock.bind(('',0))
+                port = sock.getsockname()[1]
                 print("Using available port %i" % port)
                 self.PORT_START = port
                 self.PORT_END = port
                 self.ARGUMENTS.append("-PORT=%i" % port)
+                sock.close()
                 
         if "-DEBUG" in self.ARGUMENTS or "/DEBUG" in self.ARGUMENTS:
             self.DEBUG = True
