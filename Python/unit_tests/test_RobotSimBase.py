@@ -63,7 +63,7 @@ class TestRobotSimBase(unittest.TestCase):
             if s.blending == 0 and s.move_type == MoveType.Frame:
                 lastFrame = s.playback_frames[-1]
                 expectedFramePose = get_frame_pose(s, lastFrame)
-                delta = 1e-06
+                delta = 1e-05
                 msg = f"Step {s.name} is a stop point (frame move, blending 0). Exact target position should be reached"
                 for index, value in enumerate(expectedFramePose):
                     self.assertAlmostEqual(s.pose[index], value, msg=msg, delta=delta)
@@ -77,7 +77,7 @@ class TestRobotSimBase(unittest.TestCase):
         endStep = steps[step_index + 1]
         for index, playbackFrame in enumerate(endStep.playback_frames):
             framePose = get_frame_pose(endStep, playbackFrame)
-            delta = 1e-06
+            delta = 1e-05
             for i in range(3):
                 msg = f"Step {endStep.name} playback frame {index},{i} has not the same position. refFrame{refFramePose[:3]}, step frame {framePose[:3]}"
                 self.assertAlmostEqual(framePose[i], refFramePose[i], msg=msg, delta=delta)

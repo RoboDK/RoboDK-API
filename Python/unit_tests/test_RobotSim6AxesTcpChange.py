@@ -42,6 +42,14 @@ class TestRobotSim6Axes(TestRobotSimBase):
     def load_robot_cell(self):
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
 
+    def _test_tcps_in_different_positions(self):
+        tool_list = self.rdk.ItemList(filter=ITEM_TYPE_TOOL)
+        self.robot.setPoseTool(tool_list[0])
+        p1 = self.robot.PoseTool()
+        self.robot.setPoseTool(tool_list[1])
+        p2 = self.robot.PoseTool()
+        self.assertNotEqual(p1, p2, f"The two robot pose tools have the same offset => one must have changed")
+
     @parameterized.expand([
         ("NoBlending", -1),
         ("Blending", 10),
@@ -59,6 +67,7 @@ class TestRobotSim6Axes(TestRobotSimBase):
         """Test program with one stop point"""
         self.program = get_program_tcp_change(blending)
         self._test_program(verbose=False)
+        self._test_tcps_in_different_positions()
 
 
 if __name__ == '__main__':

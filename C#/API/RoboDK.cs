@@ -1924,7 +1924,7 @@ namespace RoboDk.API
 
         public IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
-            var target = AddTarget(targetName, robotBase);
+            var target = AddTarget(targetName, robotBase, robot);
             if (target == null)
             {
                 throw new Exception($"Create target '{targetName}' failed.");
