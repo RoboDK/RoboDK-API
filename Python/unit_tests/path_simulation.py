@@ -38,20 +38,10 @@ def load_file(filename):
     global robot
     global tools
 
-    is_new_station = True
-    if rdk is not None:
-        old_station_name = rdk.ActiveStation().Name()
-        new_station_name = os.path.splitext(filename)[0]
-        is_new_station = (old_station_name != new_station_name)
-
+    rdk.CloseStation()
+    rdk.AddFile(os.path.realpath(filename))
     robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
     tools = rdk.ItemList(ITEM_TYPE_TOOL)
-    if is_new_station or not robot.Valid():
-        if is_new_station:
-            rdk.CloseStation()
-        rdk.AddFile(os.path.realpath(filename))
-        robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
-        tools = rdk.ItemList(ITEM_TYPE_TOOL)
 
     return robot, tools
 
