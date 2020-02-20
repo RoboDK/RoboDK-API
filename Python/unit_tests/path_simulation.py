@@ -18,7 +18,7 @@ robot = None
 def init_robodk():
     global rdk
 
-    rdk = Robolink(close_std_out=True)
+    rdk = Robolink()#close_std_out=True)
 
     rdk.Command("AutoRenderDelay", 50)
     rdk.Command("AutoRenderDelayMax", 300)
