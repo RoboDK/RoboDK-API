@@ -1644,34 +1644,30 @@ namespace RoboDk.API
                     joints[rowId] = jointList[rowId, colId];
                 }
 
-                var jointError = (int) jointList[numberOfJoints, colId];
+                var jointError = (int)jointList[numberOfJoints, colId];
                 var errorType = JointErrorTypeHelper.ConvertErrorCodeToJointErrorType(jointError);
                 var linearStep = jointList[numberOfJoints + 1, colId];
                 var jointStep = jointList[numberOfJoints + 2, colId];
-                var moveId = (int) jointList[numberOfJoints + 3, colId];
+                var moveId = (int)jointList[numberOfJoints + 3, colId];
 
                 var timeStep = 0.0;
-                var speeds = new double[0];
-                var accelerations = new double[0];
 
-                if ((int)flags >= 2)
+                timeStep = jointList[numberOfJoints + 4, colId];
+
+                var accelerations = new double[numberOfJoints];
+                var speeds = new double[numberOfJoints];
+                var speedRowId = numberOfJoints + 8;
+                var accelerationRowId = numberOfJoints + 8 + numberOfJoints;
+
+                for (var i = 0; i < numberOfJoints; i++)
                 {
-                    timeStep = jointList[numberOfJoints + 4, colId];
-                    speeds = new double[numberOfJoints];
-                    var speedRowId = numberOfJoints + 8;
-                    var i = 0;
-                    for (var rowId = speedRowId; rowId < speedRowId + numberOfJoints; rowId++, i++)
+                    var rowId = speedRowId + i;
+                    if (rowId < jointList.Rows)
                     {
                         speeds[i] = jointList[rowId, colId];
                     }
-                }
-
-                if ((int)flags >= 3)
-                {
-                    accelerations = new double[numberOfJoints];
-                    var accelerationRowId = numberOfJoints + 8 + numberOfJoints;
-                    var i = 0;
-                    for (var rowId = accelerationRowId; rowId < accelerationRowId + numberOfJoints; rowId++, i++)
+                    rowId = accelerationRowId + i;
+                    if (rowId < jointList.Rows)
                     {
                         accelerations[i] = jointList[rowId, colId];
                     }
