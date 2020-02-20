@@ -4882,6 +4882,19 @@ public class RoboDK
 
         // add more methods
 
+        public string setParamItem(string param, string value = "")
+        {
+            link._require_build(7129);
+            link._check_connection();
+            link._send_Line("ICMD");
+            link._send_Item(this);
+            link._send_Line(param);
+            link._send_Line(value);
+            var response = link._recv_Line();
+            link._check_status();
+            return response;
+        }
+
         /// <summary>
         /// Sets the local position (pose) of an object, target or reference frame. For example, the position of an object/frame/target with respect to its parent.
         /// If a robot is provided, it will set the pose of the end efector.
