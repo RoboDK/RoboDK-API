@@ -84,18 +84,18 @@ def get_program_near_singularity():
     return Program("Near Singularity", steps)
 
 
-def get_program_KinematicPathLimit():
+def get_program_kinematic_path_limit():
     """Test program to simulate a path which is near kinematic limits"""
     j1 = [-124.574187, -103.845852, 105.005701, 36.135749, 64.419738, 141.994562]
-    f2 = [-331.304132,   504.922772,   657.678757,  -179.352793,   -74.861742,  -129.551949]
-    f3 = [-306.399431,   504.846666,   664.415974,  -179.352793,   -74.861742,  -129.551949]
-    f4 = [-284.734545,   535.609932,   572.673677,  -179.924808,   -74.974404,   134.877210]
-    f5 = [  -309.652446,   535.618709,   565.985019,  -179.924808,   -74.974404,   134.877210 ]
-    f6 = [  -307.385836,   535.371153,   595.898247,  -179.924808,   -74.974404,   134.877210 ]
-    f7 = [  -257.440848,   534.015376,   755.909684,  -179.924808,   -74.974404,   134.877210 ]
-    j8 = [ -106.722253, -86.501522, 133.588205, -1.536958, -90.366601, 202.291369 ]
-    j9 = [ -13.025748, -109.978175, 108.893260, -49.847042, -86.956596, -214.386461 ]
-    j10 = [ 73.561315, -112.163318, 75.775272, 85.295770, -23.438906, -249.258227 ]
+    f2 = [-331.304132, 504.922772, 657.678757, -179.352793, -74.861742, -129.551949]
+    f3 = [-306.399431, 504.846666, 664.415974, -179.352793, -74.861742, -129.551949]
+    f4 = [-284.734545, 535.609932, 572.673677, -179.924808, -74.974404, 134.877210]
+    f5 = [-309.652446, 535.618709, 565.985019, -179.924808, -74.974404, 134.877210]
+    f6 = [-307.385836, 535.371153, 595.898247, -179.924808, -74.974404, 134.877210]
+    f7 = [-257.440848, 534.015376, 755.909684, -179.924808, -74.974404, 134.877210]
+    j8 = [-106.722253, -86.501522, 133.588205, -1.536958, -90.366601, 202.291369]
+    j9 = [-13.025748, -109.978175, 108.893260, -49.847042, -86.956596, -214.386461]
+    j10 = [73.561315, -112.163318, 75.775272, 85.295770, -23.438906, -249.258227]
 
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel):
@@ -115,11 +115,16 @@ def get_program_KinematicPathLimit():
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        (f"PosBased_{test_RobotSimBase.sim_step_mm_S:0.1f}mm_{test_RobotSimBase.sim_step_deg_S:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
-        (f"PosBased_{test_RobotSimBase.sim_step_mm_L:0.1f}mm_{test_RobotSimBase.sim_step_deg_L:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
-        (f"TimeBased_{test_RobotSimBase.step_time_S:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
-        (f"TimeBased_{test_RobotSimBase.step_time_M:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
-        (f"TimeBased_{test_RobotSimBase.step_time_L:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
+        (f"PosBased({test_RobotSimBase.sim_step_mm_S:0.1f}mm,{test_RobotSimBase.sim_step_deg_S:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased({test_RobotSimBase.sim_step_mm_L:0.1f}mm,{test_RobotSimBase.sim_step_deg_L:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"TimeBased({test_RobotSimBase.step_time_S:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
+        (f"TimeBased({test_RobotSimBase.step_time_M:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
+        (f"TimeBased({test_RobotSimBase.step_time_L:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
     ])
 class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
@@ -150,17 +155,16 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
     def test_near_singularity(self):
         """Test near singularity"""
         self.program = get_program_near_singularity()
+        # TODO: for big mm, joint or time steps we expect the simulation to return an error, for which step sizes?
+        # TODO: how to check? result.message, result.status and playback frame errors not consistent
+        expect_error = self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm >= test_RobotSimBase.sim_step_mm_L
+        self._test_program(expect_error, verbose=False)
 
-        if (self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm > 5
-                or self.sim_type == InstructionListJointsFlags.TimeBased and self.sim_step_time > 0.01):
-            self._test_program(result_success=False, verbose=False)
-        else:
-            self._test_program(verbose=False)
-
-    def test_KinematicPathLimit(self):
+    def test_kinematic_path_limit(self):
         """Test KinematicPathLimit"""
-        self.program = get_program_KinematicPathLimit()
+        self.program = get_program_kinematic_path_limit()
         self._test_program(verbose=False)
+
 
 if __name__ == '__main__':
     unittest.main()

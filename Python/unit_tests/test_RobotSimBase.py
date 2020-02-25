@@ -14,6 +14,10 @@ sim_step_deg_S = 1
 sim_step_mm_L = 10
 sim_step_deg_L = 10
 
+# Replacement character for a simple dot "." used for parameterized tests
+# This is needed for proper test discovery and execution in vscode
+dot_repr = "\u2024"
+
 
 class TestRobotSimBase(unittest.TestCase):
     """Base test class for InstructionListJoints tests"""
@@ -39,19 +43,23 @@ class TestRobotSimBase(unittest.TestCase):
         if self.rdk is not None:
             self.rdk.Disconnect()
 
-    def _test_if_result_message_is_success(self):
-        """Asserts that InstructionLitJoints result message is 'success'"""
+    def _test_result_message(self, expect_error=False):
+        """Asserts that InstructionListJoints result message is as expected
+
+        :param bool expect_error: Set 'True' if simulation error is expected
+        """
         result = self.program.simulation_result
-        self.assertEqual(result.message.lower(), "success",
-                         f"Step {self.program.name} InstructionLitJoints result: {result.message}")
+        result_has_error = result.message.lower() != "success"
+        msg = f"InstructionListJoints result message: '{result.message}' (but expect_error={expect_error})"
+        self.assertEqual(result_has_error, expect_error, msg)
 
     def _test_for_missing_move_ids(self):
         """Asserts that there is at least one playback frame per step"""
         move_id = 0
         for s in self.program.steps:
             move_id += 1
-            self.assertNotEqual(len(s.playback_frames), 0,
-                                f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing")
+            msg = f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing"
+            self.assertNotEqual(len(s.playback_frames), 0, msg)
 
     def _test_for_valid_move_ids(self):
         """Asserts that all playback frames have a valid move id"""
@@ -67,8 +75,8 @@ class TestRobotSimBase(unittest.TestCase):
         steps = self.program.steps
         for s in steps:
             for index, pb_frame in enumerate(s.playback_frames):
-                self.assertEqual(pb_frame.error, 0,
-                                 f"Step {s.name} frame number {index} has a simulation error: {pb_frame.error_string}")
+                msg = f"Step {s.name} frame number {index} has a simulation error: {pb_frame.error_string}"
+                self.assertEqual(pb_frame.error, 0, msg)
 
     def _test_if_stop_points_reached(self):
         """Asserts that for each frame move without blending the target is reached exactly"""
@@ -76,7 +84,7 @@ class TestRobotSimBase(unittest.TestCase):
             if s.blending == 0 and s.move_type == MoveType.Frame:
                 lastFrame = s.playback_frames[-1]
                 expectedFramePose = get_frame_pose(s, lastFrame)
-                delta = 0.0011 # one micron is used in RoboDK as tolerance when time based sequence is used
+                delta = 0.0011  # one micron is used in RoboDK as tolerance when time based sequence is used
                 msg = f"Step {s.name} is a stop point (frame move, blending 0). Exact target position should be reached"
                 for index, value in enumerate(expectedFramePose):
                     self.assertAlmostEqual(s.pose[index], value, msg=msg, delta=delta)
@@ -106,34 +114,40 @@ class TestRobotSimBase(unittest.TestCase):
                     self.assertLessEqual(pb_frame.time_step, self.program.max_time_step, msg)
                 else:
                     move_type = step.move_type if index != 0 else previous_step.move_type
-                    # TODO: This check does not look correct mm step applies to linear moves, deg step applies to joint moves
+                    # deg step applies to joint moves
                     if move_type == MoveType.Joint:
                         msg_deg = f"Step {step.name} (Joint) playback frame {index}, deg_step {pb_frame.deg_step} not in 'max_deg_step' bounds"
 
                         # Check if value given in list result is smaller than max for simulation
-                        #self.assertLessEqual(pb_frame.deg_step, self.program.max_deg_step, msg_deg)
+                        self.assertLessEqual(pb_frame.deg_step, self.program.max_deg_step, msg_deg)
 
                         # Check if actual step is smaller than max for simulation
-                        #actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b
-                        #                       in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
-                        #self.assertLessEqual(actual_deg_step, self.program.max_deg_step, msg_deg)
+                        actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b
+                                               in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
+                        self.assertLessEqual(actual_deg_step, self.program.max_deg_step, msg_deg)
                     else:
                         msg_mm = f"Step {step.name} (Frame )playback frame {index}, mm_step {pb_frame.mm_step} not in 'max_mm_step' bounds"
 
                         # Check if value given in list result is smaller than max for simulation
-                        #self.assertLessEqual(pb_frame.mm_step, self.program.max_mm_step, msg_mm)
+                        self.assertLessEqual(pb_frame.mm_step, self.program.max_mm_step, msg_mm)
 
                         # Check if actual step is smaller than max for simulation
-                        # TODO: This test does not look correct: maybe related to linear vs joint moves confusion? If not, it looks like the check is instruction by instruction and this is not accurate when we use rounding.
-                        # For example, if we have rounding of 10 mm, we'll see a 10 mm offset instead of 1 mm
-                        #actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0]) for c_a, c_b in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
-                        #self.assertLessEqual(actual_mm_step, self.program.max_mm_step, msg_mm)
+                        actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0])
+                                                   for c_a, c_b in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
+                        self.assertLessEqual(actual_mm_step, self.program.max_mm_step, msg_mm)
 
                 previous_pb_frame = pb_frame
             previous_step = step
 
-    def _test_program(self, result_success=True, verbose=False):
-        """Loads and simulates program and then asserts various properties on result"""
+    def _test_program(self, expect_error=False, verbose=False):
+        """Loads and simulates program and then asserts various properties on result
+
+        :param bool expect_error:
+            Set 'True' if simulation error is expected, will only check for result message.
+            If set to false addidional checks on the simulation result will be executed.
+        :param bool verbose:
+            Print details of simulation result and load it to RoboDK
+        """
 
         # set testing parameters
         if self.sim_type is InstructionListJointsFlags.Position:
@@ -153,12 +167,13 @@ class TestRobotSimBase(unittest.TestCase):
             self.program.print()
             self.program.simulation_result.add_to_robodk()
 
-        if not result_success:
-            # other checks don't make sense
+        self._test_result_message(expect_error)
+
+        if expect_error:
+            # other checks don't make sense if program simulation has errors
             return
 
         # perform checks on simulation result
-        self._test_if_result_message_is_success()
         self._test_for_playback_frame_errors()
         self._test_for_missing_move_ids()
         self._test_for_valid_move_ids()

@@ -69,11 +69,16 @@ def get_program_frame_with7(blending):
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        (f"PosBased_{test_RobotSimBase.sim_step_mm_S:0.1f}mm_{test_RobotSimBase.sim_step_deg_S:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
-        (f"PosBased_{test_RobotSimBase.sim_step_mm_L:0.1f}mm_{test_RobotSimBase.sim_step_deg_L:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
-        (f"TimeBased_{test_RobotSimBase.step_time_S:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
-        (f"TimeBased_{test_RobotSimBase.step_time_M:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
-        (f"TimeBased_{test_RobotSimBase.step_time_L:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
+        (f"PosBased({test_RobotSimBase.sim_step_mm_S:0.1f}mm,{test_RobotSimBase.sim_step_deg_S:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased({test_RobotSimBase.sim_step_mm_L:0.1f}mm,{test_RobotSimBase.sim_step_deg_L:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"TimeBased({test_RobotSimBase.step_time_S:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
+        (f"TimeBased({test_RobotSimBase.step_time_M:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
+        (f"TimeBased({test_RobotSimBase.step_time_L:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
     ])
 class TestRobotSim7Axes(test_RobotSimBase.TestRobotSimBase):
 
