@@ -2,7 +2,7 @@
 
 from parameterized import parameterized_class, parameterized
 from path_simulation import *
-from test_RobotSimBase import TestRobotSimBase
+import test_RobotSimBase
 
 
 def get_program_joint_no7(blending):
@@ -69,13 +69,18 @@ def get_program_frame_with7(blending):
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        ("PosBased_S", InstructionListJointsFlags.Position, 1, 1, None),
-        ("PosBased_L", InstructionListJointsFlags.Position, 10, 10, None),
-        ("TimeBased_S", InstructionListJointsFlags.TimeBased, None, None, 0.002),
-        ("TimeBased_M", InstructionListJointsFlags.TimeBased, None, None, 0.02),
-        ("TimeBased_L", InstructionListJointsFlags.TimeBased, None, None, 0.2)
+        (f"PosBased({test_RobotSimBase.sim_step_mm_S:0.1f}mm,{test_RobotSimBase.sim_step_deg_S:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased({test_RobotSimBase.sim_step_mm_L:0.1f}mm,{test_RobotSimBase.sim_step_deg_L:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"TimeBased({test_RobotSimBase.step_time_S:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
+        (f"TimeBased({test_RobotSimBase.step_time_M:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
+        (f"TimeBased({test_RobotSimBase.step_time_L:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
     ])
-class TestRobotSim7Axes(TestRobotSimBase):
+class TestRobotSim7Axes(test_RobotSimBase.TestRobotSimBase):
 
     def _test_axis7_not_moving(self):
         steps = self.program.steps
