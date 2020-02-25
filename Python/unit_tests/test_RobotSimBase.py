@@ -5,7 +5,8 @@ from path_simulation import *
 # Simulation Time for Time Based Simulation Tests
 step_time_S = 0.002
 step_time_M = 0.02
-step_time_L = 0.2
+#step_time_L = 0.2 # triggers the default 25 deg limit for kinematic error when we are close to a singularity
+step_time_L = 0.025
 
 
 # Simulation Step Size in mm and deg for Position Based Simulation Tests
@@ -13,6 +14,12 @@ sim_step_mm_S = 1
 sim_step_deg_S = 1
 sim_step_mm_L = 10
 sim_step_deg_L = 10
+
+# Maximum calculation time in seconds
+max_calc_time = 2
+
+# Define the maximum expected playback frames per instruction
+max_frames_instruction = 1000
 
 # Replacement character for a simple dot "." used for parameterized tests
 # This is needed for proper test discovery and execution in vscode
@@ -25,11 +32,13 @@ class TestRobotSimBase(unittest.TestCase):
     robot = None
     tools = None
     program = None
+    calc_time = None
 
     sim_type = None
     sim_step_mm = None
     sim_step_deg = None
     sim_step_time = None
+    
 
     def load_robot_cell(self):
         raise NotImplementedError
@@ -43,15 +52,32 @@ class TestRobotSimBase(unittest.TestCase):
         if self.rdk is not None:
             self.rdk.Disconnect()
 
+    def _test_calc_time(self):
+        """Check if InstructionListJoints takes a reasonable amount of time to calculate"""
+        msg = f"Unexpected calculation time: {self.calc_time} s"
+        self.assertLessEqual(self.calc_time, max_calc_time, msg)
+
+    def _test_frames_per_instruction(self):
+        """Check if each instruction gets a reasonable amount of frames"""
+        for step in self.program.steps:
+            nframes = len(step.playback_frames)
+            msg = f"Step {step.name} has too many playback frames: {nframes}"
+            self.assertLessEqual(nframes, max_frames_instruction, msg)
+
     def _test_result_message(self, expect_error=False):
         """Asserts that InstructionListJoints result message is as expected
 
         :param bool expect_error: Set 'True' if simulation error is expected
         """
         result = self.program.simulation_result
-        result_has_error = result.message.lower() != "success"
+        result_has_error1 = result.error < 0
+        result_has_error2 = result.message.lower() != "success"
+        
+        msg = f"InstructionListJoints result message: '{result.message}' (but returned error code={result.error})"
+        self.assertEqual(result_has_error1, result_has_error2, msg)
+
         msg = f"InstructionListJoints result message: '{result.message}' (but expect_error={expect_error})"
-        self.assertEqual(result_has_error, expect_error, msg)
+        self.assertEqual(result_has_error1, expect_error, msg)
 
     def _test_for_missing_move_ids(self):
         """Asserts that there is at least one playback frame per step"""
@@ -107,16 +133,18 @@ class TestRobotSimBase(unittest.TestCase):
         """Asserts that max simulation steps (mm, deg, time) ar not exceeded"""
         previous_step = self.program.steps[0]
         previous_pb_frame = self.program.steps[0].playback_frames[0]
+        numerical_tolerance = 1e-6
         for step in self.program.steps:
             for index, pb_frame in enumerate(step.playback_frames):
                 if self.program.simulation_type >= InstructionListJointsFlags.TimeBased:
-                    msg = f"Step {step.name} playback frame {index}, time_step {pb_frame.time_step} not in 'max_time_step' bounds"
-                    self.assertLessEqual(pb_frame.time_step, self.program.max_time_step, msg)
+                    msg = f"Step {step.name} playback frame {index}, time_step {pb_frame.time_step} not within 'max_time_step' bounds"
+                    self.assertLessEqual(pb_frame.time_step, self.program.max_time_step + numerical_tolerance, msg)
                 else:
-                    move_type = step.move_type if index != 0 else previous_step.move_type
+                    #move_type = step.move_type if index != 0 else previous_step.move_type
+                    move_type = step.move_type # Fix by Albert
                     # deg step applies to joint moves
                     if move_type == MoveType.Joint:
-                        msg_deg = f"Step {step.name} (Joint) playback frame {index}, deg_step {pb_frame.deg_step} not in 'max_deg_step' bounds"
+                        msg_deg = f"Step {step.name} (Joint) playback frame {index}, deg_step {pb_frame.deg_step} not within 'max_deg_step' bounds"
 
                         # Check if value given in list result is smaller than max for simulation
                         self.assertLessEqual(pb_frame.deg_step, self.program.max_deg_step, msg_deg)
@@ -124,9 +152,9 @@ class TestRobotSimBase(unittest.TestCase):
                         # Check if actual step is smaller than max for simulation
                         actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b
                                                in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
-                        self.assertLessEqual(actual_deg_step, self.program.max_deg_step, msg_deg)
+                        self.assertLessEqual(actual_deg_step, self.program.max_deg_step + numerical_tolerance, msg_deg)
                     else:
-                        msg_mm = f"Step {step.name} (Frame )playback frame {index}, mm_step {pb_frame.mm_step} not in 'max_mm_step' bounds"
+                        msg_mm = f"Step {step.name} (Frame) playback frame {index}, mm_step {pb_frame.mm_step} not within 'max_mm_step' bounds"
 
                         # Check if value given in list result is smaller than max for simulation
                         self.assertLessEqual(pb_frame.mm_step, self.program.max_mm_step, msg_mm)
@@ -134,7 +162,7 @@ class TestRobotSimBase(unittest.TestCase):
                         # Check if actual step is smaller than max for simulation
                         actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0])
                                                    for c_a, c_b in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
-                        self.assertLessEqual(actual_mm_step, self.program.max_mm_step, msg_mm)
+                        self.assertLessEqual(actual_mm_step, self.program.max_mm_step + numerical_tolerance, msg_mm)
 
                 previous_pb_frame = pb_frame
             previous_step = step
@@ -162,6 +190,7 @@ class TestRobotSimBase(unittest.TestCase):
 
         self.program.load_to_robodk()
         self.program.simulate()
+        self.calc_time = self.program.calc_time
 
         if verbose:
             self.program.print()
@@ -174,6 +203,8 @@ class TestRobotSimBase(unittest.TestCase):
             return
 
         # perform checks on simulation result
+        self._test_calc_time()
+        self._test_frames_per_instruction()
         self._test_for_playback_frame_errors()
         self._test_for_missing_move_ids()
         self._test_for_valid_move_ids()

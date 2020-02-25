@@ -157,8 +157,12 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
         self.program = get_program_near_singularity()
         # TODO: for big mm, joint or time steps we expect the simulation to return an error, for which step sizes?
         # TODO: how to check? result.message, result.status and playback frame errors not consistent
-        expect_error = self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm >= test_RobotSimBase.sim_step_mm_L
-        self._test_program(expect_error, verbose=False)
+        if self.sim_step_mm is not None:
+            expect_error = self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm >= test_RobotSimBase.sim_step_mm_L
+            self._test_program(expect_error, verbose=False)
+        else:
+            #print("Ignored test near singularity because sim_step_mm is None")
+            print("I", end = '')
 
     def test_kinematic_path_limit(self):
         """Test KinematicPathLimit"""

@@ -1,4 +1,5 @@
 import sys
+import time
 from enum import Enum
 from robolink import *
 
@@ -170,6 +171,7 @@ class Program():
         self.simulation_type = simulation_type
         self.simulation_result = None
         self.robodk_program = None
+        self.calc_time = None
 
     def load_to_robodk(self):
         self.robodk_program = rdk.AddProgram("Prg", robot)
@@ -212,12 +214,16 @@ class Program():
     def _get_simulation_result(self):
         flag = InstructionListJointsFlags.TimeBased
 
+        t_start = time.time()
         error_msg, joint_list, error_code = self.robodk_program.InstructionListJoints(
             mm_step=self.max_mm_step,
             deg_step=self.max_deg_step,
             time_step=self.max_time_step,
             collision_check=COLLISION_OFF,
             flags=self.simulation_type)
+
+        self.calc_time = time.time() - t_start
+
         result = InstructionListJointsResult(error_code, error_msg, joint_list)
 
         joints = self.robodk_program.getLink().Joints()
