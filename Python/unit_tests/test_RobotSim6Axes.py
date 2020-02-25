@@ -2,7 +2,7 @@
 
 from parameterized import parameterized_class
 from path_simulation import *
-from test_RobotSimBase import TestRobotSimBase
+import test_RobotSimBase
 
 
 def get_program_one_stop_point():
@@ -84,15 +84,44 @@ def get_program_near_singularity():
     return Program("Near Singularity", steps)
 
 
+def get_program_KinematicPathLimit():
+    """Test program to simulate a path which is near kinematic limits"""
+    j1 = [-124.574187, -103.845852, 105.005701, 36.135749, 64.419738, 141.994562]
+    f2 = [-331.304132,   504.922772,   657.678757,  -179.352793,   -74.861742,  -129.551949]
+    f3 = [-306.399431,   504.846666,   664.415974,  -179.352793,   -74.861742,  -129.551949]
+    f4 = [-284.734545,   535.609932,   572.673677,  -179.924808,   -74.974404,   134.877210]
+    f5 = [  -309.652446,   535.618709,   565.985019,  -179.924808,   -74.974404,   134.877210 ]
+    f6 = [  -307.385836,   535.371153,   595.898247,  -179.924808,   -74.974404,   134.877210 ]
+    f7 = [  -257.440848,   534.015376,   755.909684,  -179.924808,   -74.974404,   134.877210 ]
+    j8 = [ -106.722253, -86.501522, 133.588205, -1.536958, -90.366601, 202.291369 ]
+    j9 = [ -13.025748, -109.978175, 108.893260, -49.847042, -86.956596, -214.386461 ]
+    j10 = [ 73.561315, -112.163318, 75.775272, 85.295770, -23.438906, -249.258227 ]
+
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("1", MoveType.Joint, 0, j1, 10, 0, 0),
+        Step("2", MoveType.Frame, 0, f2, 0, 0, 0),
+        Step("3", MoveType.Frame, 0, f3, 1, 0, 0),
+        Step("4", MoveType.Frame, 0, f4, 1, 0, 0),
+        Step("2", MoveType.Frame, 0, f5, 0, 0, 0),
+        Step("3", MoveType.Frame, 0, f6, 1, 0, 0),
+        Step("4", MoveType.Frame, 0, f7, 1, 0, 0),
+        Step("1", MoveType.Joint, 0, j8, 10, 0, 0),
+        Step("1", MoveType.Joint, 0, j9, 10, 0, 0),
+        Step("1", MoveType.Joint, 0, j10, 10, 0, 0),
+    ]
+    return Program("Kinematic Path Limit", steps)
+
+
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        ("PosBased_S", InstructionListJointsFlags.Position, 1, 1, None),
-        ("PosBased_L", InstructionListJointsFlags.Position, 10, 10, None),
-        ("TimeBased_S", InstructionListJointsFlags.TimeBased, None, None, 0.002),
-        ("TimeBased_M", InstructionListJointsFlags.TimeBased, None, None, 0.02),
-        ("TimeBased_L", InstructionListJointsFlags.TimeBased, None, None, 0.2)
+        (f"PosBased_{test_RobotSimBase.sim_step_mm_S:0.1f}mm_{test_RobotSimBase.sim_step_deg_S:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased_{test_RobotSimBase.sim_step_mm_L:0.1f}mm_{test_RobotSimBase.sim_step_deg_L:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"TimeBased_{test_RobotSimBase.step_time_S:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
+        (f"TimeBased_{test_RobotSimBase.step_time_M:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
+        (f"TimeBased_{test_RobotSimBase.step_time_L:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
     ])
-class TestRobotSim6Axes(TestRobotSimBase):
+class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
     def load_robot_cell(self):
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
@@ -128,6 +157,10 @@ class TestRobotSim6Axes(TestRobotSimBase):
         else:
             self._test_program(verbose=False)
 
+    def test_KinematicPathLimit(self):
+        """Test KinematicPathLimit"""
+        self.program = get_program_KinematicPathLimit()
+        self._test_program(verbose=False)
 
 if __name__ == '__main__':
     unittest.main()

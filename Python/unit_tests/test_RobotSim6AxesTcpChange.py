@@ -1,6 +1,6 @@
 from parameterized import parameterized, parameterized_class
 from path_simulation import *
-from test_RobotSimBase import TestRobotSimBase
+import test_RobotSimBase
 
 
 def get_program_no_movement(blending):
@@ -33,11 +33,13 @@ def get_program_tcp_change(blending):
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        ("PosBased_S", InstructionListJointsFlags.Position, 1, 1, None),
-        ("TimeBased_S", InstructionListJointsFlags.TimeBased, None, None, 0.002),
-        ("TimeBased_M", InstructionListJointsFlags.TimeBased, None, None, 0.02),
+        (f"PosBased_{test_RobotSimBase.sim_step_mm_S:0.1f}mm_{test_RobotSimBase.sim_step_deg_S:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased_{test_RobotSimBase.sim_step_mm_L:0.1f}mm_{test_RobotSimBase.sim_step_deg_L:0.1f}deg", InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"TimeBased_{test_RobotSimBase.step_time_S:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
+        (f"TimeBased_{test_RobotSimBase.step_time_M:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M),
+        (f"TimeBased_{test_RobotSimBase.step_time_L:0.4f}ms", InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_L)
     ])
-class TestRobotSim6Axes(TestRobotSimBase):
+class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
     def load_robot_cell(self):
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")

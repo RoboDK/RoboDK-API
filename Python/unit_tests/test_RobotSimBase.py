@@ -2,6 +2,19 @@ import unittest
 from path_simulation import *
 
 
+# Simulation Time for Time Based Simulation Tests
+step_time_S = 0.002
+step_time_M = 0.02
+step_time_L = 0.2
+
+
+# Simulation Step Size in mm and deg for Position Based Simulation Tests
+sim_step_mm_S = 1
+sim_step_deg_S = 1
+sim_step_mm_L = 10
+sim_step_deg_L = 10
+
+
 class TestRobotSimBase(unittest.TestCase):
     """Base test class for InstructionListJoints tests"""
     rdk = None
