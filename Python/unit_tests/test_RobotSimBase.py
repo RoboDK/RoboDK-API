@@ -23,7 +23,11 @@ max_frames_instruction = 1000
 
 # Replacement character for a simple dot "." used for parameterized tests
 # This is needed for proper test discovery and execution in vscode
-dot_repr = "\u2024"
+# nose2 (out unit test html report tool) can not deal with unicode character \u2024:
+# UnicodeEncodeError: 'charmap' codec can't encode character '\u2024' in position 3871: character maps to <undefined>
+# for the time being we use "_"
+dot_repr = "_"   # "\u2024" does not work with nose 2 (see comment above)
+
 
 
 class TestRobotSimBase(unittest.TestCase):
