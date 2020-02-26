@@ -265,7 +265,7 @@ VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB
 VISIBLE_ROBOT_ALL = 0x7FFFFFFF
 VISIBLE_ROBOT_ALL_REFS = 0x15555555
 
-if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
+if False:
     # To be added in the future. Requires Python 3.6 or later
     from enum import IntFlag
     from enum import IntEnum
@@ -641,9 +641,9 @@ class Robolink:
     APPLICATION_DIR = ''    
     
     DEBUG = False     # Debug output through console
-    CLOSE_STD_OUT = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
     COM = None        # tcpip com    
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
+    CLOSE_STD_OUT = False # Close standard output for roboDK (RoboDK console output will no longer be visible)
     PORT = -1         # current port
     BUILD = 0         # This variable holds the build id and is used for version checking
     
@@ -1012,7 +1012,8 @@ class Robolink:
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
         In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
-        In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown 
+        In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
+        
         """
         if type(args) is str:
             args = [args]
@@ -1156,11 +1157,12 @@ class Robolink:
             #if self.DEBUG:
             # Important! Make sure we consume stdout (at least in Debug mode)
             if self.CLOSE_STD_OUT:
-                p.stdout.close() 
+                p.stdout.close()                
             else:
                 import threading
                 t = threading.Thread(target=output_reader, args=(p,))
                 t.start()
+                
             
             #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
             #    self._ProcessID = p.pid
@@ -5748,7 +5750,7 @@ class Item():
         It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG. 
         Use list(:class:`~robodk.Mat`) to extract each column in a list. The ERROR is returned as an int but it needs to be interpreted as a binary number.
         
-        status (int): Status is 0 if no problems arised. Otherwise it returns the number of instructions that can be successfully executed. If status is negative it means that one or more targets are not defined (missing target item).
+        status (int): Status is negative if there are program issues (singularity, axis limit, targets not properly defined or collision if activated). Otherwise it returns the number of instructions that can be successfully executed.
                 
         .. code-block:: python
             :caption: Error bit masks
