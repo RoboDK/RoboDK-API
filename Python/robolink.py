@@ -265,7 +265,7 @@ VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB
 VISIBLE_ROBOT_ALL = 0x7FFFFFFF
 VISIBLE_ROBOT_ALL_REFS = 0x15555555
 
-if False:
+if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     # To be added in the future. Requires Python 3.6 or later
     from enum import IntFlag
     from enum import IntEnum
