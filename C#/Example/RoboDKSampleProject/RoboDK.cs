@@ -1502,6 +1502,15 @@ public class RoboDK
     // Program execution type
     public const int PROGRAM_RUN_ON_SIMULATOR = 1;        // Set the program to run on the simulator
     public const int PROGRAM_RUN_ON_ROBOT = 2;            // Set the program to run on the robot
+    
+    // Robot connection state
+    public const int ROBOTCOM_PROBLEMS       = -3;
+    public const int ROBOTCOM_DISCONNECTED   = -2;
+    public const int ROBOTCOM_NOT_CONNECTED  = -1;
+    public const int ROBOTCOM_READY          = 0;
+    public const int ROBOTCOM_WORKING        = 1;
+    public const int ROBOTCOM_WAITING        = 2;
+    public const int ROBOTCOM_UNKNOWN        = -1000;
 
     // TCP calibration types
     public const int CALIBRATE_TCP_BY_POINT = 0;
@@ -5634,6 +5643,113 @@ public class RoboDK
             link._check_status();
             return status != 0;
         }
+                
+		/// <summary>
+		/// Connect to a real robot and wait for a connection to succeed.
+		/// </summary>
+		/// <param name="robotIp">Robot IP. Leave blank to use the robot's connection params.</param>
+		/// <param name="maxAttempts">Maximum connection attemps before reporting an unsuccessful connection.</param>
+		/// <param name="waitConnection">Time to wait in seconds between connection attempts.</param>
+		/// <returns>True if connected successfully, else false.</returns>
+		public bool ConnectSafe(string robotIp = "", int maxAttempts = 5, int waitConnection = 4)
+		{
+			int tryCount = 0;
+			int refreshRate = 500; // [ms]
+			var waitSpan = new TimeSpan(0, 0, waitConnection);
+            int connectionStatus;
+			Connect(robotIp);
+			var timer = new Stopwatch();
+			timer.Start();
+			var attemptStart = timer.Elapsed;
+			System.Threading.Thread.Sleep(refreshRate);
+			while (true)
+			{
+				connectionStatus = ConnectedState();
+                Console.WriteLine(connectionStatus); //.Message);
+				if (connectionStatus == ROBOTCOM_READY)
+				{
+					break;
+				}
+				else if (connectionStatus == ROBOTCOM_DISCONNECTED)
+				{
+					Console.WriteLine("Trying to reconnect...");
+					Connect(robotIp);
+				}
+
+				if (timer.Elapsed - attemptStart > waitSpan)
+				{
+					attemptStart = timer.Elapsed;
+					Disconnect();
+					tryCount++;
+					if (tryCount >= maxAttempts)
+					{
+						Console.WriteLine("Failed to connect: Timed out");
+						break;
+					}
+					Console.WriteLine("Retrying connection, attempt #" + (tryCount + 1));
+				}
+
+				System.Threading.Thread.Sleep(refreshRate);
+			}
+
+			return connectionStatus == ROBOTCOM_READY;
+		}
+
+		/// <summary>
+		/// Returns the robot connection parameters.
+		/// </summary>
+		/// <returns>Robot IP, Robot Port, FTP Path, FTP Username, FTP Password</returns>
+		public void ConnectionParams(out string robotIP, out int port, out string remotePath, out string ftpUser, out string ftpPass)
+		{
+			link._check_connection();
+			var command = "ConnectParams";
+			link._send_Line(command);
+			link._send_Item(this);
+			robotIP = link._recv_Line();
+			port = link._recv_Int();
+			remotePath = link._recv_Line();
+			ftpUser = link._recv_Line();
+			ftpPass = link._recv_Line();
+			link._check_status();
+		}
+
+		/// <summary>
+		/// Set the robot connection parameters.
+		/// </summary>
+		/// <param name="robotIP">IP address of robot.</param>
+		/// <param name="port">Port of robot.</param>
+		/// <param name="remotePath">FTP path to connect to.</param>
+		/// <param name="ftpUser">FTP username</param>
+		/// <param name="ftpPass">FTP password</param>
+		public void setConnectionParams(string robotIP, int port, string remotePath, string ftpUser, string ftpPass)
+		{
+			link._check_connection();
+			var command = "setConnectParams";
+			link._send_Line(command);
+			link._send_Item(this);
+			link._send_Line(robotIP);
+			link._send_Int(port);
+			link._send_Line(remotePath);
+			link._send_Line(ftpUser);
+			link._send_Line(ftpPass);
+			link._check_status();
+		}
+
+		/// <summary>
+		/// Check connection status with a real robot.
+		/// </summary>
+		/// <returns>Status contains connection status code enumeration (ROBOTCOM_*).</returns>
+		public int ConnectedState()
+		{
+			link._check_connection();
+			var command = "ConnectedState";
+			link._send_Line(command);
+			link._send_Item(this);
+            int status = link._recv_Int();
+			var message = link._recv_Line();
+			link._check_status();
+            return status;
+		}
 
         /// <summary>
         /// Moves a robot to a specific target ("Move Joint" mode). By default, this function blocks until the robot finishes its movements.
