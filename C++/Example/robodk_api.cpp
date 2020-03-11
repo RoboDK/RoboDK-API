@@ -3512,14 +3512,16 @@ bool RoboDK::_recv_Matrix2D(tMatrix2D **mat){ // needs to delete after!
             Matrix2D_Delete(mat);
             return false;
         }
-        buffer = _COM->read(remaining*sizeof(double));
+        buffer.append(_COM->read(remaining * sizeof(double) - buffer.size()));
+        int np = buffer.size() / sizeof(double);
         QDataStream indata(buffer);
         indata.setFloatingPointPrecision(QDataStream::DoublePrecision);
-        while (!indata.atEnd()){
+        for (int i=0; i<np; i++){
             indata >> value;
             (*mat)->data[count] = value;
             count = count + 1;
         }
+        buffer = buffer.mid(np * sizeof(double));
     }
     return false;// we should never arrive here...
 }
