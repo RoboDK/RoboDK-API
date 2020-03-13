@@ -2117,7 +2117,7 @@ namespace RoboDk.API
             }
 
             line = line.Replace('\n', ' '); // one new line at the end only!
-            var data = Encoding.UTF8.GetBytes(line + "\n");
+            var data = Encoding.UTF8.GetBytes($"{line}\n");
             try
             {
                 sckt.SendData(data);
@@ -2136,16 +2136,17 @@ namespace RoboDk.API
             }
 
             //Receives a string. It reads until if finds LF (\\n)
-            var buffer = new byte[1];
-            var bytesread = sckt.ReceiveData(buffer, 1);
-            var line = "";
-            while (bytesread > 0 && buffer[0] != '\n')
+            var byteBuffer = new byte[1];
+            var stringBuffer = new List<byte>(40);
+            var bytesRead = sckt.ReceiveData(byteBuffer, 1);
+            while (bytesRead > 0 && byteBuffer[0] != '\n')
             {
-                line = line + Encoding.UTF8.GetString(buffer);
-                bytesread = sckt.ReceiveData(buffer, 1);
+                stringBuffer.Add(byteBuffer[0]);
+                bytesRead = sckt.ReceiveData(byteBuffer, 1);
             }
 
-            return line;
+            // convert stringBuffer to UTF-8 encoded string
+            return Encoding.UTF8.GetString(stringBuffer.ToArray()); ;
         }
 
         //Sends an item pointer
