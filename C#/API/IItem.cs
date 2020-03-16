@@ -498,6 +498,13 @@ namespace RoboDk.API
         void JointLimits(out double[] lowerLlimits, out double[] upperLimits);
 
         /// <summary>
+        /// Sets the joint limits of a robot
+        /// </summary>
+        /// <param name="lower_limits"></param>
+        /// <param name="upper_limits"></param>
+        void SetJointLimits(double[] lowerLlimits, double[] upperLimits);
+
+        /// <summary>
         ///     Sets the robot of a program or a target. You must set the robot linked to a program or a target every time you copy
         ///     paste these objects.
         ///     If the robot is not provided, the first available robot will be chosen automatically.

@@ -5445,6 +5445,21 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Sets the joint limits of a robot
+        /// </summary>
+        /// <param name="lower_limits"></param>
+        /// <param name="upper_limits"></param>
+        public void setJointLimits(double[] lower_limits, double[] upper_limits)
+        {
+            link._check_connection();
+            link._send_Line("S_RobLimits");
+            link._send_Item(this);
+            link._send_Array(lower_limits);
+            link._send_Array(upper_limits);
+            link._check_status();
+        }
+
+        /// <summary>
         /// Sets the robot of a program or a target. You must set the robot linked to a program or a target every time you copy paste these objects.
         /// If the robot is not provided, the first available robot will be chosen automatically.
         /// </summary>

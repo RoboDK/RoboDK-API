@@ -837,6 +837,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void SetJointLimits(double[] lower_limits, double[] upper_limits)
+        {
+            Link.check_connection();
+            Link.send_line("S_RobLimits");
+            Link.send_item(this);
+            Link.send_array(lower_limits);
+            Link.send_array(upper_limits);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
         public void SetRobot(IItem robot = null)
         {
             Link.check_connection();
