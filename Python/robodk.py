@@ -1,4 +1,4 @@
-# Copyright 2015 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -445,11 +445,11 @@ def pose_2_xyzrpw(H):
     x = H[0,3]
     y = H[1,3]
     z = H[2,3]
-    if (H[2,0] > (1.0 - 1e-6)):
+    if (H[2,0] > (1.0 - 1e-10)):
         p = -pi/2
         r = 0
         w = math.atan2(-H[1,2],H[1,1])
-    elif H[2,0] < -1.0 + 1e-6:
+    elif H[2,0] < -1.0 + 1e-10:
         p = pi/2
         r = 0
         w = math.atan2(H[1,2],H[1,1])
@@ -531,11 +531,11 @@ def Pose_2_TxyzRxyz(H):
     c = H[0,2]
     d = H[1,2]
     e = H[2,2]
-    if c > (1.0 - 1e-6):
+    if c > (1.0 - 1e-10):
         ry1 = pi/2
         rx1 = 0
         rz1 = atan2(H[1,0],H[1,1])
-    elif c < (-1.0 + 1e-6):
+    elif c < (-1.0 + 1e-10):
         ry1 = -pi/2
         rx1 = 0
         rz1 = atan2(H[1,0],H[1,1])
@@ -630,11 +630,11 @@ def Pose_2_KUKA(H):
     x = H[0,3]
     y = H[1,3]
     z = H[2,3]
-    if (H[2,0]) > (1.0 - 1e-6):
+    if (H[2,0]) > (1.0 - 1e-10):
         p = -pi/2
         r = 0
         w = atan2(-H[1,2],H[1,1])
-    elif (H[2,0]) < (-1.0 + 1e-6):
+    elif (H[2,0]) < (-1.0 + 1e-10):
         p = pi/2
         r = 0
         w = atan2(H[1,2],H[1,1])
@@ -689,11 +689,11 @@ def Pose_2_Adept(H):
     x = H[0,3]
     y = H[1,3]
     z = H[2,3]
-    if H[2,2] > (1.0 - 1e-6):
+    if H[2,2] > (1.0 - 1e-10):
         r = 0
         p = 0
         w = atan2(H[1,0],H[0,0])
-    elif H[2,2] < (-1.0 + 1e-6):
+    elif H[2,2] < (-1.0 + 1e-10):
         r = 0
         p = pi
         w = atan2(H[1,0],H[1,1])

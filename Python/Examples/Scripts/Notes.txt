@@ -1,0 +1,8 @@
+You can run scripts directly from RoboDK by selecting:
+Tools - Run Script 
+(Shift+S)
+
+
+The difference between the Python files (.py) available Scripts and Macros is that Scripts can be run without any modifications.
+
+The Python files in the Macros folder is meant to be a pool of examples or files that you can add to your project for specific purposes.
