@@ -2094,7 +2094,7 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Update`
         """
-        auto_render = not always_render;
+        auto_render = not always_render
         self._check_connection()
         command = 'Render'
         self._send_line(command)
