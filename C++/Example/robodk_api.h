@@ -1253,6 +1253,12 @@ public:
     QList<Item> Selection();
 
     /// <summary>
+    /// Sets the selection in the tree (it can be one or more items).
+    /// </summary>
+    /// <returns>List of items to set as selected</returns>
+    void setSelection(QList<Item> list_items);
+
+    /// <summary>
     /// Show the popup menu to create the ISO9283 path for position accuracy, repeatability and path accuracy performance testing.
     /// </summary>
     /// <param name="robot"></param>
