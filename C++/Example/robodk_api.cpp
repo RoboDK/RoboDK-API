@@ -3113,6 +3113,20 @@ QList<Item> RoboDK::Selection(){
     return list_items;
 }
 
+/// <summary>
+/// Sets the selection in the tree (it can be one or more items).
+/// </summary>
+/// <returns>List of items to set as selected</returns>
+void RoboDK::setSelection(QList<Item> list_items){
+    _check_connection();
+    _send_Line("S_Selection");
+    _send_Int(list_items.length());
+    for (int i = 0; i < list_items.length(); i++)    {
+        _send_Item(list_items[i]);
+    }
+    _check_status();
+}
+
 
 /// <summary>
 /// Show the popup menu to create the ISO9283 path for path accuracy and performance testing
