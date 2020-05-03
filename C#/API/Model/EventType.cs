@@ -103,7 +103,12 @@ namespace RoboDk.API.Model
         /// <summary>
         /// The location of an object, robot or reference frame was moved, including the relative pose.
         /// </summary>
-        ItemMovedPose = 11
+        ItemMovedPose = 11,
+
+        /// <summary>
+        /// The collision map changed: collision checking has changed for one or more pairs of objects.
+        /// </summary>
+        CollisionMapChanged = 12
     }
 }
 
