@@ -1,4 +1,4 @@
-// Copyright 2015-2018 - RoboDK Inc. - https://robodk.com/
+// Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -873,7 +873,7 @@ public:
     /// </summary>
     /// <param name="paste_to">Item to attach the copied item (optional)</param>
     /// <returns>New item created</returns>
-    Item Paste(const Item *paste_to=NULL);
+    Item Paste(const Item *paste_to=nullptr);
 
     /// <summary>
     /// Loads a file and attaches it to parent. It can be any file supported by RoboDK.
@@ -881,14 +881,14 @@ public:
     /// <param name="filename">Absolute path of the file.</param>
     /// <param name="parent">Parent to attach. Leave empty for new stations or to load an object at the station root.</param>
     /// <returns>Newly added object. Check with item.Valid() for a successful load.</returns>
-    Item AddFile(const QString &filename, const Item *parent=NULL);
+    Item AddFile(const QString &filename, const Item *parent=nullptr);
 
     /// <summary>
     /// Save an item to a file. If no item is provided, the open station is saved.
     /// </summary>
     /// <param name="filename">Absolute path to save the file</param>
     /// <param name="itemsave">Object or station to save. Leave empty to automatically save the current station.</param>
-    void Save(const QString &filename, const Item *itemsave=NULL);
+    void Save(const QString &filename, const Item *itemsave=nullptr);
 
     /// <summary>
     /// Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
@@ -898,7 +898,7 @@ public:
     /// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
     /// <param name="color">Optionally specify the color as RGBA [0-1]</param>
     /// <returns>Added or modified item</returns>
-    Item AddShape(tMatrix2D *trianglePoints,Item *addTo = NULL, bool shapeOverride = false, Color *color = NULL);
+    Item AddShape(tMatrix2D *trianglePoints,Item *addTo = nullptr, bool shapeOverride = false, Color *color = nullptr);
 
     /// <summary>
     /// Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
@@ -908,7 +908,7 @@ public:
     /// <param name="add_to_ref">If True, the curve will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
     /// <param name="projection_type">Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.</param>
     /// <returns>added object/curve (null if failed)</returns>
-    Item AddCurve(tMatrix2D *curvePoints,Item *referenceObject = NULL,bool addToRef = false,int ProjectionType = PROJECTION_ALONG_NORMAL_RECALC);
+    Item AddCurve(tMatrix2D *curvePoints,Item *referenceObject = nullptr,bool addToRef = false,int ProjectionType = PROJECTION_ALONG_NORMAL_RECALC);
 
     /// <summary>
     /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
@@ -918,7 +918,7 @@ public:
     /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
     /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
     /// <returns>added object/shape (0 if failed)</returns>
-    Item AddPoints(tMatrix2D *points, Item *referenceObject = NULL, bool addToRef = false, int ProjectionType =  PROJECTION_ALONG_NORMAL_RECALC);
+    Item AddPoints(tMatrix2D *points, Item *referenceObject = nullptr, bool addToRef = false, int ProjectionType =  PROJECTION_ALONG_NORMAL_RECALC);
 
     /// <summary>
     /// Projects a point given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
@@ -941,7 +941,7 @@ public:
     /// <param name="itemparent">Parent to attach to (such as a frame).</param>
     /// <param name="itemrobot">Main robot that will be used to go to self target.</param>
     /// <returns>the new target created</returns>
-    Item AddTarget(const QString &name, Item *itemparent = NULL, Item *itemrobot = NULL);
+    Item AddTarget(const QString &name, Item *itemparent = nullptr, Item *itemrobot = nullptr);
 
     /// <summary>
     /// Adds a new Frame that can be referenced by a robot.
@@ -949,7 +949,7 @@ public:
     /// <param name="name">Name of the reference frame.</param>
     /// <param name="itemparent">Parent to attach to (such as the robot base frame).</param>
     /// <returns>The new reference frame created.</returns>
-    Item AddFrame(const QString &name, Item *itemparent = NULL);
+    Item AddFrame(const QString &name, Item *itemparent = nullptr);
 
     /// <summary>
     /// Adds a new Frame that can be referenced by a robot.
@@ -957,7 +957,7 @@ public:
     /// <param name="name">Name of the program.</param>
     /// <param name="itemrobot">Robot that will be used.</param>
     /// <returns>the new program created</returns>
-    Item AddProgram(const QString &name, Item *itemrobot = NULL);
+    Item AddProgram(const QString &name, Item *itemrobot = nullptr);
 
     /// <summary>
     /// Add a new empty station. It returns the station item added.
@@ -973,7 +973,7 @@ public:
     /// <param name="name">Name of the project settings.</param>
     /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
     /// <returns></returns>
-    Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = NULL);
+    Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = nullptr);
 
     /// <summary>
     /// Returns the list of open stations in RoboDK.
@@ -1173,7 +1173,7 @@ public:
 
     ///
     /// \brief Show a list of items as collided.
-    void ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id = NULL);
+    void ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id = nullptr);
 
     /// <summary>
     /// Calibrate a tool (TCP) given a number of points or calibration joints. Important: If the robot is calibrated, provide joint values to maximize accuracy.
@@ -1184,7 +1184,7 @@ public:
     /// <param name="algorithm">type of algorithm (by point, plane, ...)</param>
     /// <param name="robot">Robot used for the identification (if using joint values).</param>
     /// <returns>TCP as [x, y, z] - calculated TCP</returns>
-    void CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format=EULER_RX_RY_RZ, int algorithm=CALIBRATE_TCP_BY_POINT, Item *robot=NULL, double *error_stats=NULL);
+    void CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format=EULER_RX_RY_RZ, int algorithm=CALIBRATE_TCP_BY_POINT, Item *robot=nullptr, double *error_stats=nullptr);
 
     /// <summary>
     /// Calibrate a Reference Frame given a list of points or joint values. Important: If the robot is calibrated, provide joint values to maximize accuracy.
@@ -1194,7 +1194,7 @@ public:
     /// <param name="use_joints">use points or joint values. The robot item must be provided if joint values is used.</param>
     /// <param name="robot">Robot used for the identification (if using joint values).</param>
     /// <returns></returns>
-    Mat CalibrateReference(tMatrix2D *poses_joints, int method = CALIBRATE_FRAME_3P_P1_ON_X, bool use_joints = false, Item *robot = NULL);
+    Mat CalibrateReference(tMatrix2D *poses_joints, int method = CALIBRATE_FRAME_3P_P1_ON_X, bool use_joints = false, Item *robot = nullptr);
 
     /// <summary>
     /// Defines the name of the program when the program is generated. It is also possible to specify the name of the post processor as well as the folder to save the program.
@@ -1205,7 +1205,7 @@ public:
     /// <param name="postprocessor">Name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post").</param>
     /// <param name="robot">Robot to link.</param>
     /// <returns></returns>
-    int ProgramStart(const QString &progname, const QString &defaultfolder = "", const QString &postprocessor = "", Item *robot = NULL);
+    int ProgramStart(const QString &progname, const QString &defaultfolder = "", const QString &postprocessor = "", Item *robot = nullptr);
 
     /// <summary>
     /// Set the pose of the wold reference frame with respect to the user view (camera/screen).
@@ -1227,7 +1227,7 @@ public:
     /// <param name="poseBase"></param>
     /// <param name="poseTool"></param>
     /// <returns></returns>
-    bool SetRobotParams(Item *robot,tMatrix2D dhm, Mat poseBase, Mat poseTool);
+    bool setRobotParams(Item *robot,tMatrix2D dhm, Mat poseBase, Mat poseTool);
 
     /// <summary>
     /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
@@ -1238,7 +1238,7 @@ public:
     /// <param name="y">Y coordinate in pixels</param>
     /// <param name="xyzStation"></param>
     /// <returns>Item under the mouse cursor.</returns>
-    Item getCursorXYZ(int x = -1, int y = -1, tXYZ xyzStation = NULL);
+    Item getCursorXYZ(int x = -1, int y = -1, tXYZ xyzStation = nullptr);
 
     /// <summary>
     /// Returns the license as a readable string (same name shown in the RoboDK's title bar, on top of the main menu).
@@ -1265,8 +1265,13 @@ public:
     /// <param name="center">XYZ position of the center of the cube with respect to the robot base, in mm.</param>
     /// <param name="side">Cube side, in mm.</param>
     /// <returns>IS9283 Program or nullptr if the user cancelled.</returns>
-    Item Popup_ISO9283_CubeProgram(Item *robot=NULL, tXYZ center=NULL, double side=-1, bool blocking=true);
+    Item Popup_ISO9283_CubeProgram(Item *robot=nullptr, tXYZ center=nullptr, double side=-1, bool blocking=true);
 
+    /// Send file from the current location to the RoboDK instance
+    bool FileSet(const QString &file_local, const QString &file_remote="", bool load_file=true, Item *attach_to=nullptr);
+
+    /// Retrieve a file from the RoboDK running instance
+    bool FileGet(const QString &path_file_local, Item *station=nullptr, const QString path_file_remote="");
 
 
 public:
@@ -1663,7 +1668,7 @@ private:
     bool _send_Pose(const Mat &pose);
     bool _recv_XYZ(tXYZ pos);
     bool _send_XYZ(const tXYZ pos);
-    bool _recv_Array(double *values, int *psize=NULL);
+    bool _recv_Array(double *values, int *psize=nullptr);
     bool _send_Array(const double *values, int nvalues);
     bool _recv_Array(tJoints *jnts);
     bool _send_Array(const tJoints *jnts);
@@ -1684,7 +1689,7 @@ private:
 /// \image html station-tree.png
 class ROBODK Item {
     friend class RoboDK_API::RoboDK;
-    
+
 public:
     Item(RoboDK *rdk=nullptr, quint64 ptr=0, qint32 type=-1);
     Item(const Item &other);
@@ -1810,18 +1815,21 @@ public:
     /// <returns>4x4 homogeneous matrix (pose)</returns>
     Mat GeometryPose();
 
-    /// <summary>
+    /*/// <summary>
     /// Obsolete: Use setPoseTool(pose) instead. Sets the tool pose of a tool item. If a robot is provided it will set the tool pose of the active tool held by the robot.
     /// </summary>
     /// <param name="pose">4x4 homogeneous matrix (pose)</param>
     void setHtool(Mat pose);
+    */
 
+    /*
     /// <summary>
     /// Obsolete: Use PoseTool() instead.
     /// Returns the tool pose of an item. If a robot is provided it will get the tool pose of the active tool held by the robot.
     /// </summary>
     /// <returns>4x4 homogeneous matrix (pose)</returns>
     Mat Htool();
+    */
 
     /// <summary>
     /// Returns the tool pose of an item. If a robot is provided it will get the tool pose of the active tool held by the robot.

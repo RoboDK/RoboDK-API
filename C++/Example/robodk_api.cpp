@@ -3,6 +3,8 @@
 #include <QtCore/QProcess>
 #include <cmath>
 #include <algorithm>
+#include <QFile>
+
 
 #ifdef _WIN32
 // Default path on Windows:
@@ -633,7 +635,7 @@ void Item::Delete(){
 /// </summary>
 /// <returns>true if valid, false if invalid</returns>
 bool Item::Valid() const {
-    return _PTR != NULL;
+    return _PTR != 0;
 }
 /// <summary>
 /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
@@ -840,7 +842,7 @@ Mat Item::GeometryPose(){
     _RDK->_check_status();
     return pose;
 }
-
+/*
 /// <summary>
 /// Obsolete: Use setPoseTool(pose) instead. Sets the tool pose of a tool item. If a robot is provided it will set the tool pose of the active tool held by the robot.
 /// </summary>
@@ -866,7 +868,7 @@ Mat Item::Htool(){
     _RDK->_check_status();
     return pose;
 }
-
+*/
 /// <summary>
 /// Returns the tool pose of an item. If a robot is provided it will get the tool pose of the active tool held by the robot.
 /// </summary>
@@ -1380,7 +1382,7 @@ void Item::MoveJ(const Item &itemtarget, bool blocking){
         _RDK->_send_Int(1);
         _RDK->_check_status();
     } else {
-        _RDK->_moveX(&itemtarget, NULL, NULL, this, 1, blocking);
+        _RDK->_moveX(&itemtarget, nullptr, nullptr, this, 1, blocking);
     }
 }
 
@@ -1390,7 +1392,7 @@ void Item::MoveJ(const Item &itemtarget, bool blocking){
 /// <param name="target">joints -> joint target to move to.</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveJ(const tJoints &joints, bool blocking){
-    _RDK->_moveX(NULL, &joints, NULL, this, 1, blocking);
+    _RDK->_moveX(nullptr, &joints, nullptr, this, 1, blocking);
 }
 
 /// <summary>
@@ -1399,7 +1401,7 @@ void Item::MoveJ(const tJoints &joints, bool blocking){
 /// <param name="target">pose -> pose target to move to. It must be a 4x4 Homogeneous matrix</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveJ(const Mat &target, bool blocking){
-    _RDK->_moveX(NULL, NULL, &target, this, 1, blocking);
+    _RDK->_moveX(nullptr, nullptr, &target, this, 1, blocking);
 }
 
 /// <summary>
@@ -1416,7 +1418,7 @@ void Item::MoveL(const Item &itemtarget, bool blocking){
         _RDK->_send_Int(2);
         _RDK->_check_status();
     } else {
-        _RDK->_moveX(&itemtarget, NULL, NULL, this, 2, blocking);
+        _RDK->_moveX(&itemtarget, nullptr, nullptr, this, 2, blocking);
     }
 }
 
@@ -1426,7 +1428,7 @@ void Item::MoveL(const Item &itemtarget, bool blocking){
 /// <param name="joints">joints -> joint target to move to.</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveL(const tJoints &joints, bool blocking){
-    _RDK->_moveX(NULL, &joints, NULL, this, 2, blocking);
+    _RDK->_moveX(nullptr, &joints, nullptr, this, 2, blocking);
 }
 
 /// <summary>
@@ -1435,7 +1437,7 @@ void Item::MoveL(const tJoints &joints, bool blocking){
 /// <param name="target">pose -> pose target to move to. It must be a 4x4 Homogeneous matrix</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveL(const Mat &target, bool blocking){
-    _RDK->_moveX(NULL, NULL, &target, this, 2, blocking);
+    _RDK->_moveX(nullptr, nullptr, &target, this, 2, blocking);
 }
 
 /// <summary>
@@ -1445,7 +1447,7 @@ void Item::MoveL(const Mat &target, bool blocking){
 /// <param name="itemtarget2">target -> final target to move to as a target item (RoboDK target item)</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveC(const Item &itemtarget1, const Item &itemtarget2, bool blocking){
-    _RDK->_moveC(&itemtarget1, NULL, NULL, &itemtarget2, NULL, NULL, this, blocking);
+    _RDK->_moveC(&itemtarget1, nullptr, nullptr, &itemtarget2, nullptr, nullptr, this, blocking);
 }
 
 /// <summary>
@@ -1455,7 +1457,7 @@ void Item::MoveC(const Item &itemtarget1, const Item &itemtarget2, bool blocking
 /// <param name="joints2">joints -> final joint target to move to.</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveC(const tJoints &joints1, const tJoints &joints2, bool blocking){
-    _RDK->_moveC(NULL, &joints1, NULL, NULL, &joints2, NULL, this, blocking);
+    _RDK->_moveC(nullptr, &joints1, nullptr, nullptr, &joints2, nullptr, this, blocking);
 }
 
 /// <summary>
@@ -1465,7 +1467,7 @@ void Item::MoveC(const tJoints &joints1, const tJoints &joints2, bool blocking){
 /// <param name="target2">pose -> final pose target to move to. It must be a 4x4 Homogeneous matrix</param>
 /// <param name="blocking">blocking -> True if we want the instruction to block until the robot finished the movement (default=true)</param>
 void Item::MoveC(const Mat &target1, const Mat &target2, bool blocking){
-    _RDK->_moveC(NULL, NULL, &target1, NULL, NULL, &target2, this, blocking);
+    _RDK->_moveC(nullptr, nullptr, &target1, nullptr, nullptr, &target2, this, blocking);
 }
 
 /// <summary>
@@ -1985,7 +1987,7 @@ double Item::Update(int collision_check, int timeout_sec, double *out_nins_time_
     QString readable_msg = _RDK->_recv_Line();
     _RDK->_check_status();
     double ratio_ok = return_values[3];
-    if (out_nins_time_dist != NULL)
+    if (out_nins_time_dist != nullptr)
     {
         out_nins_time_dist[0] = return_values[0]; // number of correct instructions
         out_nins_time_dist[1] = return_values[1]; // estimated time to complete the program (cycle time)
@@ -2020,7 +2022,7 @@ int Item::InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, doub
         _RDK->_recv_Matrix2D(joint_list);
     } else {
         _RDK->_send_Line(save_to_file);
-        joint_list = NULL;
+        joint_list = nullptr;
     }
     int error_code = _RDK->_recv_Int();
     _RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
@@ -2061,7 +2063,7 @@ quint64 Item::GetID(){
 //---------------------------------------------------------------------------------------------------
 /////////////////////////////////// RoboDK CLASS ////////////////////////////////////////////////////
 RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path) {
-    _COM = NULL;
+    _COM = nullptr;
     _IP = robodk_ip;
     _TIMEOUT = ROBODK_API_TIMEOUT;
     _PROCESS = 0;
@@ -2399,7 +2401,7 @@ void RoboDK::Save(const QString &filename, const Item *itemsave){
 Item RoboDK::AddShape(tMatrix2D *trianglePoints, Item *addTo, bool shapeOverride, Color *color)
 {
     double colorArray[4] = {0.6,0.6,0.8,1.0};
-    if (color != NULL){
+    if (color != nullptr){
         colorArray[0] = color->r;
         colorArray[1] = color->g;
         colorArray[2] = color->b;
@@ -2471,7 +2473,7 @@ void RoboDK::ProjectPoints(tMatrix2D *points, tMatrix2D **projected, Item object
     _send_Line("ProjectPoints");
     _send_Matrix2D(points);
     _send_Item(objectProject);
-    _send_Int(ProjectionType);    
+    _send_Int(ProjectionType);
     _recv_Matrix2D(projected);
     _check_status();
 }
@@ -2923,7 +2925,7 @@ bool RoboDK::LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search)
 void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id)
 {
     int nitems = qMin(itemList.length(),collidedList.length());
-    if (robot_link_id != NULL){
+    if (robot_link_id != nullptr){
         nitems = qMin(nitems, robot_link_id->length());
     }
     _check_connection();
@@ -2933,7 +2935,7 @@ void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QLis
         _send_Item(itemList[i]);
         _send_Int(collidedList[i] ? 1 : 0);
         int link_id = 0;
-        if (robot_link_id != NULL){
+        if (robot_link_id != nullptr){
             link_id = robot_link_id->at(i);
         }
         _send_Int(link_id);
@@ -2963,7 +2965,7 @@ void RoboDK::CalibrateTool(tMatrix2D *poses_joints, tXYZ tcp_xyz, int format, in
     _send_Item(robot);
     int nxyz = 3;
     _recv_Array(tcp_xyz, &nxyz);
-    if (error_stats != NULL){
+    if (error_stats != nullptr){
         _recv_Array(error_stats);
     } else {
         double errors_ignored[20];
@@ -3056,8 +3058,8 @@ Mat RoboDK::ViewPose(){
         _send_Array(dhm[i]);
     }
 
-    _send_Array(NULL);
-    _send_Array(NULL);
+    _send_Array(nullptr);
+    _send_Array(nullptr);
     _check_status();
     return true;
 }*/
@@ -3072,7 +3074,7 @@ Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
     Item selectedItem = _recv_Item();
     tXYZ xyz;
     _recv_XYZ(xyz);
-    if (xyzStation != NULL){
+    if (xyzStation != nullptr){
         xyzStation[0] = xyz[0];
         xyzStation[1] = xyz[1];
         xyzStation[2] = xyz[2];
@@ -3136,7 +3138,7 @@ Item RoboDK::Popup_ISO9283_CubeProgram(Item *robot, tXYZ center, double side, bo
     //_require_build(5177);
     Item iso_program;
     _check_connection();
-    if (center == NULL){
+    if (center == nullptr){
         _send_Line("Popup_ProgISO9283");
         _send_Item(robot);
         _TIMEOUT = 3600 * 1000;
@@ -3165,10 +3167,63 @@ Item RoboDK::Popup_ISO9283_CubeProgram(Item *robot, tXYZ center, double side, bo
 
 
 
+
+bool RoboDK::FileSet(const QString &path_file_local, const QString &file_remote, bool load_file, Item *attach_to){
+    if (!_check_connection()){ return false; }
+    if (!_send_Line("FileRecvBin")){ return false; }
+    QFile file(path_file_local);
+    if (!_send_Line(file_remote)){ return false; }
+    int nbytes = file.size();
+    if (!_send_Int(nbytes)){ return false; }
+    if (!_send_Item(attach_to)){ return false; }
+    if (!_send_Int(load_file ? 1 : 0)){ return false; }
+    if (!_check_status()){ return false; }
+    int sz_sent = 0;
+    if (!file.open(QFile::ReadOnly)){
+        return false;
+    }
+    while (true){
+        QByteArray buffer(file.read(1024));
+        if (buffer.size() == 0){
+            break;
+        }
+        // warning! Nothing guarantees that all bytes are sent
+        sz_sent += _COM->write(buffer);
+        qDebug() << "Sending file " << path_file_local << 100*sz_sent/nbytes;
+    }
+    file.close();
+    return true;
+}
+
+bool RoboDK::FileGet(const QString &path_file_local, Item *station, const QString path_file_remote){
+    if (!_check_connection()){ return false; }
+    if (!_send_Line("FileSendBin")){ return false; }
+    if (!_send_Item(station)){ return false; }
+    if (!_send_Line(path_file_remote)){ return false; }
+    int nbytes = _recv_Int();
+    int remaining = nbytes;
+    QFile file(path_file_local);
+    if (!file.open(QFile::WriteOnly)){
+        qDebug() << "Can not open file for writting " << path_file_local;
+        return false;
+    }
+    while (remaining > 0){
+        QByteArray buffer(_COM->read(qMin(remaining, 1024)));
+        remaining -= buffer.size();
+        file.write(buffer);
+    }
+    file.close();
+    if (!_check_status()){ return false;}
+    return true;
+}
+
+
+
+
 //-------------------------- private ---------------------------------------
 
 bool RoboDK::_connected(){
-    return _COM != NULL && _COM->state() == QTcpSocket::ConnectedState;
+    return _COM != nullptr && _COM->state() == QTcpSocket::ConnectedState;
 }
 
 
@@ -3217,9 +3272,9 @@ bool RoboDK::_check_status(){
 
 
 void RoboDK::_disconnect(){
-    if (_COM != NULL){
+    if (_COM != nullptr){
         _COM->deleteLater();
-        _COM = NULL;
+        _COM = nullptr;
     }
 }
 
@@ -3269,7 +3324,7 @@ bool RoboDK::_connect(){
     // usually, 5 msec should be enough for localhost
     if (!_COM->waitForConnected(_TIMEOUT)){
         _COM->deleteLater();
-        _COM = NULL;
+        _COM = nullptr;
         return false;
     }
 
@@ -3280,20 +3335,20 @@ bool RoboDK::_connect(){
     // 5 msec should be enough for localhost
     /*if (!_COM->waitForBytesWritten(_TIMEOUT)){
         _COM->deleteLater();
-        _COM = NULL;
+        _COM = nullptr;
         return false;
     }*/
     // 10 msec should be enough for localhost
     if (!_COM->canReadLine() && !_COM->waitForReadyRead(_TIMEOUT)){
         _COM->deleteLater();
-        _COM = NULL;
+        _COM = nullptr;
         return false;
     }
     QString read(_COM->readAll());
     // make sure we receive the OK from RoboDK
     if (!read.startsWith(ROBODK_API_READY_STRING)){
         _COM->deleteLater();
-        _COM = NULL;
+        _COM = nullptr;
         return false;
     }
     return true;
@@ -3302,7 +3357,7 @@ bool RoboDK::_connect(){
 
 /////////////////////////////////////////////
 bool RoboDK::_waitline(){
-    if (_COM == NULL){ return false; }
+    if (_COM == nullptr){ return false; }
     while (!_COM->canReadLine()){
         if (!_COM->waitForReadyRead(_TIMEOUT)){
             return false;
@@ -3313,7 +3368,7 @@ bool RoboDK::_waitline(){
 QString RoboDK::_recv_Line(){//QString &string){
     QString string;
     if (!_waitline()){
-        if (_COM != NULL){
+        if (_COM != nullptr){
             //if this happens it means that there are problems: delete buffer
             _COM->readAll();
         }
@@ -3324,7 +3379,7 @@ QString RoboDK::_recv_Line(){//QString &string){
     return string;
 }
 bool RoboDK::_send_Line(const QString& string){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     _COM->write(string.toUtf8());
     _COM->write(ROBODK_API_LF, 1);
     return true;
@@ -3332,7 +3387,7 @@ bool RoboDK::_send_Line(const QString& string){
 
 int RoboDK::_recv_Int(){//qint32 &value){
     qint32 value; // do not change type
-    if (_COM == NULL){ return false; }
+    if (_COM == nullptr){ return false; }
     if (_COM->bytesAvailable() < sizeof(qint32)){
         _COM->waitForReadyRead(_TIMEOUT);
         if (_COM->bytesAvailable() < sizeof(qint32)){
@@ -3344,7 +3399,7 @@ int RoboDK::_recv_Int(){//qint32 &value){
     return value;
 }
 bool RoboDK::_send_Int(qint32 value){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     QDataStream ds(_COM);
     ds << value;
     return true;
@@ -3352,7 +3407,7 @@ bool RoboDK::_send_Int(qint32 value){
 
 Item RoboDK::_recv_Item(){//Item *item){
     Item item(this);
-    if (_COM == NULL){ return item; }
+    if (_COM == nullptr){ return item; }
     item._PTR = 0;
     item._TYPE = -1;
     if (_COM->bytesAvailable() < sizeof(quint64)){
@@ -3367,10 +3422,10 @@ Item RoboDK::_recv_Item(){//Item *item){
     return item;
 }
 bool RoboDK::_send_Item(const Item *item){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     QDataStream ds(_COM);
     quint64 ptr = 0;
-    if (item != NULL){
+    if (item != nullptr){
         ptr = item->_PTR;
     }
     ds << ptr;
@@ -3382,7 +3437,7 @@ bool RoboDK::_send_Item(const Item &item){
 
 Mat RoboDK::_recv_Pose(){//Mat &pose){
     Mat pose;
-    if (_COM == NULL){ return pose; }
+    if (_COM == nullptr){ return pose; }
     int size = 16*sizeof(double);
     if (_COM->bytesAvailable() < size){
         _COM->waitForReadyRead(_TIMEOUT);
@@ -3404,11 +3459,11 @@ Mat RoboDK::_recv_Pose(){//Mat &pose){
     return pose;
 }
 bool RoboDK::_send_Pose(const Mat &pose){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     QDataStream ds(_COM);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
     //ds.setByteOrder(QDataStream::LittleEndian);
-    double valuei;    
+    double valuei;
     for (int j=0; j<4; j++){
         for (int i=0; i<4; i++){
             valuei = pose.Get(i,j);
@@ -3418,7 +3473,7 @@ bool RoboDK::_send_Pose(const Mat &pose){
     return true;
 }
 bool RoboDK::_recv_XYZ(tXYZ pos){
-    if (_COM == NULL){ return false; }
+    if (_COM == nullptr){ return false; }
     int size = 3*sizeof(double);
     if (_COM->bytesAvailable() < size){
         _COM->waitForReadyRead(_TIMEOUT);
@@ -3437,7 +3492,7 @@ bool RoboDK::_recv_XYZ(tXYZ pos){
     return true;
 }
 bool RoboDK::_send_XYZ(const tXYZ pos){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     QDataStream ds(_COM);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
     //ds.setByteOrder(QDataStream::LittleEndian);
@@ -3452,13 +3507,13 @@ bool RoboDK::_recv_Array(tJoints *jnts){
     return _recv_Array(jnts->_Values, &(jnts->_nDOFs));
 }
 bool RoboDK::_send_Array(const tJoints *jnts){
-    if (jnts == NULL){
+    if (jnts == nullptr){
         return _send_Int(0);
     }
     return _send_Array(jnts->_Values, jnts->_nDOFs);
 }
 bool RoboDK::_send_Array(const Mat *mat){
-    if (mat == NULL){
+    if (mat == nullptr){
         return _send_Int(0);
     }
     double m44[16];
@@ -3471,8 +3526,8 @@ bool RoboDK::_send_Array(const Mat *mat){
 }
 bool RoboDK::_recv_Array(double *values, int *psize){
     int nvalues = _recv_Int();
-    if (_COM == NULL || nvalues < 0) {return false;}
-    if (psize != NULL){
+    if (_COM == nullptr || nvalues < 0) {return false;}
+    if (psize != nullptr){
         *psize = nvalues;
     }
     if (nvalues < 0 || nvalues > 50){return false;} //check if the value is not too big
@@ -3494,7 +3549,7 @@ bool RoboDK::_recv_Array(double *values, int *psize){
     return true;
 }
 bool RoboDK::_send_Array(const double *values, int nvalues){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     if (!_send_Int((qint32)nvalues)){ return false; }
     QDataStream ds(_COM);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
@@ -3540,7 +3595,7 @@ bool RoboDK::_recv_Matrix2D(tMatrix2D **mat){ // needs to delete after!
     return false;// we should never arrive here...
 }
 bool RoboDK::_send_Matrix2D(tMatrix2D *mat){
-    if (_COM == NULL || !_COM->isOpen()){ return false; }
+    if (_COM == nullptr || !_COM->isOpen()){ return false; }
     QDataStream ds(_COM);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
     //ds.setByteOrder(QDataStream::LittleEndian);
@@ -3563,18 +3618,18 @@ void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_ta
     itemrobot->WaitMove();
     _send_Line("MoveX");
     _send_Int(movetype);
-    if (target != NULL){
+    if (target != nullptr){
         _send_Int(3);
-        _send_Array((tJoints*)NULL);
+        _send_Array((tJoints*)nullptr);
         _send_Item(target);
-    } else if (joints != NULL){
+    } else if (joints != nullptr){
         _send_Int(1);
         _send_Array(joints);
-        _send_Item((Item*)NULL);
-    } else if (mat_target != NULL){// && mat_target.IsHomogeneous()) {
+        _send_Item(nullptr);
+    } else if (mat_target != nullptr){// && mat_target.IsHomogeneous()) {
         _send_Int(2);
         _send_Array(mat_target); // keep it as array!
-        _send_Item((Item*)NULL);
+        _send_Item(nullptr);
     } else {
         //throw new RDKException("Invalid target type"); //raise Exception('Problems running function');
         throw 0;
@@ -3590,35 +3645,35 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
     itemrobot->WaitMove();
     _send_Line("MoveC");
     _send_Int(3);
-    if (target1 != NULL){
+    if (target1 != nullptr){
         _send_Int(3);
-        _send_Array((tJoints*)NULL);
+        _send_Array((tJoints*)nullptr);
         _send_Item(target1);
-    } else if (joints1 != NULL) {
+    } else if (joints1 != nullptr) {
         _send_Int(1);
         _send_Array(joints1);
-        _send_Item((Item*)NULL);
-    } else if (mat_target1 != NULL){// && mat_target1.IsHomogeneous()) {
+        _send_Item(nullptr);
+    } else if (mat_target1 != nullptr){// && mat_target1.IsHomogeneous()) {
         _send_Int(2);
         _send_Array(mat_target1);
-        _send_Item((Item*)NULL);
+        _send_Item(nullptr);
     } else {
         throw 0;
         //throw new RDKException("Invalid type of target 1");
     }
     /////////////////////////////////////
-    if (target2 != NULL) {
+    if (target2 != nullptr) {
         _send_Int(3);
-        _send_Array((tJoints*)NULL);
+        _send_Array((tJoints*)nullptr);
         _send_Item(target2);
-    } else if (joints2 != NULL) {
+    } else if (joints2 != nullptr) {
         _send_Int(1);
         _send_Array(joints2);
-        _send_Item((Item*)NULL);
-    } else if (mat_target2 != NULL){// && mat_target2.IsHomogeneous()) {
+        _send_Item(nullptr);
+    } else if (mat_target2 != nullptr){// && mat_target2.IsHomogeneous()) {
         _send_Int(2);
         _send_Array(mat_target2);
-        _send_Item((Item*)NULL);
+        _send_Item(nullptr);
     } else {
         throw 0;
         //throw new RDKException("Invalid type of target 2");
@@ -3669,9 +3724,9 @@ void emxInit_real_T(tMatrix2D **pEmxArray, int numDimensions)
 }
 ///
 tMatrix2D* Matrix2D_Create() {
-	tMatrix2D *matrix;
+    tMatrix2D *matrix;
     emxInit_real_T((tMatrix2D**)(&matrix), 2);
-	return matrix;
+    return matrix;
 }
 
 
@@ -3729,25 +3784,25 @@ void emxEnsureCapacity(tMatrix2D *emxArray, int oldNumel, unsigned int elementSi
 }
 
 void Matrix2D_Set_Size(tMatrix2D *mat, int rows, int cols) {
-	int old_numel;
-	int numbel;
-	old_numel = mat->size[0] * mat->size[1];
-	mat->size[0] = rows;
-	mat->size[1] = cols;
-	numbel = rows*cols;
+    int old_numel;
+    int numbel;
+    old_numel = mat->size[0] * mat->size[1];
+    mat->size[0] = rows;
+    mat->size[1] = cols;
+    numbel = rows*cols;
     emxEnsureCapacity(mat, old_numel, sizeof(double));
-	/*for (i=0; i<numbel; i++){
-	mat->data[i] = 0.0;
-	}*/
+    /*for (i=0; i<numbel; i++){
+    mat->data[i] = 0.0;
+    }*/
 }
 
 int Matrix2D_Size(const tMatrix2D *var, int dim) { // ONE BASED!!
-	if (var->numDimensions >= dim) {
-		return var->size[dim - 1];
-	}
-	else {
-		return 0;
-	}
+    if (var->numDimensions >= dim) {
+        return var->size[dim - 1];
+    }
+    else {
+        return 0;
+    }
 }
 int Matrix2D_Get_ncols(const tMatrix2D *var) {
     return Matrix2D_Size(var, 2);
@@ -3756,14 +3811,14 @@ int Matrix2D_Get_nrows(const tMatrix2D *var) {
     return Matrix2D_Size(var, 1);
 }
 double Matrix2D_Get_ij(const tMatrix2D *var, int i, int j) { // ZERO BASED!!
-	return var->data[var->size[0] * j + i];
+    return var->data[var->size[0] * j + i];
 }
 void Matrix2D_SET_ij(const tMatrix2D *var, int i, int j, double value) { // ZERO BASED!!
-	var->data[var->size[0] * j + i] = value;
+    var->data[var->size[0] * j + i] = value;
 }
 
 double *Matrix2D_Get_col(const tMatrix2D *var, int col) { // ZERO BASED!!
-	return (var->data + var->size[0] * col);
+    return (var->data + var->size[0] * col);
 }
 
 
@@ -3799,57 +3854,57 @@ void Matrix2D_Add(tMatrix2D *var, const tMatrix2D *varadd){
 }
 
 void Debug_Array(const double *array, int arraysize) {
-	int i;
-	for (i = 0; i < arraysize; i++) {
-		//char chararray[500];  // You had better have room for what you are sprintf()ing!
-		//sprintf(chararray, "%.3f", array[i]);
-		//std::cout << chararray;
-		printf("%.3f", array[i]);
-		if (i < arraysize - 1) {
-			//std::cout << " , ";
-			printf(" , ");
-		}
-	}
+    int i;
+    for (i = 0; i < arraysize; i++) {
+        //char chararray[500];  // You had better have room for what you are sprintf()ing!
+        //sprintf(chararray, "%.3f", array[i]);
+        //std::cout << chararray;
+        printf("%.3f", array[i]);
+        if (i < arraysize - 1) {
+            //std::cout << " , ";
+            printf(" , ");
+        }
+    }
 }
 
 void Debug_Matrix2D(const tMatrix2D *emx) {
-	int size1;
-	int size2;
-	int j;
-	double *column;
-	size1 = Matrix2D_Get_nrows(emx);
-	size2 = Matrix2D_Get_ncols(emx);
-	printf("Matrix size = [%i, %i]\n", size1, size2);
-	//std::out << "Matrix size = [%i, %i]" << size1 << " " << size2 << "]\n";
-	for (j = 0; j<size2; j++) {
-		column = Matrix2D_Get_col(emx, j);
-		Debug_Array(column, size1);
-		printf("\n");
-		//std::cout << "\n";
-	}
+    int size1;
+    int size2;
+    int j;
+    double *column;
+    size1 = Matrix2D_Get_nrows(emx);
+    size2 = Matrix2D_Get_ncols(emx);
+    printf("Matrix size = [%i, %i]\n", size1, size2);
+    //std::out << "Matrix size = [%i, %i]" << size1 << " " << size2 << "]\n";
+    for (j = 0; j<size2; j++) {
+        column = Matrix2D_Get_col(emx, j);
+        Debug_Array(column, size1);
+        printf("\n");
+        //std::cout << "\n";
+    }
 }
 /*
 void Debug_Mat(Mat pose, char show_full_pose) {
-	tMatrix4x4 pose_tr;
-	double xyzwpr[6];
-	int j;
+    tMatrix4x4 pose_tr;
+    double xyzwpr[6];
+    int j;
     if (show_full_pose > 0) {
-		POSE_TR(pose_tr, pose);
-		printf("Pose size = [4x4]\n");
-		//std::cout << "Pose size = [4x4]\n";
-		for (j = 0; j < 4; j++) {
-			Debug_Array(pose_tr + j * 4, 4);
-			printf("\n");
-			//std::cout << "\n";
-		}
-	}
-	else {
-		POSE_2_XYZWPR(xyzwpr, pose);
-		//std::cout << "XYZWPR = [ ";
-		printf("XYZWPR = [ ");
-		Debug_Array(xyzwpr, 6);
-		printf(" ]\n");
-		//std::cout << " ]\n";
+        POSE_TR(pose_tr, pose);
+        printf("Pose size = [4x4]\n");
+        //std::cout << "Pose size = [4x4]\n";
+        for (j = 0; j < 4; j++) {
+            Debug_Array(pose_tr + j * 4, 4);
+            printf("\n");
+            //std::cout << "\n";
+        }
+    }
+    else {
+        POSE_2_XYZWPR(xyzwpr, pose);
+        //std::cout << "XYZWPR = [ ";
+        printf("XYZWPR = [ ");
+        Debug_Array(xyzwpr, 6);
+        printf(" ]\n");
+        //std::cout << " ]\n";
     }
 }
 */
