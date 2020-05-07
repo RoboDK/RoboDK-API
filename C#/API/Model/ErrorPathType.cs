@@ -60,7 +60,7 @@ namespace RoboDk.API.Model
         Kinematic = 0x1, // 0b001
 
         /// <summary>
-        /// The path reaches the limit of joint axes
+        /// The path reaches the limit of joint axes: the movement is not possible because it reached an axis limit.
         /// </summary>
         PathLimit = 0x2, // 0b010
 
