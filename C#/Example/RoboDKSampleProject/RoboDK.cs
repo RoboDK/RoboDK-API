@@ -1466,6 +1466,8 @@ public class RoboDK
     public const int ITEM_TYPE_BALLBARVALIDATION = 12;
     public const int ITEM_TYPE_CALIBPROJECT = 13;
     public const int ITEM_TYPE_VALID_ISO9283 = 14;
+    public const int ITEM_TYPE_FOLDER=17;
+    public const int ITEM_TYPE_ROBOT_ARM=18;
 
     // Instruction types
     public const int INS_TYPE_INVALID = -1;
