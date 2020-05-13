@@ -2388,6 +2388,17 @@ public:
     /// <returns>Returns 0 if success, otherwise, it will return negative values</returns>
     int InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, double mm_step = 10.0, double deg_step = 5.0, const QString &save_to_file = "", bool collision_check=false, int flags=0, double time_step_s=0.1);
 
+
+    /// <summary>
+    /// Set a specific item parameter.
+    /// Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.
+    /// Note: For parameters (commands) that require a JSON string value you can also provide a dict.
+    /// </summary>
+    /// <param name="param">item parameter</param>
+    /// <param name="value">value</param>
+    /// <returns></returns>
+    QString Item::setParam(const QString &param, const QString &value);
+
     /// <summary>
     /// Disconnect from the RoboDK API. This flushes any pending program generation.
     /// </summary>

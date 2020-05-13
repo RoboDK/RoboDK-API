@@ -2032,6 +2032,25 @@ int Item::InstructionListJoints(QString &error_msg, tMatrix2D **joint_list, doub
 }
 
 /// <summary>
+/// Set a specific item parameter.
+/// Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.
+/// Note: For parameters (commands) that require a JSON string value you can also provide a dict.
+/// </summary>
+/// <param name="param">item parameter</param>
+/// <param name="value">value</param>
+/// <returns></returns>
+QString Item::setParam(const QString &param, const QString &value){
+    _RDK->_check_connection();
+    _RDK->_send_Line("ICMD");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(param);
+    _RDK->_send_Line(value);
+    QString result =_RDK->_recv_Line();
+    _RDK->_check_status();
+    return result;
+}
+
+/// <summary>
 /// Disconnect from the RoboDK API. This flushes any pending program generation.
 /// </summary>
 /// <returns></returns>
