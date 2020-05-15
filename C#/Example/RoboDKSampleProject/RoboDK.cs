@@ -3197,6 +3197,45 @@ public class RoboDK
         return newitem;
     }
 
+    /// <summary>
+    /// Adds a shape provided triangle coordinates (in bulk). Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
+    /// </summary>
+    /// <param name="triangle_points_list">List of Mat objects. Each mat object is a list of vertices grouped by triangles of the same color (3xN or 6xN matrix, N must be multiple of 3 because vertices must be stacked by groups of 3)</param>
+    /// <param name="add_to">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
+    /// <param name="shape_override">Set to true to replace any other existing geometry</param>
+    /// <param name="color_list">Optionally specify the color as RGBA [0-1] (list of same length as triangle_points_list)</param>
+    /// <returns></returns>
+    public Item AddShape(List<Mat> triangle_points_list, Item add_to = null, bool shape_override = false, List<List<double>> color_list = null)
+    {
+        _require_build(16532);
+        int nsubobjs = triangle_points_list.Count;
+        if (color_list != null)
+        {
+            nsubobjs = Math.Min(nsubobjs, color_list.Count);
+        }        
+        _check_connection();
+        _send_Line("AddShape4");
+        _send_Item(add_to);
+        _send_Int(shape_override ? 1 : 0);
+        _send_Int(nsubobjs);
+        for (int i = 0; i < nsubobjs; i++)
+        {
+            _send_Matrix2D(triangle_points_list[i]);
+            if (color_list != null)
+            {
+                _send_ArrayList(color_list[i]);
+            } else
+            {
+                _send_Array(null);
+            }
+        }        
+        _COM.ReceiveTimeout = 3600 * 1000;
+        Item newitem = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return newitem;
+    }
+
 
     /// <summary>
     /// Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
@@ -4311,15 +4350,15 @@ public class RoboDK
     /// <param name="type">Type of the mechanism</param>
     /// <param name="list_obj">list of object items that build the robot</param>
     /// <param name="param">robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot</param>
-    /// <param name="joints_build">current state of the robot(joint axes) to build the robot</param>
-    /// <param name="joints_home">joints for the home position(it can be changed later)</param>
-    /// <param name="joints_senses"></param>
-    /// <param name="joints_lim_low"></param>
-    /// <param name="joints_lim_high"></param>
-    /// <param name="base_frame"></param>
-    /// <param name="tool"></param>
-    /// <param name="name"></param>
-    /// <param name="robot">existing robot in the station to replace it(optional)</param>
+    /// <param name="joints_build">Current state of the robot joints when you build it</param>
+    /// <param name="joints_home">Joints for the home position (it can be changed later)</param>
+    /// <param name="joints_senses">sense of rotation (same sense of rotation that can be specified in Parameters->Joint senses)</param>
+    /// <param name="joints_lim_low">joint lower limits (you can also double click the robot label in the robot panel to update)</param>
+    /// <param name="joints_lim_high">joint upper limits (you can also double click the robot label in the robot panel to update)</param>
+    /// <param name="base_frame">base pose</param>
+    /// <param name="tool">tool pose</param>
+    /// <param name="name">robot name (you can also use setName()</param>
+    /// <param name="robot">existing robot in the station to replace it (optional)</param>
     /// <returns></returns>
     public Item BuildMechanism(int type, List<Item> list_obj, List<double> param, List<double> joints_build, List<double> joints_home, List<double> joints_senses, List<double> joints_lim_low, List<double> joints_lim_high, Mat base_frame = null, Mat tool = null, string name = "New robot", Item robot = null)
     {

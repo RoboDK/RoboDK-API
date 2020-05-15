@@ -924,8 +924,7 @@ namespace ProjectRoboDK
 
         private void btnRunTestProgram_Click(object sender, EventArgs e)
         {
-            RDK.EventsListen();
-            RDK.EventsLoop();
+            
 
             if (!Check_ROBOT()) { return; }
 

@@ -377,6 +377,16 @@ namespace RoboDk.API
         IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null);
 
         /// <summary>
+        /// Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="listTrianglePoints">List of Mat objects. Each mat object is a list of vertices grouped by triangles of the same color (3xN or 6xN matrix, N must be multiple of 3 because vertices must be stacked by groups of 3)</param>
+        /// <param name="addTo">item to attach the newly added geometry (optional). Leave empty to create a new object.</param>
+        /// <param name="shapeOverride">Set to true to replace any other existing geometry</param>
+        /// <param name="listColor">Optionally specify the color as RGBA [0-1] (list of same length as triangle_points_list)</param>
+        /// <returns></returns>
+        IItem AddShape(List<Mat> listTrianglePoints, IItem addTo = null, bool shapeOverride = false, List<Color> listColor = null);
+
+        /// <summary>
         /// Adds a curve provided point coordinates.
         /// The provided points must be a list of vertices.
         /// A vertex normal can be provided optionally.
@@ -794,17 +804,17 @@ namespace RoboDk.API
         /// Create a new robot or mechanism.
         /// </summary>
         /// <param name="type">Type of the mechanism</param>
-        /// <param name="listObj">list of object items that build the robot</param>
+        /// <param name="list_obj">list of object items that build the robot</param>
         /// <param name="param">robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot</param>
-        /// <param name="jointsBuild">current state of the robot(joint axes) to build the robot</param>
-        /// <param name="jointsHome">joints for the home position(it can be changed later)</param>
-        /// <param name="jointsSenses"></param>
-        /// <param name="jointsLimLow"></param>
-        /// <param name="jointsLimHigh"></param>
-        /// <param name="baseFrame"></param>
-        /// <param name="tool"></param>
-        /// <param name="name"></param>
-        /// <param name="robot">existing robot in the station to replace it(optional)</param>
+        /// <param name="joints_build">Current state of the robot joints when you build it</param>
+        /// <param name="joints_home">Joints for the home position (it can be changed later)</param>
+        /// <param name="joints_senses">sense of rotation (same sense of rotation that can be specified in Parameters->Joint senses)</param>
+        /// <param name="joints_lim_low">joint lower limits (you can also double click the robot label in the robot panel to update)</param>
+        /// <param name="joints_lim_high">joint upper limits (you can also double click the robot label in the robot panel to update)</param>
+        /// <param name="base_frame">base pose</param>
+        /// <param name="tool">tool pose</param>
+        /// <param name="name">robot name (you can also use setName()</param>
+        /// <param name="robot">existing robot in the station to replace it (optional)</param>
         /// <returns></returns>
         IItem BuildMechanism(int type, List<IItem> listObj, List<double> param, List<double> jointsBuild, List<double> jointsHome, List<double> jointsSenses, List<double> jointsLimLow, List<double> jointsLimHigh, Mat baseFrame = null, Mat tool = null, string name = "New robot", IItem robot = null);
 

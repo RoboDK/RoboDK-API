@@ -985,6 +985,39 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public IItem AddShape(List<Mat> listTrianglePoints, IItem add_to = null, bool shape_override = false, List<Color> listColor = null)
+        {
+            RequireBuild(16532);
+            int nsubobjs = listTrianglePoints.Count;
+            if (listColor != null)
+            {
+                nsubobjs = Math.Min(nsubobjs, listColor.Count);
+            }
+            check_connection();
+            send_line("AddShape4");
+            send_item(add_to);
+            send_int(shape_override ? 1 : 0);
+            send_int(nsubobjs);
+            for (int i = 0; i < nsubobjs; i++)
+            {
+                send_matrix(listTrianglePoints[i]);
+                if (listColor != null)
+                {
+                    send_array(listColor[i].ToRoboDKColorArray());
+                }
+                else
+                {
+                    send_array(null);
+                }
+            }
+            ReceiveTimeout = 3600 * 1000;
+            var newitem = rec_item();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+            check_status();
+            return newitem;
+        }
+
+        /// <inheritdoc />
         public IItem AddCurve(Mat curvePoints, IItem referenceObject = null, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
