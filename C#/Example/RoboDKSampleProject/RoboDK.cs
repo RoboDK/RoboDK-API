@@ -1751,7 +1751,7 @@ public class RoboDK
     }
 
     //If we are not connected it will attempt a connection, if it fails, it will throw an error
-    void _check_connection()
+    protected void _check_connection()
     {
         if (!is_connected() && !Connect())
         {
@@ -1761,7 +1761,7 @@ public class RoboDK
     }
 
     // checks the status of the connection
-    int _check_status()
+    protected int _check_status()
     {
         int status = _recv_Int();
         LAST_STATUS_MESSAGE = "";
@@ -1829,7 +1829,7 @@ public class RoboDK
     }
 
     //Sends a string of characters with a \\n
-    void _send_Line(string line, Socket com = null)
+    protected void _send_Line(string line, Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -1839,7 +1839,7 @@ public class RoboDK
         com.Send(data);
     }
 
-    string _recv_Line(Socket com = null)
+    protected string _recv_Line(Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -1857,7 +1857,7 @@ public class RoboDK
     }
 
     //Sends an item pointer
-    void _send_Item(Item item)
+    protected void _send_Item(Item item)
     {
         byte[] bytes;
         if (item == null)
@@ -1877,7 +1877,7 @@ public class RoboDK
     }
 
     //Receives an item pointer
-    Item _recv_Item(Socket com = null)
+    protected Item _recv_Item(Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -1923,7 +1923,7 @@ public class RoboDK
         return ptr;
     }
 
-    void _send_Pose(Mat pose)
+    protected void _send_Pose(Mat pose)
     {
         if (!pose.IsHomogeneous())
         {
@@ -1946,7 +1946,7 @@ public class RoboDK
         _COM.Send(bytesarray, 8 * nvalues, SocketFlags.None);
     }
 
-    Mat _recv_Pose(Socket com = null)
+    protected Mat _recv_Pose(Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -1973,7 +1973,7 @@ public class RoboDK
         return pose;
     }
 
-    void _send_XYZ(double[] xyzpos)
+    protected void _send_XYZ(double[] xyzpos)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -1982,7 +1982,7 @@ public class RoboDK
             _COM.Send(bytes, 8, SocketFlags.None);
         }
     }
-    void _recv_XYZ(double[] xyzpos, Socket com = null)
+    protected void _recv_XYZ(double[] xyzpos, Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -2002,7 +2002,7 @@ public class RoboDK
         }
     }
 
-    void _send_Int(Int32 number, Socket com = null)
+    protected void _send_Int(Int32 number, Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -2012,7 +2012,7 @@ public class RoboDK
         com.Send(bytes);
     }
 
-    Int32 _recv_Int(Socket com = null)
+    protected Int32 _recv_Int(Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -2028,7 +2028,7 @@ public class RoboDK
     }
 
     // Sends an array of doubles
-    void _send_ArrayList(List<double> values)
+    protected void _send_ArrayList(List<double> values)
     {
         if (values == null)
         {
@@ -2044,7 +2044,7 @@ public class RoboDK
     }
 
 
-    void _send_Array(double[] values)
+    protected void _send_Array(double[] values)
     {
         if (values == null)
         {
@@ -2064,7 +2064,7 @@ public class RoboDK
     }
 
     // Receives an array of doubles
-    double[] _recv_Array(Socket com = null)
+    protected double[] _recv_Array(Socket com = null)
     {
         if (com == null)
             com = _COM;
@@ -2087,7 +2087,7 @@ public class RoboDK
         return null;
     }
     // Receives an array of doubles
-    List<double> _recv_ArrayList()
+    protected List<double> _recv_ArrayList()
     {
         double[] arraydbl = _recv_Array();
         List<double> listdbl = new List<double>();
@@ -2115,7 +2115,7 @@ public class RoboDK
         }
 
     }*/
-    void _send_Matrix2D(Mat mat)
+    protected void _send_Matrix2D(Mat mat)
     {
         var sendBuffer = new byte[mat.cols * mat.rows * sizeof(double)];
         _send_Int(mat.rows);
@@ -2143,7 +2143,7 @@ public class RoboDK
     }
 
     // receives a 2 dimensional matrix (nxm)
-    Mat _recv_Matrix2D()
+    protected Mat _recv_Matrix2D()
     {
         int size1 = _recv_Int();
         int size2 = _recv_Int();
@@ -4629,7 +4629,7 @@ public class RoboDK
     public class Item
     {
         private UInt64 item = 0;
-        private RoboDK link; // pointer to the RoboLink connection
+        protected RoboDK link; // pointer to the RoboLink connection
         int type = -1;
         string name;
 
