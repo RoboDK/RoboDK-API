@@ -103,12 +103,12 @@ def get_program_kinematic_path_limit():
         Step("2", MoveType.Frame, 0, f2, 0, 0, 0),
         Step("3", MoveType.Frame, 0, f3, 1, 0, 0),
         Step("4", MoveType.Frame, 0, f4, 1, 0, 0),
-        Step("2", MoveType.Frame, 0, f5, 0, 0, 0),
-        Step("3", MoveType.Frame, 0, f6, 1, 0, 0),
-        Step("4", MoveType.Frame, 0, f7, 1, 0, 0),
-        Step("1", MoveType.Joint, 0, j8, 10, 0, 0),
-        Step("1", MoveType.Joint, 0, j9, 10, 0, 0),
-        Step("1", MoveType.Joint, 0, j10, 10, 0, 0),
+        Step("5", MoveType.Frame, 0, f5, 0, 0, 0),
+        Step("6", MoveType.Frame, 0, f6, 1, 0, 0),
+        Step("7", MoveType.Frame, 0, f7, 1, 0, 0),
+        Step("8", MoveType.Joint, 0, j8, 10, 0, 0),
+        Step("9", MoveType.Joint, 0, j9, 10, 0, 0),
+        Step("10", MoveType.Joint, 0, j10, 10, 0, 0),
     ]
     return Program("Kinematic Path Limit", steps)
 

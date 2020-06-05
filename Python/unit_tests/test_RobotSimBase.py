@@ -91,6 +91,28 @@ class TestRobotSimBase(unittest.TestCase):
             msg = f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing"
             self.assertNotEqual(len(s.playback_frames), 0, msg)
 
+    def _test_for_playback_frames_with_time_step0(self):
+        """Asserts that there is no playback frame with time_step 0 in the middle of a move from A to B. Only the last playback frame can have a value of 0 if it is a stop point."""
+        lastMoveId = 0
+        if self.program.simulation_type != InstructionListJointsFlags.TimeBased:
+            return
+        for s in self.program.steps:
+            playbackFrameWithTimeStep0 = None
+            frameNumber = 0
+            for f in s.playback_frames:
+                frameNumber = frameNumber + 1
+                msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step}. "
+                self.assertIsNone(playbackFrameWithTimeStep0, msg)
+                if f.time_step == 0:
+                    playbackFrameWithTimeStep0 = f
+                    lastMoveId = f.move_id
+            
+    def _test_for_duplicate_frames_for_first_step(self):
+        """Asserts there is only one playback frame for the first target"""
+        firstStep = self.program.steps[0]
+        msg = f"First Step {firstStep.name} has more then one playbackFrame. Move Id 1. number of PlaybackFrames: {len(firstStep.playback_frames)}"
+        self.assertEqual(len(firstStep.playback_frames), 1, msg)
+            
     def _test_for_valid_move_ids(self):
         """Asserts that all playback frames have a valid move id"""
         playback_frames = self.program.simulation_result.playback_frames
@@ -214,3 +236,5 @@ class TestRobotSimBase(unittest.TestCase):
         self._test_for_valid_move_ids()
         self._test_max_simulation_step()
         self._test_if_stop_points_reached()
+        self._test_for_duplicate_frames_for_first_step()
+        self._test_for_playback_frames_with_time_step0()
