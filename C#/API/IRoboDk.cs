@@ -106,6 +106,11 @@ namespace RoboDk.API
         IRoboDK NewLink();
 
         /// <summary>
+        /// Close socket connection.
+        /// </summary>
+        void CloseLink();
+
+        /// <summary>
         /// Establish a connection with RoboDK. 
         /// If RoboDK is not running it will attempt to start RoboDK from the default installation path.
         /// (otherwise APPLICATION_DIR must be set properly). 

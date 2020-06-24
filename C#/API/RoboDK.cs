@@ -303,6 +303,12 @@ namespace RoboDk.API
             return rdk;
         }
 
+        public void CloseLink()
+        {
+            _bufferedSocket.Close();
+            _bufferedSocket.Dispose();
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -2649,21 +2655,18 @@ namespace RoboDk.API
 
         public sealed class RoboDKLink : IDisposable
         {
-            private RoboDK _roboDK;
-
-            public IRoboDK RoboDK => _roboDK;
+            public IRoboDK RoboDK { get; private set; }
 
             public RoboDKLink(IRoboDK roboDK)
             {
-                _roboDK = (RoboDK)roboDK.NewLink();
+                RoboDK = roboDK.NewLink();
             }
 
             public void Dispose()
             {
-                var tempRoboDK = _roboDK;
-                _roboDK = null;
-                tempRoboDK._bufferedSocket.Close();
-                tempRoboDK._bufferedSocket.Dispose();
+                var tempRoboDK = RoboDK;
+                RoboDK = null;
+                tempRoboDK.CloseLink();
             }
         }
 
@@ -2752,6 +2755,10 @@ namespace RoboDk.API
                             Debug.WriteLine($"Key_id({keyId}) {keyState.ToString()}  Modifiers: 0x{modifiers:X8}");
 
                             return new KeyPressedEventResult(item, keyId, keyState, modifiers);
+
+                        case EventType.CollisionMapChanged: 
+                            Debug.WriteLine($"RoboDK Event: {eventType}");
+                            return new EventResult(EventType.CollisionMapChanged, null);
 
                         default:
                             Debug.WriteLine($"unknown RoboDK Event: {eventType}");
