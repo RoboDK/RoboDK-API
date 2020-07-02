@@ -54,6 +54,7 @@ ITEM_TYPE_CALIBPROJECT=13
 ITEM_TYPE_VALID_ISO9283=14
 ITEM_TYPE_FOLDER=17
 ITEM_TYPE_ROBOT_ARM=18
+ITEM_TYPE_CAMERA=19
 
 # Instruction types
 INS_TYPE_INVALID = -1
@@ -634,6 +635,9 @@ class Robolink:
     # timeout for communication, in seconds
     TIMEOUT = 10
     
+    # Add Cameras as items (added option to use cameras as items at version v5.0.0)
+    CAMERA_AS_ITEM = True
+    
     # activate nodelay option (faster, requires more resources)
     NODELAY = False
     
@@ -1091,7 +1095,7 @@ class Robolink:
             return True
             
         if self.BUILD < build_required:
-            raise Exception("This function is unavailable. Update RoboDK to use this function through the API: https://robodk.com/download")
+            raise Exception("This function is unavailable. Update RoboDK to use this API feature: https://robodk.com/download")
         return True
             
     
@@ -1596,7 +1600,9 @@ class Robolink:
         self._send_line(command)
         self._send_line(filename)
         self._send_item(parent)
+        self.COM.settimeout(60) # 60 seconds timeout to add a file
         newitem = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)   
         self._check_status()
         return newitem
         
@@ -2336,7 +2342,7 @@ class Robolink:
         :return: list of pairs of strings
         :rtype: list of str
         
-        .. seealso:: :func:`~robolink.Robolink.getParam`, :func:`~robolink.Robolink.setParam`
+        .. seealso:: :func:`~robolink.Robolink.getParam` (Robolink station parameter), :func:`~robolink.Robolink.setParam` (Robolink station parameter)
         """    
         self._check_connection()
         command = 'G_Params'
@@ -2369,7 +2375,7 @@ class Robolink:
             FILE_OPENSTATION       # File name of the current station (name of the .rdk file)
             PATH_DESKTOP           # Full path to the desktop folder
             
-        .. seealso:: :func:`~robolink.Robolink.setParam`, :func:`~robolink.Robolink.getParams`
+        .. seealso:: :func:`~robolink.Robolink.setParam` (Robolink station parameter), :func:`~robolink.Robolink.getParams`
         """    
         self._check_connection()
         if str_type:
@@ -2422,7 +2428,7 @@ class Robolink:
         :param str command: Command Name, such as Trace, Threads or Window.
         :param str value: Comand value (optional, not all commands require a value) 
         
-        You can select Tools-Run Script-Show Commands to see all available commands.
+        Select **Tools-Run Script-Show Commands** to see all available commands.
         
         .. image:: Commands.png
                        
@@ -2458,13 +2464,20 @@ class Robolink:
             RoboDK -Lang=zh -ColorBgBottom=white -ColorBgTop=white -Threads=6 "path-to-file.rdk"
         
         
-        .. seealso:: :func:`~robolink.Robolink.setParam`
-        """    
+        .. seealso:: :func:`~robolink.Item.setParam` (Item parameter/command), :func:`~robolink.Robolink.setParam` (Robolink station parameter)
+        """   
+        if type(value) == dict:
+            # return dict if we provided a dict
+            value = json.dumps(value)            
+        else:
+            value = str(value)
+        value = value.replace('\n','<br>')
+        
         self._check_connection()
         command = 'SCMD'
         self._send_line(command)
         self._send_line(str(cmd))
-        self._send_line(str(value).replace('\n','<br>'))
+        self._send_line(value)
         self.COM.settimeout(3600)
         line = self._rec_line()
         self.COM.settimeout(self.TIMEOUT)        
@@ -2524,15 +2537,19 @@ class Robolink:
         Item(self, 0).ShowSequence(matrix)
 
     def LaserTracker_Measure(self, estimate=[0,0,0], search=False):
-        """Takes a laser tracker measurement with respect to its own reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
-        Returns the XYZ coordinates of target if it was found. Othewise it retuns None."""
+        """Takes a measurement using the laser tracker with respect to the tracker reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
+        Returns the XYZ coordinates of target if it was found. Othewise it retuns None. For trackers that support a 6D measurement, the returned value with be an array of 6 values (list) to include the Euler angles."""
         self._check_connection()
-        command = 'MeasLT'
+        command = 'MeasLT2'
         self._send_line(command)
         self._send_xyz(estimate)
         self._send_int(1 if search else 0)
-        xyz = self._rec_xyz()
+        xyz = self._rec_array().list()
         self._check_status()
+        if len(xyz) < 3:
+            return None
+        
+        # Old versions require checking against 0 mm    
         if xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2] < 0.0001:
             return None
         
@@ -2723,6 +2740,7 @@ class Robolink:
             CALIBRATE_FRAME_3P_P1_ORIGIN = 1    # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
             CALIBRATE_FRAME_6P = 2              # Calibrate by 6 points
             CALIBRATE_TURNTABLE = 3             # Calibrate turntable
+            CALIBRATE_TURNTABLE = 4             # Calibrate 2-axis turntable
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateTool`        
         """
@@ -2734,9 +2752,15 @@ class Robolink:
         self._send_int(method)
         self._send_item(robot)
         reference_pose = self._rec_pose()
-        errorstats = self._rec_array()
+        stats_data = self._rec_array()
         self._check_status()
-        return reference_pose        
+        
+        stats_data = stats_data.list()
+        # We'll receive addditional information when calibrating a 1 axis or 2 axis turntable
+        if len(stats_data) > 3:
+            return reference_pose, stats_data
+            
+        return reference_pose    
         
     def ProgramStart(self, programname, folder='', postprocessor='', robot=None):
         """Defines the name of the program when the program is generated (offline programming). 
@@ -2900,12 +2924,14 @@ class Robolink:
         
     #------------------------------------------------------------------
     #----------------------- CAMERA VIEWS ----------------------------
-    def Cam2D_Add(self, item_object, cam_params=""):
+    def Cam2D_Add(self, item_object=None, cam_params="", camera_item=None):
         """Open a simulated 2D camera view. Returns a handle pointer that can be used in case more than one simulated view is used.
         
         :param item_object: object to attach the camera
         :type item_object: :class:`.Item`
         :param str cam_params: Camera parameters as a string. Add one or more commands as shown in the following example.
+        :param camera_item: Use an existing camera item to modify settings and open the view (supported on RoboDK v5.0 and later)
+        :type camera_item: :class:`.Item`
         
                         
         Example:
@@ -2923,19 +2949,24 @@ class Robolink:
             #camref = RDK.Item('Frame 7',ITEM_TYPE_FRAME)
 
             # Set parameters in mm and degrees:
-            #  FOV: Field of view in degrees (atan(0.5*height/distance) of the sensor
+            #  FOV: Field of view in degrees (2*atan(0.5*height/distance) of the sensor
             #  FOCAL_LENGHT: focal lenght in mm
             #  FAR_LENGHT: maximum working distance (in mm)
+            #  PIXELSIZE: Size of the pixel in micro meters (square size assumed)
             #  SIZE: size of the window in pixels (fixed) (width x height)
-            #  SNAPSHOT: size of the snapshot image in pixels (width x height)
+            #    WINDOWFIXED: If we specify the Size, make the size of the window exactly the same size
+            #    WINDOWRESIZE: Even if we specify the size 
+            #  SNAPSHOT: size of the snapshot image in pixels if it should be different from the normal size (width x height). Size can be larger than 4k, depending on graphics card support.
             #  BG_COLOR: background color (rgb color or named color: AARRGGBB)
             #  LIGHT_AMBIENT: ambient color (rgb color or named color: AARRGGBB)
             #  LIGHT_SPECULAR: specular color (rgb color or named color: AARRGGBB)
             #  LIGHT_DIFFUSE: diffuse color (rgb color or named color: AARRGGBB)
             #  DEPTH: Add this flag to create a 32 bit depth map (white=close, black=far)
+            #  GRAYSCALE: Add this flag to create a grayscale image
             #  NO_TASKBAR: Don't add the window to the task bar
             #  MINIMIZED: Show the window minimized
             #  ALWAYS_VISIBLE: Keep the window on top of all other windows
+            #  DOCKED: Show the view as a docked window (not a separate window)
             #  SHADER_VERTEX: File to a vertex shader (GLSL file)
             #  SHADER_FRAGMENT: File to a fragment shader (GLSL file)
 
@@ -2992,47 +3023,82 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Snapshot`, :func:`~robolink.Robolink.Cam2D_Close`, :func:`~robolink.Robolink.Cam2D_SetParams`
         """
         self._check_connection()
-        command = 'Cam2D_Add'
-        self._send_line(command)
-        self._send_item(item_object)
-        self._send_line(cam_params)
-        cam_handle = self._rec_ptr()
+        if self.CAMERA_AS_ITEM:
+            self._require_build(17779)
+            command = 'Cam2D_PtrAdd'
+            self._send_line(command)
+            self._send_item(item_object)
+            self._send_item(camera_item)
+            self._send_line(cam_params)
+            cam_handle = self._rec_item()
+
+        else:
+            command = 'Cam2D_Add'
+            self._send_line(command)
+            self._send_item(item_object)
+            self._send_line(cam_params)
+            cam_handle = self._rec_ptr()
         self._check_status()
         return cam_handle
         
-    def Cam2D_Snapshot(self, file_save_img, cam_handle=0):
+    def Cam2D_Snapshot(self, file_save_img, cam_handle=0, params=""):
         """Take a snapshot from a simulated camera view and save it to a file. Returns 1 if success, 0 otherwise.
         
         :param str file_save_img: file path to save. Formats supported include PNG, JPEG, TIFF, ...
         :param int cam_handle: camera handle (pointer returned by Cam2D_Add)
+        :param str params: additional options (use, "Grayscale", "Depth" or "Color" to modify the camera snapshot)
         
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`, :func:`~robolink.Robolink.Cam2D_Close`
         """
+        if type(file_save_img) is not str:
+            raise Exception("The first argument must be a valid file name (str)")
+            
         self._check_connection()
-        command = 'Cam2D_Snapshot'
-        self._send_line(command)
-        self._send_ptr(int(cam_handle))
-        self._send_line(file_save_img)        
-        success = self._rec_int()
+        if type(cam_handle) is int:
+            command = 'Cam2D_Snapshot'
+            self._send_line(command)
+            self._send_ptr(int(cam_handle))
+            self._send_line(file_save_img)        
+            success = self._rec_int()
+            
+        else:
+            # Camera is an item
+            self._require_build(17779)
+            command = 'Cam2D_PtrSnapshot'
+            self._send_line(command)
+            self._send_item(cam_handle)
+            self._send_line(file_save_img)
+            self._send_line(params)
+            self.COM.settimeout(3600)
+            success = self._rec_int()
+            self.COM.settimeout(self.TIMEOUT)               
+        
         self._check_status()
         return success
         
     def Cam2D_Close(self, cam_handle=0):
-        """Closes all camera windows or one specific camera if the camera handle is provided. Returns 1 if success, 0 otherwise.
+        """Closes all camera windows or one specific camera if the camera handle is provided. Returns True if success, False otherwise.
         
         :param cam_handle: camera handle (pointer returned by Cam2D_Add). Leave to 0 to close all simulated views.
         :type cam_handle: int
         
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`, :func:`~robolink.Robolink.Cam2D_Snapshot`"""
         self._check_connection()
-        if cam_handle == 0:
-            command = 'Cam2D_CloseAll'
-            self._send_line(command)
+        if type(cam_handle) is int:
+            if cam_handle == 0:
+                command = 'Cam2D_CloseAll'
+                self._send_line(command)
+            else:
+                command = 'Cam2D_Close'
+                self._send_line(command)
+                self._send_ptr(cam_handle)
         else:
-            command = 'Cam2D_Close'
+            self._require_build(17779)
+            command = 'Cam2D_PtrClose'
             self._send_line(command)
-            self._send_ptr(cam_handle)
-        success = self._rec_int()
+            self._send_item(cam_handle)
+                
+        success = self._rec_int() > 0
         self._check_status()
         return success
         
@@ -3057,9 +3123,29 @@ class Robolink:
     #----------------------- SPRAY GUN SIMULATION ----------------------------
     def Spray_Add(self, item_tool=0, item_object=0, params="", points=None, geometry=None):
         """Add a simulated spray gun that allows projecting particles to a part. This is useful to simulate applications such as: 
-        arc welding, spot welding, 3D printing, painting or inspection to verify the trace. The SprayOn.py macro shows an example to use this option.
-        It returns a pointer that can be used later for other operations, such as turning the spray ON or OFF.
+        arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.         
         
+        The scripts ArcStart, ArcEnd and WeldOn and SpindleOn behave in a similar way, the only difference is the default behavior
+        This behavior simmulates Fanuc Arc Welding and triggers appropriate output when using the customized post processor.
+        
+        Select ESC to clear the trace manually.        
+
+        Example scripts that use Spray_Add in **Library/Macros**:
+        
+        * SpindleOn / SpindleOff: Turn trace On/Off
+        * ArcOn / ArcOff: Turn trace On/Off
+        * SprayOn / SprayOff: Simulate a spray given a workspace volume (for painting)
+        * WeldOn / WeldOff: Support for multiple weld guns
+        
+        Examples:
+        
+        * SpindleOn(2): Show the trace in blue
+        * SpindleOn(red): Show the trace in red
+        * SpindleOff: Turn off the trace
+        * SpindleOn(green,2.5): Green trace with a sphere of radius 2.5 mm
+    
+        .. image:: TraceOn.png
+                
         :param str params: A string specifying the behavior of the simulated particles. The string can contain one or more of the following commands (separated by a space). See the allowed parameter options.
         :param points: provide the volume as a list of points as described in the sample macro SprayOn.py
         :type points: :class:`.Mat`
@@ -3570,17 +3656,26 @@ class Item():
         self.link._send_item(parent)
         self.link._check_status()
 
-    def AttachClosest(self):
+    def AttachClosest(self, keyword='', tolerance_mm=-1, list_objects=[]):
         """Attach the closest object to the tool.
-        Returns the item that was attached.
-        Use item.Valid() to check if an object was attached to the tool.
+        Returns the item that was attached. Use item.Valid() to check if an object was attached to the tool.        
+        
+        :param str keyword: Keyword needed for an object to be grabbable (leave empty to consider all objects)
+        :param float tolerance_mm: Distance tolerance to use (at most) to consider grabbing objects. The closest object will be attached. In Tools-Options-General tab you can choose to check object distance between TCP and object shape (instead of the default TCP vs. Object position).
+        :param list list_objects: List of candidate objects to consider to grab (providing a keyword constrains the choices even more)
         
         .. seealso:: :func:`~robolink.Item.setParentStatic`
         """
         self.link._check_connection()
-        command = 'Attach_Closest'
+        command = 'Attach_Closest2'
         self.link._send_line(command)
         self.link._send_item(self)
+        self.link._send_line(keyword)
+        self.link._send_array([tolerance_mm])
+        self.link._send_int(len(list_objects))
+        for obji in list_objects:
+            self.link._send_item(obji)
+            
         item_attached = self.link._rec_item()
         self.link._check_status()
         return item_attached
@@ -4854,11 +4949,12 @@ class Item():
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
         if self.type == ITEM_TYPE_PROGRAM:
-            if type(target) != Item:
-                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
-            self.addMoveJ(target)
-        else:
-            self.link._moveX(target, self, 1, blocking)
+            blocking = False
+            if type(target) == Item:
+                self.addMoveJ(target)
+                return
+                
+        self.link._moveX(target, self, 1, blocking)
     
     def MoveL(self, target, blocking=True):
         """Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements. This function can also be called on Programs and a new movement instruction will be added at the end of the program.
@@ -4873,11 +4969,12 @@ class Item():
         .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
         if self.type == ITEM_TYPE_PROGRAM:
-            if type(target) != Item:
-                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
-            self.addMoveL(target)
-        else:
-            self.link._moveX(target, self, 2, blocking)
+            blocking = False
+            if type(target) == Item:
+                self.addMoveL(target)
+                return
+        
+        self.link._moveX(target, self, 2, blocking)
         
     def SearchL(self, target, blocking=True):
         """Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode). This function waits (blocks) until the robot finishes its movements.
@@ -5204,10 +5301,10 @@ class Item():
         return filter_status, filter_msg
     
     #"""Program item calls"""    
-    def MakeProgram(self, filestr='', run_mode = RUNMODE_MAKE_ROBOTPROG):
+    def MakeProgram(self, folder_path='', run_mode = RUNMODE_MAKE_ROBOTPROG):
         """Generate the program file. Returns True if the program was successfully generated.
         
-        :param str filestr: Path to save the program ending with a slash (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
+        :param str pathstr: Folder to save the program (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
         :param run_mode: RUNMODE_MAKE_ROBOTPROG to generate the program file. Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.
         :return: [success (True or False), log (str), transfer_succeeded (True/False)]
         
@@ -5215,11 +5312,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode`      
         """
+        if len(folder_path) > 0 and not (folder_path.endswith("/") or folder_path.endswith("\\")):
+            folder_path = folder_path + "/"
+            
         self.link._check_connection()
         command = 'MakeProg2'
         self.link._send_line(command)
         self.link._send_item(self)
-        self.link._send_line(filestr)
+        self.link._send_line(folder_path)
         self.link._send_int(run_mode)
         self.link.COM.settimeout(300) # wait up to 5 minutes for the program to generate
         prog_status = self.link._rec_int()
@@ -5604,17 +5704,18 @@ class Item():
     def Instruction(self, ins_id=-1):
         """Return the current program instruction or the instruction given the instruction id (if provided).
         It returns the following information about an instruction:
-        name: name of the instruction (displayed in the RoboDK tree)
-        instype: instruction type (INS_TYPE_*). For example, INS_TYPE_MOVE for a movement instruction.
-        movetype: type of movement for INS_TYPE_MOVE instructions: MOVE_TYPE_JOINT for joint moves, or MOVE_TYPE_LINEAR for linear moves
-        isjointtarget: 1 if the target is specified in the joint space, otherwise, the target is specified in the cartesian space (by the pose)
-        target: pose of the target as :class:`.Item`
-        joints: robot joints for that target        
+        
+        * name: name of the instruction (displayed in the RoboDK tree)
+        * instype: instruction type (INS_TYPE_*). For example, INS_TYPE_MOVE for a movement instruction.
+        * movetype: type of movement for INS_TYPE_MOVE instructions: MOVE_TYPE_JOINT for joint moves, or MOVE_TYPE_LINEAR for linear moves
+        * isjointtarget: 1 if the target is specified in the joint space, otherwise, the target is specified in the cartesian space (by the pose)
+        * target: pose of the target as :class:`.Item`
+        * joints: robot joints for that target        
         
         :param ins_id: instruction id to return
         :type ins_id: int
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.setInstruction`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.setInstruction`, :func:`~robolink.Robolink.InstructionDelete`
         """
         self.link._check_connection()
         command = 'Prog_GIns'
@@ -5653,7 +5754,7 @@ class Item():
         :param joints: robot joints for the target
         :type joints: list of float
         
-        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.Instruction`
+        .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.Instruction`
         """
         self.link._check_connection()
         command = 'Prog_SIns'
@@ -5744,13 +5845,12 @@ class Item():
         
         Outputs:
         
-        message (str): Returns a human readable error message (if any).
-        
-        joint_list (:class:`~robodk.Mat`): 2D matrix with all the joint information and corresponding information such as step, time stamp and speeds. Each entry is one column.
+        * message (str): Returns a human readable error message (if any).        
+        * joint_list (:class:`~robodk.Mat`): 2D matrix with all the joint information and corresponding information such as step, time stamp and speeds. Each entry is one column.
         It also returns the list of joints as [J1, J2, ..., Jn, ERROR, MM_STEP, DEG_STEP, MOVE_ID, TIME, X,Y,Z] or the file name if a file path is provided to save the result. Default units are MM and DEG. 
         Use list(:class:`~robodk.Mat`) to extract each column in a list. The ERROR is returned as an int but it needs to be interpreted as a binary number.
         
-        status (int): Status is negative if there are program issues (singularity, axis limit, targets not properly defined or collision if activated). Otherwise it returns the number of instructions that can be successfully executed.
+        * status (int): Status is negative if there are program issues (singularity, axis limit, targets not properly defined or collision if activated). Otherwise it returns the number of instructions that can be successfully executed.
                 
         .. code-block:: python
             :caption: Error bit masks
@@ -5784,11 +5884,32 @@ class Item():
         self.link._check_status()
         return error_msg, joint_list, error_code
         
-    def setParam(self, param, value=''):
-        """Send a specific parameter for an item.
+    def getParam(self, param):
+        """Get custom binary data from this item. Use setParam to set the data.
         
-        :param str command: Command name
-        :param str value: Comand value (optional, not all commands require a value) 
+        :param str param: Parameter name
+        
+        .. seealso:: :func:`~robolink.Item.setParam`
+        """
+        # Setting custom binary data
+        self.link._check_connection()
+        command = 'G_ItmDataParam'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        self.link._send_line(str(param))
+        data = self.link._rec_bytes()
+        self.link._check_status()
+        return data
+    
+    def setParam(self, param, value=''):
+        """Set a specific item parameter. 
+        
+        Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.
+        
+        Note: For parameters (commands) that require a JSON string value you can also provide a dict.
+        
+        :param str param: Parameter/command name
+        :param str value: Parameter value (optional, not all commands require a value). If value is bytes it will store customized data to an item given the param name.
         
         .. code-block:: python
             :caption: Example to expand or collapse an item in the tree
@@ -5796,7 +5917,7 @@ class Item():
             from robolink import *
             RDK = Robolink()      # Start the RoboDK API
             
-            # How to change the number of threads using by the RoboDK application:
+            # How to expand or collapse an item in the tree
             item = RDK.ItemUserPick("Select an item")
             
             item.setParam("Tree", "Expand")
@@ -5831,28 +5952,47 @@ class Item():
 
             # Example to change the size of displayed curves:
             obj.setValue('Display','LINEW=4')   
+            
+            # More examples to change the appearance of points and curves available here:
+            https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginAppLoader/Apps/SetStyle
         
         
-        .. seealso:: :func:`~robolink.Robolink.setParam`
-        """    
+        .. seealso:: :func:`~robolink.Item.getParam`, :func:`~robolink.Robolink.Command` (Robolink), :func:`~robolink.Robolink.setParam` (Robolink: station parameter)
+        """
+        import json
+
+        if type(value) == dict:
+            # return dict if we provided a dict
+            value = json.dumps(value)            
+        elif type(value) == bytes:
+            # Setting custom binary data
+            self.link._check_connection()
+            command = 'S_ItmDataParam'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(param))
+            self.link._send_bytes(value)
+            self.link._check_status()
+            return True
+        else:
+            value = str(value)            
+        value = value.replace('\n','<br>')
+            
         self.link._check_connection()
         command = 'ICMD'
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._send_line(str(param))
-        self.link._send_line(str(value).replace('\n','<br>'))
+        self.link._send_line(value)
         line = self.link._rec_line()
         self.link._check_status()
+        if len(value) == 0 and line.startswith("{"):
+            line = json.loads(line)
+            
         return line
         
         
-#if __name__ == "__main__":    
-#    RDK = Robolink()
-#    r = RDK.Item('',ITEM_TYPE_ROBOT)
-#    p = r.Pose()
-#    prog = RDK.AddProgram('Test')
-#    prog.MoveL(RDK.AddTarget("First Point").setAsCartesianTarget().setPose(p))
-#    p1 = p*transl(50,0,0)
-#    p2 = p*transl(50,50,0)
-#    prog.MoveC(RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p1), RDK.AddTarget("Second Point").setAsCartesianTarget().setPose(p2))
-#    #pass
+#if __name__ == "__main__":
+#   
+#    TestCamera()
+       

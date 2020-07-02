@@ -19,7 +19,7 @@ sim_step_deg_L = 10
 max_calc_time = 2
 
 # Define the maximum expected playback frames per instruction
-max_frames_instruction = 1000
+max_frames_instruction = 1250
 
 # Replacement character for a simple dot "." used for parameterized tests
 # This is needed for proper test discovery and execution in vscode
