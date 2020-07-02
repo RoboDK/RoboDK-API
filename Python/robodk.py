@@ -1,5 +1,5 @@
 # Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
@@ -881,7 +881,7 @@ def dh(rz,tx=None,tz=None,rx=None):
     return Mat( [[crz, -srz*crx,  srz*srx, tx*crz],
                  [srz,  crz*crx, -crz*srx, tx*srz],
                  [  0,      srx,      crx,     tz],
-                 [  0,        0,        0,      1]]);
+                 [  0,        0,        0,      1]])
 
 def dhm(rx, tx=None, tz=None, rz=None):
     """Returns the Denavit-Hartenberg Modified 4x4 matrix for a robot link (Craig 1986).
@@ -899,7 +899,7 @@ def dhm(rx, tx=None, tz=None, rz=None):
     return Mat([[crz,        -srz,    0,      tx],
                 [crx*srz, crx*crz, -srx, -tz*srx],
                 [srx*srz, crz*srx,  crx,  tz*crx],
-                [      0,       0,    0,       1]]);
+                [      0,       0,    0,       1]])
 
 def joints_2_angles(jin, type):
     """Converts the robot encoders into angles between links depending on the type of the robot."""
@@ -1011,7 +1011,7 @@ def intersect_line_2_plane(pline,vline,pplane,vplane):
 
 def proj_pt_2_plane(point,planepoint,planeABC):
     """Projects a point to a plane"""
-    return intersect_line_2_plane(point,planeABC,planepoint,planeABC);
+    return intersect_line_2_plane(point,planeABC,planepoint,planeABC)
 
 def proj_pt_2_line(point, paxe, vaxe):
     """Projects a point to a line"""
@@ -1405,7 +1405,7 @@ class Mat(object):
             return mulmat
         if isinstance(mat,list):#case of a matrix times a vector            
             szvect = len(mat)
-            m = self.size(0);
+            m = self.size(0)
             matvect = Mat(mat)            
             if szvect + 1 == m:
                 vectok = catV(matvect,Mat([[1]]))
@@ -1444,7 +1444,7 @@ class Mat(object):
             return False
         #if self[3,:] != Mat([[0.0,0.0,0.0,1.0]]):
         #    return False
-        test = self[0:3,0:3];
+        test = self[0:3,0:3]
         test = test*test.tr()
         test[0,0] = test[0,0] - 1.0
         test[1,1] = test[1,1] - 1.0
@@ -1472,7 +1472,7 @@ class Mat(object):
         if not self.isHomogeneous():
             raise Exception(MatrixError, "Pose matrix is not homogeneous. invH() can only compute the inverse of a homogeneous matrix")
         Hout = self.tr()
-        Hout[3,0:3] = Mat([[0,0,0]]);
+        Hout[3,0:3] = Mat([[0,0,0]])
         Hout[0:3,3] = (Hout[0:3,0:3]*self[0:3,3])*(-1)
         return Hout
     
