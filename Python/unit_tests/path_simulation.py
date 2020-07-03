@@ -28,9 +28,11 @@ def init_robodk():
     rdk.Command("CollisionMap", "None")
     rdk.setCollisionActive(COLLISION_OFF)
 
-    rdk.Command("ToleranceSingularityWrist ", 2.0)  # 2.0    Threshold angle to avoid singularity for joint 5 (deg)
-    rdk.Command("ToleranceSingularityElbow ", 3.0)  # 3.0    Threshold angle to avoid singularity for joint 3 (deg)
+    rdk.Command("ToleranceSingularityWrist ", 2.0)  # Threshold angle to avoid singularity for joint 5 (deg)
+    rdk.Command("ToleranceSingularityElbow ", 3.0)  # Threshold angle to avoid singularity for joint 3 (deg)
+    rdk.Command("ToleranceSingularityElbow ", 20.0) # Wrist is close to Axis 1  [mm]
     rdk.Command("ToleranceSmoothKinematic", 25)  # 25 deg
+    rdk.Command("ToleranceTurn180", 0.5)  # 25 deg
 
     return rdk
 
@@ -132,7 +134,7 @@ MoveType = Enum('MoveType', 'Joint Frame')
 
 
 class Step():
-    def __init__(self, name, move_type, tcp, pose, blending, speed, accel):
+    def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error=0):
         self.name = name
         self.move_type = move_type
         self.tcp = tcp
@@ -143,6 +145,7 @@ class Step():
         self.tcp_item = tools[tcp]
         self.tcp_name = tools[tcp].Name()
         self.playback_frames = []
+        self.expected_error = expected_error
 
     def print(self):
         print(f"Step '{self.name}' ({self.move_type}) ::: ",
