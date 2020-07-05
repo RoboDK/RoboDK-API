@@ -38,6 +38,15 @@ def init_robodk():
 
 
 def load_file(filename):
+    """Load a RoboDK RDK file, get robot and return robot and tool item
+
+    Args:
+        filename (string): filename of a RoboDK rdk file
+
+    Returns:
+        IItem: robot
+        IItem: tool
+    """
     global robot
     global tools
 

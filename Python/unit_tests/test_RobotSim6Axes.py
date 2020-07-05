@@ -68,22 +68,6 @@ def get_program_rotate_in_place():
     return Program("Rotate Robot Axis", steps)
 
 
-def get_program_near_singularity():
-    """Test program to simulate near singularity"""
-    j1 = [84.042754, -57.261200, 115.707342, 78.814999, -83.206905, 59.112086]
-    f2 = [267.800000, -697.899998, 489.200000, -0.000000, -0.000000, -97.106527]
-    f3 = [267.800000, -886.682410, 541.603649, 45.000000, 0.000000, 180.000000]
-    f4 = [267.800000, -900.824545, 555.745785, 45.000000, 0.000000, 180.000000]
-    steps = [
-        # Step: name, move_type, tcp, pose, blending, speed, accel):
-        Step("1", MoveType.Joint, 0, j1, 10, 0, 0),
-        Step("2", MoveType.Frame, 0, f2, 10, 0, 0),
-        Step("3", MoveType.Frame, 0, f3, 10, 0, 0),
-        Step("4", MoveType.Frame, 0, f4, 0, 0, 0),
-    ]
-    return Program("Near Singularity", steps)
-
-
 def get_program_kinematic_path_limit():
     """Test program to simulate a path which is near kinematic limits"""
     j1 = [-124.574187, -103.845852, 105.005701, 36.135749, 64.419738, 141.994562]
@@ -113,19 +97,6 @@ def get_program_kinematic_path_limit():
     return Program("Kinematic Path Limit", steps)
 
 
-
-
-def get_program_moveId0():
-    """Test program to simulate a path which is near kinematic limits"""
-    j1 = [ 58.871249, -78.599411,  143.944527, 173.481676, 65.485694,   -87.285718]
-    f2 = [247.580323, -793.574636, 574.200001, 0.000000,   -0.000000,  -154.799784]
-
-    steps = [
-        # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
-        Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
-        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 2),
-    ]
-    return Program("MoveId0", steps)
 
 
 @parameterized_class(
@@ -167,39 +138,9 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
         self._test_program(verbose=False)
         self._test_if_cartesian_coordinates_const(2)
 
-    def test_near_singularity(self):
-        """Test near singularity"""
-        self.program = get_program_near_singularity()
-        # TODO: for big mm, joint or time steps we expect the simulation to return an error, for which step sizes?
-        # TODO: how to check? result.message, result.status and playback frame errors not consistent
-        expect_error = self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm >= test_RobotSimBase.sim_step_mm_L
-        self._test_program(verbose=False)
-        ## if self.sim_step_mm is not None:
-        ##    expect_error = self.sim_type == InstructionListJointsFlags.Position and self.sim_step_mm >= test_RobotSimBase.sim_step_mm_L
-        ##    self._test_program(expect_error, verbose=False)
-        ##else:
-        ##    #print("Ignored test near singularity because sim_step_mm is None")
-        ##    print("I", end = '')
-
     def test_kinematic_path_limit(self):
         """Test KinematicPathLimit"""
         self.program = get_program_kinematic_path_limit()
-        self._test_program(verbose=False)
-
-
-@parameterized_class(
-    ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        (f"TimeBased({test_RobotSimBase.step_time_RM:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
-         InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_M)
-    ])
-class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
-
-    def load_robot_cell(self):
-        self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
-
-    def test_moveId0(self):
-        """Test program move ID0"""
-        self.program = get_program_moveId0()
         self._test_program(verbose=False)
 
 

@@ -117,8 +117,9 @@ class TestRobotSimBase(unittest.TestCase):
             frameNumber = 0
             for f in s.playback_frames:
                 frameNumber = frameNumber + 1
-                msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step}. "
-                self.assertIsNone(playbackFrameWithTimeStep0, msg)
+                if playbackFrameWithTimeStep0 != None:
+                    msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step} in the middle of the move from {f.move_id-1} to {f.move_id}. "
+                    self.fail(msg)
                 if f.time_step == 0:
                     playbackFrameWithTimeStep0 = f
                     lastMoveId = f.move_id
