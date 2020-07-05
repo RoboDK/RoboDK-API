@@ -5,6 +5,7 @@ from path_simulation import *
 # Simulation Time for Time Based Simulation Tests
 step_time_S = 0.002
 step_time_M = 0.02
+step_time_RM = 0.05  # Simuation Time used in RobotManager
 #step_time_L = 0.2 # triggers the default 25 deg limit for kinematic error when we are close to a singularity
 step_time_L = 0.025
 
@@ -68,20 +69,35 @@ class TestRobotSimBase(unittest.TestCase):
             msg = f"Step {step.name} has too many playback frames: {nframes}"
             self.assertLessEqual(nframes, max_frames_instruction, msg)
 
-    def _test_result_message(self, expect_error=False):
-        """Asserts that InstructionListJoints result message is as expected
+    def _test_result_message(self):
+        """Asserts that InstructionListJoints result message is as expected"""
 
-        :param bool expect_error: Set 'True' if simulation error is expected
-        """
-        result = self.program.simulation_result
-        result_has_error1 = result.error < 0
-        result_has_error2 = result.message.lower() != "success"
-        
-        msg = f"InstructionListJoints result message: '{result.message}' (but returned error code={result.error})"
-        self.assertEqual(result_has_error1, result_has_error2, msg)
+        numberOfExpectedErrors = 0
+        for step in self.program.steps:
+            expectedError = step.expected_error
 
-        msg = f"InstructionListJoints result message: '{result.message}' (but expect_error={expect_error})"
-        self.assertEqual(result_has_error1, expect_error, msg)
+            if expectedError > 0:
+                numberOfExpectedErrors = numberOfExpectedErrors + 1
+                msg = f"Expected error frame with error {expectedError} in Step {step.name} but Playback frame list is empty"
+                self.assertGreater( len(step.playback_frames), 0, msg)
+                lastFrame = step.playback_frames[-1]
+                msg = f"Expected error {expectedError} but found error {lastFrame.error} in playback frame"
+                self.assertEqual( lastFrame.error, expectedError, msg)
+                errorMessage = self.program.simulation_result.message.lower()
+                self.assertNotEqual( errorMessage, "success", "expected an error message but got 'success'")
+
+            if expectedError == 0:
+                if len(step.playback_frames) > 0:
+                    lastFrame = step.playback_frames[-1]
+                    msg = f"Expected error {expectedError} but found error {lastFrame.error} in playback frame"
+                    self.assertEqual( lastFrame.error, expectedError, msg)
+
+        if numberOfExpectedErrors == 0:
+            errorMessage = self.program.simulation_result.message.lower()
+            msg = f"expected error message 'success' but got error message {errorMessage}"
+            self.assertEqual( errorMessage, "success", msg)
+
+        return numberOfExpectedErrors
 
     def _test_for_missing_move_ids(self):
         """Asserts that there is at least one playback frame per step"""
@@ -101,8 +117,9 @@ class TestRobotSimBase(unittest.TestCase):
             frameNumber = 0
             for f in s.playback_frames:
                 frameNumber = frameNumber + 1
-                msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step}. "
-                self.assertIsNone(playbackFrameWithTimeStep0, msg)
+                if playbackFrameWithTimeStep0 != None:
+                    msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step} in the middle of the move from {f.move_id-1} to {f.move_id}. "
+                    self.fail(msg)
                 if f.time_step == 0:
                     playbackFrameWithTimeStep0 = f
                     lastMoveId = f.move_id
@@ -193,12 +210,9 @@ class TestRobotSimBase(unittest.TestCase):
                 previous_pb_frame = pb_frame
             previous_step = step
 
-    def _test_program(self, expect_error=False, verbose=False):
+    def _test_program(self, verbose=False):
         """Loads and simulates program and then asserts various properties on result
 
-        :param bool expect_error:
-            Set 'True' if simulation error is expected, will only check for result message.
-            If set to false addidional checks on the simulation result will be executed.
         :param bool verbose:
             Print details of simulation result and load it to RoboDK
         """
@@ -222,9 +236,9 @@ class TestRobotSimBase(unittest.TestCase):
             self.program.print()
             self.program.simulation_result.add_to_robodk()
 
-        self._test_result_message(expect_error)
-
-        if expect_error:
+        self._test_for_valid_move_ids()
+        expectedErrors = self._test_result_message()
+        if expectedErrors > 0:
             # other checks don't make sense if program simulation has errors
             return
 
@@ -233,7 +247,6 @@ class TestRobotSimBase(unittest.TestCase):
         self._test_frames_per_instruction()
         self._test_for_playback_frame_errors()
         self._test_for_missing_move_ids()
-        self._test_for_valid_move_ids()
         self._test_max_simulation_step()
         self._test_if_stop_points_reached()
         self._test_for_duplicate_frames_for_first_step()
