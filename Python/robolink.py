@@ -1489,6 +1489,7 @@ class Robolink:
         :param str message: message to display
         :param bool popup: Set to False to display the message in the RoboDK's status bar (not blocking)
         """
+        print(message)
         self._check_connection()
         if popup:
             command = 'ShowMessage'
@@ -2699,6 +2700,16 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateReference`
         """
+        if type(poses_xyzwpr) == list:    
+            nposes = len(poses_xyzwpr)
+            if len(poses_xyzwpr) > 0:
+                input_format = EULER_RX_RYp_RZpp
+                matrix = []
+                for i in range(nposes):
+                    matrix.append(Pose_2_Staubli(poses_xyzwpr[i]))
+                    
+                poses_xyzwpr = matrix
+        
         self._check_connection()
         command = 'CalibTCP3'
         self._send_line(command)
@@ -3111,11 +3122,19 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`
         """
         self._check_connection()
-        command = 'Cam2D_SetParams'
-        self._send_line(command)
-        self._send_ptr(int(cam_handle))
-        self._send_line(params)        
-        success = self._rec_int()
+        if type(cam_handle) is int:
+            command = 'Cam2D_SetParams'
+            self._send_line(command)
+            self._send_ptr(int(cam_handle))
+            self._send_line(params)        
+            success = self._rec_int()
+        else:
+            command = 'Cam2D_PtrSetParams'
+            self._send_line(command)
+            self._send_item(cam_handle)
+            self._send_line(params)        
+            success = self._rec_int()
+            
         self._check_status()
         return success
     
@@ -3475,6 +3494,9 @@ class Item():
     
     def __init__(self, link, ptr_item=0, itemtype=-1):
         self.item = ptr_item
+        if type(self.item) is str:
+            self.item = int(self.item)
+            
         self.link = link # it is recommended to keep the link as a reference and not a duplicate (otherwise it will establish a new connection at every call)
         self.type = itemtype
 
@@ -5992,7 +6014,19 @@ class Item():
         return line
         
         
-#if __name__ == "__main__":
-#   
-#    TestCamera()
+if __name__ == "__main__":
+    def TestGenericITem():
+        RDK = Robolink()
+        ptr = RDK.Command("AddItem")
+        i = Item(RDK, ptr)
+        i.setName("My Name")
+        
+    def TestCamera():
+        RDK = Robolink()
+        ref = RDK.AddFrame("Ref")
+        prm = ''
+        c = RDK.Cam2D_Add(ref, prm)
+
+    TestCamera()
+
        
