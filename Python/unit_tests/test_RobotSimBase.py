@@ -76,13 +76,19 @@ class TestRobotSimBase(unittest.TestCase):
         for step in self.program.steps:
             expectedError = step.expected_error
 
-            if expectedError > 0:
+            if type(expectedError) is list or expectedError > 0:
                 numberOfExpectedErrors = numberOfExpectedErrors + 1
-                msg = f"Expected error frame with error {expectedError} in Step {step.name} but Playback frame list is empty"
+                msg = f"Expected error frame with error {str(expectedError)} in Step {step.name} but Playback frame list is empty"
                 self.assertGreater( len(step.playback_frames), 0, msg)
                 lastFrame = step.playback_frames[-1]
-                msg = f"Expected error {expectedError} but found error {lastFrame.error} in playback frame"
-                self.assertEqual( lastFrame.error, expectedError, msg)
+                if type(expectedError) is int:
+                    msg = f"Expected error {str(expectedError)} but found error {lastFrame.error} in playback frame {step.name}"
+                    self.assertEqual( lastFrame.error, expectedError, msg)
+
+                elif not (lastFrame.error in expectedError):
+                    msg = f"Expected error {str(expectedError)} but found error {lastFrame.error} in playback frame {step.name}"
+                    self.assertEqual( lastFrame.error, expectedError, msg)
+
                 errorMessage = self.program.simulation_result.message.lower()
                 self.assertNotEqual( errorMessage, "success", "expected an error message but got 'success'")
 

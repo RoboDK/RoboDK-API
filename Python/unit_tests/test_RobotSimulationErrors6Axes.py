@@ -15,8 +15,8 @@ def get_program_near_singularity():
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("1", MoveType.Joint, 0, j1, 10, 0, 0, 0),
         Step("2", MoveType.Frame, 0, f2, 10, 0, 0, 0),
-        Step("3", MoveType.Frame, 0, f3, 10, 0, 0, 0), ## TODO: Set expected error code  
-        Step("4", MoveType.Frame, 0, f4, 0, 0, 0, 0),  ## TODO: Set expected error code
+        Step("3", MoveType.Frame, 0, f3, 10, 0, 0, [110,1000]), # Wrist singularity (could be 1000 or 100)
+        Step("4", MoveType.Frame, 0, f4, 0, 0, 0, 0), # Wrist singularity (could be 1000 or 100)
     ]
     return Program("Near Singularity", steps)
 
@@ -29,7 +29,7 @@ def get_program_moveId0():
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
-        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 2), ## TODO: Set expected error code
+        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, [110,1000]), # Wrist singularity (could be 1000 or 100)
     ]
     return Program("MoveId0", steps)
 
@@ -44,7 +44,7 @@ def get_program_180degree_rotation_error():
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
         Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 0),
-        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 16), ## TODO: Set expected error code
+        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 2000), # Elbow singularity
     ]
     return Program("180 degree rotation error", steps)
 
@@ -63,8 +63,8 @@ def get_program_axis_limit_error():
         Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 0),
         Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 0),
         Step("F4", MoveType.Frame, 0, f4, 1, 0, 0, 0),
-        Step("F5", MoveType.Frame, 0, f5, 1, 0, 0, 1),  ## TODO: Set expected error code
-        Step("F6", MoveType.Frame, 0, f6, 1, 0, 0, 0),
+        Step("F5", MoveType.Frame, 0, f5, 1, 0, 0, 0),  
+        Step("F6", MoveType.Frame, 0, f6, 1, 0, 0, [110, 10]), # Wrist singularity (could be 1000 or 100), step too high is 10
     ]
     return Program("axis_limit_error", steps)
 
@@ -81,8 +81,8 @@ def get_program_smooth_kinematic_error():
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
         Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 0),
-        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 1),  ## TODO: Set expected error code
-        Step("F4", MoveType.Frame, 0, f4, 1, 0, 0, 0),
+        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 0),
+        Step("F4", MoveType.Frame, 0, f4, 1, 0, 0, 10),  # Control Step exceeded
         Step("F5", MoveType.Frame, 0, f5, 1, 0, 0, 0),  
         Step("F6", MoveType.Frame, 0, f6, 1, 0, 0, 0),
     ]
@@ -96,7 +96,7 @@ def get_program_front_back_singularity_wrist_close_to_axis_1():
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
-        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 1),  ## TODO: Set expected error code
+        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, [10,4000]),  # Front/back singularity is 4000
     ]
     return Program("singularity (wrist to close to axis 1) error", steps)
 
