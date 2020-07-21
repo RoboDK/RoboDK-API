@@ -97,6 +97,22 @@ def get_program_kinematic_path_limit():
     return Program("Kinematic Path Limit", steps)
 
 
+def get_program_RDK_90():
+    """Test program was previously crashing during path simulation."""
+    j1 = [-0.000000, -110.000000, 120.000000, -0.000000, 30.000000, -90.000000]
+    j2 = [-30.188110, -65.220803, 95.184225, -101.467343, 61.477418, 16.537955]
+    j3 = [-33.299586, -77.893652, 117.376522, -150.782405, 28.335008, 59.561379]
+    f4 = [   531.542045,   473.107081,   430.414010,   175.000001,   -15.000001,  -136.838065 ]
+
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("J1", MoveType.Joint, 0, j1, 0, 0, 0),
+        Step("J2", MoveType.Joint, 0, j2, 0, 0, 0),
+        Step("J3", MoveType.Joint, 0, j3, 10, 0, 0),
+        Step("F4", MoveType.Frame, 0, f4, 1, 0, 0),
+    ]
+    return Program("RDK-90", steps)
+
 
 
 @parameterized_class(
@@ -140,9 +156,16 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
     def test_kinematic_path_limit(self):
         """Test KinematicPathLimit"""
+        if self.sim_step_time >= 0.02:
+            #simulation not possible with simulation time step > 20[ms]
+            return
         self.program = get_program_kinematic_path_limit()
         self._test_program(verbose=False)
 
+    def test_kinematic_RDK_90(self):
+        """Test RDK-90"""
+        self.program = get_program_RDK_90()
+        self._test_program(verbose=False)
 
 if __name__ == '__main__':
     unittest.main()

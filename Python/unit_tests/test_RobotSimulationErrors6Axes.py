@@ -101,6 +101,30 @@ def get_program_front_back_singularity_wrist_close_to_axis_1():
     return Program("singularity (wrist to close to axis 1) error", steps)
 
 
+def get_program_RDK_91():
+    """Test program simulation error should not return success message."""
+    j1 = [-124.420433, -100.220908, 123.962337, 23.242314, 63.944991, 137.508752]
+    f2 = [  -278.518943,   436.007618,   547.030830,   179.789916,   -74.994562,   -47.567604 ]
+    f3 = [  -303.439195,   435.983125,   540.350978,   179.789916,   -74.994562,   -47.567604 ]
+    f4 = [  -301.172585,   435.735568,   570.264206,   179.789916,   -74.994562,   -47.567604 ]
+    f5 = [  -231.253202,   513.686454,   655.467183,   179.789916,   -74.994562,  -118.578163 ]
+    j6 = [-116.562035, -101.182577, 117.673968, 29.901480, 56.537640, 144.298732]
+    j7 = [-69.323892, -117.000000, 116.917103, 3.454614, 34.862541, -15.159028]
+    j8 = [69.928026, -109.590561, 148.647412, -21.437124, -0.098633, -8.370814]
+
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("J1", MoveType.Joint, 0, j1, 10, 0, 0),
+        Step("F2", MoveType.Frame, 0, f2, 1, 0, 0),
+        Step("F3", MoveType.Frame, 0, f3, 0, 0, 0),
+        Step("F4", MoveType.Frame, 0, f4, 1, 0, 0),
+        Step("F5", MoveType.Frame, 0, f5, 1, 0, 0),
+        Step("J6", MoveType.Joint, 0, j6, 10, 0, 0),
+        Step("J7", MoveType.Joint, 0, j7, 10, 0, 0),
+        Step("J8", MoveType.Joint, 0, j8, 10, 0, 0, 1000),
+    ]
+    return Program("RDK-91", steps)
+
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
         (f"TimeBasedX({test_RobotSimBase.step_time_RM:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
@@ -141,6 +165,10 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
         self.program = get_program_front_back_singularity_wrist_close_to_axis_1()
         self._test_program(verbose=False)
 
+    def test_program_rdk_91(self):
+        """Test singularity error"""
+        self.program = get_program_RDK_91()
+        self._test_program(verbose=False)
 
 if __name__ == '__main__':
     unittest.main()
