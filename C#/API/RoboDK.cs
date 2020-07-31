@@ -2808,8 +2808,7 @@ namespace RoboDk.API
 
                             return new KeyPressedEventResult(item, keyId, keyState, modifiers);
 
-                        case EventType.CollisionMapChanged: // CollisionMap Changed Event
-                            // TODO: Waiting for RoboDK API Update
+                        case EventType.CollisionMapChanged: 
                             Debug.WriteLine($"RoboDK Event: {eventType}");
                             return new EventResult(EventType.CollisionMapChanged, null);
                             break;
