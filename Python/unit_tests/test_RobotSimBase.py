@@ -70,6 +70,21 @@ class TestRobotSimBase(unittest.TestCase):
             self.assertLessEqual(nframes, max_frames_instruction, msg)
 
     def _test_result_message(self):
+        """Asserts that If number of errors == 0 then result message must be success"""
+        numberOfErrors = 0
+        for step in self.program.steps:
+            for frame in step.playback_frames:
+                if frame.error > 0:
+                    numberOfErrors = numberOfErrors + 1
+        errorMessage = self.program.simulation_result.message.lower()
+        if numberOfErrors == 0:
+            msg = f"Found no simulation errors. Expected error message 'success' but got error message: {errorMessage}"
+            self.assertEqual( "success", errorMessage, msg)
+        if numberOfErrors > 0:
+            msg = f"{numberOfErrors} Simulation errors found. Expected error message != 'success'"
+            self.assertNotEqual( "success", errorMessage, msg)
+
+    def _test_result_for_expected_error_code(self):
         """Asserts that InstructionListJoints result message is as expected"""
 
         numberOfExpectedErrors = 0
@@ -243,7 +258,8 @@ class TestRobotSimBase(unittest.TestCase):
             self.program.simulation_result.add_to_robodk()
 
         self._test_for_valid_move_ids()
-        expectedErrors = self._test_result_message()
+        self._test_result_message()
+        expectedErrors = self._test_result_for_expected_error_code()
         if expectedErrors > 0:
             # other checks don't make sense if program simulation has errors
             return
