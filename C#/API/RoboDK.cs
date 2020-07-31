@@ -2811,7 +2811,6 @@ namespace RoboDk.API
                         case EventType.CollisionMapChanged: 
                             Debug.WriteLine($"RoboDK Event: {eventType}");
                             return new EventResult(EventType.CollisionMapChanged, null);
-                            break;
 
                         default:
                             Debug.WriteLine($"unknown RoboDK Event: {eventType}");
