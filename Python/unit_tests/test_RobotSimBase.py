@@ -77,12 +77,17 @@ class TestRobotSimBase(unittest.TestCase):
                 if frame.error > 0:
                     numberOfErrors = numberOfErrors + 1
         errorMessage = self.program.simulation_result.message.lower()
+
         if numberOfErrors == 0:
             msg = f"Found no simulation errors. Expected error message 'success' but got error message: {errorMessage}"
             self.assertEqual( "success", errorMessage, msg)
+
         if numberOfErrors > 0:
             msg = f"{numberOfErrors} Simulation errors found. Expected error message != 'success'"
             self.assertNotEqual( "success", errorMessage, msg)
+
+        msg = f"Expected only 1 error code but got {numberOfErrors} errors"
+        self.assertLessEqual( numberOfErrors, 1, msg)
 
     def _test_result_for_expected_error_code(self):
         """Asserts that InstructionListJoints result message is as expected"""

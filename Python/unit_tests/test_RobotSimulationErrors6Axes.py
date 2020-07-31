@@ -125,7 +125,7 @@ def get_program_RDK_91():
     ]
     return Program("RDK-91", steps)
 
-def get_program_RDK_92_target_can_not_be_reached():
+def get_program_RDK_93_target_can_not_be_reached():
     """Target StepId 65 can not be reached"""
     j1 = [-121.962375, -102.168116, 105.538444, 18.089514, 86.239362, 148.055458]
 
@@ -148,7 +148,7 @@ def get_program_RDK_92_target_can_not_be_reached():
         Step("StepId 63", MoveType.Frame, 0, f4, 10, 0, 0),
         Step("StepId 60", MoveType.Frame, 0, f5, 0, 0, 0),
         Step("StepId 64", MoveType.Frame, 0, f6, 10, 0, 0),
-        Step("StepId 65", MoveType.Frame, 0, f7, 10, 0, 0, 9999),
+        Step("StepId 65", MoveType.Frame, 0, f7, 10, 0, 0, 9999),  ## TODO: Add expected simulation Error code for target not reachable.
         Step("StepId 66", MoveType.Joint, 0, j8, 10, 0, 0, 0),
         Step("StepId 81", MoveType.Joint, 0, j9, 10, 0, 0, 0),
         Step("StepId 83", MoveType.Frame, 0, f10, 1, 0, 0, 0),
@@ -200,9 +200,9 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
         self.program = get_program_RDK_91()
         self._test_program(verbose=False)
 
-    def test_program_rdk_92(self):
-        """Target Can Not be reached"""
-        self.program = get_program_RDK_92_target_can_not_be_reached()
+    def test_program_rdk_93(self):
+        """One or more targets are not reachable or missing."""
+        self.program = get_program_RDK_93_target_can_not_be_reached()
         self._test_program(verbose=False)
        
 

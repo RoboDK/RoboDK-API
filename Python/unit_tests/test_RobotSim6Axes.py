@@ -117,10 +117,10 @@ def get_program_RDK_90():
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
-        ## (f"PosBased({test_RobotSimBase.sim_step_mm_S:0.1f}mm,{test_RobotSimBase.sim_step_deg_S:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
-        ##  InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
-        ## (f"PosBased({test_RobotSimBase.sim_step_mm_L:0.1f}mm,{test_RobotSimBase.sim_step_deg_L:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
-        ##  InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
+        (f"PosBased({test_RobotSimBase.sim_step_mm_S:0.1f}mm,{test_RobotSimBase.sim_step_deg_S:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_S, test_RobotSimBase.sim_step_deg_S, None),
+        (f"PosBased({test_RobotSimBase.sim_step_mm_L:0.1f}mm,{test_RobotSimBase.sim_step_deg_L:0.1f}deg)".replace(".", test_RobotSimBase.dot_repr),
+         InstructionListJointsFlags.Position, test_RobotSimBase.sim_step_mm_L, test_RobotSimBase.sim_step_deg_L, None),
         (f"TimeBased({test_RobotSimBase.step_time_S:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
          InstructionListJointsFlags.TimeBased, None, None, test_RobotSimBase.step_time_S),
         (f"TimeBased({test_RobotSimBase.step_time_M:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
@@ -131,6 +131,7 @@ def get_program_RDK_90():
 class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
     def load_robot_cell(self):
+        """Load RobotCell. called from test_RobotSimBase.setUp()"""
         self.robot, self.tools = load_file(r"Robot_2TCP.rdk")
 
     def test_one_stop_point(self):
@@ -156,7 +157,7 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
 
     def test_kinematic_path_limit(self):
         """Test KinematicPathLimit"""
-        if self.sim_step_time >= 0.02:
+        if self.sim_type == InstructionListJointsFlags.TimeBased and self.sim_step_time >= 0.02:
             #simulation not possible with simulation time step > 20[ms]
             return
         self.program = get_program_kinematic_path_limit()
