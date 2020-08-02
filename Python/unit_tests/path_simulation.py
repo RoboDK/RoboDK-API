@@ -21,21 +21,26 @@ def init_robodk():
 
     rdk = Robolink(close_std_out=True)
 
-    rdk.Command("AutoRenderDelay", 50)
-    rdk.Command("AutoRenderDelayMax", 300)
+    set_robodk_option("AutoRenderDelay", 50)
+    set_robodk_option("AutoRenderDelayMax", 300)
     rdk.Render(False)
 
-    rdk.Command("CollisionMap", "None")
+    set_robodk_option("CollisionMap", "None")
     rdk.setCollisionActive(COLLISION_OFF)
 
-    rdk.Command("ToleranceSingularityWrist ", 2.0)  # Threshold angle to avoid singularity for joint 5 (deg)
-    rdk.Command("ToleranceSingularityElbow ", 3.0)  # Threshold angle to avoid singularity for joint 3 (deg)
-    rdk.Command("ToleranceSingularityElbow ", 20.0) # Wrist is close to Axis 1  [mm]
-    rdk.Command("ToleranceSmoothKinematic", 25)  # 25 deg
-    rdk.Command("ToleranceTurn180", 0.5)  # 25 deg
+    set_robodk_option("ToleranceSingularityWrist", 2.0)  # Threshold angle to avoid singularity for joint 5 (deg)
+    set_robodk_option("ToleranceSingularityElbow", 3.0)  # Threshold angle to avoid singularity for joint 3 (deg)
+    set_robodk_option("ToleranceSingularityBack", 20.0) # Wrist is close to Axis 1  [mm]
+    set_robodk_option("ToleranceSmoothKinematic", 25)  # 25 deg
+    set_robodk_option("ToleranceTurn180", 0.5)  # 25 deg
 
     return rdk
 
+def set_robodk_option(option, value):
+    valueAsString = str(value)
+    result = rdk.Command(option, valueAsString)
+    if result.lower() != "ok" :
+        sys.exit(f"failed to set roboDK option {option} value {valueAsString}. Got return value: {result} instead of 'ok'")
 
 def load_file(filename):
     """Load a RoboDK RDK file, get robot and return robot and tool item

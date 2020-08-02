@@ -2650,12 +2650,30 @@ namespace RoboDk.API
             return true;
         }
 
+        public IRoboDKLink GetRoboDkLink()
+        {
+            return new RoboDKLink(this);
+        }
 
         #endregion
 
-        public sealed class RoboDKLink : IDisposable
+        public interface IRoboDKLink
+        {
+            void CheckConnection();
+            void SendLine(string line);
+            void SendItem(IItem item);
+            Mat ReceivePose();
+            int ReceiveInt();
+            double[] ReceiveArray();
+            void CheckStatus();
+        }
+
+
+        public sealed class RoboDKLink : IRoboDKLink, IDisposable
         {
             public IRoboDK RoboDK { get; private set; }
+
+            private RoboDK RDK => (RoboDK)RoboDK;
 
             public RoboDKLink(IRoboDK roboDK)
             {
@@ -2668,6 +2686,40 @@ namespace RoboDk.API
                 RoboDK = null;
                 tempRoboDK.CloseLink();
             }
+
+            public void CheckConnection()
+            {
+                RDK.check_connection();
+            }
+
+            public void SendLine(string line)
+            {
+                RDK.send_line(line);
+            }
+            public void SendItem(IItem item)
+            {
+                RDK.send_item(item);
+            }
+
+            public Mat ReceivePose()
+            {
+                return RDK.rec_pose();
+            }
+            public int ReceiveInt()
+            {
+                return RDK.rec_int();
+            }
+
+            public double[] ReceiveArray()
+            {
+                return RDK.rec_array();
+            }
+
+            public void CheckStatus()
+            {
+                RDK.check_status();
+            }
+
         }
 
         private sealed class RoboDKEventSource : IRoboDKEventSource

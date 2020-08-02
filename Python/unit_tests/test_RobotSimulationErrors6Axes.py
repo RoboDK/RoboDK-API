@@ -125,6 +125,36 @@ def get_program_RDK_91():
     ]
     return Program("RDK-91", steps)
 
+def get_program_RDK_93_target_can_not_be_reached():
+    """Target StepId 65 can not be reached"""
+    j1 = [-121.962375, -102.168116, 105.538444, 18.089514, 86.239362, 148.055458]
+
+    f2 = [  -307.346432,   439.570058,   576.803381,  -179.352794,   -74.861742,   -99.294176 ]
+    f3 = [  -282.441732,   439.493952,   583.540599,  -179.352794,   -74.861742,   -99.294176 ]
+    f4 = [  -267.103305,   434.010573,   516.128581,   179.777317,   -74.944947,   -33.895889 ]
+    f5 = [  -292.017764,   433.984527,   509.427158,   179.777317,   -74.944947,   -33.895889 ]
+    f6 = [  -289.751154,   433.736971,   539.340385,   179.777317,   -74.944947,   -33.895889 ]
+    f7 = [  -239.806166,   432.381194,   699.351823,   179.777317,   -74.944947,   -33.895889 ]
+    j8 = [0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000]
+    j9 = [79.238350, -54.625500, 102.860318, -115.621424, 68.885526, -126.911760]
+    f10 = [   312.309807,  -910.024549,   574.500010,    -0.000000,     0.000000,  -111.978180 ]
+
+
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("StepId 61", MoveType.Joint, 0, j1, 10, 0, 0),
+        Step("StepId 58", MoveType.Frame, 0, f2, 0, 0, 0),
+        Step("StepId 62", MoveType.Frame, 0, f3, 10, 0, 0),
+        Step("StepId 63", MoveType.Frame, 0, f4, 10, 0, 0),
+        Step("StepId 60", MoveType.Frame, 0, f5, 0, 0, 0),
+        Step("StepId 64", MoveType.Frame, 0, f6, 10, 0, 0),
+        Step("StepId 65", MoveType.Frame, 0, f7, 10, 0, 0, 9999),  ## TODO: Add expected simulation Error code for target not reachable.
+        Step("StepId 66", MoveType.Joint, 0, j8, 10, 0, 0, 0),
+        Step("StepId 81", MoveType.Joint, 0, j9, 10, 0, 0, 0),
+        Step("StepId 83", MoveType.Frame, 0, f10, 1, 0, 0, 0),
+    ]
+    return Program("target_StepId65_can_not_be_reached", steps)
+
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
         (f"TimeBasedX({test_RobotSimBase.step_time_RM:0.4f}ms)".replace(".", test_RobotSimBase.dot_repr),
@@ -169,6 +199,12 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
         """Test singularity error"""
         self.program = get_program_RDK_91()
         self._test_program(verbose=False)
+
+    def test_program_rdk_93(self):
+        """One or more targets are not reachable or missing."""
+        self.program = get_program_RDK_93_target_can_not_be_reached()
+        self._test_program(verbose=False)
+       
 
 if __name__ == '__main__':
     unittest.main()

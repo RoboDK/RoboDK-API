@@ -152,6 +152,11 @@ namespace RoboDk.API
             return Link;
         }
 
+        public RoboDK.IRoboDKLink GetRoboDkLink()
+        {
+            return Link.GetRoboDkLink();
+        }
+
         /// <inheritdoc />
         public void NewLink()
         {

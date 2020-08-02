@@ -101,6 +101,12 @@ namespace RoboDk.API
         RoboDK RDK();
 
         /// <summary>
+        /// Get RoboDK low level link interface.
+        /// </summary>
+        /// <returns></returns>
+        RoboDK.IRoboDKLink GetRoboDkLink();
+
+        /// <summary>
         ///     Create a new communication link. Use this for robots if you use a multithread application running multiple robots
         ///     at the same time.
         /// </summary>
