@@ -90,6 +90,7 @@ class RobolinkEvents(Robolink):
         
         elif evt == EVENT_ITEM_MOVED:
             print("Event: Item Moved")
+            #print(item.Pose())
             
         elif evt == EVENT_REFERENCE_PICKED:
             print("Event: Reference Picked")

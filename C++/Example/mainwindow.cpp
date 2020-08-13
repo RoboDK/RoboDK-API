@@ -167,7 +167,95 @@ void blocking_task(){
 // then, start the thread and let it finish once the user finishes with the popup
 void MainWindow::on_btnTestButton_clicked(){
 
+    // example to listen to events
+    //RDK->EventsListen();
+    //RDK->EventsLoop();
+
+
     if (!Check_Robot()){ return; }
+
+    /*
+    if (false) {
+        //ROBOT->setPose
+        Item robot_base = ROBOT->Parent();
+
+        // Create or select a reference frame
+        Item ref = RDK->getItem("Ref 1");
+        if (!ref.Valid()){
+            ref = RDK->AddFrame("Ref 1", &robot_base);
+            ref.setPose(Mat::transl(100,200,300));
+        }
+
+        // create or load a tool
+        Item tcp = RDK->getItem("Tool 1");
+        if (!tcp.Valid()){
+            tcp = ROBOT->AddTool(Mat::transl(0,0,150)*Mat::rotx(0.5*M_PI), "Tool 1");
+        }
+
+        // Set the robot base and tool
+        ROBOT->setPoseFrame(ref);
+        ROBOT->setPoseTool(tcp);
+
+        Mat TargetPose = ROBOT->Pose();
+
+        RDK->Render();
+
+        Item prog = RDK->AddProgram("AutomaticProg", ROBOT);
+        prog.setPoseFrame(ref);
+        prog.setPoseTool(tcp);
+
+        //Create a target (or select it)
+        for (int i=0; i<=100; i++){
+            QString target_name(QString("Target %1").arg(i+1));
+            Item target = RDK->getItem(target_name, RoboDK::ITEM_TYPE_TARGET);
+            if (!target.Valid()){
+                target = RDK->AddTarget(target_name, &ref);
+                target.setAsCartesianTarget();
+                target.setPose(TargetPose * transl(0,0, 2*i) * rotz((i/100.0)*30.0*M_PI/180.0));
+                if (i == 0){
+                    prog.MoveJ(target);
+                } else {
+                    prog.MoveL(target);
+                }
+            }
+        }
+    }
+
+    // manage a gripper
+    if (false){
+        //RDK->getItem("");
+        Item gripper = ROBOT->Childs()[0];
+
+        tJoints joints_original = gripper.Joints();
+
+        double pjoints[] = {0};
+        tJoints joints_new(pjoints, 1);
+        gripper.setJoints(joints_new);
+
+        gripper.MoveJ(joints_original);
+    }
+
+    //target.Delete();
+
+    // example to display text in the 3D window
+    if (true){
+        Item station = RDK->getActiveStation();
+        Item text_object = RDK->AddFile("", &station);
+        text_object.setPose(transl(200,300,100));
+        //text_object.setPoseAbs(transl(200,300,100));
+        text_object.setName("Display 3D text");
+    }
+
+    // Other useful functions to draw primitives
+    //RDK->AddShape()
+    //RDK->AddCurve()
+    //RDK->AddPoints()
+
+
+    return;
+*/
+
+
 
     //int runmode = RDK->RunMode(); // retrieve the run mode
 
@@ -570,3 +658,166 @@ void MainWindow::on_radIntegrateRoboDK_clicked()
 #endif
 
 }
+
+
+/*
+
+/// <summary>
+/// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
+/// </summary>
+/// <returns></returns>
+public bool EventsListen()
+{
+    _COM_EVT = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+    _COM_EVT.SendTimeout = 1000;
+    _COM_EVT.ReceiveTimeout = 1000;
+    try
+    {
+        _COM_EVT.Connect(IP, PORT);
+        if (_COM_EVT.Connected)
+        {
+            _COM_EVT.SendTimeout = _TIMEOUT;
+            _COM_EVT.ReceiveTimeout = _TIMEOUT;
+        }
+    }
+    catch //Exception e)
+    {
+        return false;
+    }
+    _send_Line("RDK_EVT", _COM_EVT);
+    _send_Int(0, _COM_EVT);
+    string response = _recv_Line(_COM_EVT);
+    int ver_evt = _recv_Int(_COM_EVT);
+    int status = _recv_Int(_COM_EVT);
+    if (response != "RDK_EVT" || status != 0)
+    {
+        return false;
+    }
+    _COM_EVT.ReceiveTimeout = 3600 * 1000;
+    //return EventsLoop();
+    return true;
+}
+
+/// <summary>
+/// Wait for a new RoboDK event. This function blocks until a new RoboDK event occurs.
+/// </summary>
+/// <param name="evt">Event ID</param>
+/// <param name="itm">Item that provoked the event (Invalid item if not applicable)</param>
+/// <returns></returns>
+public bool WaitForEvent(out int evt, out Item itm)
+{
+    evt = _recv_Int(_COM_EVT);
+    itm = _recv_Item(_COM_EVT);
+    return true;
+}
+
+/// <summary>
+/// This is a sample function that is executed when a new RoboDK Event occurs.
+/// </summary>
+/// <param name="evt"></param>
+/// <param name="itm"></param>
+/// <returns></returns>
+public bool SampleRoboDkEvent(int evt, Item itm)
+{
+    Console.WriteLine("");
+    Console.WriteLine("**** New event ****");
+
+    if (itm.Valid())
+    {
+        Console.WriteLine("  Item: " + itm.Name() + " -> Type: " + itm.Type().ToString());
+    }
+    else
+    {
+        //Console.WriteLine("  Item not applicable");
+    }
+
+    switch (evt)
+    {
+        case EVENT_SELECTION_TREE_CHANGED:
+            Console.WriteLine("Event: Selection changed (the tree was selected)");
+            break;
+        case EVENT_ITEM_MOVED:
+            Console.WriteLine("Event: Item Moved");
+            break;
+        case EVENT_REFERENCE_PICKED:
+            Console.WriteLine("Event: Reference Picked");
+            break;
+        case EVENT_REFERENCE_RELEASED:
+            Console.WriteLine("Event: Reference Released");
+            break;
+        case EVENT_TOOL_MODIFIED:
+            Console.WriteLine("Event: Tool Modified");
+            break;
+        case EVENT_3DVIEW_MOVED:
+            Console.WriteLine("Event: 3D view moved"); // use ViewPose to retrieve the pose of the camera
+            break;
+        case EVENT_ROBOT_MOVED:
+            Console.WriteLine("Event: Robot moved");
+            break;
+
+        // Important: The following events require consuming additional data from the _COM_EVT buffer
+        case EVENT_SELECTION_3D_CHANGED:
+        {
+            Console.WriteLine("Event: Selection changed");
+            // data contains the following information (24 values):
+            // pose (16), xyz selection (3), ijk normal (3), picked feature id (1), picked id (1)
+            double[] data = _recv_Array(_COM_EVT);
+            Mat pose_abs = new Mat(data, true);
+            double[] xyz = new double[] { data[16], data[17], data[18] };
+            double[] ijk = new double[] { data[19], data[20], data[21] };
+            int feature_type = Convert.ToInt32(data[22]);
+            int feature_id = Convert.ToInt32(data[23]);
+            Console.WriteLine("Additional event data - Absolute position (PoseAbs):");
+            Console.WriteLine(pose_abs.ToString());
+            Console.WriteLine("Additional event data - Point and Normal (point selected in relative coordinates)");
+            Console.WriteLine(xyz[0].ToString() + "," + xyz[1].ToString() + "," + xyz[2].ToString());
+            Console.WriteLine(ijk[0].ToString() + "," + ijk[1].ToString() + "," + ijk[2].ToString());
+            Console.WriteLine("Feature Type and ID");
+            Console.WriteLine(feature_type.ToString() + "-" + feature_id.ToString());
+            break;
+        }
+        case EVENT_KEY:
+        {
+            int key_press = _recv_Int(_COM_EVT); // 1 = key pressed, 0 = key released
+            int key_id = _recv_Int(_COM_EVT); // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
+            int modifiers = _recv_Int(_COM_EVT); // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
+            Console.WriteLine("Event: Key pressed: " + key_id.ToString() + " " + ((key_press > 0) ? "Pressed" : "Released") + ". Modifiers: " + modifiers.ToString());
+            break;
+        }
+        case EVENT_ITEM_MOVED_POSE:
+        {
+            int nvalues = _recv_Int(_COM_EVT);
+            Mat pose_rel = _recv_Pose(_COM_EVT);
+            if (nvalues > 16)
+            {
+                // future compatibility
+            }
+            Console.WriteLine("Event: item moved. Relative pose: " + pose_rel.ToString());
+            break;
+        }
+        default:
+            Console.WriteLine("Unknown event " + evt.ToString());
+            break;
+    }
+    return true;
+}
+
+/// <summary>
+/// Run the RoboDK event loop. This is loop blocks until RoboDK finishes execution. Run this loop as a separate thread or create a similar loop to customize the event loop behavior.
+/// </summary>
+/// <returns></returns>
+public bool EventsLoop()
+{
+    Console.WriteLine("Events loop started");
+    while (_COM_EVT.Connected)
+    {
+        int evt;
+        Item itm;
+        WaitForEvent(out evt, out itm);
+        SampleRoboDkEvent(evt, itm);
+    }
+    Console.WriteLine("Event loop finished");
+    return true;
+}
+*/
+
