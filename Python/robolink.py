@@ -1037,7 +1037,13 @@ class Robolink:
             self.PORT_START = port
             self.PORT_END = port
             self.ARGUMENTS.append("-PORT=%i" % port)
-                        
+            
+        elif "ROBODK_API_PORT" in os.environ:
+            port = int(os.environ["ROBODK_API_PORT"])
+            self.PORT_START = port
+            self.PORT_END = port
+            self.ARGUMENTS.append("-PORT=%i" % port)                
+
         elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
             from socket import socket
             if sys.version_info.major >= 3:
@@ -1476,10 +1482,10 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.setFlagsItem`, :func:`~robolink.Robolink.setFlagsRoboDK`, :func:`~robolink.Robolink.setWindowState`
         """
         self._check_connection()
-        command = 'S_Item_Rights'
+        command = 'G_Item_Rights'
         self._send_line(command)
         self._send_item(item)
-        flags = self._red_int()
+        flags = self._rec_int()
         self._check_status()
         return flags
     
@@ -2469,9 +2475,29 @@ class Robolink:
         """   
         if type(value) == dict:
             # return dict if we provided a dict
-            value = json.dumps(value)            
+            value = json.dumps(value) 
+            
+        elif type(value) == Mat:
+            # Special 2D matrix write/read
+            self._check_connection()
+            command = 'G_Gen_Mat'
+            self._send_line(command)
+            self._send_item(None)
+            self._send_line(str(cmd))
+            self._send_matrix(value)
+            self.COM.settimeout(3600)
+            nmats = self._rec_int()
+            self.COM.settimeout(self.TIMEOUT)
+            mat2d_list = []
+            for i in range(nmats):
+                mat2d_list.append(self._rec_matrix())
+                            
+            self._check_status()
+            return mat2d_list
+        
         else:
             value = str(value)
+            
         value = value.replace('\n','<br>')
         
         self._check_connection()
@@ -2556,23 +2582,28 @@ class Robolink:
         
         return xyz        
         
-    def StereoCamera_Measure(self):
-        """Takes a measurement with the C-Track stereocamera.
-        It returns two poses, the base reference frame and the measured object reference frame. Status is 0 if measurement succeeded."""
+    def StereoCamera_Measure(self, time_avg=0, tip_xyz=None):
+        """Takes a measurement with a 6D measurement device.
+        It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose."""
+        array_send = [time_avg]
+        if tip_xyz is not None:
+            array_send += [0,0,0]
+            
         self._check_connection()
-        command = 'MeasPose'
+        command = 'MeasPose2'
         self._send_line(command)
+        self._send_array(array_send)
         pose1 = self._rec_pose()
         pose2 = self._rec_pose()
         npoints1 = self._rec_int()
         npoints2 = self._rec_int()
-        time = self._rec_int()
         status = self._rec_int()
+        extra_data = self._rec_array()
         self._check_status()        
-        return pose1, pose2, npoints1, npoints2, time, status
+        return pose1, pose2, npoints1, npoints2, status, extra_data.list()
         
     def Collision_Line(self, p1, p2, ref=eye(4)):
-        """Checks the collision between a line and any objects in the station. The line is composed by 2 points.
+        """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
         
         :param p1: start point of the line
         :type p1: list of float [x,y,z]
@@ -4820,6 +4851,12 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
+        # Never attempt to reconnect if we are already connected
+        con_status, status_msg = self.ConnectedState()
+        print(status_msg)
+        if con_status == ROBOTCOM_READY:
+            return con_status
+            
         trycount = 0
         refresh_rate = 0.2
         self.Connect(blocking=False)
@@ -6006,7 +6043,11 @@ class Item():
         self.link._send_item(self)
         self.link._send_line(str(param))
         self.link._send_line(value)
+        
+        self.link.COM.settimeout(3600)
         line = self.link._rec_line()
+        self.link.COM.settimeout(self.link.TIMEOUT)        
+        
         self.link._check_status()
         if len(value) == 0 and line.startswith("{"):
             line = json.loads(line)
@@ -6027,6 +6068,14 @@ if __name__ == "__main__":
         prm = ''
         c = RDK.Cam2D_Add(ref, prm)
 
-    TestCamera()
+    RDK = Robolink()
+    home = RDK.Item('Home')
+    t = RDK.Item('T1')
+    
+    cost = RDK.PluginCommand("CollisionFreePlanner", "CostPtr", str(home.item) + "|" + str(t.item)) #in the future
+    
+    print(cost)
+        
+    #TestCamera()
 
        

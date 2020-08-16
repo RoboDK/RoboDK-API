@@ -98,7 +98,12 @@ namespace RoboDk.API.Model
         /// <summary>
         /// The robot reached a Shoulder singularity: the wrist is too close to axis 1
         /// </summary>
-        ShoulderSingularity = 0b100000000
+        ShoulderSingularity = 0b100000000,
+
+        /// <summary>
+        /// One or more targets are not reachable or missing
+        /// </summary>
+        PathInvalidTarget = 0b1000000000
     }
 
     public static class JointErrorTypeHelper
@@ -111,6 +116,12 @@ namespace RoboDk.API.Model
         public static ErrorPathType ConvertErrorCodeToJointErrorType(int evalue)
         {
             ErrorPathType flags = 0;
+            if (evalue % 100000000 > 9999999)
+            {
+                // "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+                flags |= ErrorPathType.PathInvalidTarget;
+            }
+
             if (evalue % 10000000 > 999999)
             {
                 // "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined

@@ -1764,6 +1764,7 @@ if sys.version_info[0] < 3:
     try:
         import Tkinter as tkinter
         import tkFileDialog as filedialog
+        import tkMessageBox as messagebox
     except:
         _tkinter_available = False
 else:
@@ -1771,8 +1772,10 @@ else:
     try:
         import tkinter
         from tkinter import filedialog
+        from tkinter import messagebox
     except ModuleNotFoundError:
         _tkinter_available = False
+       
 #------------------
 
 #------------------
@@ -1860,6 +1863,50 @@ if _tkinter_available:
         root.attributes("-topmost", True)    
         file_path = filedialog.askdirectory(**options)
         return file_path
+        
+         
+    def ShowMessage(msg, title=None):
+        """Show a blocking message"""
+        print(msg)
+        if title is None:
+            title = msg
+            
+        root = tkinter.Tk()
+        root.overrideredirect(1)
+        root.withdraw()
+        root.attributes("-topmost", True)        
+        result = messagebox.showinfo(title, msg) #, icon='warning')#, parent=texto)
+        root.destroy()
+        return result
+
+    def ShowMessageYesNo(msg, title=None):
+        """Show a blocking message and let the user answer Yes or No"""
+        print(msg)
+        if title is None:
+            title = msg
+            
+        root = tkinter.Tk()
+        root.overrideredirect(1)
+        root.withdraw()
+        root.attributes("-topmost", True)        
+        result = messagebox.askyesno(title, msg) #, icon='warning')#, parent=texto)
+        root.destroy()
+        return result
+
+    def ShowMessageYesNoCancel(msg, title=None):
+        """Show a blocking message and let the user answer Yes, No or Cancel"""
+        print(msg)
+        if title is None:
+            title = msg
+            
+        root = tkinter.Tk()
+        root.overrideredirect(1)
+        root.withdraw()
+        root.attributes("-topmost", True)        
+        result = messagebox.askyesnocancel(title, msg)#, icon='warning')#, parent=texto)
+        root.destroy()
+        return result  
+        
         
     class MessageBox(object):
 
