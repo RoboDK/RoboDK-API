@@ -1,3 +1,28 @@
+RoboDK API for ANSI C
+======================
+
+Read the [RoboDK API description](../README.md) for more information.
+
+Requirements
+------------
+- [RoboDK](https://robodk.com/download)
+
+How to install
+------------
+The included sample project is for visual studio 2017 using winsock.
+
+Additional notes
+------------
+The c API currently only implements a subset of the entire api. The C api is mostly the same as the c++ api except now the class methods are called CLASS_FunctionName() and the class data members are now a struct. For example the api uses RoboDK_ getItem() while the c++ equivalent is RoboDK::getItem(). In the c api, the first parameter will always be a pointer to the structure that represents the data used by that class. 
+<br>
+The actual api implementation is entirely in ansi C however the api relies on a socket api. Currently it's implemented with winsock however the uses of the socket api are isolated so it's fairly simple to add support for another socket api. Additionally the low level communication functions do byte swapping that would break the api if run on a big endian architecture. If big endian support is needed, you can determine the systems architecture at runtime and only swap bytes if needed.
+
+C Example
+------------
+
+The Mat class represents a 4x4 matrix (pose) and it is a subclass of QMatrix4x4
+
+```cpp
 #include <stdio.h>
 
 #include "robodk_api_c.h"
@@ -97,3 +122,5 @@ int main()
 	printf("Done");
 
 }
+
+```
