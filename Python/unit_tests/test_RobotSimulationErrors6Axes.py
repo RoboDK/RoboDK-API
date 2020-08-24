@@ -148,7 +148,7 @@ def get_program_RDK_93_target_can_not_be_reached():
         Step("StepId 63", MoveType.Frame, 0, f4, 10, 0, 0),
         Step("StepId 60", MoveType.Frame, 0, f5, 0, 0, 0),
         Step("StepId 64", MoveType.Frame, 0, f6, 10, 0, 0),
-        Step("StepId 65", MoveType.Frame, 0, f7, 10, 0, 0, 9999),  ## TODO: Add expected simulation Error code for target not reachable.
+        Step("StepId 65", MoveType.Frame, 0, f7, 10, 0, 0, 1000000),  ## TODO: Add expected simulation Error code for target not reachable.
         Step("StepId 66", MoveType.Joint, 0, j8, 10, 0, 0, 0),
         Step("StepId 81", MoveType.Joint, 0, j9, 10, 0, 0, 0),
         Step("StepId 83", MoveType.Frame, 0, f10, 1, 0, 0, 0),
