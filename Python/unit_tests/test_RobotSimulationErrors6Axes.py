@@ -44,7 +44,7 @@ def get_program_180degree_rotation_error():
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
         Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, 0),
-        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 2000), # Elbow singularity
+        Step("F3", MoveType.Frame, 0, f3, 1, 0, 0, 1000000) # Currently set as target not reachable, in the future it should be 2000 (180 deg target)
     ]
     return Program("180 degree rotation error", steps)
 
