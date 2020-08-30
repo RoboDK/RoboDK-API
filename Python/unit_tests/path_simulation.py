@@ -148,7 +148,7 @@ MoveType = Enum('MoveType', 'Joint Frame')
 
 
 class Step():
-    def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error=0):
+    def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error_flags=PathErrorFlags.NoError):
         self.name = name
         self.move_type = move_type
         self.tcp = tcp
@@ -159,7 +159,7 @@ class Step():
         self.tcp_item = tools[tcp]
         self.tcp_name = tools[tcp].Name()
         self.playback_frames = []
-        self.expected_error = expected_error
+        self.expected_error_flags = expected_error_flags
 
     def print(self):
         print(f"Step '{self.name}' ({self.move_type}) ::: ",

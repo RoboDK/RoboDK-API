@@ -284,59 +284,66 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         NoError = 0
 
         # One or more points is not reachable
-        Kinematic = 0x1 
+        Kinematic = 0b0000_0000_0001 
 
         # The path reaches the limit of joint axes
-        PathLimit = 0x2 
+        PathLimit = 0b0000_0000_0010
 
         # The robot reached a singularity point
-        PathSingularity = 0x4 
+        PathSingularity = 0b0000_0000_0100
 
         # The robot is too close to a singularity.
         # Lower the singularity tolerance to allow the robot to continue. 
-        PathNearSingularity = 0x8 
+        PathNearSingularity = 0b0000_0000_1000
 
         # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
-        PathFlipAxis = 0b10000 
+        PathFlipAxis = 0b0000_0001_0000 
 
         # Collision detected
-        Collision = 0x20 // 0b100000
+        Collision = 0b0000_0010_0000
 
         # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
-        WristSingularity = 0b1000000
+        WristSingularity = 0b0000_0100_0000
 
         # The robot reached an Elbow singularity: Joint 3 is fully extended
-        ElbowSingularity = 0b10000000
+        ElbowSingularity = 0b0000_1000_0000
 
         # The robot reached a Shoulder singularity: the wrist is too close to axis 1
-        ShoulderSingularity = 0b100000000
+        ShoulderSingularity = 0b0001_0000_0000
             
+        # One or more targets are not reachable or missing
+        PathInvalidTarget = 0b0010_0000_0000
+
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
         flags = PathErrorFlags.NoError
-        if (evalue % 10000000 > 999999):
+        if (evalue % 100_000_000 > 9_999_999):
+            # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+            flags |= PathErrorFlags.PathInvalidTarget
+
+        if (evalue % 10_000_000 > 999_999):
             # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
             flags |= PathErrorFlags.PathFlipAxis
 
-        if (evalue % 1000000 > 99999):
+        if (evalue % 1_000_000 > 99_999):
             # Collision detected.
             flags |= PathErrorFlags.Collision
 
-        if (evalue % 1000 > 99):
+        if (evalue % 1_000 > 99):
             # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
             flags |= PathErrorFlags.WristSingularity
             flags |= PathErrorFlags.PathSingularity
 
-        elif (evalue % 10000 > 999):
-            if (evalue % 10000 > 3999):
+        elif (evalue % 10_000 > 999):
+            if (evalue % 10_000 > 3999):
                 # The robot is too close to the front/back singularity (wrist close to axis 1).
                 flags |= PathErrorFlags.ShoulderSingularity
                 flags |= PathErrorFlags.PathSingularity
 
-            elif (evalue % 10000 > 1999):
+            elif (evalue % 10_000 > 1999):
+                # Joint 3 is too close the elbow singularity.
                 flags |= PathErrorFlags.ElbowSingularity
                 flags |= PathErrorFlags.PathSingularity
-                # Joint 3 is too close the elbow singularity.
 
             else:
                 # Joint 5 is too close to a singularity (0 degrees).
