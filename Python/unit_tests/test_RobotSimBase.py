@@ -89,53 +89,42 @@ class TestRobotSimBase(unittest.TestCase):
         msg = f"Expected only 1 error code but got {numberOfErrors} errors"
         self.assertLessEqual( numberOfErrors, 1, msg)
 
-    def _test_result_for_expected_error_code(self):
-        """Asserts that InstructionListJoints result message is as expected"""
-
-        numberOfExpectedErrors = 0
+    def _test_result_for_expected_path_error_flags(self):
+        numberOfErrors = 0
         for step in self.program.steps:
-            expectedError = step.expected_error
-
-            if type(expectedError) is list or expectedError > 0:
-                numberOfExpectedErrors = numberOfExpectedErrors + 1
-                msg = f"Expected error frame with error {str(expectedError)} in Step {step.name} but Playback frame list is empty"
+            expectedErrorFlags = step.expected_error_flags
+            if numberOfErrors == 0:
+                msg = f"Unexpected empty playback frame list in Step {step.name}"
                 self.assertGreater( len(step.playback_frames), 0, msg)
                 lastFrame = step.playback_frames[-1]
-                if type(expectedError) is int:
-                    msg = f"Expected error {str(expectedError)} but found error {lastFrame.error} in playback frame {step.name}"
-                    self.assertEqual( lastFrame.error, expectedError, msg)
-
-                elif not (lastFrame.error in expectedError):
-                    msg = f"Expected error {str(expectedError)} but found error {lastFrame.error} in playback frame {step.name}"
-                    self.assertEqual( lastFrame.error, expectedError, msg)
-
+                simulatedErrorFlags = ConvertErrorCodeToJointErrorType(lastFrame.error)
+                msg = f"Step {step.name} Invalid error result. expectedErrorFlags:{str(expectedErrorFlags)}, actual simulation error:{str(simulatedErrorFlags)}"
+                self.assertEqual(expectedErrorFlags, simulatedErrorFlags, msg)
+            if expectedErrorFlags != PathErrorFlags.NoError:
+                numberOfErrors = numberOfErrors + 1
                 errorMessage = self.program.simulation_result.message.lower()
                 self.assertNotEqual( errorMessage, "success", "expected an error message but got 'success'")
 
-            if expectedError == 0:
-                if len(step.playback_frames) > 0:
-                    lastFrame = step.playback_frames[-1]
-                    msg = f"Expected error {expectedError} but found error {lastFrame.error} in playback frame"
-                    self.assertEqual( lastFrame.error, expectedError, msg)
-
-        if numberOfExpectedErrors == 0:
+        if numberOfErrors == 0:
             errorMessage = self.program.simulation_result.message.lower()
             msg = f"expected error message 'success' but got error message {errorMessage}"
             self.assertEqual( errorMessage, "success", msg)
 
-        return numberOfExpectedErrors
-
     def _test_for_missing_move_ids(self):
         """Asserts that there is at least one playback frame per step"""
         move_id = 0
+        numberOfErrors = 0
         for s in self.program.steps:
-            move_id += 1
-            msg = f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing"
-            self.assertNotEqual(len(s.playback_frames), 0, msg)
+            expectedErrorFlags = s.expected_error_flags
+            if expectedErrorFlags != PathErrorFlags.NoError:
+               numberOfErrors = numberOfErrors + 1
+            if numberOfErrors == 0:
+                move_id += 1
+                msg = f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing"
+                self.assertNotEqual(len(s.playback_frames), 0, msg)
 
     def _test_for_playback_frames_with_time_step0(self):
         """Asserts that there is no playback frame with time_step 0 in the middle of a move from A to B. Only the last playback frame can have a value of 0 if it is a stop point."""
-        lastMoveId = 0
         if self.program.simulation_type != InstructionListJointsFlags.TimeBased:
             return
         for s in self.program.steps:
@@ -148,7 +137,6 @@ class TestRobotSimBase(unittest.TestCase):
                     self.fail(msg)
                 if f.time_step == 0:
                     playbackFrameWithTimeStep0 = f
-                    lastMoveId = f.move_id
             
     def _test_for_duplicate_frames_for_first_step(self):
         """Asserts there is only one playback frame for the first target"""
@@ -177,12 +165,13 @@ class TestRobotSimBase(unittest.TestCase):
         """Asserts that for each frame move without blending the target is reached exactly"""
         for s in self.program.steps:
             if s.blending == 0 and s.move_type == MoveType.Frame:
-                lastFrame = s.playback_frames[-1]
-                expectedFramePose = get_frame_pose(s, lastFrame)
-                delta = 0.0011  # one micron is used in RoboDK as tolerance when time based sequence is used
-                msg = f"Step {s.name} is a stop point (frame move, blending 0). Exact target position should be reached"
-                for index, value in enumerate(expectedFramePose):
-                    self.assertAlmostEqual(s.pose[index], value, msg=msg, delta=delta)
+                if len(s.playback_frames) > 0:
+                    lastFrame = s.playback_frames[-1]
+                    expectedFramePose = get_frame_pose(s, lastFrame)
+                    delta = 0.0011  # one micron is used in RoboDK as tolerance when time based sequence is used
+                    msg = f"Step {s.name} is a stop point (frame move, blending 0). Exact target position should be reached"
+                    for index, value in enumerate(expectedFramePose):
+                        self.assertAlmostEqual(s.pose[index], value, msg=msg, delta=delta)
 
     def _test_if_cartesian_coordinates_const(self, step_index):
         """Asserts that all playback frames of given step have same cartesian coorinates (x,y,z)"""
@@ -264,15 +253,9 @@ class TestRobotSimBase(unittest.TestCase):
 
         self._test_for_valid_move_ids()
         self._test_result_message()
-        expectedErrors = self._test_result_for_expected_error_code()
-        if expectedErrors > 0:
-            # other checks don't make sense if program simulation has errors
-            return
-
-        # perform checks on simulation result
+        self._test_result_for_expected_path_error_flags()
         self._test_calc_time()
         self._test_frames_per_instruction()
-        self._test_for_playback_frame_errors()
         self._test_for_missing_move_ids()
         self._test_max_simulation_step()
         self._test_if_stop_points_reached()
