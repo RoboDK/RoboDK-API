@@ -41,8 +41,8 @@ def get_program_180degree_rotation_error():
     j1 = [ 62.800000, -58.000000, 114.300000, -31.700000, -60.300000, 107.000000]
     f2 = [   247.718647,  -776.118962,   544.157022,     0.122916,     0.048975,  -179.957772 ]
     f3 = [   334.584051,  -775.717015,   386.683215,  -179.877084,    -0.048975,    -0.042228 ]
-    ##expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK
-    expectedSimulationError = PathErrorFlags.PathInvalidTarget  #FlipAxis will be reported as InvalidTarget
+    expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK
+    #expectedSimulationError = PathErrorFlags.PathInvalidTarget  #FlipAxis will be reported as InvalidTarget
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),

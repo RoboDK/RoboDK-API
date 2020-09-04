@@ -184,9 +184,10 @@ namespace RoboDk.API
 
         /// <summary>
         /// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
-        /// </summary>
+        /// </summary>        
         /// <param name="tocopy">Item to copy</param>
-        void Copy(IItem tocopy);
+        /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+        void Copy(IItem tocopy, bool copy_children = true);
 
         /// <summary>
         /// Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 

@@ -294,6 +294,7 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 
         # The robot is too close to a singularity.
         # Lower the singularity tolerance to allow the robot to continue. 
+        # If you get this error flag it means you may be able to go through the singularity if you lower the tolerances in Tools-Options-Motion
         PathNearSingularity = 0x8  # 0b0000_0000_1000
 
         # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
@@ -310,6 +311,9 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 
         # The robot reached a Shoulder singularity: the wrist is too close to axis 1
         ShoulderSingularity = 0b100000000 # 0b0001_0000_0000
+        
+        # Target not reachable or invalid
+        PathInvalidTarget = 0b0010_0000_0000
             
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
@@ -317,6 +321,10 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         if (evalue % 100_000_000  > 9_999_999):
             # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
             flags |= PathErrorFlags.PathFlipAxis
+            
+        if (evalue % 10_000_000 > 999_999):
+            # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+            flags |= PathErrorFlags.PathInvalidTarget
 
         if (evalue % 1_000_000 > 99_999):
             # Collision detected.
@@ -332,10 +340,12 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
                 # The robot is too close to the front/back singularity (wrist close to axis 1).
                 flags |= PathErrorFlags.ShoulderSingularity
                 flags |= PathErrorFlags.PathSingularity
+                flags |= PathErrorFlags.PathNearSingularity
 
             elif (evalue % 10_000 > 1_999):
                 flags |= PathErrorFlags.ElbowSingularity
                 flags |= PathErrorFlags.PathSingularity
+                flags |= PathErrorFlags.PathNearSingularity
                 # Joint 3 is too close the elbow singularity.
 
             else:
@@ -1511,7 +1521,7 @@ class Robolink:
             self._check_status()
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def Copy(self, item):
+    def Copy(self, item, copy_childs=True):
         """Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
         
         :param item: Item to copy to the clipboard
@@ -1533,9 +1543,10 @@ class Robolink:
         
         """
         self._check_connection()
-        command = 'Copy'
+        command = 'Copy2'
         self._send_line(command)
         self._send_item(item)
+        self._send_int(1 if copy_childs else 0)
         self._check_status()
 
     def Paste(self, paste_to=0, paste_times=1):
@@ -3579,12 +3590,14 @@ class Item():
         self.link._check_status()
         return itemtype
         
-    def Copy(self):
+    def Copy(self, copy_children=True):
         """Copy the item to the clipboard (same as Ctrl+C). Use together with Paste() to duplicate items.
+        
+        :param bool copy_children: Set to false to prevent copying all items attached to this item.
         
         .. seealso:: :func:`~robolink.Robolink.Copy`, :func:`~robolink.Item.Paste`
         """
-        self.link.Copy(self.item)
+        self.link.Copy(self.item, copy_children)
         
     def Paste(self):
         """Paste the copied :class:`.Item` from the clipboard as a child of this item (same as Ctrl+V)

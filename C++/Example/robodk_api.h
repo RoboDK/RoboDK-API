@@ -2011,6 +2011,11 @@ public:
     void JointLimits(tJoints *lower_limits, tJoints *upper_limits);
 
     /// <summary>
+    /// Set the joint limits of the robot
+    /// </summary>
+    void setJointLimits(const tJoints &lower_limits, const tJoints &upper_limits);
+
+    /// <summary>
     /// Sets the robot of a program or a target. You must set the robot linked to a program or a target every time you copy paste these objects.
     /// If the robot is not provided, the first available robot will be chosen automatically.
     /// </summary>

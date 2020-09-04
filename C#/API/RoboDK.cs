@@ -653,11 +653,13 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void Copy(IItem tocopy)
+        public void Copy(IItem tocopy, bool copy_children = true)
         {
+            RequireBuild(18705);
             check_connection();
-            send_line("Copy");
+            send_line("Copy2");
             send_item(tocopy);
+            send_int(copy_children ? 1 : 0);
             check_status();
         }
 
