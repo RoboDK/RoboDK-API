@@ -963,7 +963,7 @@ public:
     /// Add a new empty station. It returns the station item added.
     /// </summary>
     /// <param name="name">Name of the station (the title bar will be renamed to match the station name).</param>
-    Item AddStation(QString name);
+    Item AddStation(const QString &name);
 
     /// <summary>
     /// Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points.
@@ -973,7 +973,7 @@ public:
     /// <param name="name">Name of the project settings.</param>
     /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
     /// <returns></returns>
-    Item AddMachiningProject(QString name = "Curve follow settings",Item *itemrobot = nullptr);
+    Item AddMachiningProject(const QString &name = "Curve follow settings",Item *itemrobot = nullptr);
 
     /// <summary>
     /// Returns the list of open stations in RoboDK.
@@ -1703,7 +1703,7 @@ public:
     void NewLink();
 
     /// Item type (object, robot, tool, reference, robot machining project, ...)
-    int Type();
+    int Type() const;
 
     /// <summary>
     /// Save a station, a robot, a tool or an object to a file
@@ -1719,7 +1719,7 @@ public:
     /// \brief Check if an item is valid (not null and available in the open station)
     /// \param item_check Item to check
     /// \return True if the item exists, false otherwise
-    bool Valid() const ;
+    bool Valid(bool check_pointer=false) const ;
 
     /// <summary>
     /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
@@ -1793,7 +1793,7 @@ public:
     /// If a robot is provided, it will set the pose of the end efector.
     /// </summary>
     /// <param name="pose">4x4 homogeneous matrix</param>
-    void setPose(Mat pose);
+    void setPose(const Mat pose);
 
     /// <summary>
     /// Returns the local position (pose) of an object, target or reference frame. For example, the position of an object/frame/target with respect to its parent.
@@ -1807,7 +1807,7 @@ public:
     /// </summary>
     /// <param name="pose">4x4 homogeneous matrix</param>
     /// <param name="apply_movement">Apply the movement to the inner geometry and not as a pose shift</param>
-    void setGeometryPose(Mat pose);
+    void setGeometryPose(const Mat pose);
 
     /// <summary>
     /// Returns the position (pose) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
@@ -1848,34 +1848,34 @@ public:
     /// If "frame" is an item, it links the robot to the frame item. If frame is a pose, it updates the linked pose of the robot frame (with respect to the robot reference frame).
     /// </summary>
     /// <param name="frame_pose">4x4 homogeneous matrix (pose)</param>
-    void setPoseFrame(Mat frame_pose);
+    void setPoseFrame(const Mat frame_pose);
 
     /// <summary>
     /// Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
     /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
     /// </summary>
     /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-    void setPoseFrame(Item frame_item);
+    void setPoseFrame(const Item frame_item);
 
     /// <summary>
     /// Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
     /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
     /// </summary>
     /// <param name="tool_pose">4x4 homogeneous matrix (pose)</param>
-    void setPoseTool(Mat tool_pose);
+    void setPoseTool(const Mat tool_pose);
 
     /// <summary>
     /// Sets the tool of a robot or a tool object (Tool Center Point, or TCP). The tool pose can be either an item or a 4x4 Matrix.
     /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
     /// </summary>
     /// <param name="tool_item">Tool item</param>
-    void setPoseTool(Item tool_item);
+    void setPoseTool(const Item tool_item);
 
     /// <summary>
     /// Sets the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.
     /// </summary>
     /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-    void setPoseAbs(Mat pose);
+    void setPoseAbs(const Mat pose);
 
     /// <summary>
     /// Returns the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.

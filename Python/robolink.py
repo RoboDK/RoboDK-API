@@ -284,44 +284,37 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         NoError = 0
 
         # One or more points is not reachable
-        Kinematic = 0b0000_0000_0001 
+        Kinematic = 0x1   # 0b0000_0000_0001 
 
         # The path reaches the limit of joint axes
-        PathLimit = 0b0000_0000_0010
+        PathLimit = 0x2   # 0b0000_0000_0010
 
         # The robot reached a singularity point
-        PathSingularity = 0b0000_0000_0100
+        PathSingularity = 0x4  # 0b0000_0000_0100
 
         # The robot is too close to a singularity.
         # Lower the singularity tolerance to allow the robot to continue. 
-        PathNearSingularity = 0b0000_0000_1000
+        PathNearSingularity = 0x8  # 0b0000_0000_1000
 
         # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
-        PathFlipAxis = 0b0000_0001_0000 
+        PathFlipAxis = 0b10000  # 0b0000_0001_0000 
 
         # Collision detected
-        Collision = 0b0000_0010_0000
+        Collision = 0x20 // 0b100000 # 0b0000_0010_0000
 
         # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
-        WristSingularity = 0b0000_0100_0000
+        WristSingularity = 0b1000000 # 0b0000_0100_0000
 
         # The robot reached an Elbow singularity: Joint 3 is fully extended
-        ElbowSingularity = 0b0000_1000_0000
+        ElbowSingularity = 0b10000000 # 0b0000_1000_0000
 
         # The robot reached a Shoulder singularity: the wrist is too close to axis 1
-        ShoulderSingularity = 0b0001_0000_0000
+        ShoulderSingularity = 0b100000000 # 0b0001_0000_0000
             
-        # One or more targets are not reachable or missing
-        PathInvalidTarget = 0b0010_0000_0000
-
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
         flags = PathErrorFlags.NoError
-        if (evalue % 100_000_000 > 9_999_999):
-            # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
-            flags |= PathErrorFlags.PathInvalidTarget
-
-        if (evalue % 10_000_000 > 999_999):
+        if (evalue % 100_000_000  > 9_999_999):
             # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
             flags |= PathErrorFlags.PathFlipAxis
 
@@ -329,21 +322,21 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
             # Collision detected.
             flags |= PathErrorFlags.Collision
 
-        if (evalue % 1_000 > 99):
+        if (evalue % 1000 > 99):
             # Joint 5 crosses 0 degrees. This is a singularity and it is not allowed for a linear move.
             flags |= PathErrorFlags.WristSingularity
             flags |= PathErrorFlags.PathSingularity
 
         elif (evalue % 10_000 > 999):
-            if (evalue % 10_000 > 3999):
+            if (evalue % 10_000 > 3_999):
                 # The robot is too close to the front/back singularity (wrist close to axis 1).
                 flags |= PathErrorFlags.ShoulderSingularity
                 flags |= PathErrorFlags.PathSingularity
 
-            elif (evalue % 10_000 > 1999):
-                # Joint 3 is too close the elbow singularity.
+            elif (evalue % 10_000 > 1_999):
                 flags |= PathErrorFlags.ElbowSingularity
                 flags |= PathErrorFlags.PathSingularity
+                # Joint 3 is too close the elbow singularity.
 
             else:
                 # Joint 5 is too close to a singularity (0 degrees).
@@ -2590,8 +2583,11 @@ class Robolink:
         return xyz        
         
     def StereoCamera_Measure(self, time_avg=0, tip_xyz=None):
-        """Takes a measurement with a 6D measurement device.
-        It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose."""
+        """Takes a measurement with a 6D measurement device. It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose.
+        
+        :param time_avg: Take the measurement for a period of time and average the result.
+        :param tip_xyz: Offet the measurement to the tip.                
+        """
         array_send = [time_avg]
         if tip_xyz is not None:
             array_send += [0,0,0]
@@ -2738,7 +2734,7 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateReference`
         """
-        if type(poses_xyzwpr) == list:    
+        if type(poses_xyzwpr) == list and len(poses_xyzwpr) > 0 and type(poses_xyzwpr[0]) == Mat:    
             nposes = len(poses_xyzwpr)
             if len(poses_xyzwpr) > 0:
                 input_format = EULER_RX_RYp_RZpp
@@ -3456,7 +3452,6 @@ class Robolink:
         self._send_line(command)
         self._send_int(load)
         self._check_status()
-        return xyz, item
         
     def PluginCommand(self, plugin_name, plugin_command="", value=""):
         """Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
@@ -3662,10 +3657,12 @@ class Item():
         self.link._check_status()
         self.item = 0
 
-    def Valid(self):
+    def Valid(self, check_deleted=False):
         """Checks if the item is valid.
         Returns True if the item is valid or False if the item is not valid.
         An invalid item will be returned by an unsuccessful function call (wrong name or because an item was deleted)
+        
+        :param bool check_deleted: Check if the item was deleted in RoboDK.
         
         .. seealso:: :func:`~robolink.Robolink.Item`
         
@@ -3681,6 +3678,9 @@ class Item():
                 quit()
         """
         if self.item == 0: return False
+        if check_deleted:
+            return self.Type() >= 0
+            
         return True
     
     def setParent(self, parent):
@@ -4924,7 +4924,7 @@ class Item():
         return robot_ip, port, remote_path, ftp_user, ftp_pass
         
     def setConnectionParams(self, robot_ip, port, remote_path, ftp_user, ftp_pass):
-        """Retrieve robot connection parameters
+        """Set the robot connection parameters
         
         :param robot_ip: robot IP
         :type robot_ip: str
@@ -5204,7 +5204,8 @@ class Item():
         
         :param matrix: list of joints as a matrix or as a list of joint arrays. A sequence of instructions is also supported (same sequence that was supported with RoKiSim).
         :type matrix: list of list of float or a matrix of joints as a :class:`.Mat`"""
-        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == Mat):
+        display_ghost_joints = display_type & 2048
+        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == Mat or display_ghost_joints):
             # poses assumed
             self.link._check_connection()        
             command = 'Show_SeqPoses'
@@ -5212,8 +5213,13 @@ class Item():
             self.link._send_item(self)
             self.link._send_array([display_type, timeout])
             self.link._send_int(len(matrix))
-            for pose in matrix:
-                self.link._send_pose(pose)               
+            if display_ghost_joints:
+                for jnts in matrix:
+                    self.link._send_array(jnts)               
+
+            else:
+                for pose in matrix:
+                    self.link._send_pose(pose)               
             
             self.link._check_status()
             

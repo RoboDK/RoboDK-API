@@ -599,7 +599,7 @@ void Item::NewLink(){
 /// Returns the type of an item (robot, object, target, reference frame, ...)
 /// </summary>
 /// <returns></returns>
-int Item::Type(){
+int Item::Type() const{
     _RDK->_check_connection();
     _RDK->_send_Line("G_Item_Type");
     _RDK->_send_Item(this);
@@ -634,7 +634,10 @@ void Item::Delete(){
 /// Checks if the item is valid. An invalid item will be returned by an unsuccessful function call.
 /// </summary>
 /// <returns>true if valid, false if invalid</returns>
-bool Item::Valid() const {
+bool Item::Valid(bool check_deleted) const {
+    if (check_deleted){
+        return Type() > 0;
+    }
     return _PTR != 0;
 }
 /// <summary>
@@ -796,7 +799,7 @@ void Item::setName(const QString &name){
 /// If a robot is provided, it will set the pose of the end efector.
 /// </summary>
 /// <param name="pose">4x4 homogeneous matrix</param>
-void Item::setPose(Mat pose){
+void Item::setPose(const Mat pose){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Hlocal");
     _RDK->_send_Item(this);
@@ -822,7 +825,7 @@ Mat Item::Pose() const {
 /// Sets the position (pose) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
 /// </summary>
 /// <param name="pose">4x4 homogeneous matrix</param>
-void Item::setGeometryPose(Mat pose){
+void Item::setGeometryPose(const Mat pose){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Hgeom");
     _RDK->_send_Item(this);
@@ -900,7 +903,7 @@ Mat Item::PoseFrame(){
 /// If "frame" is an item, it links the robot to the frame item. If frame is a pose, it updates the linked pose of the robot frame (with respect to the robot reference frame).
 /// </summary>
 /// <param name="frame_pose">4x4 homogeneous matrix (pose)</param>
-void Item::setPoseFrame(Mat frame_pose){
+void Item::setPoseFrame(const Mat frame_pose){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Frame");
     _RDK->_send_Pose(frame_pose);
@@ -913,7 +916,7 @@ void Item::setPoseFrame(Mat frame_pose){
 /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
 /// </summary>
 /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-void Item::setPoseFrame(Item frame_item){
+void Item::setPoseFrame(const Item frame_item){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Frame_ptr");
     _RDK->_send_Item(frame_item);
@@ -926,7 +929,7 @@ void Item::setPoseFrame(Item frame_item){
 /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
 /// </summary>
 /// <param name="tool_pose">4x4 homogeneous matrix (pose)</param>
-void Item::setPoseTool(Mat tool_pose){
+void Item::setPoseTool(const Mat tool_pose){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Tool");
     _RDK->_send_Pose(tool_pose);
@@ -939,7 +942,7 @@ void Item::setPoseTool(Mat tool_pose){
 /// If the item is a tool, it links the robot to the tool item.If tool is a pose, it updates the current robot TCP.
 /// </summary>
 /// <param name="tool_item">Tool item</param>
-void Item::setPoseTool(Item tool_item){
+void Item::setPoseTool(const Item tool_item){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Tool_ptr");
     _RDK->_send_Item(tool_item);
@@ -951,7 +954,7 @@ void Item::setPoseTool(Item tool_item){
 /// Sets the global position (pose) of an item. For example, the position of an object/frame/target with respect to the station origin.
 /// </summary>
 /// <param name="pose">4x4 homogeneous matrix (pose)</param>
-void Item::setPoseAbs(Mat pose){
+void Item::setPoseAbs(const Mat pose){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Hlocal_Abs");
     _RDK->_send_Item(this);
@@ -2502,10 +2505,11 @@ void RoboDK::ProjectPoints(tMatrix2D *points, tMatrix2D **projected, Item object
 /// </summary>
 /// <param name="name">Name of the station</param>
 /// <returns>Newly created station IItem</returns>
-Item RoboDK::AddStation(QString name)
+Item RoboDK::AddStation(const QString &name)
 {
     _check_connection();
     _send_Line("NewStation");
+    _send_Line(name);
     Item newitem = _recv_Item();
     _check_status();
     return newitem;
@@ -2581,7 +2585,7 @@ Item RoboDK::AddProgram(const QString &name, Item *itemrobot){
 /// <param name="name">Name of the project settings</param>
 /// <param name="itemrobot">Robot to use for the project settings(optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.</param>
 /// <returns></returns>
-Item RoboDK::AddMachiningProject(QString name, Item *itemrobot)
+Item RoboDK::AddMachiningProject(const QString &name, Item *itemrobot)
 {
     _check_connection();
     _send_Line("Add_MACHINING");
