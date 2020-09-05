@@ -318,13 +318,17 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
         flags = PathErrorFlags.NoError
+        evalue = int(evalue)
+        if evalue == 0:
+            return flags
+            
         if (evalue % 100_000_000  > 9_999_999):
-            # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
-            flags |= PathErrorFlags.PathFlipAxis
+            # Non reachable target
+            flags |= PathErrorFlags.PathInvalidTarget
             
         if (evalue % 10_000_000 > 999_999):
             # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
-            flags |= PathErrorFlags.PathInvalidTarget
+            flags |= PathErrorFlags.PathFlipAxis
 
         if (evalue % 1_000_000 > 99_999):
             # Collision detected.

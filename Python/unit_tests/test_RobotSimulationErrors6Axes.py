@@ -39,10 +39,10 @@ def get_program_wrist_singularity2():
 def get_program_180degree_rotation_error():
     """180 degree rotation error. Test PathFlipAxis Error."""
     j1 = [ 62.800000, -58.000000, 114.300000, -31.700000, -60.300000, 107.000000]
-    f2 = [   247.718647,  -776.118962,   544.157022,     0.122916,     0.048975,  -179.957772 ]
-    f3 = [   334.584051,  -775.717015,   386.683215,  -179.877084,    -0.048975,    -0.042228 ]
+    f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ]
+    f3 = [   334.584051,  -775.717015,   386.683215,     0,    0,   0.20] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
     expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK
-    #expectedSimulationError = PathErrorFlags.PathInvalidTarget  #FlipAxis will be reported as InvalidTarget
+    # As of RoboDK 5.1.0, FlipAxis may be also reported as kinematic error if we try a move close to 180 deg outside the 0.5 deg tolerance
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
@@ -95,7 +95,7 @@ def get_program_front_back_singularity_wrist_close_to_axis_1():
     """The robot is too close to the front/back singularity (wrist to close to axis 1)"""
     j1 = [ 106.000000, -52.000000, -79.000000, -81.000000, 58.000000, -47.000000]
     f2 = [   681.000000,  -417.900000,  1063.200000,    -0.000000,   -77.000000,   180.000000 ]
-    expectedSimulationError = PathErrorFlags.PathSingularity | PathErrorFlags.ShoulderSingularity
+    expectedSimulationError = PathErrorFlags.PathSingularity | PathErrorFlags.PathNearSingularity | PathErrorFlags.ShoulderSingularity
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
