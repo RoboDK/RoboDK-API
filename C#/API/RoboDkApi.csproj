@@ -99,6 +99,7 @@
     <Compile Include="Model\UpdateResult.cs" />
     <Compile Include="Model\WindowState.cs" />
     <Compile Include="RoboDkBitConverter.cs" />
+    <Compile Include="RoboDkCommandLineParameter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="api\index.md" />

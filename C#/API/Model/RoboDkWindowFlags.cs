@@ -40,7 +40,6 @@
 
 using System;
 
-
 namespace RoboDk.API.Model
 {
     /// <summary>
@@ -49,23 +48,24 @@ namespace RoboDk.API.Model
     [Flags]
     public enum WindowFlags
     {
-        TreeActive = 1,
-        View3Dactive = 2,
-        LeftClick = 4,
-        RightClick = 8,
-        DoubleClick = 16,
-        MenuActive = 32,
-        MenuFileActive = 64,
-        MenuEditActive = 128,
-        MenuProgramActive = 256,
-        MenuToolsActive = 512,
-        MenuUtilitiesActive = 1024,
-        MenuConnectActive = 2048,
-        WindowKeysActive = 4096,
-        TreeVisible = 8192,
-        ReferencesVisible = 16384,
-        None = 0,
-        All = 0xFFFF,
+        TreeActive = 1,     // Enable the tree
+        View3DActive = 2,   // Enable the 3D view (3D mouse navigation)
+        LeftClick = 4,      // Enable left clicks
+        RightClick = 8,     // Enable right clicks
+        DoubleClick = 16,   // Enable double clicks
+        MenuActive = 32,            // Enable the main menu (complete menu)
+        MenuFileActive = 64,        // Enable the File menu
+        MenuEditActive = 128,       // Enable the Edit menu
+        MenuProgramActive = 256,    // Enable the Program menu
+        MenuToolsActive = 512,      // Enable the Tools menu
+        MenuUtilitiesActive = 1024, // Enable the Utilities menu
+        MenuConnectActive = 2048,   // Enable the Connect menu
+        WindowKeysActive = 4096,    // Enable the keyboard
+        TreeVisible = 8192,         // Make the station tree visible
+        ReferencesVisible = 16384,  // Make the reference frames visible
+        None = 0,                   //  Disable everything
+        All = 0xFFFF,               // Enable everything
+
         MenuActiveAll = MenuActive | MenuFileActive | MenuEditActive | MenuProgramActive |
                         MenuToolsActive | MenuUtilitiesActive | MenuConnectActive
     }
