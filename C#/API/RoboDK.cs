@@ -1,5 +1,4 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------
 // Copyright 2018 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,12 +42,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
 using System.Windows.Media;
@@ -91,19 +94,32 @@ namespace RoboDk.API
         /// <summary>
         /// Creates a link with RoboDK
         /// </summary>
+        public RoboDK(RoboDkCommandLineParameter commandLineParameter) : this()
+        {
+            CommandLineParameter = commandLineParameter;
+            var serverApiPort = commandLineParameter.ApiTcpServerPort;
+            if (serverApiPort != 0)
+            {
+                RoboDKServerStartPort = serverApiPort;
+                RoboDKServerEndPort = serverApiPort;
+            }
+        }
+
+
+        /// <summary>
+        /// Creates a link with RoboDK
+        /// </summary>
         public RoboDK()
         {
-            CommandLineOptions = "";
+            CommandLineParameter = new RoboDkCommandLineParameter {StartNewInstance = false};
+
+            CustomCommandLineArgumentString = "";
             ApplicationDir = "";
 
             DefaultSocketTimeoutMilliseconds = 10 * 1000;
 
-            SafeMode = true;
-            AutoUpdate = false;
-            StartHidden = false;
-
-            RoboDKServerIpAdress = "localhost";
-            RoboDKServerStartPort = 20500;
+            RoboDKServerIpAddress = "localhost";
+            RoboDKServerStartPort = RoboDkCommandLineParameter.DefaultApiServerPort;
             RoboDKServerEndPort = RoboDKServerStartPort;
 
             RoboDKBuild = 0;
@@ -112,6 +128,8 @@ namespace RoboDk.API
         #endregion
 
         #region Properties
+
+        internal RoboDkCommandLineParameter CommandLineParameter;
 
         /// <summary>
         /// Name of the RoboDK instance.
@@ -127,26 +145,17 @@ namespace RoboDk.API
         public int DefaultSocketTimeoutMilliseconds { get; set; }
 
         /// <summary>
-        /// Command line arguments to provide to RoboDK on startup
+        /// The custom command line options will be appended to the standard command line argument string
+        /// returned by RoboDkCommandLineParameter.CommandLineArgumentString.
         /// See https://robodk.com/doc/en/RoboDK-API.html#CommandLine
         /// </summary>
-        public string CommandLineOptions { get; set; }
-
-        /// <summary>
-        /// True: checks that provided items exist in memory
-        /// </summary>
-        public bool SafeMode { get; set; }
-
-        /// <summary>
-        ///     if AutoUpdate is false, the scene is rendered after every function call
-        /// </summary>
-        public bool AutoUpdate { get; set; }
+        public string CustomCommandLineArgumentString { get; set; }
 
         /// <summary>
         /// Defines the RoboDK Simulator IP Address.
         /// Default: localhost (Client and RoboDK Server runs on same computer)
         /// </summary>
-        public string RoboDKServerIpAdress { get; set; }
+        public string RoboDKServerIpAddress { get; set; }
 
         /// <summary>
         /// Port to start looking for a RoboDK connection.
@@ -163,11 +172,7 @@ namespace RoboDk.API
         /// </summary>
         public int RoboDKBuild { get; set; }
 
-        /// <summary>
-        /// Forces to start RoboDK in hidden mode. 
-        /// ShowRoboDK must be used to show the window.
-        /// </summary>
-        public bool StartHidden { get; set; }
+        public int ApiVersion { get; private set; }
 
         /// <summary>
         /// TCP Server Port to which this instance is connected to.
@@ -181,8 +186,8 @@ namespace RoboDk.API
 
         internal int ReceiveTimeout
         {
-            get { return _bufferedSocket.ReceiveTimeout; }
-            set { _bufferedSocket.ReceiveTimeout = value; }
+            get => _bufferedSocket.ReceiveTimeout;
+            set => _bufferedSocket.ReceiveTimeout = value;
         }
 
         /// <summary>
@@ -221,11 +226,11 @@ namespace RoboDk.API
                     }
                 }
             }
-            List<string> rdkList = new List<string>();
-            string[] readList = str.Split(',');
-            foreach (string st in readList)
+            var rdkList = new List<string>();
+            var readList = str.Split(',');
+            foreach (var st in readList)
             {
-                string st2 = st.Trim();
+                var st2 = st.Trim();
                 if (st2.Length < 5) // file name should be name.abc
                 {
                     continue;
@@ -254,35 +259,20 @@ namespace RoboDk.API
         /// <returns></returns>
         public static string RoboDKInstallPath()
         {
-            using (var hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-            using (var regKey = hklm.OpenSubKey(@"SOFTWARE\RoboDK"))
+            using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            using (var regKey = baseKey.OpenSubKey(@"SOFTWARE\RoboDK"))
             {
                 // key now points to the 64-bit key
                 var installPath = regKey?.GetValue("INSTDIR").ToString();
                 if (!string.IsNullOrEmpty(installPath))
                 {
-                    return installPath + "\\bin\\RoboDK.exe";
+                    var s = Path.Combine(installPath, "bin\\RoboDK.exe");
+                    return s;
                 }
             }
 
-            /*
-            // .Net 2.0
-            RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\RoboDK", false);
-            if (regKey is RegistryKey) // check if the registry was opened
-            {
-                install_path = regKey.GetValue("INSTDIR").ToString();
-                regKey.Close();
-                if (install_path != null)
-                {
-                    return = install_path + "\\bin\\RoboDK.exe";
-                }
-            }*/
-            string default_path = "C:\\RoboDK\\bin\\RoboDK.exe";
-            if (File.Exists(default_path))
-            {
-                return default_path;
-            }
-            return null;
+            const string defaultPath = "C:\\RoboDK\\bin\\RoboDK.exe";
+            return File.Exists(defaultPath) ? defaultPath : null;
         }
         #endregion
 
@@ -353,20 +343,54 @@ namespace RoboDk.API
         /// <inheritdoc />
         public bool Connect()
         {
+            if (RoboDKServerEndPort < RoboDKServerStartPort)
+            {
+                RoboDKServerEndPort = RoboDKServerStartPort;
+            }
+
+            if (CommandLineParameter.StartNewInstance)
+            {
+                StartNewRoboDkInstance();
+            }
+            else
+            {
+                TryConnectToExistingRoboDkInstance();
+            }
+
+            var success = VerifyConnection();
+            if (!success)
+            {
+                if (CommandLineParameter.StartNewInstance)
+                {
+                    Process.Kill();
+                    Process.WaitForExit(10000);
+                }
+
+                Process = null;
+            }
+
+            return success;
+        }
+
+        private void StartNewRoboDkInstance()
+        {
+            StartNewRoboDKProcess(RoboDKServerStartPort);
+            _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, RoboDKServerStartPort);
+            RoboDKServerPort = RoboDKServerStartPort;
+        }
+
+        private void TryConnectToExistingRoboDkInstance()
+        {
             // Establishes a connection with robodk. 
             // robodk must be running, otherwise, the variable APPLICATION_DIR must be set properly.
             var connected = false;
             for (var i = 0; i < 2; i++)
             {
-                if (RoboDKServerEndPort < RoboDKServerStartPort)
-                {
-                    RoboDKServerEndPort = RoboDKServerStartPort;
-                }
 
                 int port;
                 for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
                 {
-                    _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAdress, port);
+                    _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, port);
                     if (_bufferedSocket != null)
                     {
                         connected = true;
@@ -380,39 +404,18 @@ namespace RoboDk.API
                     break;
                 }
 
-                if (RoboDKServerIpAdress != "localhost")
+                if (RoboDKServerIpAddress != "localhost")
                 {
+                    // starting a new roboDK Process on a remote host is not supported.
                     break;
                 }
 
                 StartNewRoboDKProcess(RoboDKServerStartPort);
             }
-
-            if (connected && !VerifyConnection())
-            {
-                connected = false;
-                Process = null;
-            }
-
-            return connected;
         }
 
-        private bool StartNewRoboDKProcess(int port)
+        private void StartNewRoboDKProcess(int tcpServerPort)
         {
-            bool started = false;
-
-            var arguments = string.Format($"/PORT={port}");
-
-            if (StartHidden)
-            {
-                arguments = string.Format($"/NOSPLASH /NOSHOW /HIDDEN {arguments}");
-            }
-
-            if (!string.IsNullOrEmpty(CommandLineOptions))
-            {
-                arguments = string.Format($"{arguments} {CommandLineOptions}");
-            }
-
             // No application path is given. Check the registry.
             if (string.IsNullOrEmpty(ApplicationDir))
             {
@@ -431,55 +434,67 @@ namespace RoboDk.API
                 throw new FileNotFoundException(ApplicationDir);
             }
 
+            var commandLineArgumentString = CommandLineParameter.CommandLineArgumentString;
+            commandLineArgumentString += $" {CustomCommandLineArgumentString}";
+
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = ApplicationDir,
-                Arguments = arguments,
+                Arguments = commandLineArgumentString,
                 RedirectStandardOutput = true,
                 UseShellExecute = false
             };
+
+            ValidateCommandLineParameter(processStartInfo);
+
+            Debug.WriteLine($"Start RoboDK {Name}: {processStartInfo.Arguments}");
+
             Process = Process.Start(processStartInfo);
+            if (Process == null || Process.HasExited)
+            {
+                throw new RdkException("Unable to start RoboDK.exe.");
+            }
 
             // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
-            string line = "";
-            while (line != null && !line.Contains("RoboDK is Running"))
+            var roboDkRunning = false;
+            while (!roboDkRunning)
             {
-                line = Process.StandardOutput.ReadLine();
+                var line = Process.StandardOutput.ReadLine();
+                if (line == null)
+                {
+                    throw new RdkException("Unable to start RoboDK.exe. StandardOutput closed unexpectedly.");
+                }
+                Debug.WriteLine($"RoboDK: {line}");
+                roboDkRunning = line.Contains("RoboDK is Running");
             }
 
             Process.StandardOutput.Close();
-            if (line != null)
-            {
-                started = true;
-            }
-
-            return started;
         }
 
-        private static bool WaitForTcpServerPort(int serverPort, int millisecondsTimeout)
+        private static void ValidateCommandLineParameter(ProcessStartInfo processStartInfo)
         {
-            int sleepTime = 100;
-            bool serverPortIsOpen = false;
-            while ((serverPortIsOpen == false) && (millisecondsTimeout > 0))
+            // Sanity check
+            // If 'NEWINSTANCE' is a command line parameter, then it must be the first parameter
+            if (processStartInfo.Arguments.Contains("NEWINSTANCE"))
             {
-                //TcpConnectionInformation[] tcpConnInfoArray = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
-                IPEndPoint[] objEndPoints = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
-                foreach (var tcpEndPoint in objEndPoints)
+                if (!processStartInfo.Arguments.StartsWith($"{CommandLineOption.SwitchDelimiter}NEWINSTANCE"))
                 {
-                    if (tcpEndPoint.Port == serverPort)
-                    {
-                        serverPortIsOpen = true;
-                        break;
-                    }
-                }
-                if (serverPortIsOpen == false)
-                {
-                    Thread.Sleep(sleepTime);
-                    millisecondsTimeout -= sleepTime;
+                    throw new RdkException("The NEWINSTANCE Parameter must be the first command line parameter.");
                 }
             }
-            return serverPortIsOpen;
         }
+
+        public static bool IsTcpPortFree(int tcpPort)
+        {
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+
+            var activeTcpConnections = ipGlobalProperties.GetActiveTcpConnections();
+            var listeningTcpPorts = ipGlobalProperties.GetActiveTcpListeners();
+            var isTcpPortInUse = activeTcpConnections.Any(p => p.LocalEndPoint.Port == tcpPort) || 
+                                 listeningTcpPorts.Any(tcpEndPoint => tcpEndPoint.Port == tcpPort);
+            return !isTcpPortInUse;
+        }
+
 
         /// <inheritdoc />
         public IntPtr GetWindowHandle()
@@ -494,8 +509,8 @@ namespace RoboDk.API
                 RequireBuild(7750);
                 // RoboDK was not started from this application.
                 // In that case, we can retrieve the window pointer by using a specific RoboDK command
-                string str_window_id = Command("MainWindow_ID");
-                return new IntPtr(Convert.ToInt32(str_window_id));
+                var mainWindowId = Command("MainWindow_ID");
+                return new IntPtr(Convert.ToInt32(mainWindowId));
             }
         }
 
@@ -525,7 +540,7 @@ namespace RoboDk.API
 
             try
             {
-                socketEvents.Connect(RoboDKServerIpAdress, RoboDKServerPort);
+                socketEvents.Connect(RoboDKServerIpAddress, RoboDKServerPort);
                 if (socketEvents.Connected)
                 {
                     socketEvents.SendTimeout = DefaultSocketTimeoutMilliseconds;
@@ -2618,27 +2633,13 @@ namespace RoboDk.API
 
         internal bool VerifyConnection()
         {
-            bool useNewVersion = true; // this flag will be soon updated to support build/version check and prevent calling unsupported functions by RoboDK.
-            if (useNewVersion)
-            {
-                send_line("RDK_API");
-                send_int(0);
-                string response = rec_line();
-                int verApi = rec_int();
-                RoboDKBuild = rec_int();
-                check_status();
-                return response == "RDK_API";
-            } else {
-                send_line("CMD_START");
-                var startParameter = string.Format($"{Convert.ToInt32(SafeMode)} {Convert.ToInt32(AutoUpdate)}");
-                send_line(startParameter);
-                var response = rec_line();
-                if (response == "READY")
-                {
-                    return true;
-                }
-            }
-            return false;
+            send_line("RDK_API");
+            send_int(0);
+            var response = rec_line();
+            ApiVersion = rec_int();
+            RoboDKBuild = rec_int();
+            check_status();
+            return response == "RDK_API";
         }
 
         internal bool RequireBuild(int buildRequired)
