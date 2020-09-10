@@ -40,7 +40,7 @@ def get_program_180degree_rotation_error():
     """180 degree rotation error. Test PathFlipAxis Error."""
     j1 = [ 62.800000, -58.000000, 114.300000, -31.700000, -60.300000, 107.000000]
     f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ]
-    f3 = [   334.584051,  -775.717015,   386.683215,     0,    0,   0.20] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
+    f3 = [   334.584051,  -775.717015,   386.683215,     0,    180, -180] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
     expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK
     # As of RoboDK 5.1.0, FlipAxis may be also reported as kinematic error if we try a move close to 180 deg outside the 0.5 deg tolerance
     steps = [

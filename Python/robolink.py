@@ -298,22 +298,22 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         PathNearSingularity = 0x8  # 0b0000_0000_1000
 
         # A movement can't involve an exact rotation of 180 deg around a unique axis. The rotation is ambiguous and has infinite solutions.
-        PathFlipAxis = 0b10000  # 0b0000_0001_0000 
+        PathFlipAxis = 0x10  # 0b0000_0001_0000 
 
         # Collision detected
-        Collision = 0x20 // 0b100000 # 0b0000_0010_0000
+        Collision = 0x20 # 0b0000_0010_0000
 
         # The robot reached a Wrist singularity: Joint 5 is too close to 0 deg
-        WristSingularity = 0b1000000 # 0b0000_0100_0000
+        WristSingularity = 0x40 # 0b0000_0100_0000
 
         # The robot reached an Elbow singularity: Joint 3 is fully extended
-        ElbowSingularity = 0b10000000 # 0b0000_1000_0000
+        ElbowSingularity = 0x80 # 0b0000_1000_0000
 
         # The robot reached a Shoulder singularity: the wrist is too close to axis 1
-        ShoulderSingularity = 0b100000000 # 0b0001_0000_0000
+        ShoulderSingularity = 0x100 # 0b0001_0000_0000
         
         # Target not reachable or invalid
-        PathInvalidTarget = 0b0010_0000_0000
+        PathInvalidTarget = 0x200 # 0b0010_0000_0000
             
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
@@ -322,15 +322,15 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         if evalue == 0:
             return flags
             
-        if (evalue % 100_000_000  > 9_999_999):
+        if (evalue % 100000000  > 9999999):
             # Non reachable target
             flags |= PathErrorFlags.PathInvalidTarget
             
-        if (evalue % 10_000_000 > 999_999):
+        if (evalue % 10000000 > 999999):
             # "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
             flags |= PathErrorFlags.PathFlipAxis
 
-        if (evalue % 1_000_000 > 99_999):
+        if (evalue % 1000000 > 99999):
             # Collision detected.
             flags |= PathErrorFlags.Collision
 
@@ -339,14 +339,14 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
             flags |= PathErrorFlags.WristSingularity
             flags |= PathErrorFlags.PathSingularity
 
-        elif (evalue % 10_000 > 999):
-            if (evalue % 10_000 > 3_999):
+        elif (evalue % 10000 > 999):
+            if (evalue % 10000 > 3999):
                 # The robot is too close to the front/back singularity (wrist close to axis 1).
                 flags |= PathErrorFlags.ShoulderSingularity
                 flags |= PathErrorFlags.PathSingularity
                 flags |= PathErrorFlags.PathNearSingularity
 
-            elif (evalue % 10_000 > 1_999):
+            elif (evalue % 10000 > 1999):
                 flags |= PathErrorFlags.ElbowSingularity
                 flags |= PathErrorFlags.PathSingularity
                 flags |= PathErrorFlags.PathNearSingularity
@@ -6098,13 +6098,14 @@ if __name__ == "__main__":
         prm = ''
         c = RDK.Cam2D_Add(ref, prm)
 
-    RDK = Robolink()
-    home = RDK.Item('Home')
-    t = RDK.Item('T1')
-    
-    cost = RDK.PluginCommand("CollisionFreePlanner", "CostPtr", str(home.item) + "|" + str(t.item)) #in the future
-    
-    print(cost)
+    def TestCollision():
+        RDK = Robolink()
+        home = RDK.Item('Home')
+        t = RDK.Item('T1')
+        
+        cost = RDK.PluginCommand("CollisionFreePlanner", "CostPtr", str(home.item) + "|" + str(t.item)) #in the future
+        
+        print(cost)
         
     #TestCamera()
 
