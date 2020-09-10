@@ -286,13 +286,13 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         # One or more points is not reachable
         Kinematic = 0x1   # 0b0000_0000_0001 
 
-        # The path reaches the limit of joint axes
+        # The robot reaches the limit of joint axes trying to make a linear movement between 2 valid points
         PathLimit = 0x2   # 0b0000_0000_0010
 
         # The robot reached a singularity point
         PathSingularity = 0x4  # 0b0000_0000_0100
 
-        # The robot is too close to a singularity.
+        # The robot is close to a singularity.
         # Lower the singularity tolerance to allow the robot to continue. 
         # If you get this error flag it means you may be able to go through the singularity if you lower the tolerances in Tools-Options-Motion
         PathNearSingularity = 0x8  # 0b0000_0000_1000
@@ -363,8 +363,8 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
             flags |= PathErrorFlags.PathLimit
 
         if (evalue % 100 > 9):
-            # The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.
-            flags |= PathErrorFlags.PathLimit
+            # The robot can't make a linear movement because of joint limits or the target is out of reach. Consider a Joint move instead.            
+            #flags |= PathErrorFlags.PathLimit
             flags |= PathErrorFlags.Kinematic
 
         return flags
