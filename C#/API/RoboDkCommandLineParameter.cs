@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+// ReSharper disable UnusedMember.Global
 
 #endregion
 
@@ -26,7 +27,7 @@ namespace RoboDk.API
     /// RoboDK command line parameter.
     /// See https://robodk.com/doc/en/RoboDK-API.html#CommandLine
     /// </summary>
-    public class RoboDkCommandLineParameter
+    internal class RoboDkCommandLineParameter
     {
         #region Fields
 
@@ -39,30 +40,11 @@ namespace RoboDk.API
         /// A Dictionary is not ordered and adding an extra priority int attribute to use a SortedDictionary is error prone and
         /// overly complex.
         ///
-        /// The Constructor will put the CommandLineOptions into a dictionary to access the options by there property name.
+        /// The Constructor will put the CommandLineOptions into a dictionary to access the options by their property name.
         /// </summary>
-        private readonly List<CommandLineOption> _parameterList = new List<CommandLineOption>
-        {
-            new CommandLineOption<bool>(nameof(StartNewInstance), "NEWINSTANCE", false),
-            new CommandLineOption<bool>(nameof(NoSplash), "NOSPLASH", false),
-            new CommandLineOption<bool>(nameof(NoShow), "NOSHOW", false),
-            new CommandLineOption<bool>(nameof(Hidden), "HIDDEN", false),
-            new CommandLineArgument<int>(nameof(ApiTcpServerPort), "PORT", 0),
-            new CommandLineOption<bool>(nameof(NoDebugOutput), "NOSTDOUT", false),
-            new CommandLineOption<bool>(nameof(DoNotUseRecentlyUsedFileList), "SKIPINIRECENT", false),
-            new CommandLineOption<bool>(nameof(DoNotUseSettingsFile), "SKIPINI", false),
-            new CommandLineOption<bool>(nameof(NoCommunicationToRoboDkServer), "SKIPCOM", false),
-            new CommandLineOption<bool>(nameof(ExitRoboDkAfterClosingLastApiConnection), "EXIT_LAST_COM", false),
-            new CommandLineOption<bool>(nameof(NoUserInterface), "NOUI", false),
-            new CommandLineArgument<int>(nameof(TreeState), "TREE_STATE", 0),
+        private readonly List<CommandLineOption> _parameterList;
 
-            new CommandLineArgumentDebug(nameof(Logfile), "DEBUG", null),
-            new CommandLineArgument<string>(nameof(LoadSettingsFromFile), "SETTINGS", ""),
-            new CommandLineOption<bool>(nameof(HideCoordinates), "COORDS_HIDE", false),
-            new CommandLineOption<bool>(nameof(HideWindowsWhileLoadingNcFile), "NO_WINDOWS", false),
-        };
-
-        // The constructor will put the CommandLineOptions into a dictionary so we can access the options by there property name
+        // The constructor will put the CommandLineOptions into a dictionary so we can access the options by their property name
         private readonly Dictionary<string, CommandLineOption> _parameterDictionary = new Dictionary<string, CommandLineOption>();
 
         #endregion
@@ -71,20 +53,33 @@ namespace RoboDk.API
 
         public RoboDkCommandLineParameter()
         {
+            _parameterList = new List<CommandLineOption>
+            {
+                new CommandLineOption<bool>(nameof(StartNewInstance), "NEWINSTANCE", false),
+                new CommandLineOptionDependingOnNoUi(nameof(NoSplash), "NOSPLASH", false, this),
+                new CommandLineOptionDependingOnNoUi(nameof(NoShow), "NOSHOW", false, this),
+                new CommandLineOptionDependingOnNoUi(nameof(Hidden), "HIDDEN", false, this),
+                new CommandLineArgument<int>(nameof(ApiTcpServerPort), "PORT", 0),
+                new CommandLineOption<bool>(nameof(NoDebugOutput), "NOSTDOUT", false),
+                new CommandLineOption<bool>(nameof(DoNotUseRecentlyUsedFileList), "SKIPINIRECENT", false),
+                new CommandLineOption<bool>(nameof(DoNotUseSettingsFile), "SKIPINI", false),
+                new CommandLineOption<bool>(nameof(NoCommunicationToRoboDkServer), "SKIPCOM", false),
+                new CommandLineOption<bool>(nameof(ExitRoboDkAfterClosingLastApiConnection), "EXIT_LAST_COM", false),
+                new CommandLineOption<bool>(nameof(NoUserInterface), "NOUI", false),
+                new CommandLineArgumentTreeState(nameof(TreeState), "TREE_STATE", 0, this),
+
+                new CommandLineArgumentDebug(nameof(Logfile), "DEBUG", null),
+                new CommandLineArgument<string>(nameof(LoadSettingsFromFile), "SETTINGS", ""),
+                new CommandLineOption<bool>(nameof(HideReferenceFrames), "COORDS_HIDE", false),
+                new CommandLineOption<bool>(nameof(HideWindowsWhileLoadingNcFile), "NO_WINDOWS", false),
+            };
+
             // Add the command line options to a dictionary so we can access them easily
             // by the property name.
             foreach (var commandLineOption in _parameterList)
             {
                 _parameterDictionary.Add(commandLineOption.PropertyName, commandLineOption);
             }
-
-            // Assumption: CommandLineParameter only make sense when a new RoboDK instance shall be started.
-            // Do not try to connect to an existing RoboDK server.
-            StartNewInstance = true;
-
-            // Don't relay on the default server port of RoboDK.exe.
-            // Request a specific server port.
-            ApiTcpServerPort = DefaultApiServerPort;
         }
 
         #endregion
@@ -112,10 +107,10 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        /// TODO: Add Comment (ask Albert)
+        /// hide all reference frames (all the time).
         /// </summary>
-        /// <value>True: Hide coordinates (Default=false)</value>
-        public bool HideCoordinates
+        /// <value>True: reference frames (Default=false)</value>
+        public bool HideReferenceFrames
         {
             set => SetOption(value);
             get => GetOption<bool>();
@@ -171,7 +166,7 @@ namespace RoboDk.API
         }
 
         /// <summary>
-        /// If set to True, RoboDK will not reading the settings.ini file.
+        /// If set to True, RoboDK will not read the settings.ini file.
         /// The application sets options exclusively through API commands.
         /// </summary>
         public bool DoNotUseSettingsFile
@@ -311,12 +306,12 @@ namespace RoboDk.API
 
         #region Private Methods
 
-        private void SetOption<T>(T value, [CallerMemberName] string name = "")
+        private void SetOption<T>(T value, [CallerMemberName] string name = "") where T : IComparable
         {
             ((CommandLineOption<T>)_parameterDictionary[name]).Value = value;
         }
 
-        private T GetOption<T>([CallerMemberName] string name = "")
+        private T GetOption<T>([CallerMemberName] string name = "") where T : IComparable
         {
             return ((CommandLineOption<T>)_parameterDictionary[name]).Value;
         }
@@ -354,7 +349,7 @@ namespace RoboDk.API
         #endregion
     }
 
-    internal class CommandLineOption<T> : CommandLineOption
+    internal class CommandLineOption<T> : CommandLineOption where T : IComparable
     {
         #region Constructors
 
@@ -363,12 +358,6 @@ namespace RoboDk.API
         {
             DefaultValue = defaultValue;
             Value = DefaultValue;
-
-            // TODO: How to define type constraint to class declaration? "where T : IComparable"
-            if (!typeof(T).GetInterfaces().Contains(typeof(IComparable)))
-            {
-                throw new ArgumentException($"Value of command line argument {Argument} is not of type IComparable");
-            }
         }
 
         #endregion
@@ -379,14 +368,28 @@ namespace RoboDk.API
 
         internal T DefaultValue { get; }
 
-        protected bool IsDefault => Equals((IComparable)Value, (IComparable)DefaultValue);
+        protected bool IsDefault => Equals(Value, DefaultValue);
 
         internal override string CommandLineOptionString => IsDefault ? "" : $"{SwitchDelimiter}{Argument}";
 
         #endregion
     }
 
-    internal class CommandLineArgument<T> : CommandLineOption<T>
+    internal class CommandLineOptionDependingOnNoUi : CommandLineOption<bool>
+    {
+        private readonly RoboDkCommandLineParameter _commandLineParameter;
+
+        internal CommandLineOptionDependingOnNoUi(string propertyName, string argument, bool defaultValue, RoboDkCommandLineParameter commandLineParameter) 
+            : base(propertyName, argument, defaultValue)
+        {
+            _commandLineParameter = commandLineParameter;
+        }
+
+        internal override string CommandLineOptionString => _commandLineParameter.NoUserInterface ? "" : base.CommandLineOptionString;
+    }
+
+
+    internal class CommandLineArgument<T> : CommandLineOption<T> where T : IComparable
     {
         #region Constructors
 
@@ -399,9 +402,28 @@ namespace RoboDk.API
 
         #region Properties
 
-        internal override string CommandLineOptionString => IsDefault ? "" : $"{SwitchDelimiter}{Argument}={Value.ToString()}";
+        internal override string CommandLineOptionString => IsDefault ? "" : $"{SwitchDelimiter}{Argument}={Value}";
 
         #endregion
+    }
+
+    internal class CommandLineArgumentTreeState : CommandLineArgument<int>
+    {
+        private readonly RoboDkCommandLineParameter _commandLineParameter;
+
+        internal CommandLineArgumentTreeState(string propertyName, string argument, int defaultValue, RoboDkCommandLineParameter commandLineParameter) 
+            : base(propertyName, argument, defaultValue)
+        {
+            _commandLineParameter = commandLineParameter;
+        }
+
+        // If NOUI is set, then we should not pass a TREE_STATE parameter to RoboDK.
+        // However, currently RoboDK has a bug:
+        // TODO: RoboDK Bug FilterMesh does not work if there is no window handle.
+        //   If TREE_STATE is not set, then RoboDK does not create any window (which is basically correct).
+        //   But if there is no Window, then the API function  item.SetParam("FilterMesh", "0,0.0001,0.005") does not work!
+
+        //internal override string CommandLineOptionString => _commandLineParameter.NoUserInterface ? "" : base.CommandLineOptionString;
     }
 
     internal class CommandLineArgumentDebug : CommandLineOption<string>

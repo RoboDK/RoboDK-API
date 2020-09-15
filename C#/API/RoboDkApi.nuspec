@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>RoboDkApi</id>
-    <version>4.2.3</version>
+    <version>5.1.0</version>
     <title>RoboDK API</title>
     <authors>RoboDK</authors>
     <projectUrl>https://robodk.com/</projectUrl>
@@ -10,7 +10,8 @@
     <repository type="git" url="https://github.com/RoboDK/RoboDK-API" />
     <license type="file">license.txt</license>
     <dependencies>
-        <group targetFramework=".NETFramework4.5" />
+        <group targetFramework="net45" />
+		<group targetFramework="netcoreapp3.1" />
     </dependencies>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <copyright>Copyright RoboDK 2020</copyright>
@@ -19,7 +20,8 @@
     <tags>Simulation Industrial Robot Arm Offline Programming ABB Fanuc KUKA Motoman Yaskawa Denso Kawasaki Universal Robots 3D CAD CAM Manufacturing Machining Inspection Pick Place Industry 4.0</tags>
   </metadata>
   <files>
-    <file src="bin\Release\*.*" target="lib/net45" />
+    <file src="bin\Release\net45\*.*" target="lib/net45" />
+    <file src="bin\Release\netcoreapp3.1\*.*" target="lib/netcoreapp3.1" />
     <file src="license.txt" target="" />
     <file src="RoboDK.png" target="" />
     <file src="RoboDK.ico" target="" />

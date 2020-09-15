@@ -3041,7 +3041,7 @@ public class RoboDK
     public int getFlagsItem(Item item)
     {
         _check_connection();
-        _send_Line("S_Item_Rights");
+        _send_Line("G_Item_Rights");
         _send_Item(item);
         int flags = _recv_Int();
         _check_status();

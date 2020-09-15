@@ -1,12 +1,12 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
-namespace ProjectRoboDK
+namespace SamplePanelRoboDK
 {
     public partial class FormRobot : Form
     {

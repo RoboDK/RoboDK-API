@@ -1,4 +1,4 @@
-﻿namespace ProjectRoboDK
+﻿namespace SamplePanelRoboDK
 {
     partial class FormRobot
     {

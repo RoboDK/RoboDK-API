@@ -52,7 +52,7 @@ namespace RoboDk.API
     /// Matrix class for robotics.
     /// Simple matrix class for homogeneous operations.
     /// </summary>
-    public partial class Mat 
+    public class Mat 
     {
         #region Fields
 
@@ -316,6 +316,44 @@ namespace RoboDk.API
             var cz = Math.Cos(rz);
             var sz = Math.Sin(rz);
             return new Mat(cz, -sz, 0, 0, sz, cz, 0, 0, 0, 0, 1, 0);
+        }
+
+        /// <summary>
+        /// Matrix class constructor for a 3x3 homogeneous matrix
+        /// </summary>
+        /// <param name="nx"></param>
+        /// <param name="ox"></param>
+        /// <param name="ax"></param>
+        /// <param name="ny"></param>
+        /// <param name="oy"></param>
+        /// <param name="ay"></param>
+        /// <param name="nz"></param>
+        /// <param name="oz"></param>
+        /// <param name="az"></param>
+        public Mat(double nx, double ox, double ax, double ny, double oy, double ay, double nz, double oz, double az)
+        {
+            _rows = 3;
+            _cols = 3;
+            _mat = new double[_rows, _cols];
+            _mat[0, 0] = nx; _mat[1, 0] = ny; _mat[2, 0] = nz;
+            _mat[0, 1] = ox; _mat[1, 1] = oy; _mat[2, 1] = oz;
+            _mat[0, 2] = ax; _mat[1, 2] = ay; _mat[2, 2] = az;
+        }
+
+        /// <summary>
+        /// Returns the sub 3x3 matrix that represents the pose rotation
+        /// </summary>
+        /// <returns></returns>
+        public Mat Rot3x3()
+        {
+            if (!IsHomogeneous())
+            {
+                throw new MatException("It is not possible to retrieve a sub 3x3 rotation mat"); //raise Exception('Problems running function');
+            }
+
+            return new Mat(_mat[0, 0], _mat[0, 1], _mat[0, 2], 
+                           _mat[1, 0], _mat[1, 1], _mat[1, 2], 
+                           _mat[2, 0], _mat[2, 1], _mat[2, 2]);
         }
 
         /// <summary>
@@ -724,6 +762,89 @@ namespace RoboDk.API
             _mat[2, 3] = z;
         }
 
+        /// <summary>
+        /// Returns the VX orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <returns>VX orientation vector</returns>
+        public double[] VX()
+        {
+            if (!Is4x4())
+            {
+                return null;
+            }
+            double[] xyz = new double[3];
+            xyz[0] = _mat[0, 0]; xyz[1] = _mat[1, 0]; xyz[2] = _mat[2, 0];
+            return xyz;
+        }
+
+        /// <summary>
+        /// Sets the VX orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <param name="xyz">VX orientation vector</param>
+        public void setVX(double[] xyz)
+        {
+            if (!Is4x4() || xyz.Length < 3)
+            {
+                return;
+            }
+            _mat[0, 0] = xyz[0]; _mat[1, 0] = xyz[1]; _mat[2, 0] = xyz[2];
+        }
+        /// <summary>
+        /// Returns the VY orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <returns>VY orientation vector</returns>
+        public double[] VY()
+        {
+            if (!Is4x4())
+            {
+                return null;
+            }
+            double[] xyz = new double[3];
+            xyz[0] = _mat[0, 1]; xyz[1] = _mat[1, 1]; xyz[2] = _mat[2, 1];
+            return xyz;
+        }
+
+        /// <summary>
+        /// Sets the VY orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <param name="xyz">VY orientation vector</param>
+        public void setVY(double[] xyz)
+        {
+            if (!Is4x4() || xyz.Length < 3)
+            {
+                return;
+            }
+            _mat[0, 1] = xyz[0]; _mat[1, 1] = xyz[1]; _mat[2, 1] = xyz[2];
+        }
+        /// <summary>
+        /// Returns the VZ orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <returns>VZ orientation vector</returns>
+        public double[] VZ()
+        {
+            if (!Is4x4())
+            {
+                return null;
+            }
+            double[] xyz = new double[3];
+            xyz[0] = _mat[0, 2]; xyz[1] = _mat[1, 2]; xyz[2] = _mat[2, 2];
+            return xyz;
+        }
+
+        /// <summary>
+        /// Sets the VZ orientation vector of the Homogeneous matrix
+        /// </summary>
+        /// <param name="xyz">VZ orientation vector</param>
+        public void setVZ(double[] xyz)
+        {
+            if (!Is4x4() || xyz.Length < 3)
+            {
+                return;
+            }
+            _mat[0, 2] = xyz[0]; _mat[1, 2] = xyz[1]; _mat[2, 2] = xyz[2];
+        }
+
+
         public Mat GetCol(int k)
         {
             var m = new Mat(_rows, 1);
@@ -905,6 +1026,94 @@ namespace RoboDk.API
         {
             return Multiply(n, m);
         }
+
+        public static double[] operator *(Mat m, double[] n)
+        {
+            return Multiply(m, n);
+        }
+
+        /// <summary>
+        /// Returns the norm of a 3D vector
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        static public double norm(double[] p)
+        {
+            return Math.Sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+        }
+
+        /// <summary>
+        /// Returns the unitary vector
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        static public double[] normalize3(double[] p)
+        {
+            double norminv = 1.0 / norm(p);
+            return new double[] { p[0] * norminv, p[1] * norminv, p[2] * norminv };
+        }
+
+        /// <summary>
+        /// Returns the cross product of two 3D vectors
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        static public double[] cross(double[] a, double[] b)
+        {
+            return new double[] {a[1]* b[2] - a[2]* b[1],
+          a[2]* b[0] - a[0]* b[2],
+           a[0]* b[1] - a[1]* b[0]};
+        }
+        /// <summary>
+        /// Returns the dot product of two 3D vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        static public double dot(double[] a, double[] b)
+        {
+            return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        }
+
+        /// <summary>
+        /// Returns the angle in radians of two 3D vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        static public double angle3(double[] a, double[] b)
+        {
+            return Math.Acos(dot(normalize3(a), normalize3(b)));
+        }
+
+        /// <summary>
+        /// Convert a point XYZ and IJK vector (Z axis) to a pose given a hint for the Y axis
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="zaxis"></param>
+        /// <param name="reference"></param>
+        /// <param name="yaxis_hint"></param>
+        /// <returns></returns>
+        static public Mat xyzijk_2_pose(double[] point, double[] zaxis, double[] yaxis_hint = null)
+        {
+            Mat pose = Mat.Identity4x4();
+            if (yaxis_hint == null)
+            {
+                yaxis_hint = new double[] { 0, 0, 1 };
+            }
+            pose.setPos(point);
+            pose.setVZ(zaxis);
+            if (Mat.angle3(zaxis, yaxis_hint) < 2 * Math.PI / 180)
+            {
+                yaxis_hint = new double[] { 0, 1, 1 };
+            }
+            double[] xaxis = Mat.normalize3(Mat.cross(yaxis_hint, zaxis));
+            double[] yaxis = Mat.cross(zaxis, xaxis);
+            pose.setVX(xaxis);
+            pose.setVY(yaxis);
+            return pose;
+        }
+
 
         #endregion
 
@@ -1206,6 +1415,30 @@ namespace RoboDk.API
             for (var j = 0; j < m._cols; j++)
                 r[i, j] = m[i, j] * n;
             return r;
+        }
+
+        private static double[] Multiply(Mat m1, double[] p1)         // Add matrix
+        {
+            double[] p2 = new double[p1.Length];
+            if (m1._cols == 4 && m1._rows == 4 && p1.Length == 3)
+            {
+                // multiply a homogeneous matrix and a 3D vector
+                p2[0] = m1[0, 0] * p1[0] + m1[0, 1] * p1[1] + m1[0, 2] * p1[2] + m1[0, 3];
+                p2[1] = m1[1, 0] * p1[0] + m1[1, 1] * p1[1] + m1[1, 2] * p1[2] + m1[1, 3];
+                p2[2] = m1[2, 0] * p1[0] + m1[2, 1] * p1[1] + m1[2, 2] * p1[2] + m1[2, 3];
+                return p2;
+            }
+            if (m1._cols != p1.Length) throw new MatException("Matrices must have the same dimensions!");
+            for (var i = 0; i < m1._rows; i++)
+            {
+                double vi = 0;
+                for (var j = 0; j < m1._cols; j++)
+                {
+                    vi = vi + m1[i, j] * p1[j];
+                }
+                p2[i] = vi;
+            }
+            return p2;
         }
 
         private static Mat Add(Mat m1, Mat m2) // Add matrix

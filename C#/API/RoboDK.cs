@@ -42,34 +42,45 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using System.Threading;
+#if NETCORE
+using System.Drawing;
+#else
 using System.Windows.Media;
+#endif
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
+// ReSharper disable UnusedMember.Global
 
 #endregion
 
 namespace RoboDk.API
 {
     /// <summary>
-    ///     This class is the link to allows to create macros and automate Robodk.
+    ///     This class is the link to allows to create macros and automate RoboDK.
     ///     Any interaction is made through \"items\" (IItem() objects). An item is an object in the
-    ///     robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+    ///     RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
     /// </summary>
     public class RoboDK : IRoboDK, IDisposable
     {
+        public enum ConnectionType
+        {
+            None,
+
+            // API connection
+            Api = 1,
+
+            // Event connection
+            Event = 2
+        }
+
         #region Constants
 
         // Station parameters request
@@ -84,8 +95,11 @@ namespace RoboDk.API
         private bool _disposed;
 
         private readonly RoboDkBitConverter _bitConverter = new RoboDkBitConverter();
-        private BufferedSocketAdapter _bufferedSocket; // tcpip com
-        private RoboDKEventSource _roboDkEventSource;
+        private BufferedSocketAdapter _bufferedSocket;
+        private readonly RoboDkCommandLineParameter _commandLineParameter;
+        private ConnectionType _connectionType;
+        private int _roboDKServerStartPort;
+
 
         #endregion
 
@@ -94,33 +108,26 @@ namespace RoboDk.API
         /// <summary>
         /// Creates a link with RoboDK
         /// </summary>
-        public RoboDK(RoboDkCommandLineParameter commandLineParameter) : this()
-        {
-            CommandLineParameter = commandLineParameter;
-            var serverApiPort = commandLineParameter.ApiTcpServerPort;
-            if (serverApiPort != 0)
-            {
-                RoboDKServerStartPort = serverApiPort;
-                RoboDKServerEndPort = serverApiPort;
-            }
-        }
-
-
-        /// <summary>
-        /// Creates a link with RoboDK
-        /// </summary>
         public RoboDK()
         {
-            CommandLineParameter = new RoboDkCommandLineParameter {StartNewInstance = false};
+            _commandLineParameter = new RoboDkCommandLineParameter();
 
+            _connectionType = ConnectionType.Api;
+
+            Name = "RoboDk API Client";
             CustomCommandLineArgumentString = "";
             ApplicationDir = "";
 
             DefaultSocketTimeoutMilliseconds = 10 * 1000;
 
+            SafeMode = true;
+            AutoUpdate = false;
+
             RoboDKServerIpAddress = "localhost";
+
+            // Default RoboDK Port Range: 20500 .. 20502
             RoboDKServerStartPort = RoboDkCommandLineParameter.DefaultApiServerPort;
-            RoboDKServerEndPort = RoboDKServerStartPort;
+            RoboDKServerEndPort = RoboDKServerStartPort + 2;
 
             RoboDKBuild = 0;
         }
@@ -129,7 +136,151 @@ namespace RoboDk.API
 
         #region Properties
 
-        internal RoboDkCommandLineParameter CommandLineParameter;
+        public int DefaultApiServerPort => RoboDkCommandLineParameter.DefaultApiServerPort;
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.HideWindowsWhileLoadingNcFile"/>
+        /// </summary>
+        public bool HideWindowsWhileLoadingNcFile
+        {
+            set => _commandLineParameter.HideWindowsWhileLoadingNcFile = value;
+            get => _commandLineParameter.HideWindowsWhileLoadingNcFile;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.LoadSettingsFromFile"/>
+        /// </summary>
+        public string LoadSettingsFromFile
+        {
+            set => _commandLineParameter.LoadSettingsFromFile = value;
+            get => _commandLineParameter.LoadSettingsFromFile;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.HideReferenceFrames"/>
+        /// </summary>
+        public bool HideReferenceFrames
+        {
+            set => _commandLineParameter.HideReferenceFrames = value;
+            get => _commandLineParameter.HideReferenceFrames;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.TreeState"/>
+        /// </summary>
+        public int TreeState
+        {
+            set => _commandLineParameter.TreeState = value;
+            get => _commandLineParameter.TreeState;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.NoUserInterface"/>
+        /// </summary>
+        public bool NoUserInterface
+        {
+            set => _commandLineParameter.NoUserInterface = value;
+            get => _commandLineParameter.NoUserInterface;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.ExitRoboDkAfterClosingLastApiConnection"/>
+        /// </summary>
+        public bool ExitRoboDkAfterClosingLastApiConnection
+        {
+            set => _commandLineParameter.ExitRoboDkAfterClosingLastApiConnection = value;
+            get => _commandLineParameter.ExitRoboDkAfterClosingLastApiConnection;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.DoNotUseSettingsFile"/>
+        /// </summary>
+        public bool DoNotUseSettingsFile
+        {
+            set => _commandLineParameter.DoNotUseSettingsFile = value;
+            get => _commandLineParameter.DoNotUseSettingsFile;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.DoNotUseRecentlyUsedFileList"/>
+        /// </summary>
+        public bool DoNotUseRecentlyUsedFileList
+        {
+            set => _commandLineParameter.DoNotUseRecentlyUsedFileList = value;
+            get => _commandLineParameter.DoNotUseRecentlyUsedFileList;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.StartNewInstance"/>
+        /// </summary>
+        public bool StartNewInstance
+        {
+            set => _commandLineParameter.StartNewInstance = value;
+            get => _commandLineParameter.StartNewInstance;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.NoCommunicationToRoboDkServer"/>
+        /// </summary>
+        public bool NoCommunicationToRoboDkServer
+        {
+            set => _commandLineParameter.NoCommunicationToRoboDkServer = value;
+            get => _commandLineParameter.NoCommunicationToRoboDkServer;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.NoDebugOutput"/>
+        /// </summary>
+        public bool NoDebugOutput
+        {
+            set => _commandLineParameter.NoDebugOutput = value;
+            get => _commandLineParameter.NoDebugOutput;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.StartHidden"/>
+        /// </summary>
+        public bool StartHidden
+        {
+            set => _commandLineParameter.StartHidden = value;
+            get => _commandLineParameter.StartHidden;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.NoSplash"/>
+        /// </summary>
+        public bool NoSplash
+        {
+            set => _commandLineParameter.NoSplash = value;
+            get => _commandLineParameter.NoSplash;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.NoShow"/>
+        /// </summary>
+        public bool HideWindowWhileLoadingFiles
+        {
+            set => _commandLineParameter.NoShow = value;
+            get => _commandLineParameter.NoShow;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.Hidden"/>
+        /// </summary>
+        public bool Hidden
+        {
+            set => _commandLineParameter.Hidden = value;
+            get => _commandLineParameter.Hidden;
+        }
+
+        /// <summary>
+        /// <see cref="RoboDkCommandLineParameter.Logfile"/>
+        /// </summary>
+        public string Logfile
+        {
+            set => _commandLineParameter.Logfile = value;
+            get => _commandLineParameter.Logfile;
+        }
 
         /// <summary>
         /// Name of the RoboDK instance.
@@ -143,6 +294,19 @@ namespace RoboDk.API
         /// Default Socket send / receive timeout in milliseconds: 10 seconds
         /// </summary>
         public int DefaultSocketTimeoutMilliseconds { get; set; }
+
+        /// <summary>
+        /// If True checks that provided items exist in memory and poses are homogeneous
+        /// </summary>
+        public bool SafeMode { get; set; }
+
+        /// <summary>
+        /// If AUTO_UPDATE is 1, updating and rendering objects the 3D the scene will be delayed until 100 ms
+        /// after the last call.
+        /// This value can be changed in Tools-Options-Other-API Render delay,
+        /// or using the RoboDK.Command('AutoRenderDelay', value) and RoboDK.Command('AutoRenderDelayMax', value)
+        /// </summary>
+        public bool AutoUpdate { get; set; }
 
         /// <summary>
         /// The custom command line options will be appended to the standard command line argument string
@@ -160,7 +324,15 @@ namespace RoboDk.API
         /// <summary>
         /// Port to start looking for a RoboDK connection.
         /// </summary>
-        public int RoboDKServerStartPort { get; set; }
+        public int RoboDKServerStartPort
+        {
+            get => _roboDKServerStartPort;
+            set
+            {
+                _roboDKServerStartPort = value;
+                RoboDKServerEndPort = value;
+            }
+        }
 
         /// <summary>
         /// Port to stop looking for a RoboDK connection.
@@ -172,7 +344,16 @@ namespace RoboDk.API
         /// </summary>
         public int RoboDKBuild { get; set; }
 
+        /// <summary>
+        /// RoboDK API protocol version.
+        /// </summary>
         public int ApiVersion { get; private set; }
+
+        /// <summary>
+        /// RoboDK Event protocol version.
+        /// </summary>
+        public int EventChannelVersion { get; set; }
+
 
         /// <summary>
         /// TCP Server Port to which this instance is connected to.
@@ -194,6 +375,7 @@ namespace RoboDk.API
         /// RoboDK.exe process.
         /// </summary>
         public Process Process { get; private set; }
+
         public string LastStatusMessage { get; set; } // Last status message
 
         /// <summary>
@@ -213,11 +395,11 @@ namespace RoboDk.API
         /// <returns></returns>
         public static List<string> RecentFiles(string extensionFilter = "")
         {
-            string iniFile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\RoboDK\\RecentFiles.ini";
-            string str = "";
+            var iniFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"RoboDK\RecentFiles.ini");
+            var str = "";
             if (File.Exists(iniFile))
             {
-                foreach (string line in File.ReadLines(iniFile))
+                foreach (var line in File.ReadLines(iniFile))
                 {
                     if (line.Contains("RecentFileList="))
                     {
@@ -271,15 +453,19 @@ namespace RoboDk.API
                 }
             }
 
-            const string defaultPath = "C:\\RoboDK\\bin\\RoboDK.exe";
+            const string defaultPath = @"C:\RoboDK\bin\RoboDK.exe";
             return File.Exists(defaultPath) ? defaultPath : null;
         }
         #endregion
 
         #region Public Methods
 
-        /// <inheritdoc />
-        public IRoboDK NewLink()
+        /// <summary>
+        /// Open a new additional RoboDK Link to the same already existing RoboDK instance.
+        /// NOTE: Use IItem.Clone() to use an already existing item on the new RoboDk connection.
+        /// </summary>
+        /// <returns>New RoboDK Link</returns>
+        public IRoboDK CloneRoboDkConnection(ConnectionType connectionType = ConnectionType.Api)
         {
             var rdk = new RoboDK
             {
@@ -287,18 +473,14 @@ namespace RoboDk.API
                 RoboDKServerEndPort = this.RoboDKServerEndPort,
                 Name = this.Name,
                 Process = this.Process,
-                ItemInterceptFunction = this.ItemInterceptFunction
+                ItemInterceptFunction = this.ItemInterceptFunction,
+                _connectionType = connectionType
             };
             rdk.Connect();
             return rdk;
         }
 
-        public void CloseLink()
-        {
-            _bufferedSocket.Close();
-            _bufferedSocket.Dispose();
-        }
-
+        // Implement IDisposable.
         public void Dispose()
         {
             Dispose(true);
@@ -308,6 +490,11 @@ namespace RoboDk.API
         /// <inheritdoc />
         public bool Connected()
         {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(this.GetType().FullName);
+            }
+
             //return _socket.Connected;//does not work well
             // See:
             // https://stackoverflow.com/questions/2661764/how-to-check-if-a-socket-is-connected-disconnected-in-c
@@ -334,10 +521,8 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void Disconnect()
         {
-            if (_bufferedSocket != null && _bufferedSocket.Connected)
-            {
-                _bufferedSocket.Disconnect(false);
-            }
+            _bufferedSocket?.Dispose();
+            _bufferedSocket = null;
         }
 
         /// <inheritdoc />
@@ -345,144 +530,32 @@ namespace RoboDk.API
         {
             if (RoboDKServerEndPort < RoboDKServerStartPort)
             {
-                RoboDKServerEndPort = RoboDKServerStartPort;
+                throw new RdkException($"RoboDKServerEndPort:{RoboDKServerEndPort} < RoboDKServerStartPort:{RoboDKServerStartPort}");
             }
 
-            if (CommandLineParameter.StartNewInstance)
+            var connected = StartNewInstance ? StartNewRoboDkInstance() : TryConnectToExistingRoboDkInstance();
+
+            if (connected)
             {
-                StartNewRoboDkInstance();
-            }
-            else
-            {
-                TryConnectToExistingRoboDkInstance();
+                connected = VerifyConnection();
+                _bufferedSocket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+
             }
 
-            var success = VerifyConnection();
-            if (!success)
+            if (!connected)
             {
-                if (CommandLineParameter.StartNewInstance)
+                _bufferedSocket.Dispose();
+                _bufferedSocket = null;
+                if (Process != null)
                 {
                     Process.Kill();
-                    Process.WaitForExit(10000);
+                    Process.WaitForExit(2000);
                 }
-
-                Process = null;
             }
 
-            return success;
+            return connected;
         }
 
-        private void StartNewRoboDkInstance()
-        {
-            StartNewRoboDKProcess(RoboDKServerStartPort);
-            _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, RoboDKServerStartPort);
-            RoboDKServerPort = RoboDKServerStartPort;
-        }
-
-        private void TryConnectToExistingRoboDkInstance()
-        {
-            // Establishes a connection with robodk. 
-            // robodk must be running, otherwise, the variable APPLICATION_DIR must be set properly.
-            var connected = false;
-            for (var i = 0; i < 2; i++)
-            {
-
-                int port;
-                for (port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
-                {
-                    _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, port);
-                    if (_bufferedSocket != null)
-                    {
-                        connected = true;
-                        break;
-                    }
-                }
-
-                if (connected)
-                {
-                    RoboDKServerPort = port;
-                    break;
-                }
-
-                if (RoboDKServerIpAddress != "localhost")
-                {
-                    // starting a new roboDK Process on a remote host is not supported.
-                    break;
-                }
-
-                StartNewRoboDKProcess(RoboDKServerStartPort);
-            }
-        }
-
-        private void StartNewRoboDKProcess(int tcpServerPort)
-        {
-            // No application path is given. Check the registry.
-            if (string.IsNullOrEmpty(ApplicationDir))
-            {
-                ApplicationDir = RoboDKInstallPath();
-            }
-
-            // Still no application path. User Default installation directory
-            if (string.IsNullOrEmpty(ApplicationDir))
-            {
-                ApplicationDir = @"C:\RoboDK\bin\RoboDK.exe";
-            }
-
-            // Validate if executable exists
-            if (!File.Exists(ApplicationDir))
-            {
-                throw new FileNotFoundException(ApplicationDir);
-            }
-
-            var commandLineArgumentString = CommandLineParameter.CommandLineArgumentString;
-            commandLineArgumentString += $" {CustomCommandLineArgumentString}";
-
-            var processStartInfo = new ProcessStartInfo
-            {
-                FileName = ApplicationDir,
-                Arguments = commandLineArgumentString,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            };
-
-            ValidateCommandLineParameter(processStartInfo);
-
-            Debug.WriteLine($"Start RoboDK {Name}: {processStartInfo.Arguments}");
-
-            Process = Process.Start(processStartInfo);
-            if (Process == null || Process.HasExited)
-            {
-                throw new RdkException("Unable to start RoboDK.exe.");
-            }
-
-            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
-            var roboDkRunning = false;
-            while (!roboDkRunning)
-            {
-                var line = Process.StandardOutput.ReadLine();
-                if (line == null)
-                {
-                    throw new RdkException("Unable to start RoboDK.exe. StandardOutput closed unexpectedly.");
-                }
-                Debug.WriteLine($"RoboDK: {line}");
-                roboDkRunning = line.Contains("RoboDK is Running");
-            }
-
-            Process.StandardOutput.Close();
-        }
-
-        private static void ValidateCommandLineParameter(ProcessStartInfo processStartInfo)
-        {
-            // Sanity check
-            // If 'NEWINSTANCE' is a command line parameter, then it must be the first parameter
-            if (processStartInfo.Arguments.Contains("NEWINSTANCE"))
-            {
-                if (!processStartInfo.Arguments.StartsWith($"{CommandLineOption.SwitchDelimiter}NEWINSTANCE"))
-                {
-                    throw new RdkException("The NEWINSTANCE Parameter must be the first command line parameter.");
-                }
-            }
-        }
 
         public static bool IsTcpPortFree(int tcpPort)
         {
@@ -495,7 +568,6 @@ namespace RoboDk.API
             return !isTcpPortInUse;
         }
 
-
         /// <inheritdoc />
         public IntPtr GetWindowHandle()
         {
@@ -504,143 +576,29 @@ namespace RoboDk.API
             {
                 return Process.MainWindowHandle;
             }
-            else
-            {
-                RequireBuild(7750);
-                // RoboDK was not started from this application.
-                // In that case, we can retrieve the window pointer by using a specific RoboDK command
-                var mainWindowId = Command("MainWindow_ID");
-                return new IntPtr(Convert.ToInt32(mainWindowId));
-            }
+
+            RequireBuild(7750);
+            // RoboDK was not started from this application.
+            // In that case, we can retrieve the window pointer by using a specific RoboDK command
+            var mainWindowId = Command("MainWindow_ID");
+            return new IntPtr(Convert.ToInt32(mainWindowId));
         }
 
         /// <inheritdoc />
-        public void EventsListenClose()
+        public IRoboDKEventSource OpenRoboDkEventChannel()
         {
-            if (_roboDkEventSource != null)
-            {
-                _roboDkEventSource.Close();
-                _roboDkEventSource = null;
-            }
-        }
-
-        /// <inheritdoc />
-        public IRoboDKEventSource EventsListen()
-        {
-            if (_roboDkEventSource != null)
-            {
-                throw new RdkException("event socket already open.");
-            }
-
-            var socketEvents = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
-            {
-                SendTimeout = 1000,
-                ReceiveTimeout = 1000
-            };
-
-            try
-            {
-                socketEvents.Connect(RoboDKServerIpAddress, RoboDKServerPort);
-                if (socketEvents.Connected)
-                {
-                    socketEvents.SendTimeout = DefaultSocketTimeoutMilliseconds;
-                    socketEvents.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
-                }
-            }
-            catch //Exception e)
-            {
-                return null;
-            }
-
-            var bufferedSocketAdapter = new BufferedSocketAdapter(socketEvents);
-            send_line("RDK_EVT", bufferedSocketAdapter);
-            send_int(0, bufferedSocketAdapter);
-            var response = rec_line(bufferedSocketAdapter);
-            var verEvt = rec_int(bufferedSocketAdapter);
-            var status = rec_int(bufferedSocketAdapter);
-            if (response != "RDK_EVT" || status != 0)
-            {
-                return null;
-            }
-            socketEvents.ReceiveTimeout = 3600 * 1000;
-
-            return _roboDkEventSource = new RoboDKEventSource(this, bufferedSocketAdapter);
-        }
-
-        /// <inheritdoc />
-        public bool SampleRoboDkEvent(EventType evt, IItem itm)
-        {
-            bool eventReceived = true;
-
-            switch (evt)
-            {
-                case EventType.SelectionTreeChanged:
-                    Console.WriteLine("Event: Selection changed (something was selected in the tree)");
-                    if (itm.Valid())
-                        Console.WriteLine("  -> Selected: " + itm.Name());
-                    else
-                        Console.WriteLine("  -> Nothing selected");
-
-                    break;
-
-                case EventType.Selection3DChanged:
-                    Console.WriteLine("Event: Selection changed (something was selected in the 3D view)");
-                    if (itm.Valid())
-                        Console.WriteLine("  -> Selected: " + itm.Name());
-                    else
-                        Console.WriteLine("  -> Nothing selected");
-
-                    break;
-
-                case EventType.ItemMoved:
-                    // Obsolete with RoboDK v4.2.0 and later. Use ItemMovedPose instead
-                    Console.WriteLine("Event: Item Moved");
-                    if (itm.Valid())
-                        Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
-                    else
-                        Console.WriteLine("  -> This should never happen");
-
-                    break;
-
-                case EventType.ItemMovedPose:
-                    Console.WriteLine("Event: Item Moved");
-                    if (itm.Valid())
-                        Console.WriteLine("  -> Moved: " + itm.Name() + " ->\n" + itm.Pose().ToString());
-                    else
-                        Console.WriteLine("  -> This should never happen");                    
-
-                    break;
-
-                default:
-                    Console.WriteLine("Unknown event " + evt.ToString());
-                    eventReceived = false;
-                    break;
-            }
-            return eventReceived;
-        }
-
-        /// <inheritdoc />
-        public bool EventsLoop()
-        {
-            Console.WriteLine("Events loop started");
-            var eventSource = EventsListen();
-            while (eventSource.Connected)
-            {
-                EventResult eventResult = eventSource.WaitForEvent(timeout: 3600 * 1000);
-                SampleRoboDkEvent(eventResult.EventType, eventResult.Item);
-            }
-            Console.WriteLine("Event loop finished");
-            return true;
+            return new RoboDKEventSource(this);
         }
 
         /// <inheritdoc />
         public void CloseRoboDK()
         {
             check_connection();
-            var command = "QUIT";
+            const string command = "QUIT";
             send_line(command);
             check_status();
-            _bufferedSocket.Disconnect(false);
+            _bufferedSocket.Dispose();
+            _bufferedSocket = null;
             Process = null;
         }
 
@@ -670,12 +628,22 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void Copy(IItem tocopy, bool copy_children = true)
         {
-            RequireBuild(18705);
-            check_connection();
-            send_line("Copy2");
-            send_item(tocopy);
-            send_int(copy_children ? 1 : 0);
-            check_status();
+            if (RoboDKBuild < 18705)
+            {
+                check_connection();
+                send_line("Copy");
+                send_item(tocopy);
+                check_status();
+            }
+            else
+            {
+                RequireBuild(18705);
+                check_connection();
+                send_line("Copy2");
+                send_item(tocopy);
+                send_int(copy_children ? 1 : 0);
+                check_status();
+            }
         }
 
         /// <inheritdoc />
@@ -945,6 +913,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void SetItemFlags(ItemFlags itemFlags = ItemFlags.All)
+        {
+            var flags = (int) itemFlags;
+            check_connection();
+            send_line("S_Item_Rights");
+            send_item(null);
+            send_int(flags);
+            check_status();
+        }
+
+        /// <inheritdoc />
         public void ShowMessage(string message, bool popup = true)
         {
             check_connection();
@@ -992,7 +971,7 @@ namespace RoboDk.API
         public IItem AddShape(Mat trianglePoints, IItem addTo = null, bool shapeOverride = false, Color? color = null)
         {
             RequireBuild(5449);
-            Color clr = color?? Color.FromRgb(127,127,127);
+            var clr = color ?? Color.FromArgb(255, 127, 127, 127);
             var colorArray = clr.ToRoboDKColorArray();
             check_connection();
             send_line("AddShape3");
@@ -1519,6 +1498,113 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public List<Mat> SolveFK(List<IItem> robotList, List<double[]> jointsList, List<bool> solutionOkList = null)
+        {
+            RequireBuild(6535);
+            var numberOfItems = Math.Min(robotList.Count, jointsList.Count);
+            
+            check_connection();
+            send_line("G_LFK");
+            send_int(numberOfItems);
+            var listPoses = new List<Mat>();
+            for (var i = 0; i < numberOfItems; i++)
+            {
+                send_array(jointsList[i]);
+                send_item(robotList[i]);
+                var pose = rec_pose();
+                var status = rec_int();
+                listPoses.Add(pose);
+                solutionOkList?.Add(status > 0);
+            }
+            check_status();
+            return listPoses;
+        }
+
+
+        /// <inheritdoc />
+        public List<double[]> SolveIK(List<IItem> robotList, List<Mat> poseList)
+        {
+            RequireBuild(6535);
+            var numberOfItems = Math.Min(robotList.Count, poseList.Count);
+            check_connection();
+            send_line("G_LIK");
+            send_int(numberOfItems);
+            var listJoints = new List<double[]>();
+            for (var i = 0; i < numberOfItems; i++)
+            {
+                send_pose(poseList[i]);
+                send_item(robotList[i]);
+                var jointsSol = rec_array();
+                listJoints.Add(jointsSol);
+            }
+            check_status();
+            return listJoints;
+        }
+
+
+        /// <inheritdoc />
+        public List<double[]> SolveIK(List<IItem> robotList, List<Mat> poseList, List<double[]> japroxList)
+        {
+            RequireBuild(7399);
+            var numberOfItems = Math.Min(Math.Min(robotList.Count, poseList.Count), japroxList.Count);
+            check_connection();
+            send_line("G_LIK_jnts");
+            send_int(numberOfItems);
+            var listJoints = new List<double[]>();
+            for (int i = 0; i < numberOfItems; i++)
+            {
+                send_pose(poseList[i]);
+                send_array(japroxList[i]);
+                send_item(robotList[i]);
+                var jointsSol = rec_array();
+                listJoints.Add(jointsSol);
+            }
+            check_status();
+            return listJoints;
+        }
+
+
+        /// <inheritdoc />
+        public List<Mat> SolveIK_All(List<IItem> robotList, List<Mat> poseList)
+        {
+            RequireBuild(7399);
+            var numberOfItems = Math.Min(robotList.Count, poseList.Count);
+            check_connection();
+            send_line("G_LIK_cmpl");
+            send_int(numberOfItems);
+            var listJoints2d = new List<Mat>();
+            for (int i = 0; i < numberOfItems; i++)
+            {
+                send_pose(poseList[i]);
+                send_item(robotList[i]);
+                var jointsSolAll = rec_matrix();
+                listJoints2d.Add(jointsSolAll);
+            }
+            check_status();
+            return listJoints2d;
+        }
+
+        /// <inheritdoc />
+        public List<double[]> JointsConfig(List<IItem> robotList, List<double[]> jointsList)
+        {
+            RequireBuild(7399);
+            var numberOfItems = Math.Min(robotList.Count, jointsList.Count);
+            check_connection();
+            send_line("G_LThetas_Config");
+            send_int(numberOfItems);
+            var listConfig = new List<double[]>();
+            for (var i = 0; i < numberOfItems; i++)
+            {
+                send_array(jointsList[i]);
+                send_item(robotList[i]);
+                double[] config = rec_array();
+                listConfig.Add(config);
+            }
+            check_status();
+            return listConfig;
+        }
+
+        /// <inheritdoc />
         public void SetVisible(List<IItem> itemList, List<bool> visibleList, List<int> visibleFrames = null)
         {
             int nitm = Math.Min(itemList.Count, visibleList.Count);
@@ -2004,12 +2090,20 @@ namespace RoboDk.API
 
         #region Protected Methods
 
+        // Dispose(bool disposing) executes in two distinct scenarios.
+        // If disposing equals true, the method has been called directly
+        // or indirectly by a user's code. Managed and unmanaged resources
+        // can be disposed.
+        // If disposing equals false, the method has been called by the
+        // runtime from inside the finalizer and you should not reference
+        // other objects. Only unmanaged resources can be disposed.
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
             {
                 if (disposing)
                 {
+                    // Dispose managed resources.
                     _bufferedSocket?.Dispose();
                 }
 
@@ -2021,39 +2115,121 @@ namespace RoboDk.API
 
         #region Private Methods
 
-        private BufferedSocketAdapter ConnectToRoboDK(string ipAdress, int port)
+        private bool StartNewRoboDkInstance()
         {
-            bool connected = false;
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
-            {
-                SendTimeout = 1000,
-                ReceiveTimeout = 1000
-            };
+            StartNewRoboDKProcess(RoboDKServerStartPort);
+            _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, RoboDKServerStartPort);
+            return _bufferedSocket != null;
+        }
 
-            try
+        private bool TryConnectToExistingRoboDkInstance()
+        {
+            for (var port = RoboDKServerStartPort; port <= RoboDKServerEndPort; port++)
             {
-                socket.Connect(ipAdress, port);
-                if (socket.Connected)
+                _bufferedSocket = ConnectToRoboDK(RoboDKServerIpAddress, port);
+                if (_bufferedSocket != null)
                 {
-                    socket.SendTimeout = DefaultSocketTimeoutMilliseconds;
-                    socket.ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
-                    connected = true;
+                    return true;
                 }
             }
-            catch (Exception e)
-            {
-                var s = e.Message;
 
-                //connected = false;
+            return RoboDKServerIpAddress == "localhost" && StartNewRoboDkInstance();
+        }
+
+        private void StartNewRoboDKProcess(int tcpServerPort)
+        {
+            // No application path is given. Check the registry.
+            if (string.IsNullOrEmpty(ApplicationDir))
+            {
+                ApplicationDir = RoboDKInstallPath();
             }
 
-            if (!connected)
+            if (string.IsNullOrEmpty(ApplicationDir))
             {
-                socket.Dispose();
+                throw new FileNotFoundException("RoboDK.exe installation directory not found.");
+            }
+
+            if (!File.Exists(ApplicationDir))
+            {
+                throw new FileNotFoundException($"RoboDK.exe not found in the given {nameof(ApplicationDir)}:{ApplicationDir}");
+            }
+
+            _commandLineParameter.ApiTcpServerPort = tcpServerPort;
+            var commandLineArgumentString = _commandLineParameter.CommandLineArgumentString;
+            commandLineArgumentString += $" {CustomCommandLineArgumentString}";
+            commandLineArgumentString = commandLineArgumentString.Trim();
+
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = ApplicationDir,
+                Arguments = commandLineArgumentString,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+
+            ValidateCommandLineParameter(processStartInfo);
+
+            Debug.WriteLine($"Start RoboDK {Name}: {ApplicationDir}\n{processStartInfo.Arguments}");
+
+            Process = Process.Start(processStartInfo);
+            if (Process == null || Process.HasExited)
+            {
+                throw new RdkException("Unable to start RoboDK.exe.");
+            }
+
+            // wait for RoboDK to output (stdout) RoboDK is Running. Works after v3.4.0.
+            var roboDkRunning = false;
+            while (!roboDkRunning)
+            {
+                var line = Process.StandardOutput.ReadLine();
+                if (line == null)
+                {
+                    throw new RdkException("Unable to start RoboDK.exe. StandardOutput closed unexpectedly.");
+                }
+                Debug.WriteLine($"RoboDK: {line}");
+                roboDkRunning = line.Contains("RoboDK is Running");
+            }
+
+            Process.StandardOutput.Close();
+        }
+
+        private static void ValidateCommandLineParameter(ProcessStartInfo processStartInfo)
+        {
+            // Sanity check
+            // If 'NEWINSTANCE' is a command line parameter, then it must be the first parameter
+            if (processStartInfo.Arguments.Contains("NEWINSTANCE"))
+            {
+                if (!processStartInfo.Arguments.StartsWith($"{CommandLineOption.SwitchDelimiter}NEWINSTANCE"))
+                {
+                    throw new RdkException("The NEWINSTANCE Parameter must be the first command line parameter.");
+                }
+            }
+        }
+
+        private BufferedSocketAdapter ConnectToRoboDK(string host, int port)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(this.GetType().FullName);
+            }
+
+            Socket socket = null;
+            try
+            {
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
+                {
+                    SendTimeout = 1000,
+                    ReceiveTimeout = 1000
+                };
+                socket.Connect(host, port);
+                RoboDKServerPort = port;
+                return new BufferedSocketAdapter(socket);
+            }
+            catch (SocketException)
+            {
+                socket?.Dispose();
                 return null;
             }
-
-            return new BufferedSocketAdapter(socket);
         }
 
         #endregion
@@ -2063,7 +2239,7 @@ namespace RoboDk.API
         //Returns 1 if connection is valid, returns 0 if connection is invalid
         internal bool is_connected()
         {
-            return _bufferedSocket.Connected;
+            return _bufferedSocket != null && _bufferedSocket.Connected;
         }
 
         /// <summary>
@@ -2071,6 +2247,11 @@ namespace RoboDk.API
         /// </summary>
         internal void check_connection()
         {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(this.GetType().FullName);
+            }
+
             if (!is_connected() && !Connect())
             {
                 throw new RdkException("Can't connect to RoboDK API");
@@ -2165,18 +2346,13 @@ namespace RoboDk.API
         }
 
         //Sends a string of characters with a \\n
-        internal void send_line(string line, BufferedSocketAdapter sckt = null)
+        internal void send_line(string line)
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             line = line.Replace('\n', ' '); // one new line at the end only!
             var data = Encoding.UTF8.GetBytes($"{line}\n");
             try
             {
-                sckt.SendData(data);
+                _bufferedSocket.SendData(data);
             }
             catch
             {
@@ -2184,25 +2360,20 @@ namespace RoboDk.API
             }
         }
 
-        internal string rec_line(BufferedSocketAdapter sckt = null)
+        internal string rec_line()
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             //Receives a string. It reads until if finds LF (\\n)
             var byteBuffer = new byte[1];
             var stringBuffer = new List<byte>(40);
-            var bytesRead = sckt.ReceiveData(byteBuffer, 1);
-            while (bytesRead > 0 && byteBuffer[0] != '\n')
+            _bufferedSocket.ReceiveData(byteBuffer, 1);
+            while (byteBuffer[0] != '\n')
             {
                 stringBuffer.Add(byteBuffer[0]);
-                bytesRead = sckt.ReceiveData(byteBuffer, 1);
+                _bufferedSocket.ReceiveData(byteBuffer, 1);
             }
 
             // convert stringBuffer to UTF-8 encoded string
-            return Encoding.UTF8.GetString(stringBuffer.ToArray()); ;
+            return Encoding.UTF8.GetString(stringBuffer.ToArray());
         }
 
         //Sends an item pointer
@@ -2228,25 +2399,20 @@ namespace RoboDk.API
         }
 
         //Receives an item pointer
-        internal IItem rec_item(BufferedSocketAdapter sckt = null)
+        internal IItem rec_item(RoboDK link = null)
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var idBuffer = new byte[8];
             var typeBuffer = new byte[4];
-            var read1 = sckt.ReceiveData(idBuffer, idBuffer.Length);
-            var read2 = sckt.ReceiveData(typeBuffer, typeBuffer.Length);
-            if (read1 != idBuffer.Length || read2 != typeBuffer.Length)
-            {
-                return null;
-            }
-
+            _bufferedSocket.ReceiveData(idBuffer, idBuffer.Length);
+            _bufferedSocket.ReceiveData(typeBuffer, typeBuffer.Length);
             var itemId = _bitConverter.ToInt64(idBuffer, 0);
             var type = (ItemType)_bitConverter.ToInt32(typeBuffer, 0);
-            var item = new Item(this, itemId, type);
+            if (link == null)
+            {
+                link = this;
+            }
+
+            var item = new Item(link, itemId, type);
             var itemProxy = ItemInterceptFunction(item);
             return itemProxy;
         }
@@ -2262,12 +2428,7 @@ namespace RoboDk.API
         internal long rec_ptr()
         {
             var bytes = new byte[sizeof(long)];
-            var read = _bufferedSocket.ReceiveData(bytes, bytes.Length);
-            if (read != sizeof(long))
-            {
-                throw new Exception("Something went wrong");
-            }
-
+            _bufferedSocket.ReceiveData(bytes, bytes.Length);
             var ptrH = _bitConverter.ToInt64(bytes, 0);
             return ptrH;
         }
@@ -2289,22 +2450,12 @@ namespace RoboDk.API
             }
         }
 
-        internal Mat rec_pose(BufferedSocketAdapter sckt = null)
+        internal Mat rec_pose()
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var pose = new Mat(4, 4);
             var numberOfDoubles = pose.Cols * pose.Rows;
             var bytes = new byte[numberOfDoubles * sizeof(double)];
-            var nbytes = sckt.ReceiveData(bytes, bytes.Length);
-            if (nbytes != numberOfDoubles * sizeof(double))
-            {
-                throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
-            }
-
+            _bufferedSocket.ReceiveData(bytes, bytes.Length);
             var cnt = 0;
             for (var j = 0; j < pose.Cols; j++)
             {
@@ -2327,37 +2478,22 @@ namespace RoboDk.API
             }
         }
 
-        internal void rec_xyz(double[] xyzpos, BufferedSocketAdapter sckt = null)
+        internal void rec_xyz(double[] xyzpos)
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var bytes = new byte[3 * sizeof(double)];
-            var nbytes = sckt.ReceiveData(bytes, bytes.Length);
-            if (nbytes != 3 * sizeof(double))
-            {
-                throw new RdkException("Invalid pose sent"); //raise Exception('Problems running function');
-            }
-
+            _bufferedSocket.ReceiveData(bytes, bytes.Length);
             for (var i = 0; i < 3; i++)
             {
                 xyzpos[i] = BitConverter.ToDouble(bytes, i * sizeof(double));
             }
         }
 
-        internal void send_int(int number, BufferedSocketAdapter sckt = null)
+        internal void send_int(int number)
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var bytes = _bitConverter.GetBytes(number);
             try
             {
-                sckt.SendData(bytes);
+                _bufferedSocket.SendData(bytes);
             }
             catch
             {
@@ -2365,34 +2501,19 @@ namespace RoboDk.API
             }
         }
 
-        internal int rec_int(BufferedSocketAdapter sckt = null)
+        internal int rec_int()
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var bytes = new byte[sizeof(int)];
-            var read = sckt.ReceiveData(bytes, bytes.Length);
-            if (read < sizeof(int))
-            {
-                return 0;
-            }
-
+            _bufferedSocket.ReceiveData(bytes, bytes.Length);
             return _bitConverter.ToInt32(bytes, 0);
         }
 
-        internal void send_double(double number, BufferedSocketAdapter sckt = null)
+        internal void send_double(double number)
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var bytes = _bitConverter.GetBytes(number);
             try
             {
-                sckt.SendData(bytes);
+                _bufferedSocket.SendData(bytes);
             }
             catch
             {
@@ -2400,20 +2521,10 @@ namespace RoboDk.API
             }
         }
 
-        internal double rec_double(BufferedSocketAdapter sckt = null)
+        internal double rec_double()
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
             var bytes = new byte[sizeof(double)];
-            var read = sckt.ReceiveData(bytes, bytes.Length);
-            if (read < sizeof(double))
-            {
-                return 0;
-            }
-
+            _bufferedSocket.ReceiveData(bytes, bytes.Length);
             return _bitConverter.ToDouble(bytes, 0);
         }
 
@@ -2436,19 +2547,14 @@ namespace RoboDk.API
         }
 
         // Receives an array of doubles
-        internal double[] rec_array(BufferedSocketAdapter sckt = null)
+        internal double[] rec_array()
         {
-            if (sckt == null)
-            {
-                sckt = _bufferedSocket;
-            }
-
-            var nvalues = rec_int(sckt);
+            var nvalues = rec_int();
             if (nvalues > 0)
             {
                 var values = new double[nvalues];
                 var bytes = new byte[nvalues * sizeof(double)];
-                var read = sckt.ReceiveData(bytes, bytes.Length);
+                _bufferedSocket.ReceiveData(bytes, bytes.Length);
                 for (var i = 0; i < nvalues; i++)
                 {
                     values[i] = _bitConverter.ToDouble(bytes, i * sizeof(double));
@@ -2485,11 +2591,7 @@ namespace RoboDk.API
             var mat = new Mat(size1, size2);
             if (recvsize > 0)
             {
-                var nbytesok = _bufferedSocket.ReceiveData(bytes, 0, recvsize);
-                if (nbytesok != recvsize)
-                {
-                    throw new RdkException("Can't receive matrix properly");
-                }
+                _bufferedSocket.ReceiveData(bytes, 0, recvsize);
             }
 
             var cnt = 0;
@@ -2633,23 +2735,57 @@ namespace RoboDk.API
 
         internal bool VerifyConnection()
         {
-            send_line("RDK_API");
-            send_int(0);
-            var response = rec_line();
-            ApiVersion = rec_int();
-            RoboDKBuild = rec_int();
-            check_status();
-            return response == "RDK_API";
+            try
+            {
+                _bufferedSocket.ReceiveTimeout = 1000;
+
+                var response = "";
+                switch (_connectionType)
+                {
+                    case ConnectionType.Api:
+                        send_line("RDK_API");
+                        send_int(0);
+
+                        //send_array(new double[] {0,0});
+                        //send_array(new double[] { SafeMode ? 1 : 0, AutoUpdate ? 1 : 0 });
+                        response = rec_line();
+                        ApiVersion = rec_int();
+                        RoboDKBuild = rec_int();
+                        check_status();
+                        return response == "RDK_API";
+
+                    case ConnectionType.Event:
+                        send_line("RDK_EVT");
+                        send_int(0);
+                        response = rec_line();
+                        EventChannelVersion = rec_int();
+                        check_status();
+                        return response == "RDK_EVT";
+
+                    case ConnectionType.None:
+                    default:
+                        throw new RdkException($"unknown ConnectionType: {_connectionType}");
+                        return false;
+                }
+            }
+            catch (SocketException socketException)
+            {
+                return false;
+            }
         }
 
         internal bool RequireBuild(int buildRequired)
         {
             if (RoboDKBuild == 0)
+            {
                 return true;
-        
+            }
+
             if (RoboDKBuild < buildRequired)
-                throw new Exception("This function is unavailable. Update RoboDK to use this function through the API.");
-    
+            {
+                throw new RdkException("This function is unavailable. Update RoboDK to use this function through the API.");
+            }
+
             return true;
         }
 
@@ -2674,174 +2810,54 @@ namespace RoboDk.API
 
         public sealed class RoboDKLink : IRoboDKLink, IDisposable
         {
-            public IRoboDK RoboDK { get; private set; }
+            public IRoboDK RoboDK { get; }
 
-            private RoboDK RDK => (RoboDK)RoboDK;
+            private RoboDK Rdk => (RoboDK)RoboDK;
 
             public RoboDKLink(IRoboDK roboDK)
             {
-                RoboDK = roboDK.NewLink();
+                RoboDK = roboDK.CloneRoboDkConnection();
             }
 
             public void Dispose()
             {
-                var tempRoboDK = RoboDK;
-                RoboDK = null;
-                tempRoboDK.CloseLink();
+                ((IDisposable)RoboDK).Dispose();
             }
 
             public void CheckConnection()
             {
-                RDK.check_connection();
+                Rdk.check_connection();
             }
 
             public void SendLine(string line)
             {
-                RDK.send_line(line);
+                Rdk.send_line(line);
             }
             public void SendItem(IItem item)
             {
-                RDK.send_item(item);
+                Rdk.send_item(item);
             }
 
             public Mat ReceivePose()
             {
-                return RDK.rec_pose();
+                return Rdk.rec_pose();
             }
             public int ReceiveInt()
             {
-                return RDK.rec_int();
+                return Rdk.rec_int();
             }
 
             public double[] ReceiveArray()
             {
-                return RDK.rec_array();
+                return Rdk.rec_array();
             }
 
             public void CheckStatus()
             {
-                RDK.check_status();
+                Rdk.check_status();
             }
 
         }
 
-        private sealed class RoboDKEventSource : IRoboDKEventSource
-        {
-            private RoboDK _roboDk;
-            private BufferedSocketAdapter _bufferedSocketAdapter;
-
-            public RoboDKEventSource(RoboDK roboDK, BufferedSocketAdapter bufferedSocketAdapter)
-            {
-                // over this socket we will receive events from RoboDK
-                _bufferedSocketAdapter = bufferedSocketAdapter;
-
-                // create a new connection
-                // communication happens asynchronously.
-                // We are not allowed to use the already existing roboDK connecion used by the Main Application.
-                _roboDk = (RoboDK)roboDK.NewLink();
-            }
-
-            public bool Connected => _bufferedSocketAdapter.Connected;
-
-            public EventResult WaitForEvent(int timeout = 1000)
-            {
-                if (_bufferedSocketAdapter == null)
-                {
-                    throw new RdkException("Event channel has already been closed");
-                }
-
-                try
-                {
-                    _bufferedSocketAdapter.ReceiveTimeout = timeout;
-                    var eventType = (EventType)_roboDk.rec_int(_bufferedSocketAdapter);
-                    var item = _roboDk.rec_item(_bufferedSocketAdapter);
-
-                    // We are in context of an asynchronous background thread
-                    // Do not try to read any items properties or call any other RoboDK method.
-                    // e.g.:    itemName = item.Name(); -> Call may conflict with other RoboDK Calls running in the main thread!!!
-
-                    //Debug.WriteLine($"RoboDK event({(int)eventType}): {eventType.ToString()}.");
-
-                    switch (eventType)
-                    {
-                        case EventType.NoEvent:
-                        case EventType.SelectionTreeChanged:
-                        case EventType.ItemMoved:
-                            // this should never happen
-                        case EventType.ReferencePicked:
-                        case EventType.ReferenceReleased:
-                        case EventType.ToolModified:
-                        case EventType.IsoCubeCreated:
-                        case EventType.Moved3DView:
-                        case EventType.RobotMoved:
-                            return new EventResult(eventType, item);
-
-                        case EventType.ItemMovedPose:
-                            int nvalues = _roboDk.rec_int(_bufferedSocketAdapter); // this is 16 for RoboDK v4.2.0
-                            Mat pose_rel = _roboDk.rec_pose(_bufferedSocketAdapter);
-                            if (nvalues > 16)
-                            {
-                                // future compatibility
-                            }
-                            return new ItemMovedEventResult(item, pose_rel);
-
-                        case EventType.Selection3DChanged:
-                            var data = _roboDk.rec_array(_bufferedSocketAdapter);
-                            var poseAbs = new Mat(data, true);
-                            var xyzijk = data.Skip(16).Take(6).ToArray(); // { data[16], data[17], data[18], data[19], data[20], data[21] };
-                            var clickedOffset = new Mat(xyzijk);
-                            var featureType = (ObjectSelectionType)Convert.ToInt32(data[22]);
-                            var featureId = Convert.ToInt32(data[23]);
-
-                            Debug.WriteLine($"Additional event data - Absolute position (PoseAbs):");
-                            Debug.WriteLine($"{poseAbs}");
-                            Debug.WriteLine($"Selected Point: {xyzijk[0]}, {xyzijk[1]}, {xyzijk[2]}");  // point selected in relative coordinates
-                            Debug.WriteLine($"Normal Vector : {xyzijk[3]}, {xyzijk[4]}, {xyzijk[5]}");
-                            Debug.WriteLine($"Feature Type:{featureType} and ID:{featureId}");
-
-                            return new SelectionChangedEventResult(item, featureType, featureId, clickedOffset);
-
-                        case EventType.KeyPressed:
-                            var keyStateParam = _roboDk.rec_int(_bufferedSocketAdapter);  // 1 = key pressed, 0 = key released
-                            var keyId = _roboDk.rec_int(_bufferedSocketAdapter);          // Key id as per Qt mappings: https://doc.qt.io/qt-5/qt.html#Key-enum
-                            var modifiers = _roboDk.rec_int(_bufferedSocketAdapter);      // Modifier bits as per Qt mappings: https://doc.qt.io/qt-5/qt.html#KeyboardModifier-enum
-
-                            var keyState = keyStateParam > 0 ? KeyPressedEventResult.KeyPressState.Pressed : KeyPressedEventResult.KeyPressState.Released;
-                            Debug.WriteLine($"Key_id({keyId}) {keyState.ToString()}  Modifiers: 0x{modifiers:X8}");
-
-                            return new KeyPressedEventResult(item, keyId, keyState, modifiers);
-
-                        case EventType.CollisionMapChanged: 
-                            Debug.WriteLine($"RoboDK Event: {eventType}");
-                            return new EventResult(EventType.CollisionMapChanged, null);
-
-                        default:
-                            Debug.WriteLine($"unknown RoboDK Event: {eventType}");
-                            // In debug target we fail -> Exception.
-                            // In Release we send a NoEvent event
-                            Debug.Fail($"unknown RoboDK Event: {eventType}");
-                            return new EventResult(EventType.NoEvent, null);
-                    }
-                }
-                catch (Exception)
-                {
-                    // Todo: ignored
-                }
-
-                return new EventResult(EventType.NoEvent, null);
-            }
-
-            public void Close()
-            {
-                if (_bufferedSocketAdapter != null)
-                {
-                    _roboDk.Dispose();
-                    _bufferedSocketAdapter.Close();
-                    _bufferedSocketAdapter.Dispose();
-                    _bufferedSocketAdapter = null;
-                    _roboDk = null;
-                }
-            }
-        }
     }
 }

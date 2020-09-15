@@ -1091,7 +1091,9 @@ class Robolink:
         use_new_version = True
         if use_new_version:
             self._send_line('RDK_API')
-            self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
+            print(self.SAFE_MODE, self.AUTO_UPDATE)
+            #self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
+            self._send_array([0,0])
             response = self._rec_line()
             ver_api = self._rec_int()
             self.BUILD = self._rec_int()

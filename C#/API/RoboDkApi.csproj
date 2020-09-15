@@ -44,9 +44,6 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -62,6 +59,7 @@
     <Compile Include="IRoboDkEventSource.cs" />
     <Compile Include="Model\BufferedSocketAdapter.cs" />
     <Compile Include="Model\InstructionListJointsResult.cs" />
+    <Compile Include="Model\RobotConnectionParameter.cs" />
     <Compile Include="Model\RobotConnectionType.cs" />
     <Compile Include="Model\SetJointsType.cs" />
     <Compile Include="Model\ViewPoseType.cs" />
@@ -100,6 +98,7 @@
     <Compile Include="Model\WindowState.cs" />
     <Compile Include="RoboDkBitConverter.cs" />
     <Compile Include="RoboDkCommandLineParameter.cs" />
+    <Compile Include="RoboDKEventSource.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="api\index.md" />

@@ -76,15 +76,21 @@ namespace RoboDk.API
         {
             if (!_disposed)
             {
-                _socket?.Dispose();
+                if (_socket != null)
+                {
+                    try
+                    {
+                        _socket.Shutdown(SocketShutdown.Both);
+                    }
+                    finally
+                    {
+                        _socket.Close();
+                        _socket.Dispose();
+                    }
+                }
 
                 _disposed = true;
             }
-        }
-
-        public void Disconnect(bool reuseSocket)
-        {
-            _socket.Disconnect(reuseSocket);
         }
 
         public void SendData(byte[] data)
@@ -99,7 +105,7 @@ namespace RoboDk.API
             }
         }
 
-        public int ReceiveData(byte[] data, int offset, int len)
+        public void ReceiveData(byte[] data, int offset, int len)
         {
             Flush();
             Debug.Assert(offset + len <= data.Length);
@@ -107,21 +113,13 @@ namespace RoboDk.API
             while (receivedBytes < len)
             {
                 var n = _socket.Receive(data, offset + receivedBytes, len - receivedBytes, SocketFlags.None);
-                if (n <= 0)
-                {
-                    // socket closed.
-                    return 0;
-                }
-
                 receivedBytes += n;
             }
-
-            return receivedBytes;
         }
 
-        public int ReceiveData(byte[] data, int len)
+        public void ReceiveData(byte[] data, int len)
         {
-            return ReceiveData(data, 0, len);
+            ReceiveData(data, 0, len);
         }
 
         public void Close()
