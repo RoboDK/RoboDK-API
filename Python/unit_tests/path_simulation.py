@@ -144,15 +144,16 @@ class PlaybackFrame():
               f"\n\t\t accels: {accel_string}")
 
 
-MoveType = Enum('MoveType', 'Joint Frame')
+MoveType = Enum('MoveType', 'Joint Frame Arc')
 
 
 class Step():
-    def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error_flags=PathErrorFlags.NoError):
+    def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error_flags=PathErrorFlags.NoError, pose2=None):
         self.name = name
         self.move_type = move_type
         self.tcp = tcp
         self.pose = pose
+        self.pose2 = pose2 # for arc moves
         self.speed = speed
         self.accel = accel
         self.blending = blending
@@ -220,6 +221,26 @@ class Program():
             accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
             self.robodk_program.setSpeed(speed, -1, accel, -1)
             self.robodk_program.MoveL(target)
+            
+        if step.move_type == MoveType.Arc:
+            target.setPose(xyzrp2ToPose(step.pose[:6]))
+            if len(step.pose) == 7:
+                axis7 = step.pose[6]
+                target.setJoints([0, 0, 0, 0, 0, 0, axis7])
+            target.setAsCartesianTarget()
+            
+            target2 = rdk.AddTarget("Target_" + step.name + "_" + str(step.move_type) + "_2", 0, robot)
+            target2.setVisible(False)
+            target2.setPose(xyzrp2ToPose(step.pose2[:6]))
+            if len(step.pose2) == 7:
+                axis7 = step.pose2[6]
+                target2.setJoints([0, 0, 0, 0, 0, 0, axis7])
+            target2.setAsCartesianTarget()           
+            
+            speed = step.speed if step.speed > 0.0 else FRAME_SPEED
+            accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
+            self.robodk_program.setSpeed(speed, -1, accel, -1)
+            self.robodk_program.MoveC(target, target2)
 
     def simulate(self):
         self.simulation_result = self._get_simulation_result()

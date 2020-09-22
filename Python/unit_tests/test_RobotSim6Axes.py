@@ -112,6 +112,22 @@ def get_program_RDK_90():
         Step("F4", MoveType.Frame, 0, f4, 1, 0, 0),
     ]
     return Program("RDK-90", steps)
+    
+    
+def get_program_Arc_ValidMove():
+    """Test program was previously crashing during path simulation."""
+    j1 = [85.313866, -54.353057, 109.847412, 90.670697, -90.461034, 55.497054]
+    f1 = [   252.127218,  -530.131963,   529.199999,   -84.500000,    -0.000001,    -0.000000 ]
+    f2 = [   384.041242,  -453.856457,   529.200000,   -84.500000,    -0.000001,    -0.000000 ]
+    f3 = [   289.724650,  -298.049571,   529.200000,   -84.500000,    -0.000001,    -0.000000 ]
+
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("J1", MoveType.Joint, 0, j1, 0, 0, 0),
+        Step("F1", MoveType.Frame, 0, f1, 0, 0, 0),
+        Step("F2", MoveType.Arc, 0, f2, 0, 0, 0, PathErrorFlags.NoError, f3),
+    ]
+    return Program("ValidArcMove", steps)
 
 
 
@@ -167,6 +183,12 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
         """Test RDK-90"""
         self.program = get_program_RDK_90()
         self._test_program(verbose=False)
+        
+    def test_kinematic_Arc_ValidMove(self):
+        """Test RDK-90"""
+        self.program = get_program_Arc_ValidMove()
+        self._test_program(verbose=False)       
+        
 
 if __name__ == '__main__':
     unittest.main()
