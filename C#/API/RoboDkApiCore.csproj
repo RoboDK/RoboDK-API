@@ -4,23 +4,23 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <TargetFrameworks>net45;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>-->
+  <PropertyGroup>
+    <TargetFrameworks>net45;netcoreapp2.2</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="RoboDKsubclass.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- PackageReference Include="docfx.console" Version="2.48.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference -->
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <!--<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.7.0" />
+  </ItemGroup>-->
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
     <PackageReference Include="Microsoft.Win32.Registry" Version="4.7.0" />
   </ItemGroup>
 
@@ -41,6 +41,10 @@
 	<DefineConstants>NETCORE31;NETCORE</DefineConstants>
   </PropertyGroup>
   
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2'">
+    <DefineConstants>NETCORE22;NETCORE</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net45'">
 	<DefineConstants>NET45;NETFULL</DefineConstants>
   </PropertyGroup>
