@@ -12,7 +12,7 @@ def get_program_wrist_singularity1():
     f2 = [267.800000, -697.899998, 489.200000, -0.000000, -0.000000, -97.106527]
     f3 = [267.800000, -886.682410, 541.603649, 45.000000, 0.000000, 180.000000]
     f4 = [267.800000, -900.824545, 555.745785, 45.000000, 0.000000, 180.000000]
-    expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathLimit | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity
+    expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("1", MoveType.Joint, 0, j1, 10, 0, 0, 0),
@@ -27,7 +27,7 @@ def get_program_wrist_singularity2():
     """Test program to simulate a path which is near kinematic limits"""
     j1 = [ 58.871249, -78.599411,  143.944527, 173.481676, 65.485694,   -87.285718]
     f2 = [247.580323, -793.574636, 574.200001, 0.000000,   -0.000000,  -154.799784]
-    expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathLimit | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity
+    expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
@@ -58,8 +58,8 @@ def get_program_kinematic_pathlimit1():
     f3 = [   247.500000,  -869.864902,   554.200001,     0.000001,     0.000000,   -90.000000 ]
     f4 = [   247.500000,  -874.864902,   554.200001,     0.000001,     0.000000,   -90.000000 ]
     f5 = [   247.500000,  -874.864902,   545.600001,     0.000001,     0.000000,   -90.000000 ]
-    f6 = [   271.556017,  -835.575197,   545.600001,     0.000001,     0.000000,   148.521999 ]
-    expectedSimulationError = PathErrorFlags.PathLimit | PathErrorFlags.Kinematic  
+    f6 = [   117.866636,  -874.864929,   545.599975,     0.000001,    -6.810226,   -55.597047 ]
+    expectedSimulationError = PathErrorFlags.Kinematic  
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
@@ -79,7 +79,7 @@ def get_program_kinematic_pathlimit2():
     f4 = [  -277.584253,   506.915648,   544.586082,   179.947088,   -75.021714,   -45.217495 ]
     f5 = [  -302.700873,   506.909442,   537.866308,   179.947088,   -75.021714,   -45.217495 ]
     f6 = [  -300.434263,   506.661885,   567.779535,   179.947088,   -75.021714,   -45.217495 ]
-    expectedSimulationError = PathErrorFlags.PathLimit | PathErrorFlags.Kinematic  
+    expectedSimulationError = PathErrorFlags.Kinematic  
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
@@ -155,6 +155,24 @@ def get_program_path_invalid_target_rdk_93():
         Step("StepId 83", MoveType.Frame, 0, f10, 1, 0, 0, 0),
     ]
     return Program("target_StepId65_can_not_be_reached", steps)
+    
+    
+     
+def get_program_Arc_InValidMove():
+    """Test program was previously crashing during path simulation."""
+    j1 = [85.313866, -54.353057, 109.847412, 90.670697, -90.461034, 55.497054]
+    f1 = [   252.127218,  -530.131963,   529.199999,   -84.500000,    -0.000001,    -0.000000 ]
+    f2 = [   384.041242,  -453.856457,   529.200000,   -84.500000,    -0.000001,    -0.000000 ]
+    # f3 = [   289.724650,  -298.049571,   529.200000,   -84.500000,    -0.000001,    -0.000000 ]
+
+    expectedSimulationError = PathErrorFlags.InvalidArcMove
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel):
+        Step("J1", MoveType.Joint, 0, j1, 0, 0, 0),
+        Step("F1", MoveType.Frame, 0, f1, 0, 0, 0),
+        Step("F2", MoveType.Arc, 0, f2, 0, 0, 0, expectedSimulationError, f1)
+    ]
+    return Program("Invalid_ArcMove", steps)
 
 @parameterized_class(
     ("test_name", "sim_type", "sim_step_mm", "sim_step_deg", "sim_step_time"), [
@@ -200,6 +218,11 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
         """One or more targets are not reachable or missing."""
         self.program = get_program_path_invalid_target_rdk_93()
         self._test_program(verbose=False)
+
+    def test_program_path_invalid_ArcMove(self):
+        """One or more targets are not reachable or missing."""
+        self.program = get_program_Arc_InValidMove()
+        self._test_program(verbose=False)    
 
     def test_wrist_close_to_axis_1_error(self):
         """The robot is too close to the front/back singularity. Wrist close to axis 1"""

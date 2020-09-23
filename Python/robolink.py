@@ -314,6 +314,9 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         
         # Target not reachable or invalid
         PathInvalidTarget = 0x200 # 0b0010_0000_0000
+        
+        # Target not reachable or invalid
+        InvalidArcMove = 0x400 # 0b00100_0000_0000
             
     def ConvertErrorCodeToJointErrorType(evalue):
         """Convert error number returned by InstructionListJoints() to PathErrorFlags"""
@@ -321,6 +324,10 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         evalue = int(evalue)
         if evalue == 0:
             return flags
+            
+        if (evalue % 1000000000  > 99999999):
+            # Non reachable target
+            flags |= PathErrorFlags.InvalidArcMove
             
         if (evalue % 100000000  > 9999999):
             # Non reachable target
@@ -6053,7 +6060,7 @@ class Item():
         if type(value) == dict:
             # return dict if we provided a dict
             value = json.dumps(value)            
-        elif type(value) == bytes:
+        elif type(value) == bytes and sys.version_info[0] >= 3:
             # Setting custom binary data
             self.link._check_connection()
             command = 'S_ItmDataParam'
