@@ -50,9 +50,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\API\RoboDkApiCore.csproj">
+    <ProjectReference Include="..\..\API\RoboDkApi.csproj">
       <Project>{8b79d70d-399a-4a94-bbb9-c9df4f96da53}</Project>
-      <Name>RoboDkApiCore</Name>
+      <Name>RoboDkApi</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

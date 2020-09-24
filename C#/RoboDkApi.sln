@@ -7,13 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboDKAPITest", "APIUnitTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNetFrameworkApplication", "APIExamples\SimpleApplication\SimpleNetFrameworkApplication.csproj", "{8E554F79-CC49-4E18-87F2-9703E82E5584}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboDKApiCoreWinformsApplication", "APIExamples\UIExample\RoboDKApiCoreWinformsApplication.csproj", "{F96E10E6-BFF1-4E5A-84C5-B19DB809F759}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboDKApiWinformsApplication", "APIExamples\UIExample\RoboDKApiWinformsApplication.csproj", "{F96E10E6-BFF1-4E5A-84C5-B19DB809F759}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboDKFlatApiWinformsApplication", "Example\RoboDKSampleProject\RoboDKFlatApiWinformsApplication.csproj", "{BF3E6EFA-6CB0-49EF-BCA4-7BFA8BC1460B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboDkApiCore", "API\RoboDkApiCore.csproj", "{8B79D70D-399A-4A94-BBB9-C9DF4F96DA53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboDkApi", "API\RoboDkApi.csproj", "{8B79D70D-399A-4A94-BBB9-C9DF4F96DA53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNetCoreApplication", "APIExamples\SimpleNetcoreApplication\SimpleNetCoreApplication.csproj", "{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleNetCoreApplication", "APIExamples\SimpleNetcoreApplication\SimpleNetCoreApplication.csproj", "{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API-Examples", "API-Examples", "{D22322C9-632E-444A-9F35-19BFE61F159D}"
 EndProject
