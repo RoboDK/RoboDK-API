@@ -43,7 +43,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+#if NETCORE
+using System.Drawing;
+#else
 using System.Windows.Media;
+#endif
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
 
@@ -125,7 +129,7 @@ namespace RoboDk.API
         public ItemFlags GetItemFlags()
         {
             Link.check_connection();
-            string command = "S_Item_Rights";
+            string command = "G_Item_Rights";
             Link.send_line(command);
             Link.send_item(this);
             int flags = Link.rec_int();
@@ -152,6 +156,7 @@ namespace RoboDk.API
             return Link;
         }
 
+        /// <inheritdoc />
         public RoboDK.IRoboDKLink GetRoboDkLink()
         {
             return Link.GetRoboDkLink();
@@ -578,25 +583,25 @@ namespace RoboDk.API
         /// <inheritdoc />
         public void Recolor(Color tocolor, Color? fromcolor = null, double tolerance = 0.1)
         {
-            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            var toColorArray = tocolor.ToRoboDKColorArray();
             Link.check_connection();
             if (fromcolor.HasValue == false)
             {
-                fromcolor = new Color {A = 0, R = 0, G = 0, B = 0};
+                fromcolor = Color.FromArgb(0, 0, 0, 0);
                 tolerance = 2;
             }
 
-            double[] fromcolorArray = fromcolor.Value.ToRoboDKColorArray();
+            var fromColorArray = fromcolor.Value.ToRoboDKColorArray();
 
-            Link.check_color(tocolorArray);
-            Link.check_color(fromcolorArray);
+            Link.check_color(toColorArray);
+            Link.check_color(fromColorArray);
             var command = "Recolor";
             Link.send_line(command);
             Link.send_item(this);
             var combined = new double[9];
             combined[0] = tolerance;
-            Array.Copy(fromcolorArray, 0, combined, 1, 4);
-            Array.Copy(tocolorArray, 0, combined, 5, 4);
+            Array.Copy(fromColorArray, 0, combined, 1, 4);
+            Array.Copy(toColorArray, 0, combined, 5, 4);
             Link.send_array(combined);
             Link.check_status();
         }
@@ -1037,19 +1042,19 @@ namespace RoboDk.API
 		}
 
 		/// <inheritdoc />
-		public (string RobotIP, int Port, string RemotePath, string FTPUser, string FTPPass) ConnectionParams()
+		public RobotConnectionParameter ConnectionParams()
 		{
 			Link.check_connection();
-			var command = "ConnectParams";
+			const string command = "ConnectParams";
 			Link.send_line(command);
 			Link.send_item(this);
-			var robotIP = Link.rec_line();
+			var robotIp = Link.rec_line();
 			var port = Link.rec_int();
 			var remotePath = Link.rec_line();
 			var ftpUser = Link.rec_line();
 			var ftpPass = Link.rec_line();
 			Link.check_status();
-			return (robotIP, port, remotePath, ftpUser, ftpPass);
+			return new RobotConnectionParameter(robotIp, port, remotePath, ftpUser, ftpPass);
 		}
 
 		/// <inheritdoc />
@@ -1752,6 +1757,7 @@ namespace RoboDk.API
             Link.Finish();
         }
 
-        #endregion
+#endregion
+
     }
 }

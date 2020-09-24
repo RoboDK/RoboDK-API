@@ -106,7 +106,8 @@ namespace RoboDk.API.Model
         PathInvalidTarget = 0b1000000000,
 
         /// <summary>
-        /// A circular movement is not valid because it does not define an arc. Make sure to properly separate all points and make sure they are not along one line.
+        /// A circular movement is not valid because it does not define an arc.
+        /// Make sure to properly separate all points and make sure they are not along one line.
         /// </summary>
         InvalidArcMove = 0b10000000000
     }
@@ -120,19 +121,21 @@ namespace RoboDk.API.Model
         /// <returns></returns>
         public static ErrorPathType ConvertErrorCodeToJointErrorType(int evalue)
         {
-            ErrorPathType flags = 0;
+            var flags = ErrorPathType.None;
             if (evalue == 0)
             {
                 return flags;
             }
+
             if (evalue % 1000000000 > 99999999)
             {
-                // "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+                // A circular movement is not valid because it does not define an arc.
                 flags |= ErrorPathType.InvalidArcMove;
             }
+
             if (evalue % 100000000 > 9999999)
             {
-                // "The robot can't make a rotation so close to 180 deg. (the rotation axis is not properly defined
+                // One or more targets are not reachable or missing
                 flags |= ErrorPathType.PathInvalidTarget;
             }
 

@@ -44,7 +44,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+#if NETCORE
+using System.Drawing;
+#else
 using System.Windows.Media;
+#endif
 using RoboDk.API.Model;
 
 #endregion
@@ -100,17 +104,6 @@ namespace RoboDk.API
         #region Public Methods
 
         /// <summary>
-        /// Open a new additional RoboDK Link to the same already existing RoboDK instance.
-        /// </summary>
-        /// <returns>New RoboDK Link</returns>
-        IRoboDK NewLink();
-
-        /// <summary>
-        /// Close socket connection.
-        /// </summary>
-        void CloseLink();
-
-        /// <summary>
         /// Establish a connection with RoboDK. 
         /// If RoboDK is not running it will attempt to start RoboDK from the default installation path.
         /// (otherwise APPLICATION_DIR must be set properly). 
@@ -134,36 +127,24 @@ namespace RoboDk.API
         void Disconnect();
 
         /// <summary>
+        /// Open a new additional RoboDK Link to the same already existing RoboDK instance.
+        /// NOTE: Use IItem.Clone() to use an already existing item on the new RoboDk connection.
+        /// </summary>
+        /// <returns>New RoboDK Link</returns>
+        IRoboDK CloneRoboDkConnection(RoboDK.ConnectionType connectionType = RoboDK.ConnectionType.Api);
+
+        /// <summary>
         /// Get RoboDK's main window handle
         /// </summary>
         /// <returns></returns>
         IntPtr GetWindowHandle();
 
         /// <summary>
-        /// Start the event communication channel. Use WaitForEvent to wait for a new event or use EventsLoop as an example to implement an event loop.
+        /// Start the event communication channel.
+        /// Use WaitForEvent to wait for a new event.
         /// </summary>
-        /// <returns>True of event connection to RoboDK could be established.</returns>
-        IRoboDKEventSource EventsListen();
-
-        /// <summary>
-        /// Close RoboDK Event channel.
-        /// <seealso cref="EventsListen"/>
-        /// </summary>
-        void EventsListenClose();
-
-        /// <summary>
-        /// This is a sample function that is executed when a new RoboDK Event occurs.
-        /// </summary>
-        /// <param name="evt"></param>
-        /// <param name="itm"></param>
-        /// <returns></returns>
-        bool SampleRoboDkEvent(EventType evt, IItem itm);
-
-        /// <summary>
-        /// Run the RoboDK event loop. This is loop blocks until RoboDK finishes execution. Run this loop as a separate thread or create a similar loop to customize the event loop behavior.
-        /// </summary>
-        /// <returns></returns>
-        bool EventsLoop();
+        /// <returns>new event channel instance</returns>
+        IRoboDKEventSource OpenRoboDkEventChannel();
 
         /// <summary>
         /// Close RoboDK window and finish RoboDK process.
@@ -353,6 +334,13 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="flags">RoboDk Window Flags</param>
         void SetWindowFlags(WindowFlags flags);
+
+        /// <summary>
+        /// Update global item flags.
+        /// Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
+        /// </summary>
+        /// <param name="itemFlags"></param>
+        void SetItemFlags(ItemFlags itemFlags = ItemFlags.All);
 
         /// <summary>
         /// Show a message in RoboDK (it can be blocking or non blocking in the status bar)
@@ -693,6 +681,45 @@ namespace RoboDk.API
         /// <param name="p2">End point [x,y,z] of the line</param>
         /// <returns>Return true if there is a collision; false otherwise</returns>
         bool CollisionLine(double[] p1, double[] p2);
+
+        /// <summary>
+        /// Calculate the forward kinematics solution for multiple robots at the same time (faster)
+        /// </summary>
+        /// <param name="robotList">list of items</param>
+        /// <param name="jointsList">list of joint</param>
+        /// <param name="solutionOkList">optional list of bool flags to notify about failed/invalid result</param>
+        List<Mat> SolveFK(List<IItem> robotList, List<double[]> jointsList, List<bool> solutionOkList = null);
+
+        /// <summary>
+        /// Calculate the inverse kinematics solution for multiple robots at the same time (faster)
+        /// </summary>
+        /// <param name="robotList">list of items</param>
+        /// <param name="poseList">list of poses</param>
+        List<double[]> SolveIK(List<IItem> robotList, List<Mat> poseList);
+
+        /// <summary>
+        /// Calculate the inverse kinematics solution for multiple robots at the same time (faster)
+        /// </summary>
+        /// <param name="robotList">list of items</param>
+        /// <param name="poseList">list of poses</param>
+        /// <param name="japroxList"></param>
+        List<double[]> SolveIK(List<IItem> robotList, List<Mat> poseList, List<double[]> japroxList);
+
+        /// <summary>
+        /// Calculate the inverse kinematics solution for multiple robots at the same time. This call allows you to have a bulk calculation for faster performance.
+        /// </summary>
+        /// <param name="robotList">list of items</param>
+        /// <param name="poseList">list of poses</param>
+        /// <param name="solution_ok_list">optional list of bool flags to notify about failed/invalid result</param>
+        List<Mat> SolveIK_All(List<IItem> robotList, List<Mat> poseList);
+
+        /// <summary>
+        /// Returns the robot configuration state for a set of robot joints.
+        /// </summary>
+        /// <param name="robotList">list of items</param>
+        /// <param name="jointsList">array of joints</param>
+        /// <returns>3-array -> configuration status as [REAR, LOWERARM, FLIP]</returns>
+        List<double[]> JointsConfig(List<IItem> robotList, List<double[]> jointsList);
 
         /// <summary>
         /// Sets the visibility for a list of items

@@ -42,7 +42,11 @@
 
 using System;
 using System.Collections.Generic;
+#if NETCORE
+using System.Drawing;
+#else
 using System.Windows.Media;
+#endif
 using RoboDk.API.Model;
 
 #endregion
@@ -618,7 +622,7 @@ namespace RoboDk.API
 		/// Returns the robot connection parameters.
 		/// </summary>
 		/// <returns>Robot IP, Robot Port, FTP Path, FTP Username, FTP Password</returns>
-		(string RobotIP, int Port, string RemotePath, string FTPUser, string FTPPass) ConnectionParams();
+		RobotConnectionParameter ConnectionParams();
 
 		/// <summary>
 		/// Set the robot connection parameters.
