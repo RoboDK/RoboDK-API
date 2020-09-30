@@ -70,8 +70,7 @@ private slots:
     void on_radHideRoboDK_clicked();
     void on_radIntegrateRoboDK_clicked();
 
-
-    void on_radEmbedInRoboDK_clicked();
+    void on_btnEmbed_clicked();
 
 private:
     void robodk_window_clear();

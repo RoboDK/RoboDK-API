@@ -50,7 +50,14 @@
             <item>
              <widget class="QPushButton" name="btnTestButton">
               <property name="text">
-               <string>Test Button</string>
+               <string>Start Event Loop</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnEmbed">
+              <property name="text">
+               <string>Embed window</string>
               </property>
              </widget>
             </item>
@@ -96,13 +103,6 @@
               <widget class="QRadioButton" name="radIntegrateRoboDK">
                <property name="text">
                 <string>Integrate RoboDK Window</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="radEmbedInRoboDK">
-               <property name="text">
-                <string>Embed in RoboDK</string>
                </property>
               </widget>
              </item>

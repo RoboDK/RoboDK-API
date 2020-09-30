@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "embedexample.h"
+
 #include <QFileDialog>
 #include <QWindow>
 #include <QtConcurrent/QtConcurrent>
@@ -93,14 +95,6 @@ void MainWindow::on_btnLoadFile_clicked() {
     if (!Check_Robot()){
         Select_Robot();
     }
-}
-
-void MainWindow::on_radEmbedInRoboDK_clicked() {
-    if (!Check_RoboDK()){ return; }
-    on_radShowRoboDK_clicked();
-    QString windowName = windowTitle();
-    RDK->EmbedWindow(windowName);
-
 }
 
 void MainWindow::on_btnSelectRobot_clicked(){
@@ -788,3 +782,15 @@ bool MainWindow::EventsLoop()
 
 
 
+
+void MainWindow::on_btnEmbed_clicked()
+{
+    if (!Check_RoboDK()){ return; }
+    on_radShowRoboDK_clicked();
+    EmbedExample *newWindow = new EmbedExample();
+    newWindow->show();
+    QString windowName = newWindow->windowTitle();
+    qDebug() << windowName;
+    RDK->EmbedWindow(windowName);
+
+}
