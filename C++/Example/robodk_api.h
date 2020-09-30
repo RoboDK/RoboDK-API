@@ -761,7 +761,6 @@ private:
 class ROBODK RoboDK {
     friend class RoboDK_API::Item;
 
-
 public:
     RoboDK(const QString &robodk_ip="", int com_port=-1, const QString &args="", const QString &path="");
     ~RoboDK();
@@ -1273,6 +1272,14 @@ public:
     /// Retrieve a file from the RoboDK running instance
     bool FileGet(const QString &path_file_local, Item *station=nullptr, const QString path_file_remote="");
 
+    bool EmbedWindow(QString window_name, QString docked_name="", int size_w=-1, int size_h=-1, uint64_t pid=0, int area_add=1, int area_allowed=15, int timeout=500);
+
+    bool EventsListen();
+    bool WaitForEvent(int &evt,Item &itm);
+    bool Event_Receive_3D_POS(double *data, int *valueCount);
+    bool Event_Receive_Mouse_data(int *data);
+    bool Event_Receive_Event_Moved(Mat *pose_rel_out);
+    bool Event_Connected();
 
 public:
 
@@ -1554,6 +1561,22 @@ public:
         COLLISION_ON = 1
     };
 
+    // Event types
+    enum {
+        EVENT_SELECTION_TREE_CHANGED = 1,
+        EVENT_ITEM_MOVED = 2, // obsolete after RoboDK 4.2.0. Use EVENT_ITEM_MOVED_POSE instead
+        EVENT_REFERENCE_PICKED = 3,
+        EVENT_REFERENCE_RELEASED = 4,
+        EVENT_TOOL_MODIFIED = 5,
+        EVENT_CREATED_ISOCUBE = 6,
+        EVENT_SELECTION_3D_CHANGED = 7,
+        EVENT_3DVIEW_MOVED = 8,
+        EVENT_ROBOT_MOVED = 9,
+        EVENT_KEY = 10,
+        EVENT_ITEM_MOVED_POSE = 11
+    };
+
+
     /// RoboDK Window Flags
     enum {
         /// Allow using the RoboDK station tree.
@@ -1636,10 +1659,9 @@ public:
         FLAG_ITEM_ALL = 64 + 32 + 8 + 4 + 2 + 1
     };
 
-
-
 private:
     QTcpSocket *_COM;
+    QTcpSocket *_COM_EVT;
     QString _IP;
     int _PORT;
     int _TIMEOUT;
@@ -1656,19 +1678,19 @@ private:
     bool _check_connection();
     bool _check_status();
 
-    bool _waitline();
-    QString _recv_Line();//QString &string);
-    bool _send_Line(const QString &string);
-    int _recv_Int();//qint32 &value);
-    bool _send_Int(const qint32 value);
-    Item _recv_Item();//Item *item);
+    bool _waitline(QTcpSocket *com = nullptr);
+    QString _recv_Line(QTcpSocket *com = nullptr);//QString &string);
+    bool _send_Line(const QString &string,QTcpSocket *com = nullptr);
+    int _recv_Int(QTcpSocket *com = nullptr);//qint32 &value);
+    bool _send_Int(const qint32 value,QTcpSocket *com = nullptr);
+    Item _recv_Item(QTcpSocket *com = nullptr);//Item *item);
     bool _send_Item(const Item *item);
     bool _send_Item(const Item &item);
-    Mat _recv_Pose();//Mat &pose);
+    Mat _recv_Pose(QTcpSocket *com = nullptr);//Mat &pose);
     bool _send_Pose(const Mat &pose);
     bool _recv_XYZ(tXYZ pos);
     bool _send_XYZ(const tXYZ pos);
-    bool _recv_Array(double *values, int *psize=nullptr);
+    bool _recv_Array(double *values, int *psize=nullptr,QTcpSocket *com = nullptr);
     bool _send_Array(const double *values, int nvalues);
     bool _recv_Array(tJoints *jnts);
     bool _send_Array(const tJoints *jnts);

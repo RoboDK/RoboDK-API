@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>695</width>
-    <height>502</height>
+    <width>794</width>
+    <height>555</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,6 +96,13 @@
               <widget class="QRadioButton" name="radIntegrateRoboDK">
                <property name="text">
                 <string>Integrate RoboDK Window</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radEmbedInRoboDK">
+               <property name="text">
+                <string>Embed in RoboDK</string>
                </property>
               </widget>
              </item>
@@ -465,8 +472,8 @@ Position</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>695</width>
-     <height>21</height>
+     <width>794</width>
+     <height>23</height>
     </rect>
    </property>
   </widget>

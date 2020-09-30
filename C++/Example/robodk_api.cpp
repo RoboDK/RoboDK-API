@@ -3255,7 +3255,94 @@ bool RoboDK::FileGet(const QString &path_file_local, Item *station, const QStrin
 }
 
 
+bool RoboDK::EmbedWindow(QString window_name, QString docked_name, int size_w, int size_h, uint64_t pid, int area_add, int area_allowed, int timeout)
+{
+    if (!_check_connection()){ return false; }
 
+    if (docked_name == "") {
+        docked_name = window_name;
+    }
+
+    _check_connection();
+    _send_Line("WinProcDock");
+    _send_Line(docked_name);
+    _send_Line(window_name);
+    double sizeArray[2] = {size_w, size_h};
+    _send_Array(sizeArray,2);
+    _send_Line(QString::number(pid));
+    _send_Int(area_allowed);
+    _send_Int(area_add);
+    _send_Int(timeout);
+    int result = _recv_Int();
+    _check_status();
+    return result > 0;
+}
+
+
+bool RoboDK::EventsListen()
+{
+    _COM_EVT = new QTcpSocket();
+    if (_IP.isEmpty()){
+        _COM_EVT->connectToHost("127.0.0.1", _PORT); //QHostAddress::LocalHost, _PORT);
+    } else {
+        _COM_EVT->connectToHost(_IP, _PORT);
+    }
+    qDebug() << _COM_EVT->state();
+    _COM_EVT->waitForConnected(_TIMEOUT);
+    qDebug() << _COM_EVT->state();
+    _send_Line("RDK_EVT", _COM_EVT);
+    _send_Int(0, _COM_EVT);
+    QString response = _recv_Line(_COM_EVT);
+    qDebug() << response;
+    int ver_evt = _recv_Int(_COM_EVT);
+    int status = _recv_Int(_COM_EVT);
+    if (response != "RDK_EVT" || status != 0)
+    {
+        return false;
+    }
+    //_COM_EVT.ReceiveTimeout = 3600 * 1000;
+    //return EventsLoop();
+    return true;
+}
+
+bool RoboDK::WaitForEvent(int &evt, Item &itm)
+{
+    evt = _recv_Int(_COM_EVT);
+    itm = _recv_Item(_COM_EVT);
+    return true;
+}
+
+//Receives 24 doubles of data from the event loop
+bool RoboDK::Event_Receive_3D_POS(double *data, int *valueCount) {
+    return _recv_Array(data,valueCount,_COM_EVT);
+}
+
+//Receives the 3 bytes of mouse data
+bool RoboDK::Event_Receive_Mouse_data(int *data) {
+    data[0] = _recv_Int(_COM_EVT);
+    data[1] = _recv_Int(_COM_EVT);
+    data[2] = _recv_Int(_COM_EVT);
+
+    return true;
+}
+
+bool RoboDK::Event_Receive_Event_Moved(Mat *pose_rel_out) {
+    int nvalues = _recv_Int(_COM_EVT);
+    Mat pose_rel = _recv_Pose(_COM_EVT);
+    *pose_rel_out = pose_rel;
+    if (nvalues > 16)
+    {
+        return false;
+        // future compatibility
+    }
+
+    return true;
+}
+
+bool RoboDK::Event_Connected()
+{
+    return _COM_EVT != nullptr && _COM_EVT->state() == QTcpSocket::ConnectedState;
+}
 
 //-------------------------- private ---------------------------------------
 
@@ -3393,21 +3480,27 @@ bool RoboDK::_connect(){
 
 
 /////////////////////////////////////////////
-bool RoboDK::_waitline(){
-    if (_COM == nullptr){ return false; }
-    while (!_COM->canReadLine()){
-        if (!_COM->waitForReadyRead(_TIMEOUT)){
+bool RoboDK::_waitline(QTcpSocket *com){
+    if (com == nullptr) {
+        com = _COM;
+    }
+    if (com == nullptr){ return false; }
+    while (!com->canReadLine()){
+        if (!com->waitForReadyRead(_TIMEOUT)){
             return false;
         }
     }
     return true;
 }
-QString RoboDK::_recv_Line(){//QString &string){
+QString RoboDK::_recv_Line(QTcpSocket *com){//QString &string){
+    if (com == nullptr) {
+        com = _COM;
+    }
     QString string;
-    if (!_waitline()){
-        if (_COM != nullptr){
+    if (!_waitline(com)){
+        if (com != nullptr){
             //if this happens it means that there are problems: delete buffer
-            _COM->readAll();
+            com->readAll();
         }
         return string;
     }
@@ -3415,45 +3508,57 @@ QString RoboDK::_recv_Line(){//QString &string){
     string.append(QString::fromUtf8(line));
     return string;
 }
-bool RoboDK::_send_Line(const QString& string){
-    if (_COM == nullptr || !_COM->isOpen()){ return false; }
-    _COM->write(string.toUtf8());
-    _COM->write(ROBODK_API_LF, 1);
+bool RoboDK::_send_Line(const QString& string,QTcpSocket *com){
+    if (com == nullptr) {
+        com = _COM;
+    }
+    if (com == nullptr || !com->isOpen()){ return false; }
+    com->write(string.toUtf8());
+    com->write(ROBODK_API_LF, 1);
     return true;
 }
 
-int RoboDK::_recv_Int(){//qint32 &value){
+int RoboDK::_recv_Int(QTcpSocket *com){//qint32 &value){
+    if (com == nullptr){
+        com = _COM;
+    }
     qint32 value; // do not change type
-    if (_COM == nullptr){ return false; }
-    if (_COM->bytesAvailable() < sizeof(qint32)){
-        _COM->waitForReadyRead(_TIMEOUT);
-        if (_COM->bytesAvailable() < sizeof(qint32)){
+    if (com == nullptr){ return false; }
+    if (com->bytesAvailable() < sizeof(qint32)){
+        com->waitForReadyRead(_TIMEOUT);
+        if (com->bytesAvailable() < sizeof(qint32)){
             return -1;
         }
     }
-    QDataStream ds(_COM);
+    QDataStream ds(com);
     ds >> value;
     return value;
 }
-bool RoboDK::_send_Int(qint32 value){
-    if (_COM == nullptr || !_COM->isOpen()){ return false; }
-    QDataStream ds(_COM);
+bool RoboDK::_send_Int(qint32 value,QTcpSocket *com){
+    if (com == nullptr) {
+        com = _COM;
+    }
+    if (com == nullptr || !com->isOpen()){ return false; }
+    QDataStream ds(com);
     ds << value;
     return true;
 }
 
-Item RoboDK::_recv_Item(){//Item *item){
+Item RoboDK::_recv_Item(QTcpSocket *com){//Item *item){
+    if (com == nullptr) {
+        com = _COM;
+    }
     Item item(this);
-    if (_COM == nullptr){ return item; }
+    if (com == nullptr){ return item; }
     item._PTR = 0;
     item._TYPE = -1;
-    if (_COM->bytesAvailable() < sizeof(quint64)){
-        _COM->waitForReadyRead(_TIMEOUT);
-        if (_COM->bytesAvailable() < sizeof(quint64)){
+    if (com->bytesAvailable() < sizeof(quint64)){
+        com->waitForReadyRead(_TIMEOUT);
+        if (com->bytesAvailable() < sizeof(quint64)){
             return item;
         }
     }
-    QDataStream ds(_COM);
+    QDataStream ds(com);
     ds >> item._PTR;
     ds >> item._TYPE;
     return item;
@@ -3472,17 +3577,21 @@ bool RoboDK::_send_Item(const Item &item){
     return _send_Item(&item);
 }
 
-Mat RoboDK::_recv_Pose(){//Mat &pose){
+Mat RoboDK::_recv_Pose(QTcpSocket *com){//Mat &pose){
+    if (com == nullptr) {
+        com = _COM;
+    }
+
     Mat pose;
-    if (_COM == nullptr){ return pose; }
+    if (com == nullptr){ return pose; }
     int size = 16*sizeof(double);
-    if (_COM->bytesAvailable() < size){
-        _COM->waitForReadyRead(_TIMEOUT);
-        if (_COM->bytesAvailable() < size){
+    if (com->bytesAvailable() < size){
+        com->waitForReadyRead(_TIMEOUT);
+        if (com->bytesAvailable() < size){
             return pose;
         }
     }
-    QDataStream ds(_COM);
+    QDataStream ds(com);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
     //ds.setByteOrder(QDataStream::LittleEndian);
     double valuei;
@@ -3561,21 +3670,24 @@ bool RoboDK::_send_Array(const Mat *mat){
     }
     return _send_Array(m44, 16);
 }
-bool RoboDK::_recv_Array(double *values, int *psize){
+bool RoboDK::_recv_Array(double *values, int *psize, QTcpSocket *com){
+    if (com == nullptr) {
+        com = _COM;
+    }
     int nvalues = _recv_Int();
-    if (_COM == nullptr || nvalues < 0) {return false;}
+    if (com == nullptr || nvalues < 0) {return false;}
     if (psize != nullptr){
         *psize = nvalues;
     }
     if (nvalues < 0 || nvalues > 50){return false;} //check if the value is not too big
     int size = nvalues*sizeof(double);
-    if (_COM->bytesAvailable() < size){
-        _COM->waitForReadyRead(_TIMEOUT);
-        if (_COM->bytesAvailable() < size){
+    if (com->bytesAvailable() < size){
+        com->waitForReadyRead(_TIMEOUT);
+        if (com->bytesAvailable() < size){
             return false;
         }
     }
-    QDataStream ds(_COM);
+    QDataStream ds(com);
     ds.setFloatingPointPrecision(QDataStream::DoublePrecision);
     //ds.setByteOrder(QDataStream::LittleEndian);
     double valuei;
@@ -3585,6 +3697,7 @@ bool RoboDK::_recv_Array(double *values, int *psize){
     }
     return true;
 }
+
 bool RoboDK::_send_Array(const double *values, int nvalues){
     if (_COM == nullptr || !_COM->isOpen()){ return false; }
     if (!_send_Int((qint32)nvalues)){ return false; }
@@ -3598,6 +3711,7 @@ bool RoboDK::_send_Array(const double *values, int nvalues){
     }
     return true;
 }
+
 bool RoboDK::_recv_Matrix2D(tMatrix2D **mat){ // needs to delete after!
     qint32 dim1 = _recv_Int();
     qint32 dim2 = _recv_Int();
