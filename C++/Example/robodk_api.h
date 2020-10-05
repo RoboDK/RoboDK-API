@@ -744,7 +744,7 @@ public:
 
 private:
     /// Flags if a matrix is not valid.
-    double _valid;
+    bool _valid;
 
 // this is a dummy variable to easily obtain a pointer to a 16-double-array for matrix multiplications
 private:
