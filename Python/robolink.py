@@ -315,7 +315,7 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         # Target not reachable or invalid
         PathInvalidTarget = 0x200 # 0b0010_0000_0000
         
-        # Target not reachable or invalid
+        # A circular movement is not valid because it does not define an arc. Make sure to properly separate all points and make sure they are not along one line.
         InvalidArcMove = 0x400 # 0b00100_0000_0000
             
     def ConvertErrorCodeToJointErrorType(evalue):
@@ -2129,7 +2129,14 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Update`
         """
-        auto_render = not always_render
+        #auto_render = not always_render
+        if always_render is True:
+            auto_render = 0
+        elif always_render is False:
+            auto_render = 1
+        elif always_render == 2:
+            auto_render = 2
+            
         self._check_connection()
         command = 'Render'
         self._send_line(command)
@@ -2744,9 +2751,9 @@ class Robolink:
         :type tool: :class:`.Item`
         :return: \n
             [TCP, stats, errors]\n
-            Out 1 (TCP) - the TCP as a list [x,y,z] with respect to the robot flange\n
+            Out 1 (TCP) - The TCP as a list [x,y,z] with respect to the robot flange\n
             Out 2 (stats) - Statistics as [mean, standard deviation, max] - error stats summary\n
-            Out 3 (errors) - errors for each pose (array 1xN)\n
+            Out 3 (errors) - List of errors for each pose (array 1xN)\n
         
         .. code-block:: python
             :caption: Available Tool Calibration Algorithms
@@ -2785,6 +2792,8 @@ class Robolink:
         self._check_status()
         if errors.size(1) > 0:
             errors = errors[:,1].list()
+        else:
+            errors = []
         return TCPxyz.list(), errorstats.list(), errors
         
     def CalibrateReference(self, joints_points, method=CALIBRATE_FRAME_3P_P1_ON_X, use_joints=False, robot=None):
