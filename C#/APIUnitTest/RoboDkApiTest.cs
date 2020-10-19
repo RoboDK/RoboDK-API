@@ -2,16 +2,19 @@
 // We currently can not support RoboDK Tests on the build server.
 // Ignore all tests on the build server
 // To locally execute the unit test uncomment the line below
-//#define TEST_ROBODK_API
+#define TEST_ROBODK_API
 
 #region Namespaces
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RoboDk.API;
@@ -195,6 +198,97 @@ namespace RoboDkApiTest
             rdk.RoboDKServerStartPort.Should().Be(10000);
             rdk.RoboDKServerEndPort.Should().Be(10000);
         }
+
+        [TestMethod]
+        public void Test_ParallelRoboDKConnections()
+        {
+            var rdk = new RoboDK
+            {
+                RoboDKServerStartPort = 10000,
+                Logfile = Path.Combine(Directory.GetCurrentDirectory(), "RoboDk.log"),
+                DefaultSocketTimeoutMilliseconds = 10*1000
+            };
+
+            rdk.Connect();
+            rdk.Render(false);
+            rdk.Command("AutoRenderDelay", 50);
+            rdk.Command("AutoRenderDelayMax", 300);
+            rdk.DefaultSocketTimeoutMilliseconds = 10 * 1000;
+
+            List<IItem> AddStaticParts()
+            {
+                var parts = new List<IItem>();
+                var cwd = Directory.GetCurrentDirectory();
+                parts.Add(rdk.AddFile(Path.Combine(cwd, "Base_Frame.sld")));
+                parts.Add(rdk.AddFile(Path.Combine(cwd, "robot.robot")));
+                return parts;
+            }
+            List<IItem> AddDynamicParts()
+            {
+                var parts = new List<IItem>();
+                var cwd = Directory.GetCurrentDirectory();
+                for (var n = 0; n < 10; n++)
+                {
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palett_Rohteil-1.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palett_Rohteil-2.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palettenhalter.sld")));
+                }
+
+                return parts;
+            }
+
+            void DoTemporaryConnectionCalls(List<IItem> staticParts)
+            {
+                for (var i = 0; i < 100; i++)
+                {
+                    foreach (var staticPart in staticParts)
+                    {
+                        Thread.Sleep(1);
+                        ThreadSaveRoboDK.Invoke(staticPart, it => it.Pose());
+                    }
+                }
+            }
+
+            var p = AddStaticParts();
+            var task = new Task(() => DoTemporaryConnectionCalls(p));
+            task.Start();
+
+            try
+            {
+                for (var i = 0; i < 100; i++)
+                {
+                    var dynamicParts = AddDynamicParts();
+                    rdk.Command("CollisionMap", "Off");
+                    rdk.SetCollisionActive(CollisionCheckOptions.CollisionCheckOff);
+                    rdk.Delete(dynamicParts);
+
+                    //foreach (var dynamicPart in dynamicParts)
+                    //{
+                    //    dynamicPart.Delete();
+                    //}
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+
+            try
+            {
+                task.Wait();
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            finally
+            {
+                rdk.CloseRoboDK();
+            }
+        }
+
+
 
         [TestMethod]
         public void Test_WhenEndServerPortSmallerThenStartServerPortThenThrowRdkException()
@@ -596,6 +690,27 @@ namespace RoboDkApiTest
         #endregion
     }
 
+
+    public class ThreadSaveRoboDK
+    {
+
+        public static T Invoke<T>(IItem item, Func<IItem, T> func)
+        {
+            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
+            {
+                return func.Invoke(item.Clone(roboDkLink.RoboDK));
+            }
+        }
+
+        public static void Invoke(IItem item, Action<IItem> action)
+        {
+            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
+            {
+                action.Invoke(item.Clone(roboDkLink.RoboDK));
+            }
+        }
+
+    }
 
     internal class Logger
     {
