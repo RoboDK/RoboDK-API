@@ -2524,6 +2524,9 @@ class Robolink:
             self._check_status()
             return mat2d_list
         
+        elif isinstance(value, Item):
+            value = str(value.item)
+        
         else:
             value = str(value)
             
@@ -2611,28 +2614,24 @@ class Robolink:
         
         return xyz        
         
-    def StereoCamera_Measure(self, time_avg=0, tip_xyz=None):
+    def MeasurePose(self, target=-1, time_avg_ms=0, tip_xyz=None):
         """Takes a measurement with a 6D measurement device. It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose.
         
         :param time_avg: Take the measurement for a period of time and average the result.
         :param tip_xyz: Offet the measurement to the tip.                
         """
-        array_send = [time_avg]
+        array_send = [target, time_avg_ms]
         if tip_xyz is not None:
             array_send += [0,0,0]
             
         self._check_connection()
-        command = 'MeasPose2'
+        command = 'MeasPose3'
         self._send_line(command)
         self._send_array(array_send)
         pose1 = self._rec_pose()
-        pose2 = self._rec_pose()
-        npoints1 = self._rec_int()
-        npoints2 = self._rec_int()
-        status = self._rec_int()
-        extra_data = self._rec_array()
-        self._check_status()        
-        return pose1, pose2, npoints1, npoints2, status, extra_data.list()
+        data = self._rec_array().list()   
+        self._check_status()     
+        return pose1, data
         
     def Collision_Line(self, p1, p2, ref=eye(4)):
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
@@ -3557,12 +3556,16 @@ class Item():
     """
     
     def __init__(self, link, ptr_item=0, itemtype=-1):
-        self.item = ptr_item
-        if type(self.item) is str:
-            self.item = int(self.item)
-            
+        
         self.link = link # it is recommended to keep the link as a reference and not a duplicate (otherwise it will establish a new connection at every call)
         self.type = itemtype
+        if type(ptr_item) is str:
+            self.item = int(ptr_item)
+            if self.type == -1:
+                self.type = self.Type() # request type
+        else:
+            self.item = ptr_item        
+            
 
     def __repr__(self):
         if self.Valid():
@@ -4878,7 +4881,7 @@ class Item():
         return status
         
     def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=4, callback_abort=None):
-        """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded 0 if it failed.
+        """Connect to a real robot and wait for a connection to succeed. Returns the connected state returned by ConnectedState() (0 if connection succeeded and the robot is ready).
         
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
         :type robot_ip: str
