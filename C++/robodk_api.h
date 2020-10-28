@@ -1682,6 +1682,7 @@ class ROBODK Item {
 public:
     Item(RoboDK *rdk=nullptr, quint64 ptr=0, qint32 type=-1);
     Item(const Item &other);
+    Item& operator=( const Item& x ) = default;
 
     ~Item();
 
