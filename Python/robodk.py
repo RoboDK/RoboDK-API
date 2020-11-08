@@ -1001,9 +1001,9 @@ def distance(a,b):
     """Calculates the distance between two points"""
     return norm(subs3(a,b))
 
-def pose_is_similar(a,b):
-    """Check if the pose is similar. Returns True if both poses are less than 0.0001 mm or 0.0001 deg appart."""
-    if distance(a.Pos(), b.Pos()) + pose_angle_between(a,b) * 180/pi < 0.0001:
+def pose_is_similar(a,b, tolerance=0.1):
+    """Check if the pose is similar. Returns True if both poses are less than 0.1 mm or 0.1 deg appart. Optionally provide the tolerance in mm+deg"""
+    if distance(a.Pos(), b.Pos()) + pose_angle_between(a,b) * 180/pi < tolerance:
         return True
     return False
 

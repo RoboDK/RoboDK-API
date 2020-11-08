@@ -34,9 +34,10 @@
 
 
 import struct
-from robodk import *
+import robodk
 from warnings import warn
 import sys  # Only used to detect python version using sys.version_info
+import os
 
 # Tree item types
 ITEM_TYPE_STATION=1
@@ -406,7 +407,12 @@ def getPathRoboDK():
     elif _platform == "darwin":
         # MacOS
         #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-        return "~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
+        path_app = os.path.expanduser("~")+"/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+        if os.path.exists(path_app):
+            return path_app
+        # default install directory
+        return os.path.expanduser("~")+"/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
+        
     else:
         # Windows assumed  
         if sys.version_info[0] < 3:
@@ -845,7 +851,7 @@ class Robolink:
         """Receives a pose (4x4 matrix)"""
         posebytes = self.COM.recv(16*8)
         posenums = struct.unpack('>16d',posebytes)
-        pose = Mat(4,4)
+        pose = robodk.Mat(4,4)
         cnt = 0
         for j in range(4):
             for i in range(4):
@@ -904,7 +910,7 @@ class Robolink:
             #values = fread(self.COM, nvalues, 'double')
         else:
             values = [0]
-        return Mat(values)
+        return robodk.Mat(values)
 
     def _send_matrix(self, mat):
         """Sends a 2 dimensional matrix (nxm)"""
@@ -913,7 +919,7 @@ class Robolink:
             self._send_int(0)
             return
         if type(mat) == list:
-            mat = Mat(mat).tr()
+            mat = robodk.Mat(mat).tr()
         size = mat.size()
         self._send_int(size[0])
         self._send_int(size[1])
@@ -936,7 +942,7 @@ class Robolink:
                 matbytes += self.COM.recv(to_receive)
                 to_receive = min(recvsize - len(matbytes), BUFFER_SIZE)
             matnums = struct.unpack('>'+str(size1*size2)+'d',matbytes)
-            mat = Mat(size1,size2)
+            mat = robodk.Mat(size1,size2)
             cnt = 0
             for j in range(size2):
                 for i in range(size1):
@@ -944,7 +950,7 @@ class Robolink:
                     mat.rows[i][j] = matnums[cnt]
                     cnt = cnt + 1
         else:
-            mat = Mat(0,0)
+            mat = robodk.Mat(0,0)
         return mat
 
     def _moveX(self, target, itemrobot, movetype, blocking=True):
@@ -1650,8 +1656,8 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.AddCurve`, :func:`~robolink.Robolink.AddPoints`
         """
         if isinstance(triangle_points,list):
-            triangle_points = tr(Mat(triangle_points))
-        elif not isinstance(triangle_points, Mat):
+            triangle_points = robodk.tr(robodk.Mat(triangle_points))
+        elif not isinstance(triangle_points, robodk.Mat):
             raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
         self._check_connection()
         command = 'AddShape2'
@@ -1688,7 +1694,7 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.AddShape`, :func:`~robolink.Robolink.AddPoints`
         """
         if isinstance(curve_points,list):
-            curve_points = Mat(curve_points).tr()
+            curve_points = robodk.Mat(curve_points).tr()
         elif not isinstance(curve_points, Mat):
             raise Exception("curve_points must be a 3xN or 6xN list or matrix")
         self._check_connection()
@@ -1719,7 +1725,7 @@ class Robolink:
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
         if isinstance(points,list):
-            points = Mat(points).tr()
+            points = robodk.Mat(points).tr()
             
         elif not isinstance(points, Mat):
             raise Exception("points must be a 3xN or 6xN list or matrix")
@@ -1751,7 +1757,7 @@ class Robolink:
         islist = False
         if isinstance(points,list):
             islist = True
-            points = Mat(points).tr()
+            points = robodk.Mat(points).tr()
             # Safety check for backwards compatibility
             if points.size(0) != 6 and points.size(1) == 6:
                 points = points.tr()
@@ -1812,7 +1818,9 @@ class Robolink:
         self._send_line(command)
         self._send_line(filename)
         self._send_item(itemsave)
+        self.COM.settimeout(60)
         self._check_status()
+        self.COM.settimeout(self.TIMEOUT)        
     
     def AddStation(self, name='New Station'):
         """Add a new empty station. It returns the station :class:`.Item` created.
@@ -2633,7 +2641,7 @@ class Robolink:
         self._check_status()     
         return pose1, data
         
-    def Collision_Line(self, p1, p2, ref=eye(4)):
+    def Collision_Line(self, p1, p2, ref=robodk.eye(4)):
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
         
         :param p1: start point of the line
@@ -2899,7 +2907,7 @@ class Robolink:
         return pose
 
         
-    def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=eye(4), tool=eye(4), name="New robot", robot=None):
+    def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=robodk.eye(4), tool=robodk.eye(4), name="New robot", robot=None):
         """Create a new robot or mechanism.
         
         :param int type: Type of the mechanism
@@ -2991,7 +2999,7 @@ class Robolink:
         self._send_array(parameters)
         if len(joints_build) < 12:
             joints_build += [0]*(12-len(joints_build))
-        joints_data = Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
+        joints_data = robodk.Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
         self._send_matrix(joints_data)
         robot = self._rec_item()
         self._check_status()
@@ -3274,7 +3282,7 @@ class Robolink:
 
             close_param = close_p0 + close_pA + close_pB + close_color
             far_param = far_p0 + far_pA + far_pB + far_color    
-            volume = Mat([close_param, far_param]).tr()
+            volume = robodk.Mat([close_param, far_param]).tr()
             RDK.Spray_Add(tool, obj, options_command, volume)
             RDK.Spray_SetState(SPRAY_ON)
         
@@ -4181,7 +4189,7 @@ class Item():
         :param post_mult: post multiplication to apply after the scaling (optional)"""
         if pre_mult is not None or post_mult is not None:
             if pre_mult is None:
-                pre_mult = eye(4)
+                pre_mult = robodk.eye(4)
             if post_mult is None:
                 post_mult = invH(pre_mult)
             
@@ -4771,7 +4779,33 @@ class Item():
     
     def JointsConfig(self, joints):
         """Returns the robot configuration state for a set of robot joints. 
-        The configuration state is defined as: [REAR, LOWERARM, FLIP]
+        The configuration state is defined as: [REAR, LOWERARM, FLIP, turns]. The turns are reserved for future use.
+        
+        Example:
+        
+        .. code-block:: python
+        
+            # Retrieve all solutions for a given pose:
+            all_solutions = robot.SolveIK_All(pose, toolpose, framepose)
+            joints = []
+
+            # Iterate through each solution
+            for j in all_solutions:
+                # Retrieve flags as a list for each solution
+                conf_RLF = robot.JointsConfig(j).list()
+
+                # Breakdown of flags:
+                rear  = conf_RLF[0] # 1 if Rear , 0 if Front
+                lower = conf_RLF[1] # 1 if Lower, 0 if Upper (elbow)
+                flip  = conf_RLF[2] # 1 if Flip , 0 if Non flip (Flip is usually when Joint 5 is negative)
+
+                # Look for a solution with Front and Elbow up configuration
+                #if conf_RLF[0:2] == [0,0]:
+                if rear == 0 and lower == 0:
+                    print("Solution found!")
+                    joints = j
+                    break
+        
         
         :param joints: robot joints
         :type joints: list of float
