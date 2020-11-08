@@ -1695,7 +1695,7 @@ class Robolink:
         """
         if isinstance(curve_points,list):
             curve_points = robodk.Mat(curve_points).tr()
-        elif not isinstance(curve_points, Mat):
+        elif not isinstance(curve_points, robodk.Mat):
             raise Exception("curve_points must be a 3xN or 6xN list or matrix")
         self._check_connection()
         command = 'AddWire'
@@ -1727,7 +1727,7 @@ class Robolink:
         if isinstance(points,list):
             points = robodk.Mat(points).tr()
             
-        elif not isinstance(points, Mat):
+        elif not isinstance(points, robodk.Mat):
             raise Exception("points must be a 3xN or 6xN list or matrix")
         self._check_connection()
         command = 'AddPoints'
@@ -1762,7 +1762,7 @@ class Robolink:
             if points.size(0) != 6 and points.size(1) == 6:
                 points = points.tr()
             
-        elif not isinstance(points, Mat):
+        elif not isinstance(points, robodk.Mat):
             raise Exception("points must be a 3xN or 6xN list or matrix")
         self._check_connection()
         command = 'ProjectPoints'
@@ -2514,7 +2514,7 @@ class Robolink:
             # return dict if we provided a dict
             value = json.dumps(value) 
             
-        elif type(value) == Mat:
+        elif type(value) == robodk.Mat:
             # Special 2D matrix write/read
             self._check_connection()
             command = 'G_Gen_Mat'
@@ -2770,7 +2770,7 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateReference`
         """
-        if type(poses_xyzwpr) == list and len(poses_xyzwpr) > 0 and type(poses_xyzwpr[0]) == Mat:    
+        if type(poses_xyzwpr) == list and len(poses_xyzwpr) > 0 and type(poses_xyzwpr[0]) == robodk.Mat:    
             nposes = len(poses_xyzwpr)
             if len(poses_xyzwpr) > 0:
                 input_format = EULER_RX_RYp_RZpp
@@ -2808,13 +2808,13 @@ class Robolink:
         Important: Provide the list of joints to maximize accuracy for calibrated robots.
         
         :param joints_points: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
-        :type joints_points: :class:`.Mat` or a list of list of float
+        :type joints_points: :class:`robodk.Mat` or a list of list of float
         :param int method: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_FRAME ...
         :param bool use_joints: use points or joint values (bool): Set to True if joints_points is a list of joints
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
         :return: The pose of the reference frame with respect to the robot base frame
-        :rtype: :class:`.Mat`
+        :rtype: :class:`robodk.Mat`
         
         .. code-block:: python
             :caption: Available Reference Frame Calibration Algorithms
@@ -2889,7 +2889,7 @@ class Robolink:
         """Set the pose of the wold reference frame with respect to the view (camera/screen)
         
         :param pose: pose of the item with respect to its parent
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         """
         self._check_connection()
         command = 'S_ViewPose'
@@ -3239,9 +3239,9 @@ class Robolink:
                 
         :param str params: A string specifying the behavior of the simulated particles. The string can contain one or more of the following commands (separated by a space). See the allowed parameter options.
         :param points: provide the volume as a list of points as described in the sample macro SprayOn.py
-        :type points: :class:`.Mat`
+        :type points: :class:`robodk.Mat`
         :param geometry: (optional) provide a list of points describing triangles to define a specific particle geometry. Use this option instead of the PARTICLE command.
-        :type geometry: :class:`.Mat`
+        :type geometry: :class:`robodk.Mat`
                 
         .. code-block:: python
             :caption: Allowed parameter options
@@ -3975,7 +3975,7 @@ class Item():
         
         """
         self.link._check_connection()
-        if isinstance(value, Mat):
+        if isinstance(value, robodk.Mat):
             command = 'S_Gen_Mat'
             self.link._send_line(command)
             self.link._send_item(self)
@@ -3997,7 +3997,7 @@ class Item():
         For example, the position of an object, frame or target with respect to its parent reference frame.
         
         :param pose: pose of the item with respect to its parent
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Robolink.Item`
         """
@@ -4012,7 +4012,7 @@ class Item():
     def Pose(self):
         """Returns the relative position (pose) of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent.
         If a robot is provided, it will provide the pose of the end efector with respect to the robot base (same as PoseTool())
-        Returns the pose as :class:`.Mat`. 
+        Returns the pose as :class:`robodk.Mat`. 
         
         Tip: Use a Pose_2_* function from the robodk module (such as :class:`robodk.Pose_2_KUKA`) to convert the pose to XYZABC (XYZ position in mm and ABC orientation in degrees), specific to a robot brand.
         
@@ -4030,7 +4030,7 @@ class Item():
         
     def setGeometryPose(self, pose):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
-        The pose must be a :class:`.Mat`"""
+        The pose must be a :class:`robodk.Mat`"""
         self.link._check_connection()
         command = 'S_Hgeom'
         self.link._send_line(command)
@@ -4039,7 +4039,7 @@ class Item():
         self.link._check_status()
 
     def GeometryPose(self):
-        """Returns the position (pose as :class:`.Mat`) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
+        """Returns the position (pose as :class:`robodk.Mat`) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
         """
         self.link._check_connection()
         command = 'G_Hgeom'
@@ -4050,10 +4050,10 @@ class Item():
         return pose
 
     def setPoseAbs(self, pose):
-        """Sets the position of the item given the pose (:class:`.Mat`) with respect to the absolute reference frame (station reference)
+        """Sets the position of the item given the pose (:class:`robodk.Mat`) with respect to the absolute reference frame (station reference)
         
         :param pose: pose of the item with respect to the station reference
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPose`
         """
@@ -4066,7 +4066,7 @@ class Item():
         return self
 
     def PoseAbs(self):
-        """Return the position (:class:`.Mat`) of this item given the pose with respect to the absolute reference frame (station reference)
+        """Return the position (:class:`robodk.Mat`) of this item given the pose with respect to the absolute reference frame (station reference)
         For example, the position of an object/frame/target with respect to the origin of the station.
         
         .. seealso:: :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.Pose`
@@ -4412,7 +4412,7 @@ class Item():
     
     #"""Robot item calls"""
     def Joints(self):
-        """Return the current joint position as a :class:`.Mat` of a robot or the joints of a target. 
+        """Return the current joint position as a :class:`robodk.Mat` of a robot or the joints of a target. 
         If the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
         
         .. seealso:: :func:`~robolink.Item.setJoints`, :func:`~robolink.Item.MoveJ`
@@ -4492,7 +4492,7 @@ class Item():
         """Set the home position of the robot in the joint space.
         
         :param joints: robot joints
-        :type joints: list of float or :class:`.Mat`
+        :type joints: list of float or :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.setJoints`
         """
@@ -4537,7 +4537,7 @@ class Item():
         """Set the current joints of a robot or a target. If robot joints are set, the robot position will be updated on the screen.        
         
         :param joints: robot joints
-        :type joints: list of float or :class:`.Mat`
+        :type joints: list of float or :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.Joints`
         """
@@ -4602,7 +4602,7 @@ class Item():
         """Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
         
         :param frame: robot reference frame as an item, or a pose
-        :type frame: :class:`.Mat` or :class:`.Item`
+        :type frame: :class:`robodk.Mat` or :class:`.Item`
         
         .. seealso:: :func:`~robolink.Item.PoseFrame`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setPoseTool`
         """
@@ -4623,7 +4623,7 @@ class Item():
         """Set the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
         
         :param tool: robot tool as an item, or a pose
-        :type tool: :class:`.Mat` or :class:`.Item`
+        :type tool: :class:`robodk.Mat` or :class:`.Item`
         
         .. seealso:: :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setPoseFrame`"""
         self.link._check_connection()
@@ -4640,7 +4640,7 @@ class Item():
         return self
         
     def PoseTool(self):
-        """Returns the pose (:class:`.Mat`) of the robot tool (TCP) with respect to the robot flange
+        """Returns the pose (:class:`robodk.Mat`) of the robot tool (TCP) with respect to the robot flange
         
         .. seealso:: :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseFrame`
         """
@@ -4653,7 +4653,7 @@ class Item():
         return pose
         
     def PoseFrame(self):
-        """Returns the pose (:class:`.Mat`) of the robot reference frame with respect to the robot base
+        """Returns the pose (:class:`robodk.Mat`) of the robot reference frame with respect to the robot base
         
         .. seealso:: :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseTool`
         """
@@ -4667,15 +4667,15 @@ class Item():
         
     # Obsolete methods -----------------------   
     def Htool(self):
-        """Obsolete. Use :func:`~robolink.Item.PoseTool` instead. Returns the pose (:class:`.Mat`) of the robot tool (TCP) with respect to the robot flange"""
+        """Obsolete. Use :func:`~robolink.Item.PoseTool` instead. Returns the pose (:class:`robodk.Mat`) of the robot tool (TCP) with respect to the robot flange"""
         return self.PoseTool()
         
     def Tool(self):
-        """Obsolete. Use :func:`~robolink.Item.PoseTool` instead. Returns the pose (:class:`.Mat`) of the robot tool (TCP) with respect to the robot flange"""
+        """Obsolete. Use :func:`~robolink.Item.PoseTool` instead. Returns the pose (:class:`robodk.Mat`) of the robot tool (TCP) with respect to the robot flange"""
         return self.PoseTool()
         
     def Frame(self):
-        """Obsolete. Use :func:`~robolink.Item.PoseFrame` instead. Returns the pose (:class:`.Mat`) of the robot reference frame with respect to the robot base"""
+        """Obsolete. Use :func:`~robolink.Item.PoseFrame` instead. Returns the pose (:class:`robodk.Mat`) of the robot reference frame with respect to the robot base"""
         return self.PoseFrame()
         
     def setHtool(self, tool):
@@ -4698,7 +4698,7 @@ class Item():
         """Add a tool to a robot given the tool pose and the tool name. It returns the tool as an :class:`.Item`.
         
         :param tool_pose: Tool pose (TCP) of the tool with respect to the robot flange
-        :type tool_pose: :class:`.Mat`
+        :type tool_pose: :class:`robodk.Mat`
         :param str tool_name: name of the tool
         
         .. seealso:: :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`
@@ -4715,14 +4715,14 @@ class Item():
     
     def SolveFK(self, joints, tool=None, reference=None):
         """Calculate the forward kinematics of the robot for the provided joints.
-        Returns the pose of the robot flange with respect to the robot base reference (:class:`.Mat`).
+        Returns the pose of the robot flange with respect to the robot base reference (:class:`robodk.Mat`).
         
         :param joints: robot joints
-        :type joints: list of float or :class:`.Mat`
+        :type joints: list of float or :class:`robodk.Mat`
         :param tool: Optionally provide the tool used to calculate the forward kinematics. If this parameter is ignored it will use the robot flange.
-        :type tool: :class:`.Mat`
+        :type tool: :class:`robodk.Mat`
         :param reference: Optionally provide the reference frame used to calculate the forward kinematics. If this parameter is ignored it will use the robot base frame.
-        :type reference: :class:`.Mat`
+        :type reference: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         
@@ -4827,7 +4827,7 @@ class Item():
         Optionally, specify a preferred robot position using the parameter joints_approx.
         
         :param pose: pose of the robot flange with respect to the robot base frame
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         :param joints_approx: approximate solution. Leave blank to return the closest match to the current robot position.
         :type joints_approx: list of float
         
@@ -4860,7 +4860,7 @@ class Item():
         Returns a list of joints as a 2D matrix (float x n x m)
         
         :param pose: pose of the robot flange with respect to the robot base frame
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.JointsConfig`"""
         if tool is not None:
@@ -4880,9 +4880,9 @@ class Item():
     def FilterTarget(self, pose, joints_approx=None):
         """Filters a target to improve accuracy. This option requires a calibrated robot.
         :param pose: pose of the robot TCP with respect to the robot reference frame
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         :param joints_approx: approximated desired joints to define the preferred configuration
-        :type joints_approx: list of float or :class:`.Mat`"""
+        :type joints_approx: list of float or :class:`robodk.Mat`"""
         self.link._check_connection()
         command = 'FilterTarget'
         self.link._send_line(command)
@@ -5078,7 +5078,7 @@ class Item():
         Important note when adding new movement instructions to programs: only target items supported, not poses.
         
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
-        :type target: :class:`.Mat`, list of joints or :class:`.Item`
+        :type target: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
@@ -5098,7 +5098,7 @@ class Item():
         Important note when adding new movement instructions to programs: only target items supported, not poses.
         
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
-        :type target: :class:`.Mat`, list of joints or :class:`.Item`
+        :type target: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
@@ -5116,7 +5116,7 @@ class Item():
         """Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode). This function waits (blocks) until the robot finishes its movements.
         
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
-        :type target: :class:`.Mat`, list of joints or :class:`.Item`
+        :type target: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
         
@@ -5129,9 +5129,9 @@ class Item():
         """Move a robot to a specific target ("Move Circular" mode). By default, this procedure waits (blocks) until the robot finishes the movement.
     
         :param target1: pose along the cicle movement
-        :type target1: :class:`.Mat`, list of joints or :class:`.Item`
+        :type target1: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param target2: final circle target
-        :type target2: :class:`.Mat`, list of joints or :class:`.Item`
+        :type target2: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param blocking: True if the instruction should wait until the robot finished the movement (default=True)
         :type blocking: bool
         
@@ -5177,7 +5177,7 @@ class Item():
         :param j1: start joints
         :type j1: list of float
         :param pose: end pose (position of the active tool with respect to the active reference frame)
-        :type pose: :class:`.Mat`
+        :type pose: :class:`robodk.Mat`
         :param float minstep_mm: linear step in mm
         :return: returns 0 if the movement is free of collision or any other issues.
         :rtype: int
@@ -5273,9 +5273,9 @@ class Item():
         """Displays a sequence of joints or poses in RoboDK.
         
         :param matrix: list of joints as a matrix or as a list of joint arrays. A sequence of instructions is also supported (same sequence that was supported with RoKiSim).
-        :type matrix: list of list of float or a matrix of joints as a :class:`.Mat`"""
+        :type matrix: list of list of float or a matrix of joints as a :class:`robodk.Mat`"""
         display_ghost_joints = display_type & 2048
-        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == Mat or display_ghost_joints):
+        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == robodk.Mat or display_ghost_joints):
             # poses assumed
             self.link._check_connection()        
             command = 'Show_SeqPoses'
@@ -5892,7 +5892,7 @@ class Item():
         :param isjointtarget: 1 if the target is defined in the joint space, otherwise it means it is defined in the cartesian space (by the pose)
         :type isjointtarget: int
         :param target: target pose
-        :type target: :class:`.Mat`
+        :type target: :class:`robodk.Mat`
         :param joints: robot joints for the target
         :type joints: list of float
         
