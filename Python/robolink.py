@@ -1047,7 +1047,10 @@ class Robolink:
         
         """
         if type(args) is str:
-            args = [args]
+            if args != "":
+                args = [args]
+            else:
+                args = []
             
         self.IP = robodk_ip           
         self.ARGUMENTS = args
@@ -1094,7 +1097,7 @@ class Robolink:
         if "-DEBUG" in self.ARGUMENTS or "/DEBUG" in self.ARGUMENTS:
             self.DEBUG = True
         elif self.DEBUG:
-            ARGUMENTS.append("-DEBUG")
+            self.ARGUMENTS.append("-DEBUG")
                 
         self.Connect()
 
@@ -1174,32 +1177,58 @@ class Robolink:
             def output_reader(proc):
                 for line in iter(proc.stdout.readline, b''):
                     ln = str(line.decode("utf-8")).strip()
-                    print(ln)            
+                    if ln:
+                        print(ln)            
             
             from sys import platform as _platform
             p = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
                 p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)             
+            elif _platform == "darwin":
+                # Popen does not work sometimes (such as running from fusion)
+                startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
+                try:
+                    #p = subprocess.Popen(command,stdout=subprocess.PIPE)
+                    p = subprocess.Popen(command,stdout=subprocess.PIPE)                
+                except Exception as e:
+                    print(str(e))
+                    return False
+
+                #p = subprocess.call(startapp)
             else:
                 p = subprocess.Popen(command,stdout=subprocess.PIPE)
+
+            emptyln = 0
+            if p:    
+                while True:
+                    lineb = p.stdout.readline()
+                    line = str(lineb.decode("utf-8")).strip()
+                    if len(lineb) > 0:
+                        print(line)
+                        emptyln = 0
+                    else:
+                        emptyln += 1
+
+                    if emptyln > 10:
+                        print("RoboDK Application not properly started. Command:")
+                        print(str(command))
+                        break
+
+                    if 'running' in line.lower():
+                        #telapsed = time.time() - tstart
+                        #print("RoboDK startup time: %.3f" % telapsed)
+                        break
                 
-            while True:
-                line = str(p.stdout.readline().decode("utf-8")).strip()
-                print(line)
-                if 'running' in line.lower():
-                    #telapsed = time.time() - tstart
-                    #print("RoboDK startup time: %.3f" % telapsed)
-                    break
-            
-            #if self.DEBUG:
-            # Important! Make sure we consume stdout (at least in Debug mode)
-            if self.CLOSE_STD_OUT:
-                p.stdout.close()                
-            else:
-                import threading
-                t = threading.Thread(target=output_reader, args=(p,))
-                t.start()
+                #if self.DEBUG:
+                # Important! Make sure we consume stdout (at least in Debug mode)
+                if self.CLOSE_STD_OUT:
+                    p.stdout.close()                
+                else:
+                    import threading
+                    t = threading.Thread(target=output_reader, args=(p,))
+                    t.start()
                 
+            return True
             
             #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
             #    self._ProcessID = p.pid
@@ -1245,11 +1274,17 @@ class Robolink:
                     if self.APPLICATION_DIR == '':
                         connected = 0
                         return connected
-                    command = [self.APPLICATION_DIR] + self.ARGUMENTS
-                    start_robodk(command)                    
+                    command = [self.APPLICATION_DIR]
+                    if self.ARGUMENTS:
+                        command += self.ARGUMENTS
+
+                    if not start_robodk(command):
+                        connected = 0
+                        return connected                    
                     #import time
                     #time.sleep(5) # wait for RoboDK to start and check network license.
-                except:
+                except Exception as e:
+                    print(str(e))
                     raise Exception('Application path is not correct or could not start: ' + self.APPLICATION_DIR)
 
         if connected > 0 and not self._verify_connection():
@@ -6161,5 +6196,3 @@ if __name__ == "__main__":
         print(cost)
         
     #TestCamera()
-
-       
