@@ -27,11 +27,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    robodk_api.cpp
+    robodk_api.cpp \
+    embedexample.cpp
 
 HEADERS += \
         mainwindow.h \
-    robodk_api.h
+    robodk_api.h \
+    embedexample.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    embedexample.ui

@@ -613,10 +613,7 @@ classdef RobolinkItem < handle
             if nargin < 3
                 blocking = 1;
             end
-            if this.type == this.link.ITEM_TYPE_PROGRAM
-                if class(target) ~= class(this)
-                    error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
-                end
+            if this.type == this.link.ITEM_TYPE_PROGRAM && isa(target, class(this))
                 this.addMoveJ(target)
             else
                 this.link.moveX(target,this,1,blocking);
@@ -629,10 +626,7 @@ classdef RobolinkItem < handle
             if nargin < 3
                 blocking = 1;
             end
-            if this.type == this.link.ITEM_TYPE_PROGRAM
-                if ~isa(target, class(this))
-                    error('Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.')
-                end
+            if this.type == this.link.ITEM_TYPE_PROGRAM && isa(target, class(this))
                 this.addMoveL(target);
             else
                 this.link.moveX(target,this,2,blocking);

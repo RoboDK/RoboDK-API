@@ -20,7 +20,6 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -38,6 +37,8 @@ public:
     void IncrementalMove(int id, double sense);
 
 
+    bool EventsLoop();
+    bool SampleRoboDkEvent(int evt, Item itm);
 private slots:
     void on_btnLoadFile_clicked();
     void on_btnSelectRobot_clicked();
@@ -69,6 +70,7 @@ private slots:
     void on_radHideRoboDK_clicked();
     void on_radIntegrateRoboDK_clicked();
 
+    void on_btnEmbed_clicked();
 
 private:
     void robodk_window_clear();

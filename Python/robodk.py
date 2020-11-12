@@ -1001,6 +1001,11 @@ def distance(a,b):
     """Calculates the distance between two points"""
     return norm(subs3(a,b))
 
+def pose_is_similar(a,b, tolerance=0.1):
+    """Check if the pose is similar. Returns True if both poses are less than 0.1 mm or 0.1 deg appart. Optionally provide the tolerance in mm+deg"""
+    if distance(a.Pos(), b.Pos()) + pose_angle_between(a,b) * 180/pi < tolerance:
+        return True
+    return False
 
 def intersect_line_2_plane(pline,vline,pplane,vplane):
     """Calculates the intersection betweeen a line and a plane"""
@@ -1343,7 +1348,8 @@ class Mat(object):
         """Test equality"""
         if other is None:
             return False
-        return (other.rows == self.rows)
+        #return (other.rows == self.rows)
+        return pose_is_similar(other, self)
         
     def __ne__(self, other):
         return not (self == other)
