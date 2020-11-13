@@ -50,6 +50,7 @@ using System.Windows.Media;
 #endif
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
+// ReSharper disable InconsistentNaming
 
 #endregion
 
@@ -1528,7 +1529,7 @@ namespace RoboDk.API
             if (programInstruction.InstructionType == InstructionType.Move)
             {
                 programInstruction.MoveType = (MoveType) Link.rec_int();
-                programInstruction.IsJointTarget = Link.rec_int() > 0 ? true : false;
+                programInstruction.IsJointTarget = Link.rec_int() > 0;
                 programInstruction.Target = Link.rec_pose();
                 programInstruction.Joints = Link.rec_array();
             }
@@ -1647,14 +1648,15 @@ namespace RoboDk.API
             int timeoutSec = 3600,
             double time_step = 0.2)
         {
-            var result = new InstructionListJointsResult {JointList = new List<InstructionListJointsResult.JointsResult>()};
-
-            string errorMessage;
-            Mat jointList;
-            result.ErrorCode = InstructionListJoints(out errorMessage, out jointList, mmStep, degStep, saveToFile,
+            var result = new InstructionListJointsResult
+            {
+                JointList = new List<InstructionListJointsResult.JointsResult>(),
+                ErrorCode = InstructionListJoints(out var errorMessage, out var jointList, mmStep, degStep, saveToFile,
                 collisionCheck,
-                flags, timeoutSec, time_step);
-            result.ErrorMessage = errorMessage;
+                    flags, timeoutSec, time_step),
+                ErrorMessage = errorMessage
+            };
+
 
             var numberOfJoints = GetLink(ItemType.Robot).Joints().Length;
             for (var colId = 0; colId < jointList.Cols; colId++)
@@ -1665,8 +1667,8 @@ namespace RoboDk.API
                     joints[rowId] = jointList[rowId, colId];
                 }
 
-                var jointError = (int)jointList[numberOfJoints, colId];
-                var errorType = JointErrorTypeHelper.ConvertErrorCodeToJointErrorType(jointError);
+                var errorCode = (int)jointList[numberOfJoints, colId];
+                var simulationErrorFlags = SimulationErrorHandler.GetSimulationErrorFlags(errorCode);
                 var linearStep = jointList[numberOfJoints + 1, colId];
                 var jointStep = jointList[numberOfJoints + 2, colId];
                 var moveId = (int)jointList[numberOfJoints + 3, colId];
@@ -1701,7 +1703,8 @@ namespace RoboDk.API
                         joints,
                         speeds,
                         accelerations,
-                        errorType,
+                        errorCode,
+                        simulationErrorFlags,
                         linearStep,
                         jointStep,
                         timeStep

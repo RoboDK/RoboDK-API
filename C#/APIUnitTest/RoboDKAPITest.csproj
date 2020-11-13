@@ -35,4 +35,21 @@
   <ItemGroup>
     <ProjectReference Include="..\API\RoboDkApi.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Box.sld">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Phone Case Box.sld">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Phone Case Done.sld">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="robot.robot">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TableOut.sld">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

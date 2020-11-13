@@ -7,11 +7,14 @@
 #region Namespaces
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RoboDk.API;
@@ -195,6 +198,106 @@ namespace RoboDkApiTest
             rdk.RoboDKServerStartPort.Should().Be(10000);
             rdk.RoboDKServerEndPort.Should().Be(10000);
         }
+
+        /// <summary>
+        /// Test if RoboDK is handling temporary connections properly.
+        /// In the past we had some receive timeout issues when opening a temporary second connection.
+        /// </summary>
+        [TestMethod]
+        public void Test_ParallelRoboDKConnections()
+        {
+            var stopAsyncTask = false;
+            var rdk = new RoboDK
+            {
+                RoboDKServerStartPort = 10000,
+                Logfile = Path.Combine(Directory.GetCurrentDirectory(), "RoboDk.log"),
+                DefaultSocketTimeoutMilliseconds = 20*1000
+            };
+
+            rdk.Connect();
+            rdk.Render(false);
+            rdk.Command("AutoRenderDelay", 50);
+            rdk.Command("AutoRenderDelayMax", 300);
+            rdk.DefaultSocketTimeoutMilliseconds = 10 * 1000;
+
+            List<IItem> AddStaticParts()
+            {
+                var parts = new List<IItem>();
+                var cwd = Directory.GetCurrentDirectory();
+                parts.Add(rdk.AddFile(Path.Combine(cwd, "TableOut.sld")));
+                parts.Add(rdk.AddFile(Path.Combine(cwd, "robot.robot")));
+                return parts;
+            }
+            List<IItem> AddDynamicParts()
+            {
+                var parts = new List<IItem>();
+                var cwd = Directory.GetCurrentDirectory();
+                for (var n = 0; n < 10; n++)
+                {
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Phone Case Box.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Box.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Phone Case Done.sld")));
+                }
+
+                return parts;
+            }
+
+            // Task which opens a temporary new connection
+            void DoTemporaryConnectionCalls(IReadOnlyCollection<IItem> staticParts)
+            {
+                // ReSharper disable once AccessToModifiedClosure
+                while(!stopAsyncTask)
+                {
+                    foreach (var staticPart in staticParts)
+                    {
+                        Thread.Sleep(1);
+                        using (var roboDkLink = new RoboDK.RoboDKLink(staticPart.RDK()))
+                        {
+                            var clonedItem = staticPart.Clone(roboDkLink.RoboDK);
+                            clonedItem.Pose();
+                        }
+                    }
+                }
+            }
+
+            var p = AddStaticParts();
+            var task = new Task(() => DoTemporaryConnectionCalls(p));
+            task.Start();
+
+            try
+            {
+                for (var i = 0; i < 20; i++)
+                {
+                    var dynamicParts = AddDynamicParts();
+                    rdk.Command("CollisionMap", "Off");
+                    rdk.SetCollisionActive(CollisionCheckOptions.CollisionCheckOff);
+                    rdk.Delete(dynamicParts);
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            finally
+            {
+                stopAsyncTask = true;
+            }
+
+            try
+            {
+                task.Wait();
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            finally
+            {
+                rdk.CloseRoboDK();
+            }
+        }
+
+
 
         [TestMethod]
         public void Test_WhenEndServerPortSmallerThenStartServerPortThenThrowRdkException()
@@ -596,6 +699,27 @@ namespace RoboDkApiTest
         #endregion
     }
 
+
+    public class ThreadSaveRoboDK
+    {
+
+        public static T Invoke<T>(IItem item, Func<IItem, T> func)
+        {
+            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
+            {
+                return func.Invoke(item.Clone(roboDkLink.RoboDK));
+            }
+        }
+
+        public static void Invoke(IItem item, Action<IItem> action)
+        {
+            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
+            {
+                action.Invoke(item.Clone(roboDkLink.RoboDK));
+            }
+        }
+
+    }
 
     internal class Logger
     {
