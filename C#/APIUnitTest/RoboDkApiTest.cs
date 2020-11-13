@@ -2,7 +2,7 @@
 // We currently can not support RoboDK Tests on the build server.
 // Ignore all tests on the build server
 // To locally execute the unit test uncomment the line below
-#define TEST_ROBODK_API
+//#define TEST_ROBODK_API
 
 #region Namespaces
 
@@ -199,14 +199,19 @@ namespace RoboDkApiTest
             rdk.RoboDKServerEndPort.Should().Be(10000);
         }
 
+        /// <summary>
+        /// Test if RoboDK is handling temporary connections properly.
+        /// In the past we had some receive timeout issues when opening a temporary second connection.
+        /// </summary>
         [TestMethod]
         public void Test_ParallelRoboDKConnections()
         {
+            var stopAsyncTask = false;
             var rdk = new RoboDK
             {
                 RoboDKServerStartPort = 10000,
                 Logfile = Path.Combine(Directory.GetCurrentDirectory(), "RoboDk.log"),
-                DefaultSocketTimeoutMilliseconds = 10*1000
+                DefaultSocketTimeoutMilliseconds = 20*1000
             };
 
             rdk.Connect();
@@ -219,7 +224,7 @@ namespace RoboDkApiTest
             {
                 var parts = new List<IItem>();
                 var cwd = Directory.GetCurrentDirectory();
-                parts.Add(rdk.AddFile(Path.Combine(cwd, "Base_Frame.sld")));
+                parts.Add(rdk.AddFile(Path.Combine(cwd, "TableOut.sld")));
                 parts.Add(rdk.AddFile(Path.Combine(cwd, "robot.robot")));
                 return parts;
             }
@@ -229,22 +234,28 @@ namespace RoboDkApiTest
                 var cwd = Directory.GetCurrentDirectory();
                 for (var n = 0; n < 10; n++)
                 {
-                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palett_Rohteil-1.sld")));
-                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palett_Rohteil-2.sld")));
-                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Palettenhalter.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Phone Case Box.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Box.sld")));
+                    parts.Add(rdk.AddFile(Path.Combine(cwd, "Phone Case Done.sld")));
                 }
 
                 return parts;
             }
 
-            void DoTemporaryConnectionCalls(List<IItem> staticParts)
+            // Task which opens a temporary new connection
+            void DoTemporaryConnectionCalls(IReadOnlyCollection<IItem> staticParts)
             {
-                for (var i = 0; i < 100; i++)
+                // ReSharper disable once AccessToModifiedClosure
+                while(!stopAsyncTask)
                 {
                     foreach (var staticPart in staticParts)
                     {
                         Thread.Sleep(1);
-                        ThreadSaveRoboDK.Invoke(staticPart, it => it.Pose());
+                        using (var roboDkLink = new RoboDK.RoboDKLink(staticPart.RDK()))
+                        {
+                            var clonedItem = staticPart.Clone(roboDkLink.RoboDK);
+                            clonedItem.Pose();
+                        }
                     }
                 }
             }
@@ -255,23 +266,21 @@ namespace RoboDkApiTest
 
             try
             {
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < 20; i++)
                 {
                     var dynamicParts = AddDynamicParts();
                     rdk.Command("CollisionMap", "Off");
                     rdk.SetCollisionActive(CollisionCheckOptions.CollisionCheckOff);
                     rdk.Delete(dynamicParts);
-
-                    //foreach (var dynamicPart in dynamicParts)
-                    //{
-                    //    dynamicPart.Delete();
-                    //}
-
                 }
             }
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
+            }
+            finally
+            {
+                stopAsyncTask = true;
             }
 
             try
