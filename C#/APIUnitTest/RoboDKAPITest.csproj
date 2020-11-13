@@ -39,12 +39,6 @@
     <None Update="Box.sld">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Palettenhalter.sld">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Palett_Rohteil-1.sld">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Phone Case Box.sld">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
