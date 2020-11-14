@@ -5,7 +5,7 @@ from path_simulation import *
 # Simulation Time for Time Based Simulation Tests
 step_time_S = 0.002
 step_time_M = 0.02
-step_time_RM = 0.05  # Simuation Time used in RobotManager
+step_time_RM = 0.05 #0.05  # Simuation Time used in RobotManager
 #step_time_L = 0.2 # triggers the default 25 deg limit for kinematic error when we are close to a singularity
 step_time_L = 0.025
 
@@ -124,7 +124,8 @@ class TestRobotSimBase(unittest.TestCase):
                 self.assertNotEqual(len(s.playback_frames), 0, msg)
 
     def _test_for_playback_frames_with_time_step0(self):
-        """Asserts that there is no playback frame with time_step 0 in the middle of a move from A to B. Only the last playback frame can have a value of 0 if it is a stop point."""
+        """Asserts that there is no playback frame with time_step 0 in the middle of a move from A to B. Only the last playback frame can have a value of 0 if it is a stop point.
+        """
         if self.program.simulation_type != InstructionListJointsFlags.TimeBased:
             return
         for s in self.program.steps:
@@ -135,7 +136,7 @@ class TestRobotSimBase(unittest.TestCase):
                 if playbackFrameWithTimeStep0 != None:
                     msg = f"Step {s.name} playbackFrame {frameNumber-1} with moveId {f.move_id} has time_step value 0. playbackFrame {frameNumber} has time_step value {f.time_step} in the middle of the move from {f.move_id-1} to {f.move_id}. "
                     self.fail(msg)
-                if f.time_step == 0:
+                if f.time_step == 0 and f.error != 0.0:
                     playbackFrameWithTimeStep0 = f
             
     def _test_for_duplicate_frames_for_first_step(self):

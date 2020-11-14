@@ -40,7 +40,8 @@ def get_program_180degree_rotation_error():
     """180 degree rotation error. Test PathFlipAxis Error."""
     j1 = [ 62.800000, -58.000000, 114.300000, -31.700000, -60.300000, 107.000000]
     f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ]
-    f3 = [   334.584051,  -775.717015,   386.683215,     0,    180, -180] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
+    f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ] # Make sure the orientation flips 180 deg exact, otherwise, blending will adjust the path
+    f3 = [   147.718647,  -776.118962,   544.157022,     0,    180, -180] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
     expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK
     # As of RoboDK 5.1.0, FlipAxis may be also reported as kinematic error if we try a move close to 180 deg outside the 0.5 deg tolerance
     steps = [
@@ -140,7 +141,7 @@ def get_program_path_invalid_target_rdk_93():
     j8 = [0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000]
     j9 = [79.238350, -54.625500, 102.860318, -115.621424, 68.885526, -126.911760]
     f10 = [   312.309807,  -910.024549,   574.500010,    -0.000000,     0.000000,  -111.978180 ]
-    expectedSimulationError = PathErrorFlags.PathInvalidTarget  
+    expectedSimulationError = PathErrorFlags.PathLimit  
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel):
         Step("StepId 61", MoveType.Joint, 0, j1, 10, 0, 0),
@@ -210,7 +211,7 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
         self._test_program(verbose=False)
 
     def test_kinematic_pathlimit2(self):
-        """Test smoothe kinematic error (axis movement to large in one step)"""
+        """Test smooth kinematic error (axis movement to large in one step)"""
         self.program = get_program_kinematic_pathlimit2()
         self._test_program(verbose=False)
 

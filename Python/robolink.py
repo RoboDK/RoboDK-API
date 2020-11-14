@@ -38,6 +38,7 @@ import robodk
 from warnings import warn
 import sys  # Only used to detect python version using sys.version_info
 import os
+import time
 
 # Tree item types
 ITEM_TYPE_STATION=1
@@ -289,6 +290,9 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 
         # The robot reaches the limit of joint axes trying to make a linear movement between 2 valid points
         PathLimit = 0x2   # 0b0000_0000_0010
+        
+        # Error code reporting is innacurate due to large axis move. Reduce the time step or position step
+        InnacurateDueToLargeAxisMove = 0x800 # code 20
 
         # The robot reached a singularity point
         PathSingularity = 0x4  # 0b0000_0000_0100
@@ -325,6 +329,10 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         evalue = int(evalue)
         if evalue == 0:
             return flags
+            
+        if round(evalue) == 20:
+            # This error flag is never combined with other error flags
+            return PathErrorFlags.InnacurateDueToLargeAxisMove            
             
         if (evalue % 1000000000  > 99999999):
             # Non reachable target
@@ -2668,7 +2676,7 @@ class Robolink:
             array_send += [0,0,0]
             
         self._check_connection()
-        command = 'MeasPose3'
+        command = 'MeasPose4'
         self._send_line(command)
         self._send_array(array_send)
         pose1 = self._rec_pose()
@@ -4351,7 +4359,7 @@ class Item():
                 else:
                     print("Object Not Selected. Select a point in the object surface...")
                     
-                pause(0.1)
+                robodk.pause(0.1)
                 
         .. seealso:: :func:`~robolink.Item.SelectedFeature`
         """
@@ -4974,7 +4982,7 @@ class Item():
         self.Connect(blocking=False)
         tic()
         timer1 = toc()
-        pause(refresh_rate)
+        robodk.pause(refresh_rate)
         while True:
             # Wait up to 2 seconds to see the connected state
             for i in range(10):
@@ -4986,7 +4994,7 @@ class Item():
                 if callback_abort is not None and callback_abort():
                     return con_status
 
-                pause(refresh_rate)
+                robodk.pause(refresh_rate)
                 
             if con_status < 0:
                 print('Trying to reconnect...')
@@ -4994,7 +5002,7 @@ class Item():
                 if callback_abort is not None and callback_abort():
                     return con_status
 
-                pause(refresh_rate)
+                time.sleep(refresh_rate)
                 self.Connect()
                 
             if toc() - timer1 > wait_connection:
@@ -5006,7 +5014,8 @@ class Item():
 
             if callback_abort is not None and callback_abort():
                 return con_status
-            pause(refresh_rate)
+            
+            time.sleep(refresh_rate)
 
         return con_status
         
@@ -5348,6 +5357,7 @@ class Item():
         .. code-block:: python
             
             from robolink import *      # import the robolink library            
+            from robodk import *
             RDK = Robolink()            # Connect to the RoboDK API
             prog = RDK.Item('MainProgram', ITEM_TYPE_PROGRAM)
             prog.RunProgram()
@@ -5401,7 +5411,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.Busy`
         """
         while self.Busy():
-            pause(0.05)
+            time.seep(0.05)
     
     def ProgramStart(self, programname, folder='', postprocessor=''):
         """Defines the name of the program when a program must be generated. 
@@ -6092,13 +6102,14 @@ class Item():
             :caption: Example to expand or collapse an item in the tree
             
             from robolink import *
+            import time
             RDK = Robolink()      # Start the RoboDK API
             
             # How to expand or collapse an item in the tree
             item = RDK.ItemUserPick("Select an item")
             
             item.setParam("Tree", "Expand")
-            pause(2)
+            time.sleep(2)
             item.setParam("Tree", "Collapse")
             
 
