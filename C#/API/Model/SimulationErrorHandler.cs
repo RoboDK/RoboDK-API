@@ -57,6 +57,11 @@ namespace RoboDk.API.Model
             var isMotionError = false;
             var isLinearMoveError = false;
 
+            if (simulationErrorCode == 20)
+            {
+                simulationErrorFlags = SimulationErrorFlags.InnacurateDueToLargeAxisMove;
+            }
+
             if (simulationErrorCode % 10_000_000 >= 1_000_000)
             {
                 // Set Threshold angle to prevent 180deg turns (deg): roboDk.Command("ToleranceTurn180", 0.5);

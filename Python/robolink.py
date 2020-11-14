@@ -291,8 +291,10 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         # The robot reaches the limit of joint axes trying to make a linear movement between 2 valid points
         PathLimit = 0x2   # 0b0000_0000_0010
         
-        # Error code reporting is innacurate due to large axis move. Reduce the time step or position step
-        InnacurateDueToLargeAxisMove = 0x800 # code 20
+        # Error code reporting is innacurate due to large axis move. Reduce the time step or the robot speed
+        # This error flag is never combined with other error flags. 
+        # This flag will appear with time based simulations and it means the path is feasible but RoboDK is unable to calculate it with the current time step
+        InnacurateDueToLargeAxisMove = 0x800 # error code 20
 
         # The robot reached a singularity point
         PathSingularity = 0x4  # 0b0000_0000_0100
@@ -331,7 +333,8 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
             return flags
             
         if round(evalue) == 20:
-            # This error flag is never combined with other error flags
+            # This error flag is never combined with other error flags. 
+            # This flag will appear with time based simulations and it means the path is feasible but RoboDK is unable to calculate
             return PathErrorFlags.InnacurateDueToLargeAxisMove            
             
         if (evalue % 1000000000  > 99999999):

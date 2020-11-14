@@ -12,7 +12,8 @@ def get_program_wrist_singularity1():
     f2 = [267.800000, -697.899998, 489.200000, -0.000000, -0.000000, -97.106527]
     f3 = [267.800000, -886.682410, 541.603649, 45.000000, 0.000000, 180.000000]
     f4 = [267.800000, -900.824545, 555.745785, 45.000000, 0.000000, 180.000000]
-    expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity
+    #expectedSimulationError = PathErrorFlags.Kinematic | PathErrorFlags.PathSingularity | PathErrorFlags.WristSingularity# Prior to RoboDK v5.1.2 (inclusive), RoboDK used to report this error although the path is feasible
+    expectedSimulationError = PathErrorFlags.InnacurateDueToLargeAxisMove # Time step needs to be reduced to properly calculate error flags
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("1", MoveType.Joint, 0, j1, 10, 0, 0, 0),
@@ -80,7 +81,8 @@ def get_program_kinematic_pathlimit2():
     f4 = [  -277.584253,   506.915648,   544.586082,   179.947088,   -75.021714,   -45.217495 ]
     f5 = [  -302.700873,   506.909442,   537.866308,   179.947088,   -75.021714,   -45.217495 ]
     f6 = [  -300.434263,   506.661885,   567.779535,   179.947088,   -75.021714,   -45.217495 ]
-    expectedSimulationError = PathErrorFlags.Kinematic  
+    #expectedSimulationError = PathErrorFlags.Kinematic # Prior to RoboDK v5.1.2 (inclusive), RoboDK used to report this error although the path is feasible
+    expectedSimulationError = PathErrorFlags.InnacurateDueToLargeAxisMove # Time step needs to be reduced to properly calculate error flags
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
         Step("J1", MoveType.Joint, 0, j1, 0, 0, 0, 0),
@@ -103,7 +105,21 @@ def get_program_front_back_singularity_wrist_close_to_axis_1():
         Step("F2", MoveType.Frame, 0, f2, 1, 0, 0, expectedSimulationError), 
     ]
     return Program("singularity (wrist to close to axis 1) error", steps)
+    
 
+def get_program_test_fast_long_move():
+    """When we request a time based result, the error reporting can be innacurate if the time step is too large or the speed is too fast"""
+    j1 = [86.567590, -60.878784, 114.472076, 87.236349, -87.963609, -306.357582]
+    f2 = [   650,  -650,   550,     0.000001,     0.000000,   -90.000000 ]
+    f3 = [   650,  +650,   550,     0.000001,     0.000000,   -90.000000 ]
+    expectedSimulationError = PathErrorFlags.NoError
+    steps = [
+        # Step: name, move_type, tcp, pose, blending, speed, accel, expected_error):
+        Step("J1", MoveType.Joint, 0, j1, 0, 8000, 8000, 0),
+        Step("F2", MoveType.Frame, 0, f2, 1, 8000, 8000, 0),
+        Step("F3", MoveType.Frame, 0, f3, 1, 8000, 8000, expectedSimulationError)
+    ]
+    return Program("Kinematic PathLimit: large movement in short time", steps)
 
 def get_program_wrist_singularity_RDK_91():
     """Test program near wrist singularity"""
@@ -115,7 +131,8 @@ def get_program_wrist_singularity_RDK_91():
     j6 = [-116.562035, -101.182577, 117.673968, 29.901480, 56.537640, 144.298732]
     j7 = [-69.323892, -117.000000, 116.917103, 3.454614, 34.862541, -15.159028]
     j8 = [69.928026, -109.590561, 148.647412, -21.437124, -0.098633, -8.370814]
-    expectedSimulationError = PathErrorFlags.PathSingularity | PathErrorFlags.PathNearSingularity | PathErrorFlags.WristSingularity
+    #expectedSimulationError = PathErrorFlags.PathSingularity | PathErrorFlags.PathNearSingularity | PathErrorFlags.WristSingularity # Prior to RoboDK v5.1.2 (inclusive), RoboDK used to report this error although the path is feasible
+    expectedSimulationError = PathErrorFlags.InnacurateDueToLargeAxisMove # Time step needs to be reduced to properly calculate error flags
     steps = [
         # Step: name, move_type, tcp, pose, blending, speed, accel):
         Step("J1", MoveType.Joint, 0, j1, 10, 0, 0),
@@ -228,6 +245,11 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
     def test_wrist_close_to_axis_1_error(self):
         """The robot is too close to the front/back singularity. Wrist close to axis 1"""
         self.program = get_program_front_back_singularity_wrist_close_to_axis_1()
+        self._test_program(verbose=False)
+
+    def test_fast_long_move_report(self):
+        """The robot is too close to the front/back singularity. Wrist close to axis 1"""
+        self.program = get_program_test_fast_long_move()
         self._test_program(verbose=False)
 
 
