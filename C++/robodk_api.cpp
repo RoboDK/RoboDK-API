@@ -3255,19 +3255,17 @@ bool RoboDK::FileGet(const QString &path_file_local, Item *station, const QStrin
 }
 
 
-bool RoboDK::EmbedWindow(QString window_name, QString docked_name, int size_w, int size_h, uint64_t pid, int area_add, int area_allowed, int timeout)
+bool RoboDK::EmbedWindow(QString window_name, QString docked_name, int size_w, int size_h, quint64 pid, int area_add, int area_allowed, int timeout)
 {
     if (!_check_connection()){ return false; }
-
     if (docked_name == "") {
         docked_name = window_name;
     }
-
     _check_connection();
     _send_Line("WinProcDock");
     _send_Line(docked_name);
     _send_Line(window_name);
-    double sizeArray[2] = {size_w, size_h};
+    double sizeArray[2] = {(double)size_w, (double)size_h};
     _send_Array(sizeArray,2);
     _send_Line(QString::number(pid));
     _send_Int(area_allowed);
