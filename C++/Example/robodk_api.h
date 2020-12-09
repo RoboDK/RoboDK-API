@@ -2034,8 +2034,10 @@ public:
     void JointLimits(tJoints *lower_limits, tJoints *upper_limits);
 
     /// <summary>
-    /// Set the joint limits of the robot
+    /// Set the joint limits of a robot
     /// </summary>
+    /// <param name="lower_limits"></param>
+    /// <param name="upper_limits"></param>
     void setJointLimits(const tJoints &lower_limits, const tJoints &upper_limits);
 
     /// <summary>

@@ -1185,6 +1185,21 @@ void Item::JointLimits(tJoints *lower_limits, tJoints *upper_limits){
 }
 
 /// <summary>
+/// Set the joint limits of a robot
+/// </summary>
+/// <param name="lower_limits"></param>
+/// <param name="upper_limits"></param>
+void Item::setJointLimits(const tJoints &lower_limits, const tJoints &upper_limits){
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_RobLimits");
+    _RDK->_send_Item(this);
+    _RDK->_send_Array(lower_limits);
+    _RDK->_send_Array(upper_limits);
+    //double joints_type = _RDK->_recv_Int() / 1000.0;
+    _RDK->_check_status();
+}
+
+/// <summary>
 /// Set the joint limits of the robot
 /// </summary>
 /// <param name="lower_limits"></param>
