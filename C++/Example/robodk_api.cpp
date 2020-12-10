@@ -1193,8 +1193,8 @@ void Item::setJointLimits(const tJoints &lower_limits, const tJoints &upper_limi
     _RDK->_check_connection();
     _RDK->_send_Line("S_RobLimits");
     _RDK->_send_Item(this);
-    _RDK->_send_Array(lower_limits);
-    _RDK->_send_Array(upper_limits);
+    _RDK->_send_Array(&lower_limits);
+    _RDK->_send_Array(&upper_limits);
     //double joints_type = _RDK->_recv_Int() / 1000.0;
     _RDK->_check_status();
 }
