@@ -57,6 +57,8 @@ ITEM_TYPE_VALID_ISO9283=14
 ITEM_TYPE_FOLDER=17
 ITEM_TYPE_ROBOT_ARM=18
 ITEM_TYPE_CAMERA=19
+ITEM_TYPE_GENERIC=20
+ITEM_TYPE_ROBOT_AXES=21
 
 # Instruction types
 INS_TYPE_INVALID = -1
@@ -1394,7 +1396,7 @@ class Robolink:
         self._check_status()
         return retlist
 
-    def ItemUserPick(self, message="Pick one item", itemtype=None):
+    def ItemUserPick(self, message="Pick one item", itemtype_or_list=None):
         """Shows a RoboDK popup to select one object from the open station.
         An item type can be specified to filter desired items. If no type is specified, all items are selectable.
         (check variables ITEM_TYPE_*)
@@ -1405,17 +1407,30 @@ class Robolink:
             RDK.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
            
         :param str message: message to display
-        :param int itemtype: filter choices by a specific item type (ITEM_TYPE_*)
+        :param int itemtype_or_list: filter choices by a specific item type (ITEM_TYPE_*) or provide a list of items to choose from
         
         .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Robolink.ItemList`
         """
-        self._check_connection()
-        if itemtype is None:
-            itemtype = -1
-        command = 'PickItem'
-        self._send_line(command)
-        self._send_line(message)
-        self._send_int(itemtype)
+        
+        if itemtype_or_list is None:
+            itemtype_or_list = -1
+            
+        if type(itemtype_or_list) is int:        
+            self._check_connection()
+            command = 'PickItem'
+            self._send_line(command)
+            self._send_line(message)
+            self._send_int(itemtype_or_list)
+            
+        else:
+            self._check_connection()
+            command = 'PickItemList'
+            self._send_line(command)
+            self._send_line(message)
+            self._send_int(len(itemtype_or_list))
+            for itm in itemtype_or_list:
+                self._send_item(itm)
+            
         self.COM.settimeout(3600) # wait up to 1 hour for user input
         item = self._rec_item()
         self.COM.settimeout(self.TIMEOUT)
@@ -2822,7 +2837,7 @@ class Robolink:
                 input_format = EULER_RX_RYp_RZpp
                 matrix = []
                 for i in range(nposes):
-                    matrix.append(Pose_2_Staubli(poses_xyzwpr[i]))
+                    matrix.append(robodk.Pose_2_Staubli(poses_xyzwpr[i]))
                     
                 poses_xyzwpr = matrix
         
@@ -4237,7 +4252,7 @@ class Item():
             if pre_mult is None:
                 pre_mult = robodk.eye(4)
             if post_mult is None:
-                post_mult = invH(pre_mult)
+                post_mult = robodk.invH(pre_mult)
             
             self.link._check_connection()
             if isinstance(scale,float) or isinstance(scale,int):
@@ -4820,7 +4835,7 @@ class Item():
         if tool is not None:
             pose = pose*tool
         if reference is not None:
-            pose = invH(reference)*pose
+            pose = robodk.invH(reference)*pose
         return pose
     
     def JointsConfig(self, joints):
@@ -4880,7 +4895,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         """
         if tool is not None:
-            pose = pose*invH(tool)
+            pose = pose*robodk.invH(tool)
         if reference is not None:
             pose = reference*pose
             
@@ -4910,7 +4925,7 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.JointsConfig`"""
         if tool is not None:
-            pose = pose*invH(tool)
+            pose = pose*robodk.invH(tool)
         if reference is not None:
             pose = reference*pose
             
@@ -4983,8 +4998,8 @@ class Item():
         trycount = 0
         refresh_rate = 0.2
         self.Connect(blocking=False)
-        tic()
-        timer1 = toc()
+        robodk.tic()
+        timer1 = robodk.toc()
         robodk.pause(refresh_rate)
         while True:
             # Wait up to 2 seconds to see the connected state
@@ -5008,8 +5023,8 @@ class Item():
                 time.sleep(refresh_rate)
                 self.Connect()
                 
-            if toc() - timer1 > wait_connection:
-                timer1 = toc()
+            if robodk.toc() - timer1 > wait_connection:
+                timer1 = robodk.toc()
                 trycount = trycount + 1
                 if trycount >= max_attempts:
                     print('Failed to connect: Timed out')
@@ -5414,7 +5429,7 @@ class Item():
         .. seealso:: :func:`~robolink.Item.Busy`
         """
         while self.Busy():
-            time.seep(0.05)
+            time.sleep(0.05)
     
     def ProgramStart(self, programname, folder='', postprocessor=''):
         """Defines the name of the program when a program must be generated. 
