@@ -471,6 +471,15 @@ namespace RoboDk.API
         double[] Joints();
 
         /// <summary>
+        /// Return the current joint position of a robot (only from the simulator, never from the real robot). This should be used only when RoboDK is connected to the real robot and only the simulated robot needs to be retrieved(for example, if we want to move the robot using a spacemouse).
+        /// Note: Use robot.Joints() instead to retrieve the simulated and real robot position when connected.
+        /// </summary>
+        /// <returns>double x n -> joints array</returns>
+        double[] SimulatorJoints();
+
+
+
+        /// <summary>
         ///     Returns the home joints of a robot. These joints can be manually set in the robot "Parameters" menu, then select
         ///     "Set home position"
         /// </summary>

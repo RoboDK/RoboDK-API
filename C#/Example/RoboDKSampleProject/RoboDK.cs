@@ -5388,16 +5388,31 @@ public class RoboDK
             return joints;
         }
 
+        /// <summary>
+        /// Returns the current joints of a robot or the joints of a target. If the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
+        /// </summary>
+        /// <returns>double x n -> joints matrix</returns>
+        public double[] SimulatorJoints()
+        {
+            link._check_connection();
+            link._send_Line("G_Thetas");
+            link._send_Item(this);
+            double[] joints = link._recv_Array();
+            link._check_status();
+            return joints;
+        }
+
         // add more methods
 
         /// <summary>
-        /// Returns the home joints of a robot. These joints can be manually set in the robot "Parameters" menu, then select "Set home position"
+        /// Return the current joint position of a robot (only from the simulator, never from the real robot). This should be used only when RoboDK is connected to the real robot and only the simulated robot needs to be retrieved(for example, if we want to move the robot using a spacemouse).
+        /// Note: Use robot.Joints() instead to retrieve the simulated and real robot position when connected.
         /// </summary>
         /// <returns>double x n -> joints array</returns>
         public double[] JointsHome()
         {
             link._check_connection();
-            link._send_Line("G_Home");
+            link._send_Line("G_Thetas_Sim");
             link._send_Item(this);
             double[] joints = link._recv_Array();
             link._check_status();

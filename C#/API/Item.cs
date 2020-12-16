@@ -767,6 +767,18 @@ namespace RoboDk.API
             return joints;
         }
 
+        /// <inheritdoc />
+        public double[] SimulatorJoints()
+        {
+            Link.check_connection();
+            var command = "G_Thetas_Sim";
+            Link.send_line(command);
+            Link.send_item(this);
+            var joints = Link.rec_array();
+            Link.check_status();
+            return joints;
+        }
+
         // add more methods
 
         /// <inheritdoc />
