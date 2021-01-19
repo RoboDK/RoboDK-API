@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>794</width>
-    <height>555</height>
+    <width>855</width>
+    <height>602</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,16 +48,23 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="btnTestButton">
+             <widget class="QPushButton" name="btnEmbed">
               <property name="text">
-               <string>Start Event Loop</string>
+               <string>Embed window</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="btnEmbed">
+             <widget class="QPushButton" name="btnTestButton">
               <property name="text">
-               <string>Embed window</string>
+               <string>Test Event Loop</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnTestCamera">
+              <property name="text">
+               <string>Test Camera</string>
               </property>
              </widget>
             </item>
@@ -472,8 +479,8 @@ Position</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>794</width>
-     <height>23</height>
+     <width>855</width>
+     <height>24</height>
     </rect>
    </property>
   </widget>

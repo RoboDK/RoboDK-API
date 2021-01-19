@@ -794,3 +794,21 @@ void MainWindow::on_btnEmbed_clicked()
     RDK->EmbedWindow(windowName);
 
 }
+
+void MainWindow::on_btnTestCamera_clicked(){
+    Item reference = RDK->ItemUserPick("Pick a coordinate system to attach the camera", RoboDK::ITEM_TYPE_FRAME);
+    if (!reference.Valid()){
+        qDebug() << "No item selected or available";
+        return;
+    }
+    // Set camera parameters so that it takes Full HD snapshot images and black background
+    QString cam_params = "NEAR_LENGTH=5 FAR_LENGTH=100000 FOV=30 SNAPSHOT=1920x1080 NO_TASKBAR BG_COLOR=black";
+    Item cam_item = RDK->Cam2D_Add(reference, cam_params);
+    QString image_file = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "/Camera-Snapshot.png";
+    int success = RDK->Cam2D_Snapshot(image_file, cam_item);
+    if (success == 0){
+        qDebug() << "Failed to save image to: " << image_file;
+    } else {
+        qDebug() << "Snapshot saved successfully: " << image_file;
+    }
+}

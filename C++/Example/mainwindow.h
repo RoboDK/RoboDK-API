@@ -72,6 +72,8 @@ private slots:
 
     void on_btnEmbed_clicked();
 
+    void on_btnTestCamera_clicked();
+
 private:
     void robodk_window_clear();
 
