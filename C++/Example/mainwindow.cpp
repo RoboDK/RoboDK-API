@@ -801,6 +801,12 @@ void MainWindow::on_btnTestCamera_clicked(){
         qDebug() << "No item selected or available";
         return;
     }
+
+    // Get or set the camera location (reference it is linked to):
+    //Mat pose_rel = reference.Pose(); // get current pose (relative, with respect to parent)
+    //Mat pose_abs = reference.PoseAbs(); // get current pose (absolute, with respect to station reference)
+    //reference.setPose(transl(100,200,300) * rotz(M_PI));
+
     // Set camera parameters so that it takes Full HD snapshot images and black background
     QString cam_params = "NEAR_LENGTH=5 FAR_LENGTH=100000 FOV=30 SNAPSHOT=1920x1080 NO_TASKBAR BG_COLOR=black";
     Item cam_item = RDK->Cam2D_Add(reference, cam_params);
