@@ -180,6 +180,10 @@ struct XYZ_t {
 	double arr3[3];
 };
 
+struct  XYZWPR_t {
+	double arr6[6];
+};
+
 
 //Platform indepedant IO operations
 void ThreadSleep(unsigned long nMilliseconds);
@@ -204,6 +208,13 @@ void Item_MoveJ_mat(struct Item_t *inst, struct Mat_t *joints, bool isBlocking);
 void Item_WaitMove(const struct Item_t *inst, double timeout_sec); //Complete
 bool Item_Connect(const struct Item_t *inst, const char *robot_ip); //Complete
 
+void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose);
+void Item_setPoseFrame(const struct Item_t *inst,const struct Mat_t pose);
+void Item_setAccuracyActive(const struct Item_t *inst, const int accurate);
+struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
+void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
+
+
 //Matrix functions, not directly related to robodk's api but needed to manipulate matrices as double[16] arrays.
 //Upercase first letter after _ means it operates on an instance of the struct while lowercase creates a new instance of the struct.
 struct Mat_t Mat_eye();
@@ -224,6 +235,7 @@ void Mat_Multiply_cumul(struct Mat_t *in1out, const struct Mat_t *in2);
 void Mat_Multiply_rotxyz(struct Mat_t *in1out, const double rx, const double ry, const double rz);
 bool Mat_isHomogeneous(const struct Mat_t *inst);
 void Mat_SetPos(struct Mat_t *in1out, const double x, const double y, const double z);
+void Mat_SetPose_KUKA(struct Mat_t *in1out, const struct XYZWPR_t in);
 void Mat_Get_VX(const struct Mat_t *inst, struct XYZ_t *out);
 void Mat_Get_VY(const struct Mat_t *inst, struct XYZ_t *out);
 void Mat_Get_VZ(const struct Mat_t *inst, struct XYZ_t *out);
@@ -240,56 +252,21 @@ void Joints_SetValues(struct Joints_t *inst, const double *values, int ndofs);
 bool Joints_Valid(struct Joints_t *inst);
 void Joints_ToString(struct Joints_t *inst, char *output);
 
-/////////////////////////////////////////////////////////////////
-/// @brief Creates a new 2D matrix \ref Matrix2D_t.. Use \ref Matrix2D_Delete to delete the matrix (to free the memory).
-/// The Procedure @ref Debug_Matrix2D shows an example to read data from a Matrix2D_t
 struct Matrix2D_t* Matrix2D_Create();
-
-/// @brief Deletes a \ref Matrix2D_t.
-/// @param[in] mat: Pointer of the pointer to the matrix
 void Matrix2D_Delete(struct Matrix2D_t **mat);
-
-/// @brief Sets the size of a \ref Matrix2D_t.
-/// @param[in/out] mat: Pointer to the matrix
-/// @param[in] rows: The number of rows.
-/// @param[in] cols: The number of columns.
 void Matrix2D_Set_Size(struct Matrix2D_t *mat, int rows, int cols);
-
-/// @brief Sets the size of a \ref Matrix2D_t.
-/// @param[in/out] mat: Pointer to the matrix
-/// @param[in] dim: Dimension (1 or 2)
 int Matrix2D_Size(const struct Matrix2D_t *mat, int dim);
-
-/// @brief Returns the number of columns of a \ref Matrix2D_t.
-/// @param[in] mat: Pointer to the matrix
-/// Returns the number of columns (Second dimension)
 int Matrix2D_Get_ncols(const struct Matrix2D_t *var);
-
-/// @brief Returns the number of rows of a \ref Matrix2D_t.
-/// @param[in] mat: Pointer to the matrix
-/// Returns the number of rows (First dimension)
 int Matrix2D_Get_nrows(const struct Matrix2D_t *var);
-
-/// @brief Returns the value at location [i,j] of a \ref Matrix2D_t.
-/// @param[in] mat: Pointer to the matrix
-/// Returns the value of the cell
 double Matrix2D_Get_ij(const struct Matrix2D_t *var, int i, int j);
-
-/// @brief Returns the pointer of a column of a \ref Matrix2D_t.
-/// A column has \ref Matrix2D_Get_nrows values that can be accessed/modified from the returned pointer continuously.
-/// @param[in] mat: Pointer to the matrix
-/// @param[in] col: Column to retreive.
-/// /return double array (internal pointer) to the column
 double* Matrix2D_Get_col(const struct Matrix2D_t *var, int col);
 
-/// @brief Show an array through STDOUT
-/// Given an array of doubles, it generates a string
 void Debug_Array(const double *array, int arraysize);
-
-/// @brief Display the content of a \ref Matrix2D_t through STDOUT. This is only intended for debug purposes.
-/// @param[in] mat: Pointer to the matrix
 void Debug_Matrix2D(const struct Matrix2D_t *mat);
 
+
+struct XYZWPR_t XYZWPR_Create(double x,double y,double z,
+						      double w,double p,double r);
 
 //XYZ functions, consider adding inline if debug performance matters
 double XYZ_Dot(const struct XYZ_t *v, const struct XYZ_t *q);
@@ -311,6 +288,8 @@ bool          _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number); //Complet
 bool          _RoboDK_send_Line(struct RoboDK_t *inst, const char *); //Complete
 bool          _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item); //Complete
 bool          _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int size); //Complete
+bool          _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose); //Complete
+
 
 int32_t       _RoboDK_recv_Int(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_Line(struct RoboDK_t *inst, char *output); //Complete

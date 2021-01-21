@@ -27,6 +27,18 @@ int socketRead(SOCKET sock, void *outBuffer, int bufferSize) {
 #endif
 }
 
+//Takes timeout in ms
+void setSocketTimeout(SOCKET sock, int timeout_ms) {
+	struct timeval timeout;      
+#if defined(_WIN32)
+	timeout.tv_sec = timeout_ms * 0.001;
+	timeout.tv_usec = 0;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,sizeof(struct timeval));
+#elif defined(POSIX)
+
+#endif
+}
+
 int socketBytesAvailable(SOCKET sock) {
 #if defined(_WIN32)
 	unsigned long bytes_available;
@@ -212,6 +224,75 @@ bool Item_Connect(const struct Item_t *inst,const char *robot_ip) {
 	return status != 0;
 }
 
+void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Tool");
+	_RoboDK_send_Pose(inst->_RDK,pose);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+void Item_setPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Frame");
+	_RoboDK_send_Pose(inst->_RDK, pose);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_AbsAccOn");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK, accurate);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_FK");
+	_RoboDK_send_Array(inst->_RDK, joints->_Values, joints->_nDOFs);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	struct Mat_t pose = _RoboDK_recv_Pose(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+
+	struct Mat_t base2flange;
+	Mat_Copy(&base2flange,&pose);
+	if (tool_pose != NULL) {
+		Mat_Multiply_out(&base2flange,&pose,tool_pose);
+	}
+	if (reference_pose != NULL) {
+		struct Mat_t temp;
+		Mat_Inv_out(&temp, reference_pose);
+		Mat_Multiply_cumul(&base2flange, &temp);
+	}
+
+	return base2flange;
+}
+
+void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,
+	struct Mat_t *out_poseFiltered, struct Joints_t *out_joints_filtered) {
+	const struct Joints_t *joints_approx_validPtr = joints_approx;
+	struct Joints_t default_value = Joints_create(6);
+
+	if (joints_approx == NULL) {
+		joints_approx_validPtr = &default_value;
+	}
+
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "FilterTarget");
+	_RoboDK_send_Pose(inst->_RDK, *pose);
+	_RoboDK_send_Array(inst->_RDK, joints_approx_validPtr->_Values, joints_approx_validPtr->_nDOFs);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	struct Mat_t pose_filtered = _RoboDK_recv_Pose(inst->_RDK);
+	struct Joints_t joints_filtered =_RoboDK_recv_Array_Joints(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	*out_poseFiltered = pose_filtered;
+	*out_joints_filtered = joints_filtered;
+
+}
+
 void RoboDK_setRunMode(struct RoboDK_t *inst,int run_mode) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst,"S_RunMode");
@@ -394,6 +475,46 @@ void Mat_SetPos(struct Mat_t *in1out, const double x, const double y, const doub
 	in1out->arr16[14] = z;
 }
 
+void Mat_SetPose_KUKA(struct Mat_t *in1out, const struct XYZWPR_t in) {
+	double x = in.arr6[0];
+	double y = in.arr6[1];
+	double z = in.arr6[2];
+	double r = in.arr6[3];
+	double p = in.arr6[4];
+	double w = in.arr6[5];
+
+	double a = r * M_PI / 180.0;
+	double b = p * M_PI / 180.0;
+	double c = w * M_PI / 180.0;
+
+	double ca = cos(a);
+	double sa = sin(a);
+	double cb = cos(b);
+	double sb = sin(b);
+	double cc = cos(c);
+	double sc = sin(c);
+
+	in1out->arr16[0] = cb * ca;
+	in1out->arr16[4] = ca * sc*sb - cc * sa;
+	in1out->arr16[8] = sc * sa + cc * ca*sb;
+	in1out->arr16[12] = x;
+
+	in1out->arr16[1] = cb * sa;
+	in1out->arr16[5] = cc * ca + sc * sb*sa;
+	in1out->arr16[9] = cc * sb*sa - ca * sc;
+	in1out->arr16[13] = y;
+
+	in1out->arr16[2] = -sb;
+	in1out->arr16[6] = cb * sc;
+	in1out->arr16[10] = cc * cb;
+	in1out->arr16[14] = z;
+
+	in1out->arr16[3] = 0.0;
+	in1out->arr16[7] = 0.0;
+	in1out->arr16[11] = 0.0;
+	in1out->arr16[15] = 1.0;
+}
+
 void Mat_Get_VX(const struct Mat_t *inst, struct XYZ_t *out) {
 	out->arr3[0] = inst->arr16[0];
 	out->arr3[1] = inst->arr16[1];
@@ -424,7 +545,7 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
 	if (inst->arr16[2] > (1.0 - 1e-6)) {
 		p = -M_PI * 0.5;
 		r = 0;
-		w = atan2(-inst->arr16[6], inst->arr16[5]);
+		w = atan2(-inst->arr16[9], inst->arr16[5]);
 	}
 	else if (inst->arr16[2] < -1.0 + 1e-6) {
 		p = 0.5*M_PI;
@@ -434,7 +555,7 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
 	else {
 		p = atan2(-inst->arr16[2], sqrt(inst->arr16[0] * inst->arr16[0] + inst->arr16[1] * inst->arr16[1]));
 		w = atan2(inst->arr16[1], inst->arr16[0]);
-		r = atan2(inst->arr16[6], inst->arr16[8]);
+		r = atan2(inst->arr16[6], inst->arr16[10]);
 	}
 	r = r * 180.0 / M_PI;
 	p = p * 180.0 / M_PI;
@@ -516,6 +637,10 @@ struct Joints_t Joints_copy(const double *joints, int ndofs) {
 }
 
 void Joints_SetValues(struct Joints_t *inst, const double *values, int ndofs) {
+	if (ndofs > 0) {
+		inst->_nDOFs = ndofs;
+	}
+
 	for (int i = 0; i < inst->_nDOFs; i++) {
 		inst->_Values[i] = values[i];
 	}
@@ -533,7 +658,7 @@ void Joints_ToString(struct Joints_t *inst, char *output) {
 	}
 	strcat(output, "tJoints({");
 	char tempbuffer[20];
-	for (int i = 1; i < inst->_nDOFs; i++) {
+	for (int i = 0; i < inst->_nDOFs; i++) {
 		if (inst->_Values[i] < 1e9) {
 			sprintf(tempbuffer, "%10.2f,", inst->_Values[i]);
 		}
@@ -727,6 +852,18 @@ void Debug_Matrix2D(const struct Matrix2D_t *emx) {
 		printf("\n");
 		//std::cout << "\n";
 	}
+}
+
+struct XYZWPR_t XYZWPR_Create(double x, double y, double z,
+	double w, double p, double r) {
+	struct XYZWPR_t out;
+	out.arr6[0] = x;
+	out.arr6[1] = y;
+	out.arr6[2] = z;
+	out.arr6[3] = w;
+	out.arr6[4] = p;
+	out.arr6[5] = r;
+	return out;
 }
 
 double XYZ_Dot(const struct XYZ_t *v, const struct XYZ_t *q) {
@@ -941,20 +1078,38 @@ bool _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int nvalues
 	return true;
 }
 
+bool _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose) {
+	if (inst->_isConnected == false) { return false; }
+	char bufferBytes[16 * sizeof(double)];
+	double valuei;
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
+			valuei = pose.arr16[(j * 4) + i];
+			char valueIBytes[sizeof(double)];
+			memcpy(&valueIBytes, &valuei, sizeof(double));
+			for (int k = 0; k < sizeof(double); k++) {
+				bufferBytes[((i + (j * 4)) * 8) + k] = valueIBytes[sizeof(double) - 1 - k];
+			}
+		}
+	}
+	SocketWrite(inst->_COM, &bufferBytes, sizeof(bufferBytes));
+
+	return true;
+}
+
 
 int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
 	int32_t value = -1; // do not change type
 	int i;
 	if (inst->_isConnected == false) { return false; }
-	if (socketBytesAvailable(inst->_COM) <= sizeof(int32_t)) {
-		char buffer[sizeof(int32_t)];
-		int bytesReceived = socketRead(inst->_COM, buffer, sizeof(int32_t));
-		if (bytesReceived <= 0) {
-			return -1;
-		}
-		for (i = 0; i < 4; i++) {
-			value = buffer[i] << (24 - i * 8);
-		}
+	char buffer[sizeof(int32_t)];
+	int bytesReceived = socketRead(inst->_COM, buffer, sizeof(int32_t));
+	if (bytesReceived <= 0) {
+		return -1;
+	}
+	for (i = 0; i < 4; i++) {
+		value = buffer[i] << (24 - i * 8);
+	}
 	}
 	return value;
 }
@@ -1009,19 +1164,17 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst) {
 	memset(pose.arr16, 0, sizeof(double[16]));
 	if (inst->_isConnected == false) { return pose; }
 	int size = 16 * sizeof(double);
-	if (socketBytesAvailable(inst->_COM) <= size) {
-		char bufferBytes[16 * sizeof(double)];
-		socketRead(inst->_COM, bufferBytes, 16 * sizeof(double));
-		for (int j = 0; j < 4; j++) {
-			for (int i = 0; i < 4; i++) {
-				char valueIBytes[sizeof(double)];
-				for (int k = 0; k < sizeof(double); k++) {
-					valueIBytes[sizeof(double) - 1 - k] = bufferBytes[((i + (j * 4)) * 8) + k];
-				}
-				double valuei;
-				memcpy(&valuei, &valueIBytes, sizeof(double));
-				pose.arr16[(j * 4) + i] = valuei;
+	char bufferBytes[16 * sizeof(double)];
+	socketRead(inst->_COM, bufferBytes, size);
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
+			char valueIBytes[sizeof(double)];
+			for (int k = 0; k < sizeof(double); k++) {
+				valueIBytes[sizeof(double) - 1 - k] = bufferBytes[((i + (j * 4)) * 8) + k];
 			}
+			double valuei;
+			memcpy(&valuei, &valueIBytes, sizeof(double));
+			pose.arr16[(j * 4) + i] = valuei;
 		}
 	}
 	return pose;
@@ -1035,19 +1188,22 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
 	}
 	if (nvalues < 0 || nvalues > 50) { return false; } //check if the value is not too big
 	int size = nvalues * sizeof(double);
-	if (socketBytesAvailable(inst->_COM) <= (size + 4)) {
-		double valuei;
-		for (int i = 0; i < nvalues; i++) {
-			char bufferCurValue[sizeof(double)];
-			char valueIBytes[sizeof(double)];
-			socketRead(inst->_COM, &bufferCurValue, sizeof(double));
-			for (int k = 0; k < sizeof(double); k++) {
-				valueIBytes[sizeof(double) - 1 - k] = bufferCurValue[k];
-			}
-			memcpy(&valuei, &valueIBytes, sizeof(double));
-			pValues[i] = valuei;
+	//if (socketBytesAvailable(inst->_COM) <= (size + 4)) {
+	double valuei;
+	for (int i = 0; i < nvalues; i++) {
+		char bufferCurValue[sizeof(double)];
+		char valueIBytes[sizeof(double)];
+		int nread = socketRead(inst->_COM, &bufferCurValue, sizeof(double));
+		if (nread < 0) {
+			return false;
 		}
+		for (int k = 0; k < sizeof(double); k++) {
+			valueIBytes[sizeof(double) - 1 - k] = bufferCurValue[k];
+		}
+		memcpy(&valuei, &valueIBytes, sizeof(double));
+		pValues[i] = valuei;
 	}
+	//}
 	return true;
 }
 
