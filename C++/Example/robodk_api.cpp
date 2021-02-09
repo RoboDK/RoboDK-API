@@ -3073,6 +3073,35 @@ Mat RoboDK::ViewPose(){
     return pose;
 }
 
+//INCOMPLETE function!
+/*bool RoboDK::SetRobotParams(Item *robot, tMatrix2D dhm, Mat poseBase, Mat poseTool)
+{
+    _check_connection();
+    _send_Line("S_AbsAccParam");
+    _send_Item(robot);
+    Mat r2b;
+    r2b.setToIdentity();
+    _send_Pose(r2b);
+    _send_Pose(poseBase);
+    _send_Pose(poseTool);
+    int *ndofs = dhm.size;
+    _send_Int(*ndofs);
+    for (int i = 0; i < *ndofs; i++){
+        _send_Array(dhm);
+    }
+
+    _send_Pose(poseBase);
+    _send_Pose(poseTool);
+    _send_Int(*ndofs);
+    for (int i = 0; i < *ndofs; i++){
+        _send_Array(dhm[i]);
+    }
+
+    _send_Array(nullptr);
+    _send_Array(nullptr);
+    _check_status();
+    return true;
+}*/
 
 Item RoboDK::Cam2D_Add(const Item &item_object, const QString &cam_params, const Item *cam_item){
     _check_connection();
