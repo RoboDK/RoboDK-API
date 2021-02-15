@@ -742,6 +742,7 @@ public:
     /// </returns>
     static Mat rotz(double rz);
 
+
 private:
     /// Flags if a matrix is not valid.
     bool _valid;

@@ -3072,7 +3072,8 @@ Mat RoboDK::ViewPose(){
     _check_status();
     return pose;
 }
-//INCOMPLETE!!!!!!!
+
+//INCOMPLETE function!
 /*bool RoboDK::SetRobotParams(Item *robot, tMatrix2D dhm, Mat poseBase, Mat poseTool)
 {
     _check_connection();
@@ -3101,6 +3102,39 @@ Mat RoboDK::ViewPose(){
     _check_status();
     return true;
 }*/
+
+Item RoboDK::Cam2D_Add(const Item &item_object, const QString &cam_params, const Item *cam_item){
+    _check_connection();
+    _send_Line("Cam2D_PtrAdd");
+    _send_Item(item_object);
+    _send_Item(cam_item);
+    _send_Line(cam_params);
+    Item cam_item_return = _recv_Item();
+    _check_status();
+    return cam_item_return;
+}
+int RoboDK::Cam2D_Snapshot(const QString &file_save_img, const Item &cam_item, const QString &params){
+    _check_connection();
+    _send_Line("Cam2D_PtrSnapshot");
+    _send_Item(cam_item);
+    _send_Line(file_save_img);
+    _send_Line(params);
+    _TIMEOUT = 3600 * 1000;
+    int status = _recv_Int();
+    _TIMEOUT = ROBODK_API_TIMEOUT;
+    _check_status();
+    return status;
+}
+
+int RoboDK::Cam2D_SetParams(const QString &params, const Item &cam_item){
+    _check_connection();
+    _send_Line("Cam2D_PtrSetParams");
+    _send_Item(cam_item);
+    _send_Line(params);
+    int status = _recv_Int();
+    _check_status();
+    return status;
+}
 
 Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
 {

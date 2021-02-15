@@ -742,6 +742,7 @@ public:
     /// </returns>
     static Mat rotz(double rz);
 
+
 private:
     /// Flags if a matrix is not valid.
     bool _valid;
@@ -1217,6 +1218,32 @@ public:
     /// </summary>
     /// <returns>View pose.</returns>
     Mat ViewPose();
+
+    /// <summary>
+    /// Add a simulated 2D or depth camera as an item. Use Delete to delete it.
+    /// </summary>
+    /// <param name="item_object">Reference or object to attach the camera</param>
+    /// <param name="cam_params">Camera settings as described here: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Cam2D_Add</param>
+    /// <param name="cam_item">Provide an existing camera item to modify it</param>
+    /// <returns>Camera item</returns>
+    Item Cam2D_Add(const Item &item_object, const QString &cam_params, const Item *cam_item=nullptr);
+
+    /// <summary>
+    /// Take a snapshot of a simulated camera and save it as an image.
+    /// </summary>
+    /// <param name="file_save_img">file path to save. Formats supported include PNG, JPEG, TIFF, ...</param>
+    /// <param name="cam_item">Camera item</param>
+    /// <param name="params">additional options (use, "Grayscale", "Depth" or "Color" to modify the output of a camera snapshot)</param>
+    /// <returns>Returns 1 if success, 0 otherwise</returns>
+    int Cam2D_Snapshot(const QString &file_save_img, const Item &cam_item, const QString &params="");
+
+     /// <summary>
+     /// Set the camera parameters.
+     /// </summary>
+     /// <param name="cam_params">Camera parameters: The same parameters that can be set using Cam2D_Add()</param>
+     /// <param name="cam_item">Camera item</param>
+     /// <returns>Returns 1 if success, 0 otherwise</returns>
+     int Cam2D_SetParams(const QString &cam_params, const Item &cam_item);
 
     /// <summary>
     /// Set the nominal robot parameters.
