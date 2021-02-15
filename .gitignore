@@ -19,3 +19,7 @@ C#/APIExamples/SimpleApplication/bin/
 C#/APIExamples/SimpleNetcoreApplication/bin/
 C#/APIExamples/UIExample/bin/
 C#/APIUnitTest/bin/
+C/RoboDK C API/.vs/*
+C/RoboDK C API/RoboDK_C_API/x64/*
+C/RoboDK C API/x64/*
+C/RoboDK C API/RoboDK_C_API/RoboDK_C_API.vcxproj.user

@@ -157,7 +157,7 @@ struct Joints_t {
 	double _Values[RDK_SIZE_JOINTS_MAX];
 };
 
-/// \brief The Matrix2D_t struct represents a variable size 2d Matrix. Use the Matrix2D_... functions to oeprate on this variable sized matrix.
+/// \brief The Matrix2D_t struct represents a variable size 2d Matrix. Use the Matrix2D_... functions to operate on this variable sized matrix.
 /// This type of data can be used to get/set a program as a list. This is also useful for backwards compatibility functions related to RoKiSim.
 struct Matrix2D_t {
 	/// Pointer to the data
@@ -211,6 +211,7 @@ bool Item_Connect(const struct Item_t *inst, const char *robot_ip); //Complete
 void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose);
 void Item_setPoseFrame(const struct Item_t *inst,const struct Mat_t pose);
 void Item_setAccuracyActive(const struct Item_t *inst, const int accurate);
+struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t *ref);
 struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
 

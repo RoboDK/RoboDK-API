@@ -35,7 +35,7 @@ void setSocketTimeout(SOCKET sock, int timeout_ms) {
 	timeout.tv_usec = 0;
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,sizeof(struct timeval));
 #elif defined(POSIX)
-
+	#warning todo
 #endif
 }
 
@@ -248,6 +248,29 @@ void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
 	_RoboDK_send_Int(inst->_RDK, accurate);
 	_RoboDK_check_status(inst->_RDK);
 }
+
+
+
+struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t* ref) {
+	struct Joints_t jnts;
+	struct Mat_t base2flange = *pose; //pose of the robot flange with respect to the robot base frame
+	if (tool != NULL) {
+		struct Mat_t poseInv;
+		//Mat_Inv_out();
+		//base2flange = pose * tool->inv();
+	}
+	if (ref != NULL) {
+		//base2flange = (*ref) * base2flange;
+	}
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_IK");
+	_RoboDK_send_Pose(inst->_RDK, base2flange);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	jnts = _RoboDK_recv_Array_Joints(inst->_RDK); //&jnts  VS
+	_RoboDK_check_status(inst->_RDK);
+	return jnts;
+}
+
 
 struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose) {
 	_RoboDK_check_connection(inst->_RDK);
@@ -1109,7 +1132,6 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
 	}
 	for (i = 0; i < 4; i++) {
 		value = buffer[i] << (24 - i * 8);
-	}
 	}
 	return value;
 }
