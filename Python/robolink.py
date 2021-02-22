@@ -4883,14 +4883,18 @@ class Item():
         return config
     
     def SolveIK(self, pose, joints_approx = None, tool=None, reference=None):
-        """Calculates the inverse kinematics for the specified pose. 
-        It returns the joints solution as a list of floats which are the closest match to the current robot configuration (see SolveIK_All()).
-        Optionally, specify a preferred robot position using the parameter joints_approx.
+        """Calculates the inverse kinematics for a given specified pose. The pose must be robot flange with respect to the robot base unless you provide the tool and/or reference. 
+        It returns the joints solution as a Mat object (size 1xnDOFs). Use list() on a Mat to convert to a list. If there is no solution it returns an array of size 0.
+        If there is no solution it returns an empty matrix.
         
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`robodk.Mat`
-        :param joints_approx: approximate solution. Leave blank to return the closest match to the current robot position.
+        :param joints_approx: Preferred joint solution or robot configuration. Leave blank to return the closest match to the current robot position.
         :type joints_approx: list of float
+        :param joints_approx: Tool pose with respect to the robot flange (TCP)
+        :type joints_approx: :class:`robodk.Mat`
+        :param joints_approx: Reference pose (reference frame with respect to the robot base)
+        :type joints_approx: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         """
