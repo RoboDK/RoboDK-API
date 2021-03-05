@@ -195,54 +195,110 @@ struct Joints_t Item_Joints(const struct Item_t *inst) {
 	return jnts;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Move using Joint angles
+
+
 void Item_MoveJ_joints(struct Item_t *inst, struct Joints_t *joints, bool isBlocking) {
+
 	_RoboDK_moveX(inst->_RDK, NULL, joints, NULL, inst, 1, isBlocking);
 }
 
-void Item_MoveJ_mat(struct Item_t *inst, struct Mat_t *targetPose, bool isBlocking) {
-	_RoboDK_moveX(inst->_RDK, NULL, NULL, targetPose, inst, 1, isBlocking);
-
-}
-
-void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
-		
-		_RoboDK_moveX(inst->_RDK ,inst2, nullptr, nullptr, inst, 1, isBlocking);
-
-}
-
 void Item_MoveL_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking) {
+
 	_RoboDK_moveX(inst->_RDK, NULL, joints, NULL, inst, 2, isBlocking);
 }
 
-void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking) {
-	_RoboDK_moveX(inst->_RDK, NULL, NULL, targetPose, inst, 2, isBlocking);
+void Item_MoveC_joints(struct Item_t* inst, struct Joints_t* joints1, struct Joints_t* joints2, bool isBlocking) {
 
+	_RoboDK_moveC(inst->_RDK, NULL, joints1, NULL, NULL, joints2, NULL, inst, isBlocking);
 }
 
+
+
+
+//Move using items in the station tree (Targets)
+void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
+
+	_RoboDK_moveX(inst->_RDK, inst2, nullptr, nullptr, inst, 1, isBlocking);
+
+}
 void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
 
 	_RoboDK_moveX(inst->_RDK, inst2, nullptr, nullptr, inst, 2, isBlocking);
 
 }
 
+void Item_MoveC(struct Item_t* inst, struct Item_t* inst2, struct Item_t* inst3, bool isBlocking) {
 
+	_RoboDK_moveC(inst->_RDK, inst2, nullptr, nullptr,inst3, nullptr, nullptr, inst, isBlocking);
 
+}
 
+//Move using mat entered as a Target Pose
+void Item_MoveJ_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking) {
 
+	_RoboDK_moveX(inst->_RDK, NULL, NULL, targetPose, inst, 1, isBlocking);
 
+}
 
+void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking) {
 
+	_RoboDK_moveX(inst->_RDK, NULL, NULL, targetPose, inst, 2, isBlocking);
 
+}
+void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t* targetPose2, bool isBlocking) {
 
+	_RoboDK_moveC(inst->_RDK, nullptr, nullptr, targetPose1, nullptr, nullptr,targetPose2,inst, isBlocking);
 
+}
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Item_setDO(const struct Item_t* inst, const char *io_var, const char *io_value) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"setDO");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, io_var);
+	_RoboDK_send_Line(inst->_RDK, io_value);
+	_RoboDK_check_status(inst->_RDK);
+}
 
+void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "setAO");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, io_var);
+	_RoboDK_send_Line(inst->_RDK, io_value);
+	_RoboDK_check_status(inst->_RDK);
+}
 
+char Item_getDI(const struct Item_t* inst, char* io_var) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"getDI");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK,io_var);
+	_RoboDK_recv_Line(inst->_RDK, io_var);
+	char io_value = *io_var;
+	_RoboDK_check_status(inst->_RDK);
+	return io_value;
+}
 
+char Item_getAI(const struct Item_t* inst, char* io_var) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"getAI");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, io_var);
+	_RoboDK_recv_Line(inst->_RDK, io_var);
+	char di_value = *io_var;
+	_RoboDK_check_status(inst->_RDK);
+	return di_value;
+}
 
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Item_WaitMove(const struct Item_t *inst, double timeout_sec) {
 	_RoboDK_check_connection(inst->_RDK);
@@ -1296,6 +1352,14 @@ bool _RoboDK_connected(struct RoboDK_t *inst) {
 	return inst->_isConnected;
 }
 
+bool _RoboDK_disconnect(struct RoboDK_t* inst) {
+	if (inst->_isConnected == false) {
+		return false;
+	}
+	closesocket(inst->_COM);
+	return true;
+}
+
 
 bool _RoboDK_check_connection(struct RoboDK_t *inst) {
 	if (_RoboDK_connected(inst)) {
@@ -1569,7 +1633,7 @@ bool _RoboDK_check_status(struct RoboDK_t *inst) {
 }
 
 
-void _RoboDK_moveX(struct RoboDK_t *inst, const struct Item_t *target, const struct Joints_t *joints, const struct Mat_t *mat_target, const struct Item_t *itemrobot, int movetype, bool blocking) {
+void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const struct Joints_t* joints, const struct Mat_t* mat_target, const struct Item_t* itemrobot, int movetype, bool blocking) {
 	Item_WaitMove(itemrobot, 300);
 	_RoboDK_send_Line(inst, "MoveX");
 	_RoboDK_send_Int(inst, movetype);
@@ -1598,12 +1662,64 @@ void _RoboDK_moveX(struct RoboDK_t *inst, const struct Item_t *target, const str
 	if (blocking) {
 		Item_WaitMove(itemrobot, 300);
 	}
-
-
-
-
-
-
-
-
 }
+
+
+
+void _RoboDK_moveC(struct RoboDK_t* inst, const struct Item_t* target1, const struct Joints_t* joints1, const struct Mat_t* mat_target1, const struct Item_t* target2, const struct Joints_t* joints2, const struct Mat_t* mat_target2, const struct Item_t* itemrobot, bool isblocking) {
+	Item_WaitMove(itemrobot, 300);
+	_RoboDK_send_Line(inst, "MoveC");
+	_RoboDK_send_Int(inst,3);
+	if (target1 != NULL) {
+		_RoboDK_send_Int(inst, 3);
+		_RoboDK_send_Array(inst, NULL, 0);
+		_RoboDK_send_Item(inst, target1);
+	}
+	else if (joints1 != NULL) {
+		_RoboDK_send_Int(inst, 1);
+		_RoboDK_send_Array(inst, joints1->_Values, joints1->_nDOFs);
+		_RoboDK_send_Item(inst, NULL);
+	}
+	else if (mat_target1 != NULL) {// && mat_target.IsHomogeneous()) {
+		_RoboDK_send_Int(inst, 2);
+		_RoboDK_send_Array(inst, mat_target1->arr16, 16); // keep it as array!
+		_RoboDK_send_Item(inst, NULL);
+	}
+	else {
+		//throw new RDKException("Invalid target type"); //raise Exception('Problems running function');
+		fprintf(stderr, "Invalid target type");
+		return;
+	}
+
+
+
+	if (target2 != NULL) {
+		_RoboDK_send_Int(inst, 3);
+		_RoboDK_send_Array(inst, NULL, 0);
+		_RoboDK_send_Item(inst, target2);
+	}
+	else if (joints2 != NULL) {
+		_RoboDK_send_Int(inst, 1);
+		_RoboDK_send_Array(inst, joints2->_Values, joints2->_nDOFs);
+		_RoboDK_send_Item(inst, NULL);
+	}
+	else if (mat_target2 != NULL) {// && mat_target.IsHomogeneous()) {
+		_RoboDK_send_Int(inst, 2);
+		_RoboDK_send_Array(inst, mat_target2->arr16, 16); // keep it as array!
+		_RoboDK_send_Item(inst, NULL);
+	}
+	else {
+		//throw new RDKException("Invalid target type"); //raise Exception('Problems running function');
+		fprintf(stderr, "Invalid target type");
+		return;
+	}
+
+
+	_RoboDK_send_Item(inst, itemrobot);
+	_RoboDK_check_status(inst);
+	if (isblocking) {
+		Item_WaitMove(itemrobot, 300);
+	}
+}
+
+

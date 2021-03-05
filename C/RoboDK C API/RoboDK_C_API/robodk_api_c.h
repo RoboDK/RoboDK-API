@@ -211,18 +211,21 @@ bool Item_Connect(const struct Item_t *inst, const char *robot_ip); //Complete
 void Item_MoveJ_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking); //Complete
 void Item_MoveJ_mat(struct Item_t* inst, struct Mat_t* joints, bool isBlocking); //Complete
 void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done 
+
 void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done
 void Item_MoveL_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking);
 void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking);
 
 
+void Item_MoveC_joints(struct Item_t* inst, struct Joints_t* joints1, struct Joints_t* joints2, bool isBlocking);
+void Item_MoveC(struct Item_t* inst, struct Item_t* inst2, struct Item_t* inst3, bool isBlocking);
+void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t* targetPose2, bool isBlocking);
 
-
-
-
-
-
-
+//DI and DO
+char Item_getDI(const struct Item_t* inst, char* io_var);
+char Item_getAI(const struct Item_t* inst, char* io_var);
+void Item_setDO(const struct Item_t* inst, const char* io_var, const char* io_value);
+void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value);
 
 
 
@@ -338,6 +341,9 @@ void XYZ_Copy(struct XYZ_t *out, const struct XYZ_t *in);
 //Internal functions
 bool		  _RoboDK_connect_smart(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_connect(struct RoboDK_t *inst); //Complete
+
+bool          _RoboDK_disconnect(struct RoboDK_t* inst); /// 
+
 bool          _RoboDK_connected(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_check_connection(struct RoboDK_t *inst); //Complete
 
@@ -358,4 +364,4 @@ struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_check_status(struct RoboDK_t *inst); //Complete
 
 void          _RoboDK_moveX(struct RoboDK_t *inst, const struct Item_t *target, const struct Joints_t *joints, const struct Mat_t *mat_target, const struct Item_t *itemrobot, int movetype, bool blocking);
-
+void          _RoboDK_moveC(struct RoboDK_t* inst, const struct Item_t* target1, const struct Joints_t* joints1, const struct Mat_t* mat_target1, const struct Item_t* target2, const struct Joints_t* joints2, const struct Mat_t* mat_target2, const struct Item_t* itemrobot, bool blocking);
