@@ -185,7 +185,7 @@ struct  XYZWPR_t {
 };
 
 
-//Platform indepedant IO operations
+//Platform indepedent IO operations
 void ThreadSleep(unsigned long nMilliseconds);
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID);
 int  SocketWrite(SOCKET, void *buffer, int bufferSize);
@@ -198,26 +198,82 @@ struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM
 void RoboDK_setRunMode(struct RoboDK_t *inst, int run_mode); //Complete
 
 //RoboDK item class functions
-bool Item_Valid(const struct Item_t *item);
+bool Item_Valid(const struct Item_t *item); //Done
 void Item_Name(const struct Item_t *inst, char *nameOut); //Complete
 struct Mat_t Item_Pose(const struct Item_t *inst); //Complete
+
 //Robot specific item commands
 struct Joints_t Item_Joints(const struct Item_t *inst); //Complete
-void Item_MoveJ_joints(struct Item_t *inst, struct Joints_t *joints, bool isBlocking); //Complete
-void Item_MoveJ_mat(struct Item_t *inst, struct Mat_t *joints, bool isBlocking); //Complete
-void Item_WaitMove(const struct Item_t *inst, double timeout_sec); //Complete
+void Item_WaitMove(const struct Item_t *inst, double timeout_sec); //
 bool Item_Connect(const struct Item_t *inst, const char *robot_ip); //Complete
 
+//Move Functions
+void Item_MoveJ_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking); //Complete
+void Item_MoveJ_mat(struct Item_t* inst, struct Mat_t* joints, bool isBlocking); //Complete
+void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done 
+void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done
+void Item_MoveL_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking);
+void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking);
+
+
+
+
+
+
+
+
+
+
+
+
+// Pose Functions
+void Item_setPose(const struct Item_t* inst, const struct Mat_t pose); //done VS
 void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose);
 void Item_setPoseFrame(const struct Item_t *inst,const struct Mat_t pose);
 void Item_setAccuracyActive(const struct Item_t *inst, const int accurate);
+
+
+
+//recently added VS
+void Item_setName(const struct Item_t* inst, const char* name); //progress
+struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst );// 
+void Item_setRounding(const struct Item_t* inst, double zonedata);// Done 
+void Item_setSimulationSpeed(const struct Item_t* inst, double speed);//Done  
+double Item_SimulationSpeed(const struct Item_t* inst);//In Progress   
+void Item_ShowInstructions(const struct Item_t* inst, bool visible); //Done 
+int Item_InstructionCount(const struct Item_t* inst);//Done 
+void Item_ShowTargets(const struct Item_t* inst, bool visible);//In Progress //pass program  item 
+void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints);//Done 
+bool Item_Busy(const struct Item_t* inst);//Done
+void Item_Stop(const struct Item_t* inst);//Done
+bool Item_Disconnect(const struct Item_t* inst); //Done
+
+
+
+void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose); //Done
+struct Mat_t Item_PoseAbs(const struct Item_t* inst);//Done
+
+
+
+struct Mat_t Item_PoseTool(const struct Item_t* inst); //Done Returns the pose (Mat) of the robot tool (TCP) with respect to the robot flange
+struct Mat_t Item_PoseFrame(const struct Item_t* inst); //Done Returns the pose (Mat) of the Active reference frame with respect to the robot base 
+void Item_setGeometryPose(const struct Item_t* inst, const struct Mat_t pose); //done
+struct Mat_t Item_GeometryPose(const struct Item_t* inst); //done
+
+void Item_setColor(const struct Item_t* inst,double R, double G, double B, double A); //Done
+
+struct Item_t Item_Parent(const struct Item_t* inst); //Done
+
+//void Item_List(const struct Item_t *inst, char *nameOut[]); //In progress
+
+
 struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t *ref);
 struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
 
 
 //Matrix functions, not directly related to robodk's api but needed to manipulate matrices as double[16] arrays.
-//Upercase first letter after _ means it operates on an instance of the struct while lowercase creates a new instance of the struct.
+//Uppercase first letter after _ means it operates on an instance of the struct while lowercase creates a new instance of the struct.
 struct Mat_t Mat_eye();
 struct Mat_t Mat_transl(const double x, const double y, const double z);
 struct Mat_t Mat_rotx(const double rx);

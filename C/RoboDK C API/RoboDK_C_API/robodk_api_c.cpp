@@ -175,7 +175,7 @@ void Item_Name(const struct Item_t *inst, char *nameOut) {
 	return;
 }
 
-struct Mat_t Item_Pose(const struct Item_t *inst) {
+struct Mat_t Item_Pose(const struct Item_t *inst) {  
 	struct Mat_t pose;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_Hlocal");
@@ -204,13 +204,53 @@ void Item_MoveJ_mat(struct Item_t *inst, struct Mat_t *targetPose, bool isBlocki
 
 }
 
+void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
+		
+		_RoboDK_moveX(inst->_RDK ,inst2, nullptr, nullptr, inst, 1, isBlocking);
+
+}
+
+void Item_MoveL_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking) {
+	_RoboDK_moveX(inst->_RDK, NULL, joints, NULL, inst, 2, isBlocking);
+}
+
+void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking) {
+	_RoboDK_moveX(inst->_RDK, NULL, NULL, targetPose, inst, 2, isBlocking);
+
+}
+
+void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
+
+	_RoboDK_moveX(inst->_RDK, inst2, nullptr, nullptr, inst, 2, isBlocking);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Item_WaitMove(const struct Item_t *inst, double timeout_sec) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "WaitMove");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
 	inst->_RDK->_TIMEOUT = (int)(timeout_sec * 1000.0);
-	_RoboDK_check_status(inst->_RDK); //Will wait heres
+	_RoboDK_check_status(inst->_RDK); //Will wait here
 	inst->_RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
 }
 
@@ -223,6 +263,51 @@ bool Item_Connect(const struct Item_t *inst,const char *robot_ip) {
 	_RoboDK_check_status(inst->_RDK);
 	return status != 0;
 }
+
+bool Item_Disconnect(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Disconnect");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int status = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return status != 0;
+}
+
+
+struct Mat_t Item_PoseFrame(const struct Item_t* inst) { //in progress
+	struct Mat_t pose;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Frame");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	pose = _RoboDK_recv_Pose(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	printf("Retrieving Active Reference Frame...\n");
+	return pose;
+}
+
+
+struct Mat_t Item_PoseTool(const struct Item_t* inst) { //in progress
+	struct Mat_t pose;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Tool");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	pose = _RoboDK_recv_Pose(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	printf("Retrieving Pose of Tool...\n");
+	return pose;
+}
+
+void Item_setPose(const struct Item_t* inst, const struct Mat_t pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Hlocal");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Pose(inst->_RDK, pose);
+	
+	_RoboDK_check_status(inst->_RDK);
+
+}
+
+
 
 void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
@@ -240,6 +325,14 @@ void Item_setPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
+void Item_setName(const struct Item_t* inst, const char *name) {
+
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Name");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, name);
+	_RoboDK_check_status(inst->_RDK);
+}
 
 void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
 	_RoboDK_check_connection(inst->_RDK);
@@ -248,6 +341,205 @@ void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
 	_RoboDK_send_Int(inst->_RDK, accurate);
 	_RoboDK_check_status(inst->_RDK);
 }
+
+struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst) {//in progress
+	_RoboDK_check_connection(inst->_RDK);//initiating
+	_RoboDK_send_Line(inst->_RDK, "Add_FRAME");//command
+	_RoboDK_send_Line(inst->_RDK, framename);//frame name passed by user
+	_RoboDK_send_Item(inst->_RDK, inst); //sending parent
+	struct Item_t frame = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	printf("New Frame Added\n");
+	return frame;
+
+}
+
+
+void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progress
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"S_ZoneData");
+	_RoboDK_send_Int(inst->_RDK, ((int)(zonedata * 1000.0)));
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+	printf("Rounding Value changed to %d\n", int(zonedata));
+}
+
+void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints ) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"S_Speed4");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	double speed_accel[4];
+	speed_accel[0] = speed_linear;
+	speed_accel[1] = accel_linear;
+	speed_accel[2] = speed_joints;
+	speed_accel[3] = accel_joints;
+	_RoboDK_send_Array(inst->_RDK,speed_accel, 4);
+	_RoboDK_check_status(inst->_RDK);
+	printf("Speed Changed to new values\n");
+}
+
+bool Item_Busy(const struct Item_t* inst) { //pass program
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "IsBusy");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int busy = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	if (busy>0){
+		printf("Program is running\n");
+	}
+	else {
+		printf("Program is paused\n");
+	}
+	return(busy > 0);
+}
+
+
+void Item_Stop(const struct Item_t* inst) { //pass program
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"Stop");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+
+
+void Item_setSimulationSpeed(const struct Item_t* inst, double speed) { 
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "SimulateSpeed");
+	_RoboDK_send_Int(inst->_RDK, (int)(speed * 1000));
+	_RoboDK_check_status(inst->_RDK);
+
+}
+
+double Item_SimulationSpeed(const struct Item_t* inst) {
+	double speed = 0.000;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "GetSimulateSpeed");
+	speed = 0.001*(double)_RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return speed;
+}
+
+void Item_ShowInstructions(const struct Item_t* inst, bool visible) { // pass Item with ITEM_TYPE_PROGRAM
+	int t = 0;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Prog_ShowIns");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	if (visible) {
+		t = 1;
+		printf("Instructions are visible\n");
+	}
+	else {
+		t = 0;
+		printf("Instructions are hidden\n");
+	}
+	_RoboDK_send_Int(inst->_RDK, t);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+void Item_ShowTargets(const struct Item_t* inst, bool visible) { // pass Item with ITEM_TYPE_PROGRAM
+	int t = 0;  
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Prog_ShowTargets");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	if (visible) {
+		t = 1;
+		printf("Targets are visible\n");
+	}
+	else  {
+		t = 0;
+		printf("Targets are hidden\n");
+	}
+
+	_RoboDK_send_Int(inst->_RDK, t);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+
+int Item_InstructionCount(const struct Item_t* inst) {
+
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Prog_Nins");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int nins = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return nins;
+
+}
+
+
+void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Hlocal_Abs");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Pose(inst->_RDK, pose);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+struct Mat_t Item_PoseAbs(const struct Item_t* inst) {
+	struct Mat_t pose;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Hlocal_Abs");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	pose = _RoboDK_recv_Pose(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return pose;
+}
+
+
+
+void Item_setGeometryPose(const struct Item_t* inst, const struct Mat_t pose) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Hgeom");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Pose(inst->_RDK, pose);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+struct Mat_t Item_GeometryPose(const struct Item_t* inst) {
+	struct Mat_t pose;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Hgeom");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	pose = _RoboDK_recv_Pose(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return pose;
+}
+
+
+
+void Item_setColor(const struct Item_t* inst, double R, double G, double B, double A) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"S_Color");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	double color[4];
+	color[0] = R;
+	color[1] = G;
+	color[2] = B;
+	color[3] = A;
+	_RoboDK_send_Array(inst->_RDK, color, 4);
+	_RoboDK_check_status(inst->_RDK);
+
+}
+
+struct Item_t Item_Parent(const struct Item_t* inst) {
+	struct Item_t parent; 
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Parent");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	parent = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return parent;
+}
+
+
+
+
+
+
 
 
 
@@ -1306,5 +1598,12 @@ void _RoboDK_moveX(struct RoboDK_t *inst, const struct Item_t *target, const str
 	if (blocking) {
 		Item_WaitMove(itemrobot, 300);
 	}
+
+
+
+
+
+
+
 
 }

@@ -2097,7 +2097,7 @@ public:
     void JointsConfig(const tJoints &joints, tConfig config);
 
     /// <summary>
-    /// Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
+    /// This function calculates the inverse kinematics for a pose. The joints returned are the closest to the current robot configuration (see SolveIK_All()). If the pose is not reachable, the length of the returned joints is 0.
     /// </summary>
     /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
     /// <param name="joints_close">Aproximate joints solution to choose among the possible solutions. Leave this value empty to return the closest match to the current robot position.</param>
