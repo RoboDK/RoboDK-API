@@ -329,6 +329,104 @@ bool Item_Disconnect(const struct Item_t* inst) {
 	return status != 0;
 }
 
+int Item_Type(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Item_Type");
+	_RoboDK_send_Item(inst->_RDK, inst);
+
+	int itemtype = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return itemtype;
+}
+
+void Item_Save(const struct Item_t* inst, char* filename) {
+	//_RoboDK_Save(filename, inst->_RDK);
+}
+
+void Item_Delete(struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Remove");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+	inst->_PTR = 0;
+	inst->_TYPE = -1;
+}
+
+
+void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Scale");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Array(inst->_RDK,scale_xyz, 3);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+void Item_setAsCartesianTarget(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Target_As_RT");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+void Item_setAsJointTarget(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Target_As_JT");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+bool Item_isJointTarget(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Target_Is_JT");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int is_jt = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return is_jt > 0;
+}
+
+struct Joints_t Item_JointsHome(const struct Item_t* inst) {
+	struct Joints_t jnts;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Home");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	jnts = _RoboDK_recv_Array_Joints(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return jnts;
+}
+
+void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
+	double angles[6];
+	angles[0] = jnts._Values[0];
+	angles[1] = jnts._Values[1];
+	angles[2] = jnts._Values[2];
+	angles[3] = jnts._Values[3];
+	angles[4] = jnts._Values[4];
+	angles[5] = jnts._Values[5];
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Home");
+	_RoboDK_send_Array(inst->_RDK, angles, jnts._nDOFs);
+	_RoboDK_send_Item(inst->_RDK,inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts) {
+	double angles[6];
+	angles[0] = jnts._Values[0];
+	angles[1] = jnts._Values[1];
+	angles[2] = jnts._Values[2];
+	angles[3] = jnts._Values[3];
+	angles[4] = jnts._Values[4];
+	angles[5] = jnts._Values[5];
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Thetas");
+	_RoboDK_send_Array(inst->_RDK, angles, jnts._nDOFs);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+
 
 struct Mat_t Item_PoseFrame(const struct Item_t* inst) { //in progress
 	struct Mat_t pose;
