@@ -223,18 +223,18 @@ void Item_MoveC_joints(struct Item_t* inst, struct Joints_t* joints1, struct Joi
 //Move using items in the station tree (Targets)
 void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
 
-	_RoboDK_moveX(inst->_RDK, inst2, nullptr, nullptr, inst, 1, isBlocking);
+	_RoboDK_moveX(inst->_RDK, inst2, NULL, NULL, inst, 1, isBlocking);
 
 }
 void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking) {
 
-	_RoboDK_moveX(inst->_RDK, inst2, nullptr, nullptr, inst, 2, isBlocking);
+	_RoboDK_moveX(inst->_RDK, inst2, NULL, NULL, inst, 2, isBlocking);
 
 }
 
 void Item_MoveC(struct Item_t* inst, struct Item_t* inst2, struct Item_t* inst3, bool isBlocking) {
 
-	_RoboDK_moveC(inst->_RDK, inst2, nullptr, nullptr,inst3, nullptr, nullptr, inst, isBlocking);
+	_RoboDK_moveC(inst->_RDK, inst2, NULL , NULL, inst3, NULL, NULL, inst, isBlocking);
 
 }
 
@@ -252,7 +252,7 @@ void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocki
 }
 void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t* targetPose2, bool isBlocking) {
 
-	_RoboDK_moveC(inst->_RDK, nullptr, nullptr, targetPose1, nullptr, nullptr,targetPose2,inst, isBlocking);
+	_RoboDK_moveC(inst->_RDK, NULL, NULL, targetPose1, NULL, NULL,targetPose2,inst, isBlocking);
 
 }
 
