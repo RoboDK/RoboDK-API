@@ -352,6 +352,52 @@ void Item_Delete(struct Item_t* inst) {
 	inst->_TYPE = -1;
 }
 
+void Item_setParent(const struct Item_t* inst1, const struct Item_t* inst2) {
+	_RoboDK_check_connection(inst1->_RDK);
+	_RoboDK_send_Line(inst1->_RDK,"S_Parent");
+	_RoboDK_send_Item(inst1->_RDK, inst1);
+	_RoboDK_send_Item(inst2->_RDK, inst2);
+	_RoboDK_check_status(inst1->_RDK);
+}
+
+void Item_setParentStatic(const struct Item_t* inst1, const struct Item_t* inst2) {
+	_RoboDK_check_connection(inst1->_RDK);
+	_RoboDK_send_Line(inst1->_RDK, "S_Parent_Static");
+	_RoboDK_send_Item(inst1->_RDK, inst1);
+	_RoboDK_send_Item(inst2->_RDK, inst2);
+	_RoboDK_check_status(inst1->_RDK);
+}
+
+struct Item_t Item_AttachClosest(const struct Item_t* inst) {
+	struct Item_t item_attached;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Attach_Closest");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	item_attached = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return item_attached;
+}
+
+struct Item_t Item_DetachClosest(const struct Item_t* inst1, const struct Item_t* inst2) {
+	struct Item_t item_detached;
+	_RoboDK_check_connection(inst1->_RDK);
+	_RoboDK_send_Line(inst1->_RDK, "Detach_Closest");
+	_RoboDK_send_Item(inst1->_RDK, inst1);
+	_RoboDK_send_Item(inst2->_RDK, inst2);
+	item_detached = _RoboDK_recv_Item(inst1->_RDK);
+	_RoboDK_check_status(inst1->_RDK);
+	return item_detached;
+}
+
+void Item_DetachAll(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Detach_All");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Item(inst->_RDK, inst); //inst > parent here ;to be tested
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
 
 void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
 	_RoboDK_check_connection(inst->_RDK);
@@ -360,6 +406,27 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
 	_RoboDK_send_Array(inst->_RDK,scale_xyz, 3);
 	_RoboDK_check_status(inst->_RDK);
 }
+
+
+struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options)
+{
+	struct Item_t program;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_MachiningParams");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, &ncfile);
+	_RoboDK_send_Item(inst->_RDK, part_obj);
+	//_RoboDK_send_Line(inst->_RDK, "NO_UPDATE " + options);
+	_RoboDK_send_Line(inst->_RDK, options);
+	inst->_RDK->_TIMEOUT = 3600 * 1000;
+	program =_RoboDK_recv_Item(inst->_RDK);
+	inst->_RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
+	double status = _RoboDK_recv_Int(inst->_RDK) / 1000.0;
+	_RoboDK_check_status(inst->_RDK);
+	return program;
+}
+
+
 
 
 void Item_setAsCartesianTarget(const struct Item_t* inst) {
@@ -409,6 +476,41 @@ void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
 	_RoboDK_send_Item(inst->_RDK,inst);
 	_RoboDK_check_status(inst->_RDK);
 }
+
+struct Item_t Item_ObjectLink(const struct Item_t* inst,int link_id) {
+
+	struct Item_t item1;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_LinkObjId");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK,link_id);
+	item1 = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return item1;
+}
+struct Item_t Item_getLink(const struct Item_t* inst, int link_id) {
+
+	struct Item_t item1;
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_LinkType");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK, link_id);
+	item1 = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return item1;
+}
+
+
+void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits, struct Joints_t *upper_limits) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_RobLimits");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Array(inst->_RDK,lower_limits->_Values,lower_limits->_nDOFs);
+	_RoboDK_send_Array(inst->_RDK,upper_limits->_Values, lower_limits->_nDOFs);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
 
 void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts) {
 	double angles[6];
@@ -688,6 +790,31 @@ struct Item_t Item_Parent(const struct Item_t* inst) {
 	_RoboDK_check_status(inst->_RDK);
 	return parent;
 }
+
+bool Item_Visible(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Visible");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int visible = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return (visible != 0);
+}
+
+void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame) {
+	if (visible_frame < 0)
+	{
+		visible_frame = visible ? 1 : 0;
+	}
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Visible");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK,visible ? 1 : 0);
+	_RoboDK_send_Int(inst->_RDK,visible_frame);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+
 
 
 

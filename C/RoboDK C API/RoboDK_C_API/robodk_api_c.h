@@ -258,15 +258,32 @@ void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_
 bool Item_Busy(const struct Item_t* inst);//Done
 void Item_Stop(const struct Item_t* inst);//Done
 bool Item_Disconnect(const struct Item_t* inst); //Done
+
 int Item_Type(const struct Item_t* inst);
 void Item_Save(const struct Item_t* inst, char* filename);
 void Item_Delete(struct Item_t* inst);
+void Item_setParent(const struct Item_t* inst1, const struct Item_t* inst2);
+void Item_setParentStatic(const struct Item_t* inst1, const struct Item_t* inst2);
+struct Item_t Item_AttachClosest(const struct Item_t* inst);
+struct Item_t Item_DetachClosest(const struct Item_t* inst1, const struct Item_t* inst2);
+void Item_DetachAll(const struct Item_t* inst);
+bool Item_Visible(const struct Item_t* inst);
+void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame);
 void Item_Scale(const struct Item_t* inst, double scale_xyz[3]);
+
+void Item_setJointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits);
+
+
+
+struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options);
 void Item_setAsCartesianTarget(const struct Item_t* inst);
 void Item_setAsJointTarget(const struct Item_t* inst);
 bool Item_isJointTarget(const struct Item_t* inst);
 struct Joints_t Item_JointsHome(const struct Item_t* inst);
 void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts);
+struct Item_t Item_ObjectLink(const struct Item_t* inst, int link_id);
+struct Item_t Item_getLink(const struct Item_t* inst, int link_id);
+
 void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts);
 void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose); //Done
 struct Mat_t Item_PoseAbs(const struct Item_t* inst);//Done
