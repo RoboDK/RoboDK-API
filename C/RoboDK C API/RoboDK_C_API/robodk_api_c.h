@@ -271,9 +271,10 @@ bool Item_Visible(const struct Item_t* inst);
 void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame);
 void Item_Scale(const struct Item_t* inst, double scale_xyz[3]);
 
+void Item_JointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits); //done
 void Item_setJointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits);
-
-
+void Item_setRobot(const struct Item_t* inst);
+struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t& tool_pose, const char& tool_name);
 
 struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options);
 void Item_setAsCartesianTarget(const struct Item_t* inst);

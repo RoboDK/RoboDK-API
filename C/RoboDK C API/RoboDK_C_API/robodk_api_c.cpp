@@ -501,6 +501,18 @@ struct Item_t Item_getLink(const struct Item_t* inst, int link_id) {
 }
 
 
+
+void Item_JointLimits(const struct Item_t* inst, struct Joints_t *lower_limits, struct Joints_t *upper_limits) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_RobLimits");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_recv_Array(inst->_RDK, lower_limits->_Values, &lower_limits->_nDOFs);
+	_RoboDK_recv_Array(inst->_RDK, upper_limits->_Values, &lower_limits->_nDOFs);
+	double joints_type = _RoboDK_recv_Int(inst->_RDK) / 1000.0;
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
 void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits, struct Joints_t *upper_limits) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_RobLimits");
@@ -508,6 +520,25 @@ void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits
 	_RoboDK_send_Array(inst->_RDK,lower_limits->_Values,lower_limits->_nDOFs);
 	_RoboDK_send_Array(inst->_RDK,upper_limits->_Values, lower_limits->_nDOFs);
 	_RoboDK_check_status(inst->_RDK);
+}
+
+void Item_setRobot(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Robot");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	//_RDK->_send_Item(robot);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t &tool_pose, const char &tool_name) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "AddToolEmpty");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Pose(inst->_RDK, tool_pose);
+	_RoboDK_send_Line(inst->_RDK, &tool_name);
+	struct Item_t newtool = _RoboDK_recv_Item(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return newtool;
 }
 
 
