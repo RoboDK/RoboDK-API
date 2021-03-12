@@ -2132,11 +2132,8 @@ quint64 RoboDK::ProcessID(){
 }
 
 quint64 RoboDK::WindowID(){
-    qint64 window_id;
-    if (window_id == 0) {
-        QString response = Command("MainWindow_ID");
-        window_id = response.toInt();
-    }
+    QString response = Command("MainWindow_ID");
+    quint64 window_id = response.toInt();
     return window_id;
 }
 
