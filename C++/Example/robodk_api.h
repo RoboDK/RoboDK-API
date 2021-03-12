@@ -1299,7 +1299,7 @@ public:
     /// Retrieve a file from the RoboDK running instance
     bool FileGet(const QString &path_file_local, Item *station=nullptr, const QString path_file_remote="");
 
-    bool EmbedWindow(QString window_name, QString docked_name="", int size_w=-1, int size_h=-1, uint64_t pid=0, int area_add=1, int area_allowed=15, int timeout=500);
+    bool EmbedWindow(QString window_name, QString docked_name="", int size_w=-1, int size_h=-1, quint64 pid=0, int area_add=1, int area_allowed=15, int timeout=500);
 
     bool EventsListen();
     bool WaitForEvent(int &evt,Item &itm);
@@ -2097,7 +2097,7 @@ public:
     void JointsConfig(const tJoints &joints, tConfig config);
 
     /// <summary>
-    /// This function calculates the inverse kinematics for a pose. The joints returned are the closest to the current robot configuration (see SolveIK_All()). If the pose is not reachable, the length of the returned joints is 0.
+    /// Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see SolveIK_All())
     /// </summary>
     /// <param name="pose">4x4 matrix -> pose of the robot flange with respect to the robot base frame</param>
     /// <param name="joints_close">Aproximate joints solution to choose among the possible solutions. Leave this value empty to return the closest match to the current robot position.</param>

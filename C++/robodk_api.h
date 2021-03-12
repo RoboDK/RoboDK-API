@@ -1299,7 +1299,7 @@ public:
     /// Retrieve a file from the RoboDK running instance
     bool FileGet(const QString &path_file_local, Item *station=nullptr, const QString path_file_remote="");
 
-    bool EmbedWindow(QString window_name, QString docked_name="", int size_w=-1, int size_h=-1, uint64_t pid=0, int area_add=1, int area_allowed=15, int timeout=500);
+    bool EmbedWindow(QString window_name, QString docked_name="", int size_w=-1, int size_h=-1, quint64 pid=0, int area_add=1, int area_allowed=15, int timeout=500);
 
     bool EventsListen();
     bool WaitForEvent(int &evt,Item &itm);
