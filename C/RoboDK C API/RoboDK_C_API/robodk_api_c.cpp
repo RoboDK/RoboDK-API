@@ -298,6 +298,29 @@ char Item_getAI(const struct Item_t* inst, char* io_var) {
 	return di_value;
 }
 
+void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "waitDI");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, io_var);
+	_RoboDK_send_Line(inst->_RDK, io_value);
+	_RoboDK_send_Int(inst->_RDK, (int)(timeout_ms * 1000.0));
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
+void Item_customInstruction(const struct Item_t* inst,const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "InsCustom2");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK, name);
+	_RoboDK_send_Line(inst->_RDK, path_run);
+	_RoboDK_send_Line(inst->_RDK, path_icon);
+	_RoboDK_send_Line(inst->_RDK, cmd_run_on_robot);
+	_RoboDK_send_Int(inst->_RDK, blocking ? 1 : 0);
+	_RoboDK_check_status(inst->_RDK);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Item_WaitMove(const struct Item_t *inst, double timeout_sec) {
@@ -651,6 +674,84 @@ void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progres
 	printf("Rounding Value changed to %d\n", int(zonedata));
 }
 
+void Item_ShowSequence(const struct Item_t* inst,  struct Matrix2D_t *sequence) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "Show_Seq");
+	//_RoboDK_send_Matrix2D(sequence); to be defined
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+bool Item_MakeProgram(const struct Item_t* inst,const char& filename) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "MakeProg");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Line(inst->_RDK,&filename);
+	int prog_status = _RoboDK_recv_Int(inst->_RDK);
+	char prog_log_str;
+	_RoboDK_recv_Line(inst->_RDK, &prog_log_str);
+	_RoboDK_check_status(inst->_RDK);
+	bool success = false;
+	if (prog_status > 1) {
+		success = true;
+	}
+	return success; // prog_log_str
+}
+
+void Item_setRunType(const struct Item_t* inst, int program_run_type) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK,"S_ProgRunType");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK, program_run_type);
+	_RoboDK_check_status(inst->_RDK);
+}
+
+int Item_RunProgram(const struct Item_t* inst) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "RunProg");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int prog_status = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return prog_status;
+}
+
+
+int Item_RunCode(const struct Item_t* inst, char& parameters) {
+	_RoboDK_check_connection(inst->_RDK);
+	if (parameters == '\0') {
+		_RoboDK_send_Line(inst->_RDK, "RunProg");
+		_RoboDK_send_Item(inst->_RDK, inst);
+	}
+	else {
+		_RoboDK_send_Line(inst->_RDK, "RunProgParam");
+		_RoboDK_send_Item(inst->_RDK, inst);
+		_RoboDK_send_Line(inst->_RDK, &parameters);
+	}
+	int progstatus = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return progstatus;
+}
+
+int Item_RunInstruction(const struct Item_t* inst, const char& code, int run_type) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "RunCode2");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	//_RoboDK_send_Line(inst->_RDK, &code.replace("\n\n", "<br>").replace("\n", "<br>") ); // to be created
+	_RoboDK_send_Int(inst->_RDK, run_type);
+	int progstatus = _RoboDK_recv_Int(inst->_RDK);
+	_RoboDK_check_status(inst->_RDK);
+	return progstatus;
+}
+
+void Item_Pause(const struct Item_t* inst, double time_ms) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "RunPause");
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_send_Int(inst->_RDK, (int)(time_ms * 1000.0));
+	_RoboDK_check_status(inst->_RDK);
+}
+
+
 void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints ) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_Speed4");
@@ -755,6 +856,11 @@ int Item_InstructionCount(const struct Item_t* inst) {
 	return nins;
 
 }
+
+
+
+
+
 
 
 void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose) {
@@ -897,6 +1003,23 @@ struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *join
 
 	return base2flange;
 }
+
+void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t & joints, double config) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "G_Thetas_Config");
+	_RoboDK_send_Array(inst->_RDK, joints._Values, joints._nDOFs);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	int sz = RDK_SIZE_MAX_CONFIG;
+	_RoboDK_recv_Array(inst->_RDK,&config, &sz);
+	_RoboDK_check_status(inst->_RDK);
+	//return config;
+}
+
+
+
+
+
+
 
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,
 	struct Mat_t *out_poseFiltered, struct Joints_t *out_joints_filtered) {

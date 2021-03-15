@@ -96,6 +96,43 @@ enum eITEM_TYPE {
 	ITEM_TYPE_VALID_ISO9283 = 14
 };
 
+enum {
+	/// Invalid instruction.
+	INS_TYPE_INVALID = -1,
+
+	/// Linear or joint movement instruction.
+	INS_TYPE_MOVE = 0,
+
+	/// Circular movement instruction.
+	INS_TYPE_MOVEC = 1,
+
+	/// Set speed instruction.
+	INS_TYPE_CHANGESPEED = 2,
+
+	/// Set reference frame instruction.
+	INS_TYPE_CHANGEFRAME = 3,
+
+	/// Set the tool (TCP) instruction.
+	INS_TYPE_CHANGETOOL = 4,
+
+	/// Set the robot instruction (obsolete).
+	INS_TYPE_CHANGEROBOT = 5,
+
+	/// Pause instruction.
+	INS_TYPE_PAUSE = 6,
+
+	/// Simulation event instruction.
+	INS_TYPE_EVENT = 7,
+
+	/// Program call or raw code output.
+	INS_TYPE_CODE = 8,
+
+	/// Display message on the teach pendant.
+	INS_TYPE_PRINT = 9
+};
+
+
+
 /// Script execution types used by IRoboDK.setRunMode and IRoboDK.RunMode
 enum eRobotRunMode{
 	/// Performs the simulation moving the robot (default)
@@ -244,15 +281,25 @@ char Item_getDI(const struct Item_t* inst, char* io_var);
 char Item_getAI(const struct Item_t* inst, char* io_var);
 void Item_setDO(const struct Item_t* inst, const char* io_var, const char* io_value);
 void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value);
+void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms);
+void Item_customInstruction(const struct Item_t* inst, const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot);
 
 
 void Item_setName(const struct Item_t* inst, const char* name); //progress
 struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst );// 
 void Item_setRounding(const struct Item_t* inst, double zonedata);// Done 
+void Item_ShowSequence(const struct Item_t* inst, struct Matrix2D_t* sequence);
+bool Item_MakeProgram(const struct Item_t* inst, const char& filename);
+void Item_setRunType(const struct Item_t* inst, int program_run_type);
+int Item_RunProgram(const struct Item_t* inst);
+int Item_RunCode(const struct Item_t* inst, char& parameters);
+int Item_RunInstruction(const struct Item_t* inst, const char& code, int run_type);
+void Item_Pause(const struct Item_t* inst, double time_ms);
 void Item_setSimulationSpeed(const struct Item_t* inst, double speed);//Done  
 double Item_SimulationSpeed(const struct Item_t* inst);//In Progress   
 void Item_ShowInstructions(const struct Item_t* inst, bool visible); //Done 
 int Item_InstructionCount(const struct Item_t* inst);//Done 
+
 void Item_ShowTargets(const struct Item_t* inst, bool visible);//In Progress //pass program  item 
 void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints);//Done 
 bool Item_Busy(const struct Item_t* inst);//Done
@@ -299,6 +346,7 @@ void Item_setColor(const struct Item_t* inst,double R, double G, double B, doubl
 struct Item_t Item_Parent(const struct Item_t* inst); //Done
 struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t *ref);
 struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
+void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t& joints, double config);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
 
 
