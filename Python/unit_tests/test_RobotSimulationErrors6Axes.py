@@ -40,7 +40,6 @@ def get_program_wrist_singularity2():
 def get_program_180degree_rotation_error():
     """180 degree rotation error. Test PathFlipAxis Error."""
     j1 = [ 62.800000, -58.000000, 114.300000, -31.700000, -60.300000, 107.000000]
-    f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ]
     f2 = [   247.718647,  -776.118962,   544.157022,     0,     0,  -180 ] # Make sure the orientation flips 180 deg exact, otherwise, blending will adjust the path
     f3 = [   147.718647,  -776.118962,   544.157022,     0,    180, -180] # default RoboDK tolerance for flip axis is 0.5 deg rotation (so a 179.5 deg rotation is allowed at most)
     expectedSimulationError = PathErrorFlags.PathFlipAxis ## currently not implemented in RoboDK

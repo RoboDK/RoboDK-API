@@ -102,7 +102,7 @@ namespace RoboDk.API
                         return new KeyPressedEventResult(item, keyId, keyState, modifiers);
 
                     case EventType.CollisionMapChanged:
-                        Debug.WriteLine($"RoboDK Event: {eventType}");
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
                         return new EventResult(EventType.CollisionMapChanged, null);
 
                     default:
@@ -115,6 +115,10 @@ namespace RoboDk.API
                 }
             }
             catch (SocketException socketException)
+            {
+                return new EventResult(EventType.NoEvent, null);
+            }
+            catch (ObjectDisposedException e)
             {
                 return new EventResult(EventType.NoEvent, null);
             }

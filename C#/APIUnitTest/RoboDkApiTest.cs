@@ -1,5 +1,4 @@
-﻿
-// We currently can not support RoboDK Tests on the build server.
+﻿// We currently can not support RoboDK Tests on the build server.
 // Ignore all tests on the build server
 // To locally execute the unit test uncomment the line below
 //#define TEST_ROBODK_API
@@ -20,7 +19,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RoboDk.API;
 using RoboDk.API.Exceptions;
 using RoboDk.API.Model;
-
 
 #endregion
 
@@ -228,6 +226,7 @@ namespace RoboDkApiTest
                 parts.Add(rdk.AddFile(Path.Combine(cwd, "robot.robot")));
                 return parts;
             }
+
             List<IItem> AddDynamicParts()
             {
                 var parts = new List<IItem>();
@@ -296,7 +295,6 @@ namespace RoboDkApiTest
                 rdk.CloseRoboDK();
             }
         }
-
 
 
         [TestMethod]
@@ -700,36 +698,11 @@ namespace RoboDkApiTest
     }
 
 
-    public class ThreadSaveRoboDK
-    {
-
-        public static T Invoke<T>(IItem item, Func<IItem, T> func)
-        {
-            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
-            {
-                return func.Invoke(item.Clone(roboDkLink.RoboDK));
-            }
-        }
-
-        public static void Invoke(IItem item, Action<IItem> action)
-        {
-            using (var roboDkLink = new RoboDK.RoboDKLink(item.RDK()))
-            {
-                action.Invoke(item.Clone(roboDkLink.RoboDK));
-            }
-        }
-
-    }
-
     internal class Logger
     {
         #region Constants
 
         private const string Lock = "lock";
-
-        #endregion
-
-        #region Constructors
 
         #endregion
 

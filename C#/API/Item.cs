@@ -142,7 +142,7 @@ namespace RoboDk.API
         /// <inheritdoc />
         public bool Equals(IItem otherItem)
         {
-            return ItemId == otherItem.ItemId;
+            return ItemId == otherItem?.ItemId;
         }
 
         /// <inheritdoc />
