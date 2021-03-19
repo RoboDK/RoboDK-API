@@ -122,11 +122,11 @@ namespace RoboDk.API.Model
         FrameMoveNotPossible = 2048,
 
         /// <summary>
-        /// The path is feasible (no error found), however, the calculation is innacurate or invalid due to a large axis move. 
+        /// The path is feasible (no error found), however, the calculation is inaccurate or invalid due to a large axis move. 
         /// Reduce the time step or the robot speed to properly get accurate flags.
         /// This error flag is never combined with other error flags. 
         /// This flag will appear with time based simulations and it means the path is feasible but RoboDK is unable to calculate it with the current time step.
         /// </summary>
-        InnacurateDueToLargeAxisMove = 4096
+        InaccurateDueToLargeAxisMove = 4096
     }
 }

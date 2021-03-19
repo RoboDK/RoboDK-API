@@ -46,7 +46,6 @@ namespace RoboDk.API.Model
 
         /// <summary>
         /// Get SimulationErrorFlags from raw RoboDK Path Simulation Error.
-        /// TODO mth: This code should be moved to the RoboDK API after Release 1.2
         /// </summary>
         /// <param name="simulationErrorCode"></param>
         /// <returns></returns>
@@ -59,7 +58,7 @@ namespace RoboDk.API.Model
 
             if (simulationErrorCode == 20)
             {
-                simulationErrorFlags = SimulationErrorFlags.InnacurateDueToLargeAxisMove;
+                simulationErrorFlags = SimulationErrorFlags.InaccurateDueToLargeAxisMove;
             }
 
             if (simulationErrorCode % 10_000_000 >= 1_000_000)
