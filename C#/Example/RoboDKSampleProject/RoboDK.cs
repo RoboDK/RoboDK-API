@@ -5405,14 +5405,14 @@ public class RoboDK
         // add more methods
 
         /// <summary>
-        /// Return the current joint position of a robot (only from the simulator, never from the real robot). This should be used only when RoboDK is connected to the real robot and only the simulated robot needs to be retrieved(for example, if we want to move the robot using a spacemouse).
-        /// Note: Use robot.Joints() instead to retrieve the simulated and real robot position when connected.
+        /// Return the home joints of a robot. 
+        /// The home joints can be manually set in the robot "Parameters" menu of the robot panel in RoboDK, then select "Set home position".
         /// </summary>
         /// <returns>double x n -> joints array</returns>
         public double[] JointsHome()
         {
             link._check_connection();
-            link._send_Line("G_Thetas_Sim");
+            link._send_Line("G_Home");
             link._send_Item(this);
             double[] joints = link._recv_Array();
             link._check_status();
