@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
 //Networking includes
 #ifdef _WIN32
 #include <Ws2tcpip.h>
@@ -206,6 +205,7 @@ struct Matrix2D_t {
 	/// Allocated size.
 	int allocatedSize;
 
+
 	/// Number of dimensions (usually 2)
 	int numDimensions;
 
@@ -289,11 +289,11 @@ void Item_setName(const struct Item_t* inst, const char* name); //progress
 struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst );// 
 void Item_setRounding(const struct Item_t* inst, double zonedata);// Done 
 void Item_ShowSequence(const struct Item_t* inst, struct Matrix2D_t* sequence);
-bool Item_MakeProgram(const struct Item_t* inst, const char& filename);
+bool Item_MakeProgram(const struct Item_t* inst, const char* filename);
 void Item_setRunType(const struct Item_t* inst, int program_run_type);
 int Item_RunProgram(const struct Item_t* inst);
-int Item_RunCode(const struct Item_t* inst, char& parameters);
-int Item_RunInstruction(const struct Item_t* inst, const char& code, int run_type);
+int Item_RunCode(const struct Item_t* inst, char* parameters);
+int Item_RunInstruction(const struct Item_t* inst, const char* code, int run_type);
 void Item_Pause(const struct Item_t* inst, double time_ms);
 void Item_setSimulationSpeed(const struct Item_t* inst, double speed);//Done  
 double Item_SimulationSpeed(const struct Item_t* inst);//In Progress   
@@ -321,7 +321,7 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]);
 void Item_JointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits); //done
 void Item_setJointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits);
 void Item_setRobot(const struct Item_t* inst);
-struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t& tool_pose, const char& tool_name);
+struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t* tool_pose, const char* tool_name);
 
 struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options);
 void Item_setAsCartesianTarget(const struct Item_t* inst);
@@ -346,7 +346,7 @@ void Item_setColor(const struct Item_t* inst,double R, double G, double B, doubl
 struct Item_t Item_Parent(const struct Item_t* inst); //Done
 struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t *ref);
 struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
-void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t& joints, double config);
+void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t *joints, double config);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
 
 

@@ -553,12 +553,12 @@ void Item_setRobot(const struct Item_t* inst) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
-struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t &tool_pose, const char &tool_name) {
+struct Item_t Item_AddTool(const struct Item_t* inst, const struct Mat_t *tool_pose, const char *tool_name) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "AddToolEmpty");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	_RoboDK_send_Pose(inst->_RDK, tool_pose);
-	_RoboDK_send_Line(inst->_RDK, &tool_name);
+	_RoboDK_send_Pose(inst->_RDK, *tool_pose);
+	_RoboDK_send_Line(inst->_RDK, tool_name);
 	struct Item_t newtool = _RoboDK_recv_Item(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
 	return newtool;
@@ -671,7 +671,7 @@ void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progres
 	_RoboDK_send_Int(inst->_RDK, ((int)(zonedata * 1000.0)));
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
-	printf("Rounding Value changed to %d\n", int(zonedata));
+	printf("Rounding Value changed to %d\n", (int)zonedata);
 }
 
 void Item_ShowSequence(const struct Item_t* inst,  struct Matrix2D_t *sequence) {
@@ -682,11 +682,11 @@ void Item_ShowSequence(const struct Item_t* inst,  struct Matrix2D_t *sequence) 
 	_RoboDK_check_status(inst->_RDK);
 }
 
-bool Item_MakeProgram(const struct Item_t* inst,const char& filename) {
+bool Item_MakeProgram(const struct Item_t* inst,const char* filename) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "MakeProg");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	_RoboDK_send_Line(inst->_RDK,&filename);
+	_RoboDK_send_Line(inst->_RDK,filename);
 	int prog_status = _RoboDK_recv_Int(inst->_RDK);
 	char prog_log_str;
 	_RoboDK_recv_Line(inst->_RDK, &prog_log_str);
@@ -716,27 +716,27 @@ int Item_RunProgram(const struct Item_t* inst) {
 }
 
 
-int Item_RunCode(const struct Item_t* inst, char& parameters) {
+int Item_RunCode(const struct Item_t* inst, char *parameters) {
 	_RoboDK_check_connection(inst->_RDK);
-	if (parameters == '\0') {
+	if (*parameters == '\0') {
 		_RoboDK_send_Line(inst->_RDK, "RunProg");
 		_RoboDK_send_Item(inst->_RDK, inst);
 	}
 	else {
 		_RoboDK_send_Line(inst->_RDK, "RunProgParam");
 		_RoboDK_send_Item(inst->_RDK, inst);
-		_RoboDK_send_Line(inst->_RDK, &parameters);
+		_RoboDK_send_Line(inst->_RDK, parameters);
 	}
 	int progstatus = _RoboDK_recv_Int(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
 	return progstatus;
 }
 
-int Item_RunInstruction(const struct Item_t* inst, const char& code, int run_type) {
+int Item_RunInstruction(const struct Item_t* inst, const char* code, int run_type) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "RunCode2");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	//_RoboDK_send_Line(inst->_RDK, &code.replace("\n\n", "<br>").replace("\n", "<br>") ); // to be created
+	//_RoboDK_send_Line(inst->_RDK, code.replace("\n\n", "<br>").replace("\n", "<br>") ); // to be created
 	_RoboDK_send_Int(inst->_RDK, run_type);
 	int progstatus = _RoboDK_recv_Int(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
@@ -1004,10 +1004,10 @@ struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *join
 	return base2flange;
 }
 
-void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t & joints, double config) {
+void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t *joints, double config) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_Thetas_Config");
-	_RoboDK_send_Array(inst->_RDK, joints._Values, joints._nDOFs);
+	_RoboDK_send_Array(inst->_RDK, joints->_Values, joints->_nDOFs);
 	_RoboDK_send_Item(inst->_RDK, inst);
 	int sz = RDK_SIZE_MAX_CONFIG;
 	_RoboDK_recv_Array(inst->_RDK,&config, &sz);
