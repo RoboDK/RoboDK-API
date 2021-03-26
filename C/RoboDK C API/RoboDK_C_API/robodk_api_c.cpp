@@ -162,6 +162,23 @@ struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM
 	return item;
 }
 
+void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "S_Param");
+	_RoboDK_send_Line(inst, param);
+	_RoboDK_send_Line(inst, value);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "G_Param");
+	_RoboDK_send_Line(inst, param);
+	_RoboDK_recv_Line(inst, value);
+	_RoboDK_check_status(inst);
+}
+
+
 bool Item_Valid(const struct Item_t *item) {
 	return item->_PTR != 0;
 }
@@ -766,18 +783,14 @@ void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_
 	printf("Speed Changed to new values\n");
 }
 
+
+/// Checks if a robot or program is currently running (busy or moving)
 bool Item_Busy(const struct Item_t* inst) { //pass program
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "IsBusy");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	int busy = _RoboDK_recv_Int(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
-	if (busy>0){
-		printf("Program is running\n");
-	}
-	else {
-		printf("Program is paused\n");
-	}
 	return(busy > 0);
 }
 

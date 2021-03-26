@@ -335,9 +335,16 @@ struct Item_t Item_getLink(const struct Item_t* inst, int link_id);
 void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts);
 void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose); //Done
 struct Mat_t Item_PoseAbs(const struct Item_t* inst);//Done
+////////////////////////////////////////////////////////////////////////////
+
+void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value);
+void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value);
 
 
 
+
+
+////////////////////////////////////////////////////////////////////////////
 struct Mat_t Item_PoseTool(const struct Item_t* inst); //Done Returns the pose (Mat) of the robot tool (TCP) with respect to the robot flange
 struct Mat_t Item_PoseFrame(const struct Item_t* inst); //Done Returns the pose (Mat) of the Active reference frame with respect to the robot base 
 void Item_setGeometryPose(const struct Item_t* inst, const struct Mat_t pose); //done
