@@ -518,7 +518,6 @@ void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
 }
 
 struct Item_t Item_ObjectLink(const struct Item_t* inst,int link_id) {
-
 	struct Item_t item1;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_LinkObjId");
@@ -529,7 +528,6 @@ struct Item_t Item_ObjectLink(const struct Item_t* inst,int link_id) {
 	return item1;
 }
 struct Item_t Item_getLink(const struct Item_t* inst, int link_id) {
-
 	struct Item_t item1;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_LinkType");
@@ -562,11 +560,11 @@ void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setRobot(const struct Item_t* inst) {
+void Item_setRobot(const struct Item_t* inst,const struct Item_t* robot) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Robot");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	//_RDK->_send_Item(robot);
+	_RoboDK_send_Item(robot->_RDK, robot);
 	_RoboDK_check_status(inst->_RDK);
 }
 
@@ -852,7 +850,6 @@ void Item_ShowTargets(const struct Item_t* inst, bool visible) { // pass Item wi
 		t = 0;
 		printf("Targets are hidden\n");
 	}
-
 	_RoboDK_send_Int(inst->_RDK, t);
 	_RoboDK_check_status(inst->_RDK);
 }
@@ -964,16 +961,6 @@ void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame)
 }
 
 
-
-
-
-
-
-
-
-
-
-
 struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t* ref) {
 	struct Joints_t jnts;
 	struct Mat_t base2flange = *pose; //pose of the robot flange with respect to the robot base frame
@@ -1002,7 +989,6 @@ struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *join
 	_RoboDK_send_Item(inst->_RDK, inst);
 	struct Mat_t pose = _RoboDK_recv_Pose(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
-
 	struct Mat_t base2flange;
 	Mat_Copy(&base2flange,&pose);
 	if (tool_pose != NULL) {
@@ -1013,7 +999,6 @@ struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *join
 		Mat_Inv_out(&temp, reference_pose);
 		Mat_Multiply_cumul(&base2flange, &temp);
 	}
-
 	return base2flange;
 }
 
@@ -1025,7 +1010,6 @@ void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t *joints,
 	int sz = RDK_SIZE_MAX_CONFIG;
 	_RoboDK_recv_Array(inst->_RDK,&config, &sz);
 	_RoboDK_check_status(inst->_RDK);
-	//return config;
 }
 
 
@@ -2115,3 +2099,59 @@ void _RoboDK_moveC(struct RoboDK_t* inst, const struct Item_t* target1, const st
 }
 
 
+void RoboDK_License(struct RoboDK_t* inst, char* license) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "G_License");
+	_RoboDK_recv_Line(inst,license);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_setViewPose(struct RoboDK_t* inst, struct Mat_t* pose) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "S_ViewPose");
+	_RoboDK_send_Pose(inst,*pose);
+	_RoboDK_check_status(inst);
+
+}
+
+void RoboDK_ShowRoboDK(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "RAISE");
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_HideRoboDK(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "HIDE");
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_CloseRoboDK(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "QUIT");
+	_RoboDK_check_status(inst);
+	_RoboDK_disconnect(inst);
+	inst->_PROCESS = 0;
+}
+
+void RoboDK_setWindowState(struct RoboDK_t* inst, int windowstate) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "S_WindowState");
+	_RoboDK_send_Int(inst, windowstate);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_setFlagsRoboDK(struct RoboDK_t* inst, int flags) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "S_RoboDK_Rights");
+	_RoboDK_send_Int(inst, flags);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_setFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, int flags) {
+	_RoboDK_check_connection(inst1);
+	_RoboDK_send_Line(inst1, "S_RoboDK_Rights");
+	_RoboDK_send_Item(inst1,inst2);
+	_RoboDK_send_Int(inst1, flags);
+	_RoboDK_check_status(inst1);
+}

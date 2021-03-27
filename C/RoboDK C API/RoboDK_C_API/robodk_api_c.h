@@ -233,6 +233,16 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, int com_port, 
 void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup); //Complete
 struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM_TYPE itemtype); //Complete
 void RoboDK_setRunMode(struct RoboDK_t *inst, int run_mode); //Complete
+void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value);
+void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value);
+void RoboDK_License(struct RoboDK_t* inst, char* license);
+void RoboDK_setViewPose(struct RoboDK_t* inst, struct Mat_t* pose);
+void RoboDK_ShowRoboDK(struct RoboDK_t* inst);
+void RoboDK_HideRoboDK(struct RoboDK_t* inst);
+void RoboDK_CloseRoboDK(struct RoboDK_t* inst);
+void RoboDK_setWindowState(struct RoboDK_t* inst, int windowstate);
+void RoboDK_setFlagsRoboDK(struct RoboDK_t* inst, int flags);
+void RoboDK_setFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, int flags);
 
 //RoboDK item class functions
 bool Item_Valid(const struct Item_t *item); //Done
@@ -244,47 +254,24 @@ struct Joints_t Item_Joints(const struct Item_t *inst); //Complete
 void Item_WaitMove(const struct Item_t *inst, double timeout_sec); //
 bool Item_Connect(const struct Item_t *inst, const char *robot_ip); //Complete
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 // Pose Functions
 void Item_setAccuracyActive(const struct Item_t* inst, const int accurate);
 void Item_setPose(const struct Item_t* inst, const struct Mat_t pose); //done 
 void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose);
 void Item_setPoseFrame(const struct Item_t *inst,const struct Mat_t pose);
 
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//Recently added 
-
 //Move Functions
 void Item_MoveJ_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking); //Complete
 void Item_MoveJ_mat(struct Item_t* inst, struct Mat_t* joints, bool isBlocking); //Complete
 void Item_MoveJ(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done 
-
 void Item_MoveL(struct Item_t* inst, struct Item_t* inst2, bool isBlocking); //Done
 void Item_MoveL_joints(struct Item_t* inst, struct Joints_t* joints, bool isBlocking);
 void Item_MoveL_mat(struct Item_t* inst, struct Mat_t* targetPose, bool isBlocking);
-
-
 void Item_MoveC_joints(struct Item_t* inst, struct Joints_t* joints1, struct Joints_t* joints2, bool isBlocking);
 void Item_MoveC(struct Item_t* inst, struct Item_t* inst2, struct Item_t* inst3, bool isBlocking);
 void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t* targetPose2, bool isBlocking);
-
-//DI and DO
-char Item_getDI(const struct Item_t* inst, char* io_var);
-char Item_getAI(const struct Item_t* inst, char* io_var);
-void Item_setDO(const struct Item_t* inst, const char* io_var, const char* io_value);
-void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value);
-void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms);
 void Item_customInstruction(const struct Item_t* inst, const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot);
-
-
+///
 void Item_setName(const struct Item_t* inst, const char* name); //progress
 struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst );// 
 void Item_setRounding(const struct Item_t* inst, double zonedata);// Done 
@@ -299,13 +286,11 @@ void Item_setSimulationSpeed(const struct Item_t* inst, double speed);//Done
 double Item_SimulationSpeed(const struct Item_t* inst);//In Progress   
 void Item_ShowInstructions(const struct Item_t* inst, bool visible); //Done 
 int Item_InstructionCount(const struct Item_t* inst);//Done 
-
 void Item_ShowTargets(const struct Item_t* inst, bool visible);//In Progress //pass program  item 
 void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints);//Done 
 bool Item_Busy(const struct Item_t* inst);//Done
 void Item_Stop(const struct Item_t* inst);//Done
 bool Item_Disconnect(const struct Item_t* inst); //Done
-
 int Item_Type(const struct Item_t* inst);
 void Item_Save(const struct Item_t* inst, char* filename);
 void Item_Delete(struct Item_t* inst);
@@ -317,12 +302,10 @@ void Item_DetachAll(const struct Item_t* inst);
 bool Item_Visible(const struct Item_t* inst);
 void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame);
 void Item_Scale(const struct Item_t* inst, double scale_xyz[3]);
-
 void Item_JointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits); //done
 void Item_setJointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits);
-void Item_setRobot(const struct Item_t* inst);
+void Item_setRobot(const struct Item_t* inst, const struct Item_t* robot);
 struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t* tool_pose, const char* tool_name);
-
 struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options);
 void Item_setAsCartesianTarget(const struct Item_t* inst);
 void Item_setAsJointTarget(const struct Item_t* inst);
@@ -331,20 +314,9 @@ struct Joints_t Item_JointsHome(const struct Item_t* inst);
 void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts);
 struct Item_t Item_ObjectLink(const struct Item_t* inst, int link_id);
 struct Item_t Item_getLink(const struct Item_t* inst, int link_id);
-
 void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts);
 void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose); //Done
 struct Mat_t Item_PoseAbs(const struct Item_t* inst);//Done
-////////////////////////////////////////////////////////////////////////////
-
-void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value);
-void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value);
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////
 struct Mat_t Item_PoseTool(const struct Item_t* inst); //Done Returns the pose (Mat) of the robot tool (TCP) with respect to the robot flange
 struct Mat_t Item_PoseFrame(const struct Item_t* inst); //Done Returns the pose (Mat) of the Active reference frame with respect to the robot base 
 void Item_setGeometryPose(const struct Item_t* inst, const struct Mat_t pose); //done
@@ -356,6 +328,12 @@ struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *join
 void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t *joints, double config);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
 
+//DI and DO
+char Item_getDI(const struct Item_t* inst, char* io_var);
+char Item_getAI(const struct Item_t* inst, char* io_var);
+void Item_setDO(const struct Item_t* inst, const char* io_var, const char* io_value);
+void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value);
+void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
