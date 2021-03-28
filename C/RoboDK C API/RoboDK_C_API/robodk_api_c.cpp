@@ -146,6 +146,41 @@ void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup
 	}
 }
 
+void RoboDK_Copy(struct RoboDK_t* inst, const Item_t* tocopy) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Copy");
+	_RoboDK_send_Item(inst,tocopy);
+	_RoboDK_check_status(inst);
+}
+
+struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const Item_t* paste_to) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Paste");
+	_RoboDK_send_Item(inst, paste_to);
+	Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
+}
+
+struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const Item_t* parent) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Add");
+	_RoboDK_send_Line(inst, filename);
+	_RoboDK_send_Item(inst, parent);
+	Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
+}
+
+void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const Item_t* itemsave) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Save");
+	_RoboDK_send_Line(inst, filename);
+	_RoboDK_send_Item(inst,itemsave);
+	_RoboDK_check_status(inst);
+}
+
+
 struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM_TYPE itemtype) {
 	_RoboDK_check_connection(inst);
 	if (itemtype < 0) {

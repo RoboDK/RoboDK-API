@@ -162,7 +162,6 @@ struct RoboDK_t {
 	int _PORT;
 	int _TIMEOUT;
 	int64_t _PROCESS;
-
 	char _ROBODK_BIN[MAX_STR_LENGTH]; // file path to the robodk program (executable), typically C:/RoboDK/bin/RoboDK.exe. Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
 	char _ARGUMENTS[MAX_STR_LENGTH];  // arguments to provide to RoboDK on startup
 };
@@ -170,10 +169,8 @@ struct RoboDK_t {
 //Represents an instance of a RoboDK Item class
 struct Item_t {
 	struct RoboDK_t *_RDK;
-
 	/// Pointer to the item inside RoboDK
 	uint64_t _PTR;
-
 	/// Item type
 	int32_t _TYPE;
 };
@@ -188,7 +185,6 @@ struct Mat_t {
 struct Joints_t {
 	/// number of degrees of freedom
 	int _nDOFs;
-
 	/// joint values (doubles, used to store the joint values)
 	double _Values[RDK_SIZE_JOINTS_MAX];
 };
@@ -198,17 +194,12 @@ struct Joints_t {
 struct Matrix2D_t {
 	/// Pointer to the data
 	double *data;
-
 	/// Pointer to the size array.
 	int *size;
-
 	/// Allocated size.
 	int allocatedSize;
-
-
 	/// Number of dimensions (usually 2)
 	int numDimensions;
-
 	bool canFreeData;
 };
 
@@ -243,6 +234,13 @@ void RoboDK_CloseRoboDK(struct RoboDK_t* inst);
 void RoboDK_setWindowState(struct RoboDK_t* inst, int windowstate);
 void RoboDK_setFlagsRoboDK(struct RoboDK_t* inst, int flags);
 void RoboDK_setFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, int flags);
+void RoboDK_Copy(struct RoboDK_t* inst, const Item_t* tocopy);
+struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const Item_t* paste_to);
+struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const Item_t* parent);
+void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const Item_t* itemsave);
+
+
+
 
 //RoboDK item class functions
 bool Item_Valid(const struct Item_t *item); //Done
