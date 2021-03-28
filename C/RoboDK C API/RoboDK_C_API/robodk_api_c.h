@@ -234,13 +234,15 @@ void RoboDK_CloseRoboDK(struct RoboDK_t* inst);
 void RoboDK_setWindowState(struct RoboDK_t* inst, int windowstate);
 void RoboDK_setFlagsRoboDK(struct RoboDK_t* inst, int flags);
 void RoboDK_setFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, int flags);
-void RoboDK_Copy(struct RoboDK_t* inst, const Item_t* tocopy);
-struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const Item_t* paste_to);
-struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const Item_t* parent);
-void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const Item_t* itemsave);
-
-
-
+void RoboDK_Copy(struct RoboDK_t* inst, const struct Item_t* tocopy);
+struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const struct Item_t* paste_to);
+struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const struct Item_t* parent);
+void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const struct Item_t* itemsave);
+struct Item_t RoboDK_AddStation(struct RoboDK_t* inst, const char* name);
+void RoboDK_CloseStation(struct RoboDK_t* inst);
+struct Item_t RoboDK_AddTarget(struct RoboDK_t* inst, const char* name, struct Item_t* itemparent, struct Item_t* itemrobot);// Done
+struct Item_t RoboDK_AddFrame(struct RoboDK_t* inst, struct Item_t* item, const char* framename);// Done
+struct Item_t RoboDK_AddProgram(struct RoboDK_t* inst, const char* name, struct Item_t* itemrobot);// Done
 
 //RoboDK item class functions
 bool Item_Valid(const struct Item_t *item); //Done
@@ -271,7 +273,7 @@ void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t
 void Item_customInstruction(const struct Item_t* inst, const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot);
 ///
 void Item_setName(const struct Item_t* inst, const char* name); //progress
-struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst );// 
+
 void Item_setRounding(const struct Item_t* inst, double zonedata);// Done 
 void Item_ShowSequence(const struct Item_t* inst, struct Matrix2D_t* sequence);
 bool Item_MakeProgram(const struct Item_t* inst, const char* filename);

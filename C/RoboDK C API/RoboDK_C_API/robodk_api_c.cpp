@@ -146,14 +146,14 @@ void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup
 	}
 }
 
-void RoboDK_Copy(struct RoboDK_t* inst, const Item_t* tocopy) {
+void RoboDK_Copy(struct RoboDK_t* inst, const struct Item_t* tocopy) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Copy");
 	_RoboDK_send_Item(inst,tocopy);
 	_RoboDK_check_status(inst);
 }
 
-struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const Item_t* paste_to) {
+struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const struct Item_t* paste_to) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Paste");
 	_RoboDK_send_Item(inst, paste_to);
@@ -162,21 +162,38 @@ struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const Item_t* paste_to) {
 	return newitem;
 }
 
-struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const Item_t* parent) {
+struct Item_t RoboDK_AddFile(struct RoboDK_t* inst, const char* filename, const struct Item_t* parent) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Add");
 	_RoboDK_send_Line(inst, filename);
 	_RoboDK_send_Item(inst, parent);
-	Item_t newitem = _RoboDK_recv_Item(inst);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
 	_RoboDK_check_status(inst);
 	return newitem;
 }
 
-void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const Item_t* itemsave) {
+void RoboDK_Save(struct RoboDK_t* inst, const char* filename, const struct Item_t* itemsave) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Save");
 	_RoboDK_send_Line(inst, filename);
 	_RoboDK_send_Item(inst,itemsave);
+	_RoboDK_check_status(inst);
+}
+
+struct Item_t RoboDK_AddStation(struct RoboDK_t* inst, const char* name) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "NewStation");
+	_RoboDK_send_Line(inst, name);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
+}
+
+
+
+void RoboDK_CloseStation(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "RemoveStn");
 	_RoboDK_check_status(inst);
 }
 
@@ -701,19 +718,37 @@ void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
 	_RoboDK_send_Int(inst->_RDK, accurate);
 	_RoboDK_check_status(inst->_RDK);
 }
-
-struct Item_t Item_AddFrame(const char* framename, const struct Item_t* inst) {//in progress
-	_RoboDK_check_connection(inst->_RDK);//initiating
-	_RoboDK_send_Line(inst->_RDK, "Add_FRAME");//command
-	_RoboDK_send_Line(inst->_RDK, framename);//frame name passed by user
-	_RoboDK_send_Item(inst->_RDK, inst); //sending parent
-	struct Item_t frame = _RoboDK_recv_Item(inst->_RDK);
-	_RoboDK_check_status(inst->_RDK);
-	printf("New Frame Added\n");
-	return frame;
-
+struct Item_t RoboDK_AddTarget(struct RoboDK_t* inst, const char* name, struct Item_t* itemparent, struct Item_t* itemrobot) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Add_TARGET");
+	_RoboDK_send_Line(inst, name);
+	_RoboDK_send_Item(inst, itemparent);
+	_RoboDK_send_Item(inst, itemrobot);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
 }
 
+struct Item_t RoboDK_AddFrame(struct RoboDK_t* inst, struct Item_t* item, const char* framename) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Add_FRAME");
+	_RoboDK_send_Line(inst, framename);
+	_RoboDK_send_Item(inst, item); 
+	struct Item_t frame = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	printf("New Frame Added\n");
+	return frame;
+}
+
+struct Item_t RoboDK_AddProgram(struct RoboDK_t* inst, const char* name, struct Item_t* itemrobot) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Add_PROG");
+	_RoboDK_send_Line(inst, name);
+	_RoboDK_send_Item(inst, itemrobot);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
+}
 
 void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progress
 	_RoboDK_check_connection(inst->_RDK);
