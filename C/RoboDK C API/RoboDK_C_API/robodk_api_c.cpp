@@ -750,6 +750,94 @@ struct Item_t RoboDK_AddProgram(struct RoboDK_t* inst, const char* name, struct 
 	return newitem;
 }
 
+struct Item_t RoboDK_AddMachiningProject(struct RoboDK_t* inst, const char*name, const struct Item_t* itemrobot){
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Add_MACHINING");
+	_RoboDK_send_Line(inst, name);
+	_RoboDK_send_Item(inst, itemrobot);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return newitem;
+}
+
+
+struct Item_t RoboDK_getActiveStation(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "G_ActiveStn");
+	struct Item_t station = _RoboDK_recv_Item(inst);
+	_RoboDK_check_status(inst);
+	return station;
+}
+
+void RoboDK_setActiveStation(struct RoboDK_t* inst,struct Item_t* station) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "S_ActiveStn");
+	_RoboDK_send_Item(inst, station);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_Render(struct RoboDK_t* inst,bool always_render) {
+	bool auto_render = !always_render;
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Render");
+	_RoboDK_send_Int(inst, auto_render ? 1 : 0);
+	_RoboDK_check_status(inst);
+}
+
+void RoboDK_Update(struct RoboDK_t* inst){
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Refresh");
+	_RoboDK_send_Int(inst, 0);
+	_RoboDK_check_status(inst);
+}
+
+bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct Item_t* object_parent) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "IsInside");
+	_RoboDK_send_Item(inst, object_inside);
+	_RoboDK_send_Item(inst, object_parent);
+	int inside = _RoboDK_recv_Int(inst);
+	_RoboDK_check_status(inst);
+	return inside > 0;
+}
+
+int RoboDK_setCollisionActive(struct RoboDK_t* inst, int check_state) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Collision_SetState");
+	_RoboDK_send_Int(inst, check_state);
+	int ncollisions = _RoboDK_recv_Int(inst);
+	_RoboDK_check_status(inst);
+	return ncollisions;
+}
+
+int RoboDK_Collisions(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Collisions");
+	int ncollisions = _RoboDK_recv_Int(inst);
+	_RoboDK_check_status(inst);
+	return ncollisions;
+}
+
+int RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "Collided");
+	_RoboDK_send_Item(inst, item1);
+	_RoboDK_send_Item(inst, item2);
+	int ncollisions = _RoboDK_recv_Int(inst);
+	_RoboDK_check_status(inst);
+	return ncollisions;
+}
+
+
+
+
+
+
+
+
+
+
+
 void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progress
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_ZoneData");
@@ -1115,6 +1203,14 @@ void RoboDK_setRunMode(struct RoboDK_t *inst,int run_mode) {
 	_RoboDK_send_Line(inst,"S_RunMode");
 	_RoboDK_send_Int(inst,run_mode);
 	_RoboDK_check_status(inst);
+}
+
+int RoboDK_RunMode(struct RoboDK_t* inst) {
+	_RoboDK_check_connection(inst);
+	_RoboDK_send_Line(inst, "G_RunMode");
+	int runmode = _RoboDK_recv_Int(inst);
+	_RoboDK_check_status(inst);
+	return runmode;
 }
 
 struct Mat_t Mat_eye() {

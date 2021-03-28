@@ -224,6 +224,7 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, int com_port, 
 void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup); //Complete
 struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM_TYPE itemtype); //Complete
 void RoboDK_setRunMode(struct RoboDK_t *inst, int run_mode); //Complete
+int RoboDK_RunMode(struct RoboDK_t* inst);
 void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value);
 void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value);
 void RoboDK_License(struct RoboDK_t* inst, char* license);
@@ -243,6 +244,18 @@ void RoboDK_CloseStation(struct RoboDK_t* inst);
 struct Item_t RoboDK_AddTarget(struct RoboDK_t* inst, const char* name, struct Item_t* itemparent, struct Item_t* itemrobot);// Done
 struct Item_t RoboDK_AddFrame(struct RoboDK_t* inst, struct Item_t* item, const char* framename);// Done
 struct Item_t RoboDK_AddProgram(struct RoboDK_t* inst, const char* name, struct Item_t* itemrobot);// Done
+struct Item_t RoboDK_AddMachiningProject(struct RoboDK_t* inst, const char* name, const struct Item_t* itemrobot);
+struct Item_t RoboDK_getActiveStation(struct RoboDK_t* inst);
+void RoboDK_setActiveStation(struct RoboDK_t* inst, struct Item_t* station);
+void RoboDK_Render(struct RoboDK_t* inst, bool always_render);
+void RoboDK_Update(struct RoboDK_t* inst);
+bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct Item_t* object_parent);
+int RoboDK_setCollisionActive(struct RoboDK_t* inst, int check_state);
+int RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2);
+
+
+
+
 
 //RoboDK item class functions
 bool Item_Valid(const struct Item_t *item); //Done
