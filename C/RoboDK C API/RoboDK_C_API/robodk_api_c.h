@@ -435,6 +435,7 @@ bool          _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, in
 bool          _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose); //Complete
 
 
+//These functions will need to work on a big endian system
 int32_t       _RoboDK_recv_Int(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_Line(struct RoboDK_t *inst, char *output); //Complete
 struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst); //Complete
