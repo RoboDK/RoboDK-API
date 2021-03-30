@@ -152,7 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConsoleApplication1.cpp" />
-    <ClCompile Include="robodk_api_c.cpp" />
+    <ClCompile Include="robodk_api_c.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="robodk_api_c.h" />

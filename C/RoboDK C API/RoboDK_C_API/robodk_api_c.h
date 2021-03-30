@@ -1,4 +1,10 @@
-#pragma once
+#ifndef ROBODK_API_H
+#define ROBODK_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //Standard libraries used by the robodk api
 #include <math.h>
 #include <stdio.h>
@@ -47,7 +53,11 @@
 // IMPORTANT!! Do not change this value
 
 //Maximum string lenth for string based parameters like IP and names
+#ifdef _MSC_VER
+enum { MAX_STR_LENGTH = 1024 };
+#else
 static const int MAX_STR_LENGTH = 1024;
+#endif
 
 //Enums
 /// Tree item types
@@ -318,7 +328,7 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]);
 void Item_JointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits); //done
 void Item_setJointLimits(const struct Item_t* inst, struct Joints_t* lower_limits, struct Joints_t* upper_limits);
 void Item_setRobot(const struct Item_t* inst, const struct Item_t* robot);
-struct Item_t Item_AddTool(const struct Item_t* inst, const Mat_t* tool_pose, const char* tool_name);
+struct Item_t Item_AddTool(const struct Item_t* inst, const struct Mat_t* tool_pose, const char* tool_name);
 struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options);
 void Item_setAsCartesianTarget(const struct Item_t* inst);
 void Item_setAsJointTarget(const struct Item_t* inst);
@@ -440,3 +450,9 @@ bool          _RoboDK_check_status(struct RoboDK_t *inst); //Complete
 
 void          _RoboDK_moveX(struct RoboDK_t *inst, const struct Item_t *target, const struct Joints_t *joints, const struct Mat_t *mat_target, const struct Item_t *itemrobot, int movetype, bool blocking);
 void          _RoboDK_moveC(struct RoboDK_t* inst, const struct Item_t* target1, const struct Joints_t* joints1, const struct Mat_t* mat_target1, const struct Item_t* target2, const struct Joints_t* joints2, const struct Mat_t* mat_target2, const struct Item_t* itemrobot, bool blocking);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -156,7 +156,7 @@ struct Item_t RoboDK_Paste(struct RoboDK_t* inst, const struct Item_t* paste_to)
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Paste");
 	_RoboDK_send_Item(inst, paste_to);
-	Item_t newitem = _RoboDK_recv_Item(inst);
+	struct Item_t newitem = _RoboDK_recv_Item(inst);
 	_RoboDK_check_status(inst);
 	return newitem;
 }
