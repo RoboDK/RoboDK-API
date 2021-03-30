@@ -53,11 +53,7 @@ extern "C" {
 // IMPORTANT!! Do not change this value
 
 //Maximum string lenth for string based parameters like IP and names
-#ifdef _MSC_VER
 enum { MAX_STR_LENGTH = 1024 };
-#else
-static const int MAX_STR_LENGTH = 1024;
-#endif
 
 //Enums
 /// Tree item types
