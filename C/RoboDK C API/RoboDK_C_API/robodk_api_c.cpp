@@ -18,7 +18,6 @@ int SocketWrite(SOCKET sock, void *buffer, int bufferSize) {
 }
 
 
-
 int socketRead(SOCKET sock, void *outBuffer, int bufferSize) {
 #if defined(_WIN32)
 	return recv(sock, (char *)outBuffer, bufferSize, 0);
@@ -134,9 +133,9 @@ void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup
 	{
 		_RoboDK_send_Line(inst, "ShowMessage");
 		_RoboDK_send_Line(inst, message);
-		inst->_TIMEOUT = 3600 * 1000;
-		_RoboDK_check_status(inst);
-		inst->_TIMEOUT = ROBODK_API_TIMEOUT;
+		setSocketTimeout(inst->_COM, (int)(3600 * 1000));
+		_RoboDK_check_status(inst); //Will wait here
+		setSocketTimeout(inst->_COM, inst->_TIMEOUT);
 	}
 	else
 	{
@@ -397,9 +396,9 @@ void Item_WaitMove(const struct Item_t *inst, double timeout_sec) {
 	_RoboDK_send_Line(inst->_RDK, "WaitMove");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
-	inst->_RDK->_TIMEOUT = (int)(timeout_sec * 1000.0);
+	setSocketTimeout(inst->_RDK->_COM,(int)(timeout_sec * 1000.0));
 	_RoboDK_check_status(inst->_RDK); //Will wait here
-	inst->_RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
+	setSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
 }
 
 bool Item_Connect(const struct Item_t *inst,const char *robot_ip) {
@@ -495,7 +494,7 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "Scale");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	_RoboDK_send_Array(inst->_RDK,scale_xyz, 3);
+	_RoboDK_send_Array(inst->_RDK, scale_xyz, 3);
 	_RoboDK_check_status(inst->_RDK);
 }
 
@@ -510,9 +509,9 @@ struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile
 	_RoboDK_send_Item(inst->_RDK, part_obj);
 	//_RoboDK_send_Line(inst->_RDK, "NO_UPDATE " + options);
 	_RoboDK_send_Line(inst->_RDK, options);
-	inst->_RDK->_TIMEOUT = 3600 * 1000;
-	program =_RoboDK_recv_Item(inst->_RDK);
-	inst->_RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
+	setSocketTimeout(inst->_RDK->_COM, (int)(3600 * 1000));
+	program = _RoboDK_recv_Item(inst->_RDK); //Will wait here
+	setSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
 	double status = _RoboDK_recv_Int(inst->_RDK) / 1000.0;
 	_RoboDK_check_status(inst->_RDK);
 	return program;
