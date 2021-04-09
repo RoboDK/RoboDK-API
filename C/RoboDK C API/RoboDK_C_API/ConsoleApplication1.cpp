@@ -36,16 +36,16 @@ int main()
 	Mat_SetPose_KUKA(&pose_ref, XYZWPR_Create(400, 0, 0, 0, 0, 0));
 
 	//Update the robot TCP and reference frame
-	Item_setPoseTool(&robotItem, pose_tcp);
-	Item_setPoseFrame(&robotItem, pose_ref);
-	Item_setAccuracyActive(&robotItem, false);
+	Item_SetPoseTool(&robotItem, pose_tcp);
+	Item_SetPoseFrame(&robotItem, pose_ref);
+	Item_SetAccuracyActive(&robotItem, false);
 
 	//Define a nominal target in the joint space:
 	const double jointsDouble[] = { 0, 0, 90, 0, 90, 0 };
 	struct Joints_t joints;
 	Joints_SetValues(&joints, jointsDouble, sizeof(jointsDouble) / sizeof(double));
 
-	struct Mat_t pose_robot = Item_solveFK(&robotItem, &joints, NULL, NULL);
+	struct Mat_t pose_robot = Item_SolveFK(&robotItem, &joints, NULL, NULL);
 
 	//Calculate pose_target: the TCP with respect to the reference frame
 	struct Mat_t pose_target;
@@ -124,13 +124,13 @@ int main()
 		if (Item_Connect(&robotItem, ""))
 		{
 			// Set simulation mode
-			RoboDK_setRunMode(&rdk, RUNMODE_RUN_ROBOT);
+			RoboDK_SetRunMode(&rdk, RUNMODE_RUN_ROBOT);
 			printf("Warning future moves will operate on the real robot!\n");
 		}
 		else
 		{
 			printf("Could not connect to real robot, running in simulation mode.\n");
-			RoboDK_setRunMode(&rdk, RUNMODE_SIMULATE);
+			RoboDK_SetRunMode(&rdk, RUNMODE_SIMULATE);
 		}
 
 		printf("Input e to exit, any other character causes a random movement\n");

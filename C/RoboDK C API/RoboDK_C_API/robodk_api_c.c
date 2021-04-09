@@ -1,5 +1,9 @@
 #include "robodk_api_c.h"
 
+static const char ROBODK_API_START_STRING[] = "CMD_START";
+static const char ROBODK_API_READY_STRING[] = "READY";
+static const char ROBODK_API_LF[] = "\n";
+
 //Platform indepedant IO operations
 void ThreadSleep(unsigned long nMilliseconds) {
 #if defined(_WIN32)
@@ -9,7 +13,7 @@ void ThreadSleep(unsigned long nMilliseconds) {
 #endif
 }
 
-int SocketWrite(SOCKET sock, void *buffer, int bufferSize) {
+uint32_t SocketWrite(SOCKET sock, void *buffer, uint32_t bufferSize) {
 #if defined(_WIN32)
 	return send(sock, (char *)buffer, bufferSize, 0);
 #elif defined(POSIX)
@@ -30,7 +34,7 @@ int socketRead(SOCKET sock, void *outBuffer, int bufferSize) {
 void setSocketTimeout(SOCKET sock, int timeout_ms) {
 	struct timeval timeout;      
 #if defined(_WIN32)
-	timeout.tv_sec = timeout_ms * 0.001;
+	timeout.tv_sec = (long) (timeout_ms * 0.001);
 	timeout.tv_usec = 0;
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,sizeof(struct timeval));
 #elif defined(POSIX)
@@ -100,7 +104,7 @@ void RoboDK_Connect_default(struct RoboDK_t *inst) {
 	RoboDK_Connect(inst, "", -1, "", "");
 }
 
-void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, int com_port, const char *args, const char *path) {
+void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_port, const char *args, const char *path) {
 	//_COM = nullptr;
 	//_IP = robodk_ip;
 	strcpy(inst->_IP, robodk_ip);
@@ -213,7 +217,7 @@ struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM
 	return item;
 }
 
-void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value) {
+void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "S_Param");
 	_RoboDK_send_Line(inst, param);
@@ -221,7 +225,7 @@ void RoboDK_setParam(struct RoboDK_t* inst, const char* param, const char* value
 	_RoboDK_check_status(inst);
 }
 
-void RoboDK_getParam(struct RoboDK_t* inst, const char* param, char* value) {
+void RoboDK_GetParam(struct RoboDK_t* inst, const char* param, char* value) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "G_Param");
 	_RoboDK_send_Line(inst, param);
@@ -326,7 +330,7 @@ void Item_MoveC_mat(struct Item_t* inst, struct Mat_t* targetPose1, struct Mat_t
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Item_setDO(const struct Item_t* inst, const char *io_var, const char *io_value) {
+void Item_SetDO(const struct Item_t* inst, const char *io_var, const char *io_value) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"setDO");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -335,7 +339,7 @@ void Item_setDO(const struct Item_t* inst, const char *io_var, const char *io_va
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_value) {
+void Item_SetAO(const struct Item_t* inst, const char* io_var, const char* io_value) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "setAO");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -344,7 +348,7 @@ void Item_setAO(const struct Item_t* inst, const char* io_var, const char* io_va
 	_RoboDK_check_status(inst->_RDK);
 }
 
-char Item_getDI(const struct Item_t* inst, char* io_var) {
+char Item_GetDI(const struct Item_t* inst, char* io_var) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"getDI");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -355,7 +359,7 @@ char Item_getDI(const struct Item_t* inst, char* io_var) {
 	return io_value;
 }
 
-char Item_getAI(const struct Item_t* inst, char* io_var) {
+char Item_GetAI(const struct Item_t* inst, char* io_var) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"getAI");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -366,7 +370,7 @@ char Item_getAI(const struct Item_t* inst, char* io_var) {
 	return di_value;
 }
 
-void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms) {
+void Item_WaitDI(const struct Item_t* inst, const char* io_var, const char* io_value, double timeout_ms) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "waitDI");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -377,7 +381,7 @@ void Item_waitDI(const struct Item_t* inst, const char* io_var, const char* io_v
 }
 
 
-void Item_customInstruction(const struct Item_t* inst,const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot) {
+void Item_CustomInstruction(const struct Item_t* inst,const char* name, const char* path_run, const char* path_icon, bool blocking, const char* cmd_run_on_robot) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "InsCustom2");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -443,7 +447,7 @@ void Item_Delete(struct Item_t* inst) {
 	inst->_TYPE = -1;
 }
 
-void Item_setParent(const struct Item_t* inst1, const struct Item_t* inst2) {
+void Item_SetParent(const struct Item_t* inst1, const struct Item_t* inst2) {
 	_RoboDK_check_connection(inst1->_RDK);
 	_RoboDK_send_Line(inst1->_RDK,"S_Parent");
 	_RoboDK_send_Item(inst1->_RDK, inst1);
@@ -451,7 +455,7 @@ void Item_setParent(const struct Item_t* inst1, const struct Item_t* inst2) {
 	_RoboDK_check_status(inst1->_RDK);
 }
 
-void Item_setParentStatic(const struct Item_t* inst1, const struct Item_t* inst2) {
+void Item_SetParentStatic(const struct Item_t* inst1, const struct Item_t* inst2) {
 	_RoboDK_check_connection(inst1->_RDK);
 	_RoboDK_send_Line(inst1->_RDK, "S_Parent_Static");
 	_RoboDK_send_Item(inst1->_RDK, inst1);
@@ -499,7 +503,7 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
 }
 
 
-struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options)
+struct Item_t Item_SetMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options)
 {
 	struct Item_t program;
 	_RoboDK_check_connection(inst->_RDK);
@@ -520,21 +524,21 @@ struct Item_t Item_setMachiningParameters(const struct Item_t* inst, char ncfile
 
 
 
-void Item_setAsCartesianTarget(const struct Item_t* inst) {
+void Item_SetAsCartesianTarget(const struct Item_t* inst) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Target_As_RT");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setAsJointTarget(const struct Item_t* inst) {
+void Item_SetAsJointTarget(const struct Item_t* inst) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Target_As_JT");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
 }
 
-bool Item_isJointTarget(const struct Item_t* inst) {
+bool Item_IsJointTarget(const struct Item_t* inst) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "Target_Is_JT");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -553,7 +557,7 @@ struct Joints_t Item_JointsHome(const struct Item_t* inst) {
 	return jnts;
 }
 
-void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
+void Item_SetJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
 	double angles[6];
 	angles[0] = jnts._Values[0];
 	angles[1] = jnts._Values[1];
@@ -568,7 +572,7 @@ void Item_setJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
-struct Item_t Item_ObjectLink(const struct Item_t* inst,int link_id) {
+struct Item_t Item_ObjectLink(const struct Item_t* inst,uint32_t link_id) {
 	struct Item_t item1;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_LinkObjId");
@@ -578,12 +582,12 @@ struct Item_t Item_ObjectLink(const struct Item_t* inst,int link_id) {
 	_RoboDK_check_status(inst->_RDK);
 	return item1;
 }
-struct Item_t Item_getLink(const struct Item_t* inst, int link_id) {
+struct Item_t Item_GetLink(const struct Item_t* inst, enum eITEM_TYPE link_type) {
 	struct Item_t item1;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_LinkType");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	_RoboDK_send_Int(inst->_RDK, link_id);
+	_RoboDK_send_Int(inst->_RDK, link_type);
 	item1 = _RoboDK_recv_Item(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
 	return item1;
@@ -602,7 +606,7 @@ void Item_JointLimits(const struct Item_t* inst, struct Joints_t *lower_limits, 
 }
 
 
-void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits, struct Joints_t *upper_limits) {
+void Item_SetJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits, struct Joints_t *upper_limits) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_RobLimits");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -611,7 +615,7 @@ void Item_setJointLimits(const struct Item_t* inst,struct Joints_t *lower_limits
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setRobot(const struct Item_t* inst,const struct Item_t* robot) {
+void Item_SetRobot(const struct Item_t* inst,const struct Item_t* robot) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Robot");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -632,7 +636,7 @@ struct Item_t Item_AddTool(const struct Item_t* inst, const struct Mat_t *tool_p
 
 
 
-void Item_setJoints(const struct Item_t* inst, struct Joints_t jnts) {
+void Item_SetJoints(const struct Item_t* inst, struct Joints_t jnts) {
 	double angles[6];
 	angles[0] = jnts._Values[0];
 	angles[1] = jnts._Values[1];
@@ -673,7 +677,7 @@ struct Mat_t Item_PoseTool(const struct Item_t* inst) { //in progress
 	return pose;
 }
 
-void Item_setPose(const struct Item_t* inst, const struct Mat_t pose) {
+void Item_SetPose(const struct Item_t* inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Hlocal");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -685,7 +689,7 @@ void Item_setPose(const struct Item_t* inst, const struct Mat_t pose) {
 
 
 
-void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
+void Item_SetPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Tool");
 	_RoboDK_send_Pose(inst->_RDK,pose);
@@ -693,7 +697,7 @@ void Item_setPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
+void Item_SetPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Frame");
 	_RoboDK_send_Pose(inst->_RDK, pose);
@@ -710,11 +714,11 @@ void Item_setName(const struct Item_t* inst, const char *name) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
-void Item_setAccuracyActive(const struct Item_t *inst, const int accurate) {
+void Item_SetAccuracyActive(const struct Item_t *inst, const bool accurate) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_AbsAccOn");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	_RoboDK_send_Int(inst->_RDK, accurate);
+	_RoboDK_send_Int(inst->_RDK, accurate ? 1 : 0);
 	_RoboDK_check_status(inst->_RDK);
 }
 struct Item_t RoboDK_AddTarget(struct RoboDK_t* inst, const char* name, struct Item_t* itemparent, struct Item_t* itemrobot) {
@@ -760,7 +764,7 @@ struct Item_t RoboDK_AddMachiningProject(struct RoboDK_t* inst, const char*name,
 }
 
 
-struct Item_t RoboDK_getActiveStation(struct RoboDK_t* inst) {
+struct Item_t RoboDK_GetActiveStation(struct RoboDK_t* inst) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "G_ActiveStn");
 	struct Item_t station = _RoboDK_recv_Item(inst);
@@ -768,7 +772,7 @@ struct Item_t RoboDK_getActiveStation(struct RoboDK_t* inst) {
 	return station;
 }
 
-void RoboDK_setActiveStation(struct RoboDK_t* inst,struct Item_t* station) {
+void RoboDK_SetActiveStation(struct RoboDK_t* inst,struct Item_t* station) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "S_ActiveStn");
 	_RoboDK_send_Item(inst, station);
@@ -800,11 +804,11 @@ bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct
 	return inside > 0;
 }
 
-int RoboDK_setCollisionActive(struct RoboDK_t* inst, int check_state) {
+uint32_t RoboDK_SetCollisionActive(struct RoboDK_t* inst, enum eCollisionState check_state) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Collision_SetState");
 	_RoboDK_send_Int(inst, check_state);
-	int ncollisions = _RoboDK_recv_Int(inst);
+	uint32_t ncollisions = _RoboDK_recv_Int(inst);
 	_RoboDK_check_status(inst);
 	return ncollisions;
 }
@@ -817,12 +821,12 @@ int RoboDK_Collisions(struct RoboDK_t* inst) {
 	return ncollisions;
 }
 
-int RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2) {
+uint32_t RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "Collided");
 	_RoboDK_send_Item(inst, item1);
 	_RoboDK_send_Item(inst, item2);
-	int ncollisions = _RoboDK_recv_Int(inst);
+	uint32_t ncollisions = _RoboDK_recv_Int(inst);
 	_RoboDK_check_status(inst);
 	return ncollisions;
 }
@@ -837,7 +841,7 @@ int RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t*
 
 
 
-void Item_setRounding(const struct Item_t* inst, double zonedata) { //in progress
+void Item_SetRounding(const struct Item_t* inst, double zonedata) { //in progress
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_ZoneData");
 	_RoboDK_send_Int(inst->_RDK, ((int)(zonedata * 1000.0)));
@@ -870,7 +874,7 @@ bool Item_MakeProgram(const struct Item_t* inst,const char* filename) {
 	return success; // prog_log_str
 }
 
-void Item_setRunType(const struct Item_t* inst, int program_run_type) {
+void Item_SetRunType(const struct Item_t* inst, int program_run_type) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_ProgRunType");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -924,7 +928,7 @@ void Item_Pause(const struct Item_t* inst, double time_ms) {
 }
 
 
-void Item_setSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints ) {
+void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints ) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_Speed4");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -960,7 +964,7 @@ void Item_Stop(const struct Item_t* inst) { //pass program
 
 
 
-void Item_setSimulationSpeed(const struct Item_t* inst, double speed) { 
+void Item_SetSimulationSpeed(const struct Item_t* inst, double speed) { 
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "SimulateSpeed");
 	_RoboDK_send_Int(inst->_RDK, (int)(speed * 1000));
@@ -1013,12 +1017,12 @@ void Item_ShowTargets(const struct Item_t* inst, bool visible) { // pass Item wi
 
 
 
-int Item_InstructionCount(const struct Item_t* inst) {
+int32_t Item_InstructionCount(const struct Item_t* inst) {
 
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "Prog_Nins");
 	_RoboDK_send_Item(inst->_RDK, inst);
-	int nins = _RoboDK_recv_Int(inst->_RDK);
+	uint32_t nins = _RoboDK_recv_Int(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
 	return nins;
 
@@ -1030,7 +1034,7 @@ int Item_InstructionCount(const struct Item_t* inst) {
 
 
 
-void Item_setPoseAbs(const struct Item_t* inst, const struct Mat_t pose) {
+void Item_SetPoseAbs(const struct Item_t* inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Hlocal_Abs");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -1051,7 +1055,7 @@ struct Mat_t Item_PoseAbs(const struct Item_t* inst) {
 
 
 
-void Item_setGeometryPose(const struct Item_t* inst, const struct Mat_t pose) {
+void Item_SetGeometryPose(const struct Item_t* inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Hgeom");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -1071,7 +1075,7 @@ struct Mat_t Item_GeometryPose(const struct Item_t* inst) {
 
 
 
-void Item_setColor(const struct Item_t* inst, double R, double G, double B, double A) {
+void Item_SetColor(const struct Item_t* inst, double R, double G, double B, double A) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_Color");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -1104,16 +1108,13 @@ bool Item_Visible(const struct Item_t* inst) {
 	return (visible != 0);
 }
 
-void Item_setVisible(const struct Item_t* inst, bool visible, int visible_frame) {
-	if (visible_frame < 0)
-	{
-		visible_frame = visible ? 1 : 0;
-	}
+void Item_SetVisible(const struct Item_t* inst, bool visible, bool visible_frame) {
+	visible_frame = visible ? 1 : 0;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Visible");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_send_Int(inst->_RDK,visible ? 1 : 0);
-	_RoboDK_send_Int(inst->_RDK,visible_frame);
+	_RoboDK_send_Int(inst->_RDK,visible_frame );
 	_RoboDK_check_status(inst->_RDK);
 }
 
@@ -1122,7 +1123,7 @@ struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose
 	struct Joints_t jnts;
 	struct Mat_t base2flange = *pose; //pose of the robot flange with respect to the robot base frame
 	if (tool != NULL) {
-		struct Mat_t poseInv;
+		//struct Mat_t poseInv;
 		//Mat_Inv_out();
 		//base2flange = pose * tool->inv();
 	}
@@ -1139,7 +1140,7 @@ struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose
 }
 
 
-struct Mat_t Item_solveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose) {
+struct Mat_t Item_SolveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_FK");
 	_RoboDK_send_Array(inst->_RDK, joints->_Values, joints->_nDOFs);
@@ -1197,14 +1198,14 @@ void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, cons
 
 }
 
-void RoboDK_setRunMode(struct RoboDK_t *inst,int run_mode) {
+void RoboDK_SetRunMode(struct RoboDK_t *inst, enum eRobotRunMode run_mode) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst,"S_RunMode");
 	_RoboDK_send_Int(inst,run_mode);
 	_RoboDK_check_status(inst);
 }
 
-int RoboDK_RunMode(struct RoboDK_t* inst) {
+enum eRobotRunMode RoboDK_RunMode(struct RoboDK_t* inst) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "G_RunMode");
 	int runmode = _RoboDK_recv_Int(inst);
@@ -1874,7 +1875,8 @@ bool _RoboDK_connect(struct RoboDK_t *inst) {
 	*/
 	SocketWrite(inst->_COM, (void *)ROBODK_API_START_STRING, sizeof(ROBODK_API_START_STRING));
 	SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
-	SocketWrite(inst->_COM, (void *) "1 0\n", sizeof("1 0\n"));
+	static const char tempString[] = "1 0\n";
+	SocketWrite(inst->_COM, (void *) tempString, sizeof(tempString));
 	SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
 	//ThreadSleep(inst->_TIMEOUT);
 	//QString read(_COM->readAll());
@@ -1952,7 +1954,7 @@ bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
 		i++;
 	}
 
-	SocketWrite(inst->_COM, sendBuffer, strlen(sendBuffer));
+	SocketWrite(inst->_COM, sendBuffer, (int) (strlen(sendBuffer)));
 	SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
 	return true;
 }
@@ -1964,7 +1966,7 @@ bool _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item) {
 	char buffer[sizeof(uint64_t)];
 	uint64_t ptrVal;
 	if (item == NULL) {
-		ptrVal = NULL;
+		ptrVal = (uint64_t) NULL;
 	}
 	else {
 		ptrVal = item->_PTR;
@@ -2271,7 +2273,7 @@ void RoboDK_License(struct RoboDK_t* inst, char* license) {
 	_RoboDK_check_status(inst);
 }
 
-void RoboDK_setViewPose(struct RoboDK_t* inst, struct Mat_t* pose) {
+void RoboDK_SetViewPose(struct RoboDK_t* inst, struct Mat_t* pose) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "S_ViewPose");
 	_RoboDK_send_Pose(inst,*pose);
@@ -2299,21 +2301,21 @@ void RoboDK_CloseRoboDK(struct RoboDK_t* inst) {
 	inst->_PROCESS = 0;
 }
 
-void RoboDK_setWindowState(struct RoboDK_t* inst, int windowstate) {
+void RoboDK_SetWindowState(struct RoboDK_t* inst, enum eRoboDKWindowState windowstate) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "S_WindowState");
 	_RoboDK_send_Int(inst, windowstate);
 	_RoboDK_check_status(inst);
 }
 
-void RoboDK_setFlagsRoboDK(struct RoboDK_t* inst, int flags) {
+void RoboDK_SetFlagsRoboDK(struct RoboDK_t* inst, uint32_t flags) {
 	_RoboDK_check_connection(inst);
 	_RoboDK_send_Line(inst, "S_RoboDK_Rights");
 	_RoboDK_send_Int(inst, flags);
 	_RoboDK_check_status(inst);
 }
 
-void RoboDK_setFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, int flags) {
+void RoboDK_SetFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, uint32_t flags) {
 	_RoboDK_check_connection(inst1);
 	_RoboDK_send_Line(inst1, "S_RoboDK_Rights");
 	_RoboDK_send_Item(inst1,inst2);
