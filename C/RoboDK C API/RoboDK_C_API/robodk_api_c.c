@@ -874,7 +874,7 @@ bool Item_MakeProgram(const struct Item_t* inst,const char* filename) {
 	return success; // prog_log_str
 }
 
-void Item_SetRunType(const struct Item_t* inst, int program_run_type) {
+void Item_SetRunType(const struct Item_t* inst, enum eRobotRunMode program_run_type) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_ProgRunType");
 	_RoboDK_send_Item(inst->_RDK, inst);
@@ -908,7 +908,7 @@ int Item_RunCode(const struct Item_t* inst, char *parameters) {
 	return progstatus;
 }
 
-int Item_RunInstruction(const struct Item_t* inst, const char* code, int run_type) {
+int Item_RunInstruction(const struct Item_t* inst, const char* code, enum eProgInstructionType run_type) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "RunCode2");
 	_RoboDK_send_Item(inst->_RDK, inst);
