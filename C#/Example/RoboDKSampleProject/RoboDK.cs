@@ -5395,7 +5395,7 @@ public class RoboDK
         public double[] SimulatorJoints()
         {
             link._check_connection();
-            link._send_Line("G_Thetas");
+            link._send_Line("G_Thetas_Sim");
             link._send_Item(this);
             double[] joints = link._recv_Array();
             link._check_status();
