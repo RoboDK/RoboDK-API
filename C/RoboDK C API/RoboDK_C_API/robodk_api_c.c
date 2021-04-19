@@ -928,14 +928,14 @@ void Item_Pause(const struct Item_t* inst, double time_ms) {
 }
 
 
-void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints ) {
+void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double speed_joints, double accel_linear, double accel_joints ) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK,"S_Speed4");
 	_RoboDK_send_Item(inst->_RDK, inst);
 	double speed_accel[4];
 	speed_accel[0] = speed_linear;
-	speed_accel[1] = accel_linear;
-	speed_accel[2] = speed_joints;
+	speed_accel[1] = speed_joints;
+	speed_accel[2] = accel_linear;
 	speed_accel[3] = accel_joints;
 	_RoboDK_send_Array(inst->_RDK,speed_accel, 4);
 	_RoboDK_check_status(inst->_RDK);

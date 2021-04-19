@@ -360,7 +360,7 @@ double Item_SimulationSpeed(const struct Item_t* inst);//In Progress
 void Item_ShowInstructions(const struct Item_t* inst, bool visible); //Done 
 int32_t Item_InstructionCount(const struct Item_t* inst);//Done 
 void Item_ShowTargets(const struct Item_t* inst, bool visible);//In Progress //pass program  item 
-void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double accel_linear, double speed_joints , double accel_joints);//Done 
+void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double speed_joints, double accel_linear, double accel_joints);//Done 
 bool Item_Busy(const struct Item_t* inst);//Done
 void Item_Stop(const struct Item_t* inst);//Done
 bool Item_Disconnect(const struct Item_t* inst); //Done
