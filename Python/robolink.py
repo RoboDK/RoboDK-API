@@ -110,6 +110,8 @@ ROBOTCOM_UNKNOWN        = -1000
 # TCP calibration methods
 CALIBRATE_TCP_BY_POINT = 0
 CALIBRATE_TCP_BY_PLANE = 1
+CALIBRATE_TCP_BY_PLANE_SCARA = 4
+
 # Reference frame calibration methods 
 CALIBRATE_FRAME_3P_P1_ON_X = 0      # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
 CALIBRATE_FRAME_3P_P1_ORIGIN = 1    # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
@@ -1801,7 +1803,7 @@ class Robolink:
         self._check_status()
         return newitem   
 
-    def ProjectPoints(self, points, object_project, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def ProjectPoints(self, points, object_project, projection_type=PROJECTION_ALONG_NORMAL_RECALC, timeout=30):
         """Project a point or a list of points given its coordinates. 
         The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
         It returns the projected points as a list of points (empty matrix if failed). 
@@ -1812,6 +1814,8 @@ class Robolink:
         :type object_project: :class:`.Item`
         :param projection_type: Type of projection. For example: PROJECTION_ALONG_NORMAL_RECALC will project along the point normal and recalculate the normal vector on the surface projected.
         :type projection_type: int
+        :param timeout: Max timeout to wait for a reply in seconds (30 seconds by default).
+        :type timeout: int
         
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
@@ -1831,7 +1835,7 @@ class Robolink:
         self._send_matrix(points)
         self._send_item(object_project)
         self._send_int(projection_type)  
-        self.COM.settimeout(30) # 30 seconds timeout
+        self.COM.settimeout(timeout) # 30 seconds timeout
         projected_points = self._rec_matrix() # will wait here
         self.COM.settimeout(self.TIMEOUT)        
         self._check_status()
@@ -4060,7 +4064,7 @@ class Item():
         :param pose: pose of the item with respect to its parent
         :type pose: :class:`robodk.Mat`
         
-        .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Robolink.Item`
+        .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Robolink.Item`
         """
         self.link._check_connection()
         command = 'S_Hlocal'
@@ -4071,15 +4075,13 @@ class Item():
         return self
 
     def Pose(self):
-        """Returns the relative position (pose) of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent.
-        If a robot is provided, it will provide the pose of the end efector with respect to the robot base (same as PoseTool())
-        Returns the pose as :class:`robodk.Mat`. 
+        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this provide the pose of the end efector with respect to the robot base (same as PoseTool()). It returns the pose as :class:`robodk.Mat`. 
         
         Tip: Use a Pose_2_* function from the robodk module (such as :class:`robodk.Pose_2_KUKA`) to convert the pose to XYZABC (XYZ position in mm and ABC orientation in degrees), specific to a robot brand.
         
         Example: :ref:`weldexample`
         
-        .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.PoseFrame`, :func:`~robolink.Robolink.Item`
+        .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.PoseFrame`, :func:`~robolink.Robolink.Item`
         """
         self.link._check_connection()
         command = 'G_Hlocal'
@@ -4111,12 +4113,12 @@ class Item():
         return pose
 
     def setPoseAbs(self, pose):
-        """Sets the position of the item given the pose (:class:`robodk.Mat`) with respect to the absolute reference frame (station reference)
+        """Set the pose (:class:`robodk.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
         
         :param pose: pose of the item with respect to the station reference
         :type pose: :class:`robodk.Mat`
         
-        .. seealso:: :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPose`
+        .. seealso:: :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.Pose`
         """
         self.link._check_connection()
         command = 'S_Hlocal_Abs'
@@ -4127,10 +4129,36 @@ class Item():
         return self
 
     def PoseAbs(self):
-        """Return the position (:class:`robodk.Mat`) of this item given the pose with respect to the absolute reference frame (station reference)
-        For example, the position of an object/frame/target with respect to the origin of the station.
+        """Return the pose (:class:`robodk.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
         
-        .. seealso:: :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.Pose`
+        .. seealso:: :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPose`
+                
+        Example:
+        
+        .. code-block:: python
+            # Calculate the pose of any object with respect to any reference in RoboDK
+            def CalculatePoseFrame2Object(frame, part):                
+                # Get both poses with respect to the station reference (wrt-world coordinate system)
+                framePoseAbs = frame.PoseAbs()
+                partPoseAbs = part.PoseAbs()
+
+                # Calculate the pose of the object relative to the reference
+                pose = framePoseAbs.inv() * partPoseAbs
+                return pose
+
+            # Take the object
+            obj = RDK.Item('Sphere')
+
+            # Retrieve the reference
+            frame = RDK.Item('Frame 2')
+
+            # Calculate the relationship
+            pose =  CalculatePoseFrame2Object(frame,obj)
+
+            # Display the result
+            print(pose)
+            RDK.ShowMessage("The relative pose is:\n" + str(pose))
+        
         """
         self.link._check_connection()
         command = 'G_Hlocal_Abs'
@@ -4762,7 +4790,7 @@ class Item():
         :type tool_pose: :class:`robodk.Mat`
         :param str tool_name: name of the tool
         
-        .. seealso:: :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`
+        .. seealso:: :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.AddFile`
         """
         self.link._check_connection()
         command = 'AddToolEmpty'
@@ -5212,7 +5240,7 @@ class Item():
             self.link.MoveC(target1, target2, self, blocking)
     
     def MoveJ_Test(self, j1, j2, minstep_deg=-1):
-        """Checks if a joint movement is feasible and free of collision (if collision checking is activated).
+        """Checks if a joint movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.
         
         :param j1: start joints
         :type j1: list of float
@@ -5238,7 +5266,7 @@ class Item():
         return collision
     
     def MoveL_Test(self, j1, pose, minstep_mm=-1):
-        """Checks if a linear movement is feasible and free of collision (if collision checking is activated).
+        """Checks if a linear movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination pose if a collision is not detected.
         
         :param j1: start joints
         :type j1: list of float
