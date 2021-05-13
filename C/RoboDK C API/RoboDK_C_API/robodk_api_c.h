@@ -292,6 +292,8 @@ void RoboDK_SetViewPose(struct RoboDK_t* inst, struct Mat_t* pose);
 void RoboDK_ShowRoboDK(struct RoboDK_t* inst);
 void RoboDK_HideRoboDK(struct RoboDK_t* inst);
 void RoboDK_CloseRoboDK(struct RoboDK_t* inst);
+void Item_SetFrame(const struct Item_t* inst, const struct Item_t* frame);
+void Item_SetTool(const struct Item_t* inst, const struct Item_t* tool);
 void RoboDK_SetWindowState(struct RoboDK_t* inst, enum eRoboDKWindowState windowstate);
 void RoboDK_SetFlagsRoboDK(struct RoboDK_t* inst, uint32_t flags);
 void RoboDK_SetFlagsItem(struct RoboDK_t* inst1, struct Item_t* inst2, uint32_t flags);
