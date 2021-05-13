@@ -697,6 +697,14 @@ void Item_SetPoseTool(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_status(inst->_RDK);
 }
 
+void Item_SetTool(const struct Item_t* inst, const struct Item_t* tool) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Tool_ptr");
+	_RoboDK_send_Item(inst->_RDK, tool);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
 void Item_SetPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Frame");
@@ -704,6 +712,15 @@ void Item_SetPoseFrame(const struct Item_t *inst, const struct Mat_t pose) {
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
 }
+
+void Item_SetFrame(const struct Item_t* inst, const struct Item_t* frame) {
+	_RoboDK_check_connection(inst->_RDK);
+	_RoboDK_send_Line(inst->_RDK, "S_Frame_ptr");
+	_RoboDK_send_Item(inst->_RDK, frame);
+	_RoboDK_send_Item(inst->_RDK, inst);
+	_RoboDK_check_status(inst->_RDK);
+}
+
 
 void Item_setName(const struct Item_t* inst, const char *name) {
 
