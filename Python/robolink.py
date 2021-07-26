@@ -39,6 +39,7 @@ from warnings import warn
 import sys  # Only used to detect python version using sys.version_info
 import os
 import time
+import threading
 
 # Tree item types
 ITEM_TYPE_STATION=1
@@ -162,6 +163,8 @@ FEATURE_NONE=0
 FEATURE_SURFACE=1
 FEATURE_CURVE=2
 FEATURE_POINT=3
+FEATURE_SURFACE_PREVIEW = 8
+FEATURE_MESH = 9
 
 # Spray gun simulation:
 SPRAY_OFF = 0
@@ -580,7 +583,7 @@ def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area
         window.mainloop()
     
     """
-    import threading
+    #import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
         # it is important to run this on a parallel thread to not block the main window events in Python
         rdk = Robolink(port=port, args=args)
@@ -688,6 +691,7 @@ class Robolink:
     
     DEBUG = False     # Debug output through console
     COM = None        # tcpip com    
+    _lock = threading.Lock()
     ARGUMENTS = []    # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     CLOSE_STD_OUT = False # Close standard output for roboDK (RoboDK console output will no longer be visible)
     PORT = -1         # current port
@@ -1239,7 +1243,7 @@ class Robolink:
                 if self.CLOSE_STD_OUT:
                     p.stdout.close()                
                 else:
-                    import threading
+                    #import threading
                     t = threading.Thread(target=output_reader, args=(p,))
                     t.start()
                 
@@ -1914,15 +1918,16 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.AddFrame`
         """
-        self._check_connection()
-        command = 'Add_TARGET'
-        self._send_line(command)
-        self._send_line(name)
-        self._send_item(itemparent)
-        self._send_item(itemrobot)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        with self._lock:
+            self._check_connection()
+            command = 'Add_TARGET'
+            self._send_line(command)
+            self._send_line(name)
+            self._send_item(itemparent)
+            self._send_item(itemrobot)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     def AddFrame(self, name, itemparent=0):
         """Adds a new reference Frame. It returns the new :class:`.Item` created.
@@ -1932,14 +1937,15 @@ class Robolink:
         :type itemparent: :class:`.Item`
         
         .. seealso:: :func:`~robolink.Robolink.AddTarget`"""
-        self._check_connection()
-        command = 'Add_FRAME'
-        self._send_line(command)
-        self._send_line(name)
-        self._send_item(itemparent)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        with self._lock:
+            self._check_connection()
+            command = 'Add_FRAME'
+            self._send_line(command)
+            self._send_line(name)
+            self._send_item(itemparent)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     def AddProgram(self, name, itemrobot=0):
         """Add a new program to the RoboDK station. Programs can be used to simulate a specific sequence, to generate vendor specific programs (Offline Programming) or to run programs on the robot (Online Programming).
@@ -2098,14 +2104,15 @@ class Robolink:
         More examples to generate programs directly from your script or move the robot directly from your program here: 
         :ref:`lbl-move-through-points`. or the macro available in RoboDK/Library/Macros/MoveRobotThroughLine.py
         """
-        self._check_connection()
-        command = 'Add_PROG'
-        self._send_line(command)
-        self._send_line(name)
-        self._send_item(itemrobot)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        with self._lock:
+            self._check_connection()
+            command = 'Add_PROG'
+            self._send_line(command)
+            self._send_line(name)
+            self._send_item(itemrobot)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
         
     def AddMillingProject(self, name='Milling settings', itemrobot=0):
         """Obsolete, use :func:`~robolink.Robolink.AddMachiningProject` instead"""
@@ -2121,14 +2128,15 @@ class Robolink:
         :type itemrobot: :class:`.Item`
         
         .. seealso:: :func:`~robolink.Item.setMachiningParameters`"""
-        self._check_connection()
-        command = 'Add_MACHINING'
-        self._send_line(command)
-        self._send_line(name)
-        self._send_item(itemrobot)
-        newitem = self._rec_item()
-        self._check_status()
-        return newitem
+        with self._lock:
+            self._check_connection()
+            command = 'Add_MACHINING'
+            self._send_line(command)
+            self._send_line(name)
+            self._send_item(itemrobot)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def RunProgram(self, fcn_param, wait_for_finished = False):
@@ -2170,14 +2178,15 @@ class Robolink:
             RDK.RunCode("Prog1", True)              # Run a program named Prog1 available in the RoboDK station
             
         """
-        self._check_connection()
-        command = 'RunCode'
-        self._send_line(command)
-        self._send_int(code_is_fcn_call)
-        self._send_line(code.replace('\r\n','<<br>>').replace('\n','<<br>>'))
-        prog_status = self._rec_int()
-        self._check_status()
-        return prog_status
+        with self._lock:
+            self._check_connection()
+            command = 'RunCode'
+            self._send_line(command)
+            self._send_int(code_is_fcn_call)
+            self._send_line(code.replace('\r\n','<<br>>').replace('\n','<<br>>'))
+            prog_status = self._rec_int()
+            self._check_status()
+            return prog_status
     
     def RunMessage(self, message, message_is_comment=False):
         """Show a message or a comment in the program generated offline (program generation). The message (or code) is displayed on the teach pendant of the robot.
@@ -2187,12 +2196,13 @@ class Robolink:
         
         """
         print('Message: ' + message)
-        self._check_connection()
-        command = 'RunMessage'
-        self._send_line(command)
-        self._send_int(message_is_comment)
-        self._send_line(message.replace('\r\n','<<br>>').replace('\n','<<br>>'))
-        self._check_status()    
+        with self._lock:
+            self._check_connection()
+            command = 'RunMessage'
+            self._send_line(command)
+            self._send_int(message_is_comment)
+            self._send_line(message.replace('\r\n','<<br>>').replace('\n','<<br>>'))
+            self._check_status()    
 
     def Render(self, always_render=False):
         """Display/render the scene: update the display. This function turns default rendering (rendering after any modification of the station unless always_render is set to true).
