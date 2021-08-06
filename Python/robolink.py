@@ -703,15 +703,13 @@ class Robolink:
     def _setTimeout(self, timeout_sec=30):
         """Set the communication timeout (in seconds)."""
         # Change the default timeout here, in seconds:
-        with self._lock:
-            self.TIMEOUT = timeout_sec # in seconds
-            self.COM.settimeout(self.TIMEOUT)
+        self.TIMEOUT = timeout_sec # in seconds
+        self.COM.settimeout(self.TIMEOUT)
         
     def _is_connected(self):
         """Returns 1 if connection is valid, returns 0 if connection is invalid"""
-        with self._lock:
-            if not self.COM: return 0
-            connected = 1        
+        if not self.COM: return 0
+        connected = 1        
         #try:
         #    self.COM.settimeout(0)
         #    check = self.COM.recv(1)
@@ -719,366 +717,343 @@ class Robolink:
         #    connected = 0
         #    
         #self.COM.settimeout(self.TIMEOUT)
-            return connected
+        return connected
 
     def _check_connection(self):
         """If we are not connected it will attempt a connection, if it fails, it will throw an error"""
-        with self._lock:
-            if not self._is_connected() and self.Connect() < 1:
-                raise Exception('Unable to connect')
+        if not self._is_connected() and self.Connect() < 1:
+            raise Exception('Unable to connect')
         #To do: Clear input buffer.
 
     def _check_status(self):
         """This procedure checks the status of the connection"""
-        with self._lock:
-            status = self._rec_int()
-            if status == 0:
-                # everything is OK
-                self.LAST_STATUS_MESSAGE = ''
+        status = self._rec_int()
+        if status == 0:
+            # everything is OK
+            self.LAST_STATUS_MESSAGE = ''
         
-            elif status > 0 and status < 10:
-                self.LAST_STATUS_MESSAGE = 'Unknown error'
-                if status == 1:
-                    self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
-                elif status == 2: #output warning
-                    self.LAST_STATUS_MESSAGE = self._rec_line()
-                    print('WARNING: ' + self.LAST_STATUS_MESSAGE)
-                    #warn(self.LAST_STATUS_MESSAGE)# does not show where is the problem...
-                    return 0
-                elif status == 3: #output error
-                    self.LAST_STATUS_MESSAGE = self._rec_line()
-                    raise Exception(self.LAST_STATUS_MESSAGE)
-                elif status == 9:
-                    self.LAST_STATUS_MESSAGE = 'Invalid license. Purchase a license online (www.robodk.com) or contact us at info@robodk.com.'
-                print(self.LAST_STATUS_MESSAGE)
-                raise Exception(self.LAST_STATUS_MESSAGE)
-            
-            elif status < 100:
-                # Since RoboDK 4.0 we raise dedicated errors
+        elif status > 0 and status < 10:
+            self.LAST_STATUS_MESSAGE = 'Unknown error'
+            if status == 1:
+                self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
+            elif status == 2: #output warning
                 self.LAST_STATUS_MESSAGE = self._rec_line()
-                if status == 10:                        
-                    raise TargetReachError(self.LAST_STATUS_MESSAGE)
-
-                elif status == 11:
-                    raise StoppedError(self.LAST_STATUS_MESSAGE)
-            
-                elif status == 12:
-                    raise InputError(self.LAST_STATUS_MESSAGE)   
-
-                elif status == 13:
-                    raise LicenseError(self.LAST_STATUS_MESSAGE)                   
-            
-                else:
-                    # Generic error exception
-                    raise Exception(self.LAST_STATUS_MESSAGE)
-                
-            else:
-                self.LAST_STATUS_MESSAGE = 'Problems running function'
+                print('WARNING: ' + self.LAST_STATUS_MESSAGE)
+                #warn(self.LAST_STATUS_MESSAGE)# does not show where is the problem...
+                return 0
+            elif status == 3: #output error
+                self.LAST_STATUS_MESSAGE = self._rec_line()
                 raise Exception(self.LAST_STATUS_MESSAGE)
+            elif status == 9:
+                self.LAST_STATUS_MESSAGE = 'Invalid license. Purchase a license online (www.robodk.com) or contact us at info@robodk.com.'
+            print(self.LAST_STATUS_MESSAGE)
+            raise Exception(self.LAST_STATUS_MESSAGE)
             
-            return status
+        elif status < 100:
+            # Since RoboDK 4.0 we raise dedicated errors
+            self.LAST_STATUS_MESSAGE = self._rec_line()
+            if status == 10:                        
+                raise TargetReachError(self.LAST_STATUS_MESSAGE)
+                
+            elif status == 11:
+                raise StoppedError(self.LAST_STATUS_MESSAGE)
+            
+            elif status == 12:
+                raise InputError(self.LAST_STATUS_MESSAGE)   
+
+            elif status == 13:
+                raise LicenseError(self.LAST_STATUS_MESSAGE)                   
+            
+            else:
+                # Generic error exception
+                raise Exception(self.LAST_STATUS_MESSAGE)
+                
+        else:
+            self.LAST_STATUS_MESSAGE = 'Problems running function'
+            raise Exception(self.LAST_STATUS_MESSAGE)
+            
+        return status
 
     def _check_color(self, color):
         """Formats the color in a vector of size 4x1 and ranges [0,1]"""
-        with self._lock:
-            if not isinstance(color,list) or len(color) < 3 or len(color) > 4:
-                raise Exception('The color vector must be a list of 3 or 4 values')
-            if len(color) == 3:
-                color.append(1)
-            if max(color) > 1 or min(color) < -1:
-                print("WARNING: Color provided is not in the range [0,1] ([r,g,b,a])")
-            return color
+        if not isinstance(color,list) or len(color) < 3 or len(color) > 4:
+            raise Exception('The color vector must be a list of 3 or 4 values')
+        if len(color) == 3:
+            color.append(1)
+        if max(color) > 1 or min(color) < -1:
+            print("WARNING: Color provided is not in the range [0,1] ([r,g,b,a])")
+        return color
 
     def _send_line(self, string=None):
         """Sends a string of characters with a \\n"""
-        with self._lock:
-            string = string.replace('\n','<br>')
-            if sys.version_info[0] < 3:
-                self.COM.send(bytes(string+'\n')) # Python 2.x only
-            else:
-                self.COM.send(bytes(string+'\n','utf-8')) # Python 3.x only
+        string = string.replace('\n','<br>')
+        if sys.version_info[0] < 3:
+            self.COM.send(bytes(string+'\n')) # Python 2.x only
+        else:
+            self.COM.send(bytes(string+'\n','utf-8')) # Python 3.x only
 
     def _rec_line(self):
         """Receives a string. It reads until if finds LF (\\n)"""
-        with self._lock:
-            string = b''
+        string = b''
+        chari = self.COM.recv(1)
+        while chari != b'\n':    # read until LF
+            string = string + chari
             chari = self.COM.recv(1)
-            while chari != b'\n':    # read until LF
-                string = string + chari
-                chari = self.COM.recv(1)
-            return str(string.decode('utf-8')) # python 2 and python 3 compatible
-            #string = ''
-            #chari = self.COM.recv(1).decode('utf-8')
-            #while chari != '\n':    # read until LF
-            #    string = string + chari
-            #    chari = self.COM.recv(1).decode('utf-8')
-            #return str(string) # python 2 and python 3 compatible
+        return str(string.decode('utf-8')) # python 2 and python 3 compatible
+        #string = ''
+        #chari = self.COM.recv(1).decode('utf-8')
+        #while chari != '\n':    # read until LF
+        #    string = string + chari
+        #    chari = self.COM.recv(1).decode('utf-8')
+        #return str(string) # python 2 and python 3 compatible
 
     def _send_item(self, item):
         """Sends an item pointer"""
-        with self._lock:
-            if isinstance(item, Item):
-                self.COM.send(struct.pack('>Q',item.item))#q=unsigned long long (64 bits), d=float64
-                return
-            if item is None:
-                item = 0
-            self.COM.send(struct.pack('>Q',item))#q=unsigned long long (64 bits), d=float64
+        if isinstance(item, Item):
+            self.COM.send(struct.pack('>Q',item.item))#q=unsigned long long (64 bits), d=float64
+            return
+        if item is None:
+            item = 0
+        self.COM.send(struct.pack('>Q',item))#q=unsigned long long (64 bits), d=float64
 
     def _rec_item(self):
         """Receives an item pointer"""
-        with self._lock:
-            buffer = self.COM.recv(8)
-            item = struct.unpack('>Q',buffer)#q=unsigned long long (64 bits), d=float64
-            buffer2 = self.COM.recv(4)
-            itemtype = struct.unpack('>i',buffer2)
-            return Item(self,item[0], itemtype[0])
+        buffer = self.COM.recv(8)
+        item = struct.unpack('>Q',buffer)#q=unsigned long long (64 bits), d=float64
+        buffer2 = self.COM.recv(4)
+        itemtype = struct.unpack('>i',buffer2)
+        return Item(self,item[0], itemtype[0])
         
     def _send_bytes(self, data):
         """Sends a byte array"""
-        with self._lock:
-            if isinstance(data,str):
-                data = bytes(data,'utf-8')
-            if not isinstance(data,bytes):
-                data = bytes(data)
+        if isinstance(data,str):
+            data = bytes(data,'utf-8')
+        if not isinstance(data,bytes):
+            data = bytes(data)
             
-            self.COM.send(struct.pack('>I',len(data)))#q=unsigned long long (64 bits), d=float64
-            self.COM.send(data)
+        self.COM.send(struct.pack('>I',len(data)))#q=unsigned long long (64 bits), d=float64
+        self.COM.send(data)
 
     def _rec_bytes(self):
         """Receives a byte array"""
-        with self._lock:
-            buffer = self.COM.recv(4)
-            bytes_len = struct.unpack('>I',buffer)[0]#q=unsigned long long (64 bits), d=float64
-            data = b''
-            bytes_remaining = bytes_len
-            while bytes_remaining > 0:
-                data += self.COM.recv(bytes_remaining)
-                bytes_remaining = bytes_len - len(data)
-            return data
+        buffer = self.COM.recv(4)
+        bytes_len = struct.unpack('>I',buffer)[0]#q=unsigned long long (64 bits), d=float64
+        data = b''
+        bytes_remaining = bytes_len
+        while bytes_remaining > 0:
+            data += self.COM.recv(bytes_remaining)
+            bytes_remaining = bytes_len - len(data)
+        return data
         
     def _send_ptr(self, ptr_h):
         """Sends a generic pointer"""
-        with self._lock:
-            self.COM.send(struct.pack('>Q',ptr_h))#q=unsigned long long (64 bits), d=float64
+        self.COM.send(struct.pack('>Q',ptr_h))#q=unsigned long long (64 bits), d=float64
 
     def _rec_ptr(self):
         """Receives a generic pointer"""
-        with self._lock:
-            buffer = self.COM.recv(8)
-            ptr_h = struct.unpack('>Q',buffer)#q=unsigned long long (64 bits), d=float64
-            return ptr_h[0] #return ptr_h
+        buffer = self.COM.recv(8)
+        ptr_h = struct.unpack('>Q',buffer)#q=unsigned long long (64 bits), d=float64
+        return ptr_h[0] #return ptr_h
 
     def _send_pose(self, pose):
         """Sends a pose (4x4 matrix)"""
-        with self._lock:
-            if not pose.isHomogeneous():
-                print("Warning: pose is not homogeneous!")
-                print(pose)
-            posebytes = b''
-            for j in range(4):
-                for i in range(4):
-                    posebytes = posebytes + struct.pack('>d',pose[i,j])
-            self.COM.send(posebytes)
+        if not pose.isHomogeneous():
+            print("Warning: pose is not homogeneous!")
+            print(pose)
+        posebytes = b''
+        for j in range(4):
+            for i in range(4):
+                posebytes = posebytes + struct.pack('>d',pose[i,j])
+        self.COM.send(posebytes)
 
     def _rec_pose(self):
         """Receives a pose (4x4 matrix)"""
-        with self._lock:
-            posebytes = self.COM.recv(16*8)
-            posenums = struct.unpack('>16d',posebytes)
-            pose = robodk.Mat(4,4)
-            cnt = 0
-            for j in range(4):
-                for i in range(4):
-                    pose[i,j] = posenums[cnt]
-                    cnt = cnt + 1
-            return pose
+        posebytes = self.COM.recv(16*8)
+        posenums = struct.unpack('>16d',posebytes)
+        pose = robodk.Mat(4,4)
+        cnt = 0
+        for j in range(4):
+            for i in range(4):
+                pose[i,j] = posenums[cnt]
+                cnt = cnt + 1
+        return pose
         
     def _send_xyz(self, pos):
         """Sends an xyz vector"""
-        with self._lock:
-            posbytes = b''
-            for i in range(3):
-                posbytes = posbytes + struct.pack('>d',pos[i])
-            self.COM.send(posbytes)
+        posbytes = b''
+        for i in range(3):
+            posbytes = posbytes + struct.pack('>d',pos[i])
+        self.COM.send(posbytes)
 
     def _rec_xyz(self):
         """Receives an xyz vector"""
-        with self._lock:
-            posbytes = self.COM.recv(3*8)
-            posnums = struct.unpack('>3d',posbytes)
-            pos = [0,0,0]
-            for i in range(3):
-                pos[i] = posnums[i]
-            return pos
+        posbytes = self.COM.recv(3*8)
+        posnums = struct.unpack('>3d',posbytes)
+        pos = [0,0,0]
+        for i in range(3):
+            pos[i] = posnums[i]
+        return pos
 
     def _send_int(self, num):
         """Sends an int (32 bits)"""
-        with self._lock:
-            if isinstance(num, float):
-                num = round(num)
-            elif not isinstance(num, int):
-                num = num[0]
-            self.COM.send(struct.pack('>i',num))
+        if isinstance(num, float):
+            num = round(num)
+        elif not isinstance(num, int):
+            num = num[0]
+        self.COM.send(struct.pack('>i',num))
 
     def _rec_int(self):
         """Receives an int (32 bits)"""
-        with self._lock:
-            buffer = self.COM.recv(4)
-            num = struct.unpack('>i',buffer)
-            return num[0]
+        buffer = self.COM.recv(4)
+        num = struct.unpack('>i',buffer)
+        return num[0]
 
     def _send_array(self, values):
         """Sends an array of doubles"""
-        with self._lock:
-            if not isinstance(values,list):#if it is a Mat() with joints
-                values = (values.tr()).rows[0]
-            nval = len(values)
-            self._send_int(nval)        
-            if nval > 0:
-                buffer = b''
-                for i in range(nval):
-                    buffer = buffer + struct.pack('>d',values[i])
-                self.COM.send(buffer)
+        if not isinstance(values,list):#if it is a Mat() with joints
+            values = (values.tr()).rows[0]
+        nval = len(values)
+        self._send_int(nval)        
+        if nval > 0:
+            buffer = b''
+            for i in range(nval):
+                buffer = buffer + struct.pack('>d',values[i])
+            self.COM.send(buffer)
 
     def _rec_array(self):
         """Receives an array of doubles"""
-        with self._lock:
-            nvalues = self._rec_int()
-            if nvalues > 0:
-                buffer = self.COM.recv(8*nvalues)
-                values = list(struct.unpack('>'+str(nvalues)+'d',buffer))
-                #values = fread(self.COM, nvalues, 'double')
-            else:
-                values = [0]
-            return robodk.Mat(values)
+        nvalues = self._rec_int()
+        if nvalues > 0:
+            buffer = self.COM.recv(8*nvalues)
+            values = list(struct.unpack('>'+str(nvalues)+'d',buffer))
+            #values = fread(self.COM, nvalues, 'double')
+        else:
+            values = [0]
+        return robodk.Mat(values)
 
     def _send_matrix(self, mat):
         """Sends a 2 dimensional matrix (nxm)"""
-        with self._lock:
-            if mat is None:
-                self._send_int(0)
-                self._send_int(0)
-                return
-            if type(mat) == list:
-                mat = robodk.Mat(mat).tr()
-            size = mat.size()
-            self._send_int(size[0])
-            self._send_int(size[1])
-            for j in range(size[1]):
-                matbytes = b''
-                for i in range(size[0]):
-                    matbytes = matbytes + struct.pack('>d',mat[i,j])
-                self.COM.send(matbytes)
+        if mat is None:
+            self._send_int(0)
+            self._send_int(0)
+            return
+        if type(mat) == list:
+            mat = robodk.Mat(mat).tr()
+        size = mat.size()
+        self._send_int(size[0])
+        self._send_int(size[1])
+        for j in range(size[1]):
+            matbytes = b''
+            for i in range(size[0]):
+                matbytes = matbytes + struct.pack('>d',mat[i,j])
+            self.COM.send(matbytes)
 
     def _rec_matrix(self):
         """Receives a 2 dimensional matrix (nxm)"""
-        with self._lock:
-            size1 = self._rec_int()
-            size2 = self._rec_int()
-            recvsize = size1*size2*8
-            BUFFER_SIZE = 512
-            if recvsize > 0:
-                matbytes = b''
-                to_receive = min(recvsize, BUFFER_SIZE)
-                while to_receive > 0:
-                    matbytes += self.COM.recv(to_receive)
-                    to_receive = min(recvsize - len(matbytes), BUFFER_SIZE)
-                matnums = struct.unpack('>'+str(size1*size2)+'d',matbytes)
-                mat = robodk.Mat(size1,size2)
-                cnt = 0
-                for j in range(size2):
-                    for i in range(size1):
-                        #mat[i,j] = matnums[cnt]
-                        mat.rows[i][j] = matnums[cnt]
-                        cnt = cnt + 1
-            else:
-                mat = robodk.Mat(0,0)
-            return mat
+        size1 = self._rec_int()
+        size2 = self._rec_int()
+        recvsize = size1*size2*8
+        BUFFER_SIZE = 512
+        if recvsize > 0:
+            matbytes = b''
+            to_receive = min(recvsize, BUFFER_SIZE)
+            while to_receive > 0:
+                matbytes += self.COM.recv(to_receive)
+                to_receive = min(recvsize - len(matbytes), BUFFER_SIZE)
+            matnums = struct.unpack('>'+str(size1*size2)+'d',matbytes)
+            mat = robodk.Mat(size1,size2)
+            cnt = 0
+            for j in range(size2):
+                for i in range(size1):
+                    #mat[i,j] = matnums[cnt]
+                    mat.rows[i][j] = matnums[cnt]
+                    cnt = cnt + 1
+        else:
+            mat = robodk.Mat(0,0)
+        return mat
 
     def _moveX(self, target, itemrobot, movetype, blocking=True):
         """Performs a linear or joint movement. Use MoveJ or MoveL instead."""
-        with self._lock:
-            #self._check_connection();
-            itemrobot.WaitMove()# checks connection
-            if blocking:
-                command = 'MoveXb'
-            else:
-                command = 'MoveX'
+        #self._check_connection();
+        itemrobot.WaitMove()# checks connection
+        if blocking:
+            command = 'MoveXb'
+        else:
+            command = 'MoveX'
             
-            self._send_line(command)
-            self._send_int(movetype)
-            if isinstance(target,Item):# target is an item
-                self._send_int(3)
-                self._send_array([])
-                self._send_item(target)
-            elif isinstance(target,list) or target.size() != (4,4):# target are joints
-                self._send_int(1)
-                self._send_array(target)
-                self._send_item(0)
-            elif target.size() == (4,4):    # target is a pose
-                self._send_int(2)
-                mattr = target.tr()
-                self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
-                self._send_item(0)
-            else:
-                raise Exception('Invalid input values')
-            self._send_item(itemrobot)
-            self._check_status()
-            if blocking:
-                #itemrobot.WaitMove()
-                self.COM.settimeout(360000)
-                self._check_status()#will wait here
-                self.COM.settimeout(self.TIMEOUT)
+        self._send_line(command)
+        self._send_int(movetype)
+        if isinstance(target,Item):# target is an item
+            self._send_int(3)
+            self._send_array([])
+            self._send_item(target)
+        elif isinstance(target,list) or target.size() != (4,4):# target are joints
+            self._send_int(1)
+            self._send_array(target)
+            self._send_item(0)
+        elif target.size() == (4,4):    # target is a pose
+            self._send_int(2)
+            mattr = target.tr()
+            self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
+            self._send_item(0)
+        else:
+            raise Exception('Invalid input values')
+        self._send_item(itemrobot)
+        self._check_status()
+        if blocking:
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
             
     def MoveC(self, target1, target2, itemrobot, blocking=True):
         """Performs a circular movement. Use robot.MoveC instead."""
-        with self._lock:
-            #self._check_connection();
-            itemrobot.WaitMove()# checks connection
-            if blocking:
-                command = 'MoveCb'
-            else:
-                command = 'MoveC'
+        #self._check_connection();
+        itemrobot.WaitMove()# checks connection
+        if blocking:
+            command = 'MoveCb'
+        else:
+            command = 'MoveC'
             
-            self._send_line(command)
+        self._send_line(command)
+        self._send_int(3)
+        if isinstance(target1,Item):# target1 is an item
             self._send_int(3)
-            if isinstance(target1,Item):# target1 is an item
-                self._send_int(3)
-                self._send_array([])
-                self._send_item(target1)
-            elif isinstance(target1,list) or target1.size() != (4,4):# target1 are joints
-                self._send_int(1)
-                self._send_array(target1)
-                self._send_item(0)
-            elif target1.size() == (4,4):    # target1 is a pose
-                self._send_int(2)
-                mattr = target1.tr()
-                self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
-                self._send_item(0)
-            else:
-                raise Exception('Invalid input value for target 1')
-            if isinstance(target2,Item):# target1 is an item
-                self._send_int(3)
-                self._send_array([])
-                self._send_item(target2)
-            elif isinstance(target2,list) or target2.size() != (4,4):# target2 are joints
-                self._send_int(1)
-                self._send_array(target2)
-                self._send_item(0)
-            elif target2.size() == (4,4):    # target2 is a pose
-                self._send_int(2)
-                mattr = target2.tr()
-                self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
-                self._send_item(0)
-            else:
-                raise Exception('Invalid input value for target 2')
-            self._send_item(itemrobot)
-            self._check_status()
-            if blocking:
-                #itemrobot.WaitMove()
-                self.COM.settimeout(360000)
-                self._check_status()#will wait here
-                self.COM.settimeout(self.TIMEOUT)
+            self._send_array([])
+            self._send_item(target1)
+        elif isinstance(target1,list) or target1.size() != (4,4):# target1 are joints
+            self._send_int(1)
+            self._send_array(target1)
+            self._send_item(0)
+        elif target1.size() == (4,4):    # target1 is a pose
+            self._send_int(2)
+            mattr = target1.tr()
+            self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
+            self._send_item(0)
+        else:
+            raise Exception('Invalid input value for target 1')
+        if isinstance(target2,Item):# target1 is an item
+            self._send_int(3)
+            self._send_array([])
+            self._send_item(target2)
+        elif isinstance(target2,list) or target2.size() != (4,4):# target2 are joints
+            self._send_int(1)
+            self._send_array(target2)
+            self._send_item(0)
+        elif target2.size() == (4,4):    # target2 is a pose
+            self._send_int(2)
+            mattr = target2.tr()
+            self._send_array(mattr.rows[0]+mattr.rows[1]+mattr.rows[2]+mattr.rows[3])
+            self._send_item(0)
+        else:
+            raise Exception('Invalid input value for target 2')
+        self._send_item(itemrobot)
+        self._check_status()
+        if blocking:
+            #itemrobot.WaitMove()
+            self.COM.settimeout(360000)
+            self._check_status()#will wait here
+            self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False):
@@ -1090,259 +1065,251 @@ class Robolink:
         In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
         
         """
-        with self._lock:
-            if type(args) is str:
-                if args != "":
-                    args = [args]
-                else:
-                    args = []
-            
-            self.IP = robodk_ip           
-            self.ARGUMENTS = args
-            self.CLOSE_STD_OUT = close_std_out
-            if robodk_path is not None:
-                self.APPLICATION_DIR = robodk_path
+        if type(args) is str:
+            if args != "":
+                args = [args]
             else:
-                self.APPLICATION_DIR = getPathRoboDK()
+                args = []
             
-            if ('/API_NODELAY' in self.ARGUMENTS or '-API_NODELAY' in self.ARGUMENTS):
-                self.NODELAY = True
+        self.IP = robodk_ip           
+        self.ARGUMENTS = args
+        self.CLOSE_STD_OUT = close_std_out
+        if robodk_path is not None:
+            self.APPLICATION_DIR = robodk_path
+        else:
+            self.APPLICATION_DIR = getPathRoboDK()
             
-            if port is not None:
-                self.PORT_START = port
-                self.PORT_END = port
-                self.ARGUMENTS.append("-PORT=%i" % port)
+        if ('/API_NODELAY' in self.ARGUMENTS or '-API_NODELAY' in self.ARGUMENTS):
+            self.NODELAY = True
             
-            elif "ROBODK_API_PORT" in os.environ:
-                port = int(os.environ["ROBODK_API_PORT"])
-                self.PORT_START = port
-                self.PORT_END = port
-                self.ARGUMENTS.append("-PORT=%i" % port)                
+        if port is not None:
+            self.PORT_START = port
+            self.PORT_END = port
+            self.ARGUMENTS.append("-PORT=%i" % port)
+            
+        elif "ROBODK_API_PORT" in os.environ:
+            port = int(os.environ["ROBODK_API_PORT"])
+            self.PORT_START = port
+            self.PORT_END = port
+            self.ARGUMENTS.append("-PORT=%i" % port)                
 
-            elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
-                from socket import socket
-                if sys.version_info.major >= 3:
-                    with socket() as s:
-                        s.bind(('',0))
-                        port = s.getsockname()[1]
-                        print("Using available port %i" % port)
-                        self.PORT_START = port
-                        self.PORT_END = port
-                        self.ARGUMENTS.append("-PORT=%i" % port)
-                else:
-                    sock = socket()
-                    sock.bind(('',0))
-                    port = sock.getsockname()[1]
+        elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
+            from socket import socket
+            if sys.version_info.major >= 3:
+                with socket() as s:
+                    s.bind(('',0))
+                    port = s.getsockname()[1]
                     print("Using available port %i" % port)
                     self.PORT_START = port
                     self.PORT_END = port
                     self.ARGUMENTS.append("-PORT=%i" % port)
-                    sock.close()
+            else:
+                sock = socket()
+                sock.bind(('',0))
+                port = sock.getsockname()[1]
+                print("Using available port %i" % port)
+                self.PORT_START = port
+                self.PORT_END = port
+                self.ARGUMENTS.append("-PORT=%i" % port)
+                sock.close()
                 
-            if "-DEBUG" in self.ARGUMENTS or "/DEBUG" in self.ARGUMENTS:
-                self.DEBUG = True
-            elif self.DEBUG:
-                self.ARGUMENTS.append("-DEBUG")
+        if "-DEBUG" in self.ARGUMENTS or "/DEBUG" in self.ARGUMENTS:
+            self.DEBUG = True
+        elif self.DEBUG:
+            self.ARGUMENTS.append("-DEBUG")
                 
-            self.Connect()
+        self.Connect()
 
     def _verify_connection(self):
         """Verify that we are connected to the RoboDK API server"""
-
-        with self._lock:
-            use_new_version = True
-            if use_new_version:
-                self._send_line('RDK_API')
-                self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
-                response = self._rec_line()
-                ver_api = self._rec_int()
-                self.BUILD = self._rec_int()
-                self._check_status()
-                return response == 'RDK_API'
+        
+        use_new_version = True
+        if use_new_version:
+            self._send_line('RDK_API')
+            self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
+            response = self._rec_line()
+            ver_api = self._rec_int()
+            self.BUILD = self._rec_int()
+            self._check_status()
+            return response == 'RDK_API'
             
+        else:
+            self._send_line('CMD_START')
+            self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
+            #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
+            response = self._rec_line()
+            if response == 'READY':
+                ok = 1
             else:
-                self._send_line('CMD_START')
-                self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
-                #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
-                response = self._rec_line()
-                if response == 'READY':
-                    ok = 1
-                else:
-                    ok = 0
-                return ok
+                ok = 0
+            return ok
             
     def _require_build(self, build_required):
-        with self._lock:
-            if self.BUILD == 0:
-                # unknown build number. Use new API hello command
-                return True
-            
-            if self.BUILD < build_required:
-                raise Exception("This function is unavailable. Update RoboDK to use this API feature: https://robodk.com/download")
+        if self.BUILD == 0:
+            # unknown build number. Use new API hello command
             return True
+            
+        if self.BUILD < build_required:
+            raise Exception("This function is unavailable. Update RoboDK to use this API feature: https://robodk.com/download")
+        return True
             
     
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
-        with self._lock:
-            self.COM.close()
+        self.COM.close()
         
     def Finish(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated.
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode`, :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.ProgramStart`"""
-        with self._lock:
-            self.Disconnect()
+        self.Disconnect()
     
     def NewLink(self):
         """Reconnect the API using a different communication link."""
-        with self._lock:
-            try:
-            #if True:
-                import socket
-                #self.COM.close()
-                self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                if self.NODELAY:
-                    self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        try:
+        #if True:
+            import socket
+            #self.COM.close()
+            self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if self.NODELAY:
+                self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 
-                self.COM.connect((self.IP, self.PORT))                
-                connected = self._is_connected()
-                if connected > 0:
-                    self._verify_connection()
-                    self.COM.settimeout(self.TIMEOUT)
-                else:
-                    print("Failed to reconnect (1)")
-            except:
-                print("Failed to reconnect (2)")
+            self.COM.connect((self.IP, self.PORT))                
+            connected = self._is_connected()
+            if connected > 0:
+                self._verify_connection()
+                self.COM.settimeout(self.TIMEOUT)
+            else:
+                print("Failed to reconnect (1)")
+        except:
+            print("Failed to reconnect (2)")
             
     def Connect(self):
         """Establish a connection with RoboDK. If RoboDK is not running it will attempt to start RoboDK from the default installation path (otherwise APPLICATION_DIR must be set properly).
         If the connection succeeds it returns 1, otherwise it returns 0"""
         def start_robodk(command):
-            with self._lock:
-                print('Starting %s\n' % self.APPLICATION_DIR)
-                import subprocess
-                #import time            
-                #tstart = time.time()
+            print('Starting %s\n' % self.APPLICATION_DIR)
+            import subprocess
+            #import time            
+            #tstart = time.time()
             
-                def output_reader(proc):
-                    for line in iter(proc.stdout.readline, b''):
-                        ln = str(line.decode("utf-8")).strip()
-                        if ln:
-                            print(ln)            
+            def output_reader(proc):
+                for line in iter(proc.stdout.readline, b''):
+                    ln = str(line.decode("utf-8")).strip()
+                    if ln:
+                        print(ln)            
             
-                from sys import platform as _platform
-                p = None
-                if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                    p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)             
-                elif _platform == "darwin":
-                    # Popen does not work sometimes (such as running from fusion)
-                    startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
-                    try:
-                        #p = subprocess.Popen(command,stdout=subprocess.PIPE)
-                        p = subprocess.Popen(command,stdout=subprocess.PIPE)                
-                    except Exception as e:
-                        print(str(e))
-                        return False
+            from sys import platform as _platform
+            p = None
+            if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
+                p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)             
+            elif _platform == "darwin":
+                # Popen does not work sometimes (such as running from fusion)
+                startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
+                try:
+                    #p = subprocess.Popen(command,stdout=subprocess.PIPE)
+                    p = subprocess.Popen(command,stdout=subprocess.PIPE)                
+                except Exception as e:
+                    print(str(e))
+                    return False
 
-                    #p = subprocess.call(startapp)
-                else:
-                    p = subprocess.Popen(command,stdout=subprocess.PIPE)
+                #p = subprocess.call(startapp)
+            else:
+                p = subprocess.Popen(command,stdout=subprocess.PIPE)
 
-                emptyln = 0
-                if p:    
-                    while True:
-                        lineb = p.stdout.readline()
-                        line = str(lineb.decode("utf-8")).strip()
-                        if len(lineb) > 0:
-                            print(line)
-                            emptyln = 0
-                        else:
-                            emptyln += 1
-
-                        if emptyln > 10:
-                            print("RoboDK Application not properly started. Command:")
-                            print(str(command))
-                            break
-
-                        if 'running' in line.lower():
-                            #telapsed = time.time() - tstart
-                            #print("RoboDK startup time: %.3f" % telapsed)
-                            break
-                
-                    #if self.DEBUG:
-                    # Important! Make sure we consume stdout (at least in Debug mode)
-                    if self.CLOSE_STD_OUT:
-                        p.stdout.close()                
+            emptyln = 0
+            if p:    
+                while True:
+                    lineb = p.stdout.readline()
+                    line = str(lineb.decode("utf-8")).strip()
+                    if len(lineb) > 0:
+                        print(line)
+                        emptyln = 0
                     else:
-                        #import threading
-                        t = threading.Thread(target=output_reader, args=(p,))
-                        t.start()
-                
-                return True
-            
-                #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-                #    self._ProcessID = p.pid
-                #    for line in p.stdout:
-                #        line_ok = line.strip()
-                #        print(line_ok)
-                #        if 'running' in line_ok.lower():
-                #            print("RoboDK is running")
-                #            return #does not return!!
+                        emptyln += 1
 
-        with self._lock:    
-            import socket
-            connected = 0
-            for i in range(2):
-                for port in range(self.PORT_START,self.PORT_END+1):
-                    # Prevent warning message by closing the previous socket
-                    if self.COM:
-                        self.COM.close()
-                    
-                    self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    if self.NODELAY:
-                        self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                    
-                    self.COM.settimeout(1)
-                    try:
-                        self.COM.connect((self.IP, port))                
-                        connected = self._is_connected()
-                        if connected > 0:
-                            self.COM.settimeout(self.TIMEOUT)
-                            break
-                        
-                    except:
-                        connected = connected
-
-                if connected > 0:# if status is closed, try to open application
-                    self.PORT = port
-                    break
-                
-                elif i == 0:            
-                    if self.IP != 'localhost':
+                    if emptyln > 10:
+                        print("RoboDK Application not properly started. Command:")
+                        print(str(command))
                         break
-                    
-                    try:
-                        if self.APPLICATION_DIR == '':
-                            connected = 0
-                            return connected
-                        command = [self.APPLICATION_DIR]
-                        if self.ARGUMENTS:
-                            command += self.ARGUMENTS
 
-                        if not start_robodk(command):
-                            connected = 0
-                            return connected                    
-                        #import time
-                        #time.sleep(5) # wait for RoboDK to start and check network license.
-                    except Exception as e:
-                        print(str(e))
-                        raise Exception('Application path is not correct or could not start: ' + self.APPLICATION_DIR)
-
-            if connected > 0 and not self._verify_connection():
-                connected = 0
+                    if 'running' in line.lower():
+                        #telapsed = time.time() - tstart
+                        #print("RoboDK startup time: %.3f" % telapsed)
+                        break
+                
+                #if self.DEBUG:
+                # Important! Make sure we consume stdout (at least in Debug mode)
+                if self.CLOSE_STD_OUT:
+                    p.stdout.close()                
+                else:
+                    #import threading
+                    t = threading.Thread(target=output_reader, args=(p,))
+                    t.start()
+                
+            return True
             
-            return connected
+            #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
+            #    self._ProcessID = p.pid
+            #    for line in p.stdout:
+            #        line_ok = line.strip()
+            #        print(line_ok)
+            #        if 'running' in line_ok.lower():
+            #            print("RoboDK is running")
+            #            return #does not return!!
+                        
+        import socket
+        connected = 0
+        for i in range(2):
+            for port in range(self.PORT_START,self.PORT_END+1):
+                # Prevent warning message by closing the previous socket
+                if self.COM:
+                    self.COM.close()
+                    
+                self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self.NODELAY:
+                    self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    
+                self.COM.settimeout(1)
+                try:
+                    self.COM.connect((self.IP, port))                
+                    connected = self._is_connected()
+                    if connected > 0:
+                        self.COM.settimeout(self.TIMEOUT)
+                        break
+                        
+                except:
+                    connected = connected
+
+            if connected > 0:# if status is closed, try to open application
+                self.PORT = port
+                break
+                
+            elif i == 0:            
+                if self.IP != 'localhost':
+                    break
+                    
+                try:
+                    if self.APPLICATION_DIR == '':
+                        connected = 0
+                        return connected
+                    command = [self.APPLICATION_DIR]
+                    if self.ARGUMENTS:
+                        command += self.ARGUMENTS
+
+                    if not start_robodk(command):
+                        connected = 0
+                        return connected                    
+                    #import time
+                    #time.sleep(5) # wait for RoboDK to start and check network license.
+                except Exception as e:
+                    print(str(e))
+                    raise Exception('Application path is not correct or could not start: ' + self.APPLICATION_DIR)
+
+        if connected > 0 and not self._verify_connection():
+            connected = 0
+            
+        return connected
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # public methods
@@ -1380,23 +1347,22 @@ class Robolink:
             robot = RDK.Item('', ITEM_TYPE_ROBOT)   # the first available robot
 
         """
-        with self._lock:
-            if type(name) is not str:
-                raise Exception("Invalid name: provide a name as a string. Item names are visible in the RoboDK tree.")
+        if type(name) is not str:
+            raise Exception("Invalid name: provide a name as a string. Item names are visible in the RoboDK tree.")
             
-            self._check_connection()
-            if itemtype is None:
-                command = 'G_Item'
-                self._send_line(command)
-                self._send_line(name)
-            else:
-                command = 'G_Item2'
-                self._send_line(command)
-                self._send_line(name)
-                self._send_int(itemtype)
-            item = self._rec_item()#     item = fread(com, 2, 'ulong');% ulong is 32 bits!!!
-            self._check_status()
-            return item
+        self._check_connection()
+        if itemtype is None:
+            command = 'G_Item'
+            self._send_line(command)
+            self._send_line(name)
+        else:
+            command = 'G_Item2'
+            self._send_line(command)
+            self._send_line(name)
+            self._send_int(itemtype)
+        item = self._rec_item()#     item = fread(com, 2, 'ulong');% ulong is 32 bits!!!
+        self._check_status()
+        return item
 
 
     def ItemList(self, filter=None, list_names=False):
@@ -1407,35 +1373,34 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Robolink.ItemUserPick`
         """
-        with self._lock:
-            self._check_connection()
-            retlist = []
-            if list_names:
-                if filter is None:
-                    command = 'G_List_Items'
-                    self._send_line(command)
-                else:
-                    command = 'G_List_Items_Type'
-                    self._send_line(command)
-                    self._send_int(filter)
-                count = self._rec_int()
-                for i in range(count):
-                    namei = self._rec_line()
-                    retlist.append(namei)
+        self._check_connection()
+        retlist = []
+        if list_names:
+            if filter is None:
+                command = 'G_List_Items'
+                self._send_line(command)
             else:
-                if filter is None:
-                    command = 'G_List_Items_ptr'
-                    self._send_line(command)
-                else:
-                    command = 'G_List_Items_Type_ptr'
-                    self._send_line(command)
-                    self._send_int(filter)
-                count = self._rec_int()
-                for i in range(count):
-                    itemi = self._rec_item()
-                    retlist.append(itemi)
-            self._check_status()
-            return retlist
+                command = 'G_List_Items_Type'
+                self._send_line(command)
+                self._send_int(filter)
+            count = self._rec_int()
+            for i in range(count):
+                namei = self._rec_line()
+                retlist.append(namei)
+        else:
+            if filter is None:
+                command = 'G_List_Items_ptr'
+                self._send_line(command)
+            else:
+                command = 'G_List_Items_Type_ptr'
+                self._send_line(command)
+                self._send_int(filter)
+            count = self._rec_int()
+            for i in range(count):
+                itemi = self._rec_item()
+                retlist.append(itemi)
+        self._check_status()
+        return retlist
 
     def ItemUserPick(self, message="Pick one item", itemtype_or_list=None):
         """Shows a RoboDK popup to select one object from the open station.
@@ -1443,7 +1408,7 @@ class Robolink:
         (check variables ITEM_TYPE_*)
         Example:
         
-            .. code-block:: python
+        .. code-block:: python
         
             RDK.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
            
@@ -1453,72 +1418,67 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Robolink.ItemList`
         """
         
-        with self._lock:
-            if itemtype_or_list is None:
-                itemtype_or_list = -1
+        if itemtype_or_list is None:
+            itemtype_or_list = -1
             
-            if type(itemtype_or_list) is int:        
-                self._check_connection()
-                command = 'PickItem'
-                self._send_line(command)
-                self._send_line(message)
-                self._send_int(itemtype_or_list)
+        if type(itemtype_or_list) is int:        
+            self._check_connection()
+            command = 'PickItem'
+            self._send_line(command)
+            self._send_line(message)
+            self._send_int(itemtype_or_list)
             
-            else:
-                self._check_connection()
-                command = 'PickItemList'
-                self._send_line(command)
-                self._send_line(message)
-                self._send_int(len(itemtype_or_list))
-                for itm in itemtype_or_list:
-                    self._send_item(itm)
+        else:
+            self._check_connection()
+            command = 'PickItemList'
+            self._send_line(command)
+            self._send_line(message)
+            self._send_int(len(itemtype_or_list))
+            for itm in itemtype_or_list:
+                self._send_item(itm)
             
-            self.COM.settimeout(3600) # wait up to 1 hour for user input
-            item = self._rec_item()
-            self.COM.settimeout(self.TIMEOUT)
-            self._check_status()
-            return item
+        self.COM.settimeout(3600) # wait up to 1 hour for user input
+        item = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)
+        self._check_status()
+        return item
 
     def ShowRoboDK(self):
         """Show or raise the RoboDK window
         
         .. seealso:: :func:`~robolink.Robolink.setWindowState`"""
-        with self._lock:
-            self._check_connection()
-            command = 'RAISE'
-            self._send_line(command)
-            self._check_status()
+        self._check_connection()
+        command = 'RAISE'
+        self._send_line(command)
+        self._check_status()
         
     def HideRoboDK(self):
         """Hide the RoboDK window. RoboDK will keep running as a process
         
         .. seealso:: :func:`~robolink.Robolink.setWindowState`"""
-        with self._lock:
-            self._check_connection()
-            command = 'HIDE'
-            self._send_line(command)
-            self._check_status()
+        self._check_connection()
+        command = 'HIDE'
+        self._send_line(command)
+        self._check_status()
         
     def CloseRoboDK(self):
         """Close RoboDK window and finish RoboDK's execution."""
-        with self._lock:
-            self._check_connection()
-            command = 'QUIT'
-            self._send_line(command)
-            self._check_status()
+        self._check_connection()
+        command = 'QUIT'
+        self._send_line(command)
+        self._check_status()
         
     def Version(self):
         """Close RoboDK window and finish RoboDK's execution."""
-        with self._lock:
-            self._check_connection()
-            command = 'Version'
-            self._send_line(command)
-            app_name = self._rec_line()
-            bit_arch = self._rec_int()
-            ver4 = self._rec_line()
-            date_build = self._rec_line()
-            self._check_status()
-            return ver4
+        self._check_connection()
+        command = 'Version'
+        self._send_line(command)
+        app_name = self._rec_line()
+        bit_arch = self._rec_int()
+        ver4 = self._rec_line()
+        date_build = self._rec_line()
+        self._check_status()
+        return ver4
         
     def setWindowState(self, windowstate=WINDOWSTATE_NORMAL):
         """Set the state of the RoboDK window
@@ -1539,12 +1499,11 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.setFlagsRoboDK`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'S_WindowState'
-            self._send_line(command)
-            self._send_int(windowstate)
-            self._check_status()
+        self._check_connection()
+        command = 'S_WindowState'
+        self._send_line(command)
+        self._send_int(windowstate)
+        self._check_status()
         
     def setFlagsRoboDK(self, flags=FLAG_ROBODK_ALL):
         """Update the RoboDK flags. RoboDK flags allow defining how much access the user has to RoboDK features. Use a FLAG_ROBODK_* variables to set one or more flags.
@@ -1575,12 +1534,11 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.setFlagsItem`, :func:`~robolink.Robolink.setWindowState`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'S_RoboDK_Rights'
-            self._send_line(command)
-            self._send_int(flags)
-            self._check_status()
+        self._check_connection()
+        command = 'S_RoboDK_Rights'
+        self._send_line(command)
+        self._send_int(flags)
+        self._check_status()
         
     def setFlagsItem(self, item, flags=FLAG_ITEM_ALL):
         """Update item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
@@ -1591,13 +1549,12 @@ class Robolink:
         :type flags: int        
         
         .. seealso:: :func:`~robolink.Robolink.getFlagsItem`, :func:`~robolink.Robolink.setFlagsRoboDK`, :func:`~robolink.Robolink.setWindowState`"""
-        with self._lock:
-            self._check_connection()
-            command = 'S_Item_Rights'
-            self._send_line(command)
-            self._send_item(item)
-            self._send_int(flags)
-            self._check_status()
+        self._check_connection()
+        command = 'S_Item_Rights'
+        self._send_line(command)
+        self._send_item(item)
+        self._send_int(flags)
+        self._check_status()
         
     def getFlagsItem(self, item):
         """Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
@@ -1618,14 +1575,13 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setFlagsItem`, :func:`~robolink.Robolink.setFlagsRoboDK`, :func:`~robolink.Robolink.setWindowState`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'G_Item_Rights'
-            self._send_line(command)
-            self._send_item(item)
-            flags = self._rec_int()
-            self._check_status()
-            return flags
+        self._check_connection()
+        command = 'G_Item_Rights'
+        self._send_line(command)
+        self._send_item(item)
+        flags = self._rec_int()
+        self._check_status()
+        return flags
     
     def ShowMessage(self, message, popup=True):
         """Show a message from the RoboDK window. By default, the message will be a blocking popup. Alternatively, it can be a message displayed at the bottom of RoboDK's main window.
@@ -1633,21 +1589,20 @@ class Robolink:
         :param str message: message to display
         :param bool popup: Set to False to display the message in the RoboDK's status bar (not blocking)
         """
-        with self._lock:
-            print(message)
-            self._check_connection()
-            if popup:
-                command = 'ShowMessage'
-                self._send_line(command)
-                self._send_line(message)
-                self.COM.settimeout(3600) # wait up to 1 hour user to hit OK
-                self._check_status()
-                self.COM.settimeout(self.TIMEOUT)
-            else:
-                command = 'ShowMessageStatus'
-                self._send_line(command)
-                self._send_line(message)
-                self._check_status()
+        print(message)
+        self._check_connection()
+        if popup:
+            command = 'ShowMessage'
+            self._send_line(command)
+            self._send_line(message)
+            self.COM.settimeout(3600) # wait up to 1 hour user to hit OK
+            self._check_status()
+            self.COM.settimeout(self.TIMEOUT)
+        else:
+            command = 'ShowMessageStatus'
+            self._send_line(command)
+            self._send_line(message)
+            self._check_status()
     
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def Copy(self, item, copy_childs=True):
@@ -1671,13 +1626,12 @@ class Robolink:
             object_copy2.setName('My Object (copy 2)')
         
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Copy2'
-            self._send_line(command)
-            self._send_item(item)
-            self._send_int(1 if copy_childs else 0)
-            self._check_status()
+        self._check_connection()
+        command = 'Copy2'
+        self._send_line(command)
+        self._send_item(item)
+        self._send_int(1 if copy_childs else 0)
+        self._check_status()
 
     def Paste(self, paste_to=0, paste_times=1):
         """Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item. 
@@ -1691,31 +1645,30 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.Copy`
         
         """
-        with self._lock:
-            if paste_times > 1:
-                self._require_build(10500)
-                self._check_connection()
-                command = 'PastN'
-                self._send_line(command)
-                self._send_item(paste_to)
-                self._send_int(paste_times)
-                ntimes = self._rec_int()
-                list_items = []
-                for i in range(ntimes):
-                    newitem = self._rec_item()
-                    list_items.append(newitem)
-                
-                self._check_status()
-                return list_items
-            
-            else:
-                self._check_connection()
-                command = 'Paste'
-                self._send_line(command)
-                self._send_item(paste_to)
+        if paste_times > 1:
+            self._require_build(10500)
+            self._check_connection()
+            command = 'PastN'
+            self._send_line(command)
+            self._send_item(paste_to)
+            self._send_int(paste_times)
+            ntimes = self._rec_int()
+            list_items = []
+            for i in range(ntimes):
                 newitem = self._rec_item()
-                self._check_status()
-                return newitem
+                list_items.append(newitem)
+                
+            self._check_status()
+            return list_items
+            
+        else:
+            self._check_connection()
+            command = 'Paste'
+            self._send_line(command)
+            self._send_item(paste_to)
+            newitem = self._rec_item()
+            self._check_status()
+            return newitem
 
     def AddFile(self, filename, parent=0):
         """Load a file and attach it to parent (if provided). The call returns the newly added :class:`.Item`. If the new file is an object and it is attached to a robot it will be automatically converted to a tool.
@@ -1744,17 +1697,16 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.Save`, :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Robolink.AddTool`, :func:`~robolink.Robolink.Copy`, :func:`~robolink.Robolink.Paste`
             
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Add'
-            self._send_line(command)
-            self._send_line(filename)
-            self._send_item(parent)
-            self.COM.settimeout(60) # 60 seconds timeout to add a file
-            newitem = self._rec_item()
-            self.COM.settimeout(self.TIMEOUT)   
-            self._check_status()
-            return newitem
+        self._check_connection()
+        command = 'Add'
+        self._send_line(command)
+        self._send_line(filename)
+        self._send_item(parent)
+        self.COM.settimeout(60) # 60 seconds timeout to add a file
+        newitem = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)   
+        self._check_status()
+        return newitem
         
     def AddShape(self, triangle_points, add_to=0, override_shapes = False):
         """Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
@@ -1770,20 +1722,19 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.AddCurve`, :func:`~robolink.Robolink.AddPoints`
         """
-        with self._lock:
-            if isinstance(triangle_points,list):
-                triangle_points = robodk.tr(robodk.Mat(triangle_points))
-            elif not isinstance(triangle_points, robodk.Mat):
-                raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
-            self._check_connection()
-            command = 'AddShape2'
-            self._send_line(command)
-            self._send_matrix(triangle_points)
-            self._send_item(add_to)
-            self._send_int(1 if override_shapes else 0)
-            newitem = self._rec_item()
-            self._check_status()
-            return newitem    
+        if isinstance(triangle_points,list):
+            triangle_points = robodk.tr(robodk.Mat(triangle_points))
+        elif not isinstance(triangle_points, robodk.Mat):
+            raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
+        self._check_connection()
+        command = 'AddShape2'
+        self._send_line(command)
+        self._send_matrix(triangle_points)
+        self._send_item(add_to)
+        self._send_int(1 if override_shapes else 0)
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem    
         
     def AddCurve(self, curve_points, reference_object=0, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
@@ -1809,21 +1760,20 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.AddShape`, :func:`~robolink.Robolink.AddPoints`
         """
-        with self._lock:
-            if isinstance(curve_points,list):
-                curve_points = robodk.Mat(curve_points).tr()
-            elif not isinstance(curve_points, robodk.Mat):
-                raise Exception("curve_points must be a 3xN or 6xN list or matrix")
-            self._check_connection()
-            command = 'AddWire'
-            self._send_line(command)
-            self._send_matrix(curve_points)
-            self._send_item(reference_object)
-            self._send_int(1 if add_to_ref else 0)
-            self._send_int(projection_type)        
-            newitem = self._rec_item()
-            self._check_status()
-            return newitem   
+        if isinstance(curve_points,list):
+            curve_points = robodk.Mat(curve_points).tr()
+        elif not isinstance(curve_points, robodk.Mat):
+            raise Exception("curve_points must be a 3xN or 6xN list or matrix")
+        self._check_connection()
+        command = 'AddWire'
+        self._send_line(command)
+        self._send_matrix(curve_points)
+        self._send_item(reference_object)
+        self._send_int(1 if add_to_ref else 0)
+        self._send_int(projection_type)        
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem   
         
     def AddPoints(self, points, reference_object=0, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
@@ -1841,22 +1791,21 @@ class Robolink:
         
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
-        with self._lock:
-            if isinstance(points,list):
-                points = robodk.Mat(points).tr()
+        if isinstance(points,list):
+            points = robodk.Mat(points).tr()
             
-            elif not isinstance(points, robodk.Mat):
-                raise Exception("points must be a 3xN or 6xN list or matrix")
-            self._check_connection()
-            command = 'AddPoints'
-            self._send_line(command)
-            self._send_matrix(points)
-            self._send_item(reference_object)
-            self._send_int(1 if add_to_ref else 0)
-            self._send_int(projection_type)        
-            newitem = self._rec_item()
-            self._check_status()
-            return newitem   
+        elif not isinstance(points, robodk.Mat):
+            raise Exception("points must be a 3xN or 6xN list or matrix")
+        self._check_connection()
+        command = 'AddPoints'
+        self._send_line(command)
+        self._send_matrix(points)
+        self._send_item(reference_object)
+        self._send_int(1 if add_to_ref else 0)
+        self._send_int(projection_type)        
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem   
 
     def ProjectPoints(self, points, object_project, projection_type=PROJECTION_ALONG_NORMAL_RECALC, timeout=30):
         """Project a point or a list of points given its coordinates. 
@@ -1874,58 +1823,55 @@ class Robolink:
         
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
-        with self._lock:
-            islist = False
-            if isinstance(points,list):
-                islist = True
-                points = robodk.Mat(points).tr()
-                # Safety check for backwards compatibility
-                if points.size(0) != 6 and points.size(1) == 6:
-                    points = points.tr()
+        islist = False
+        if isinstance(points,list):
+            islist = True
+            points = robodk.Mat(points).tr()
+            # Safety check for backwards compatibility
+            if points.size(0) != 6 and points.size(1) == 6:
+                points = points.tr()
             
-            elif not isinstance(points, robodk.Mat):
-                raise Exception("points must be a 3xN or 6xN list or matrix")
-            self._check_connection()
-            command = 'ProjectPoints'
-            self._send_line(command)
-            self._send_matrix(points)
-            self._send_item(object_project)
-            self._send_int(projection_type)  
-            self.COM.settimeout(timeout) # 30 seconds timeout
-            projected_points = self._rec_matrix() # will wait here
-            self.COM.settimeout(self.TIMEOUT)        
-            self._check_status()
-            if islist:
-                projected_points = list(projected_points)
-            return projected_points
+        elif not isinstance(points, robodk.Mat):
+            raise Exception("points must be a 3xN or 6xN list or matrix")
+        self._check_connection()
+        command = 'ProjectPoints'
+        self._send_line(command)
+        self._send_matrix(points)
+        self._send_item(object_project)
+        self._send_int(projection_type)  
+        self.COM.settimeout(timeout) # 30 seconds timeout
+        projected_points = self._rec_matrix() # will wait here
+        self.COM.settimeout(self.TIMEOUT)        
+        self._check_status()
+        if islist:
+            projected_points = list(projected_points)
+        return projected_points
         
     def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
-        with self._lock:
-            self._require_build(12938)
-            self._check_connection()
-            self._send_line('RemoveStn')
-            self._check_status()
+        self._require_build(12938)
+        self._check_connection()
+        self._send_line('RemoveStn')
+        self._check_status()
         
     def Delete(self, item_list):
         """Remove a list of items.
         
         .. seealso:: :func:`~robolink.Item.Delete`, :func:`~robolink.Robolink.CloseStation`
         """
-        with self._lock:
-            self._require_build(14560)        
-            if type(item_list) is not list:
-                item_list = [item_list]           
+        self._require_build(14560)        
+        if type(item_list) is not list:
+            item_list = [item_list]           
         
-            self._check_connection()
-            command = 'RemoveLst'
-            self._send_line(command)
-            self._send_int(len(item_list))
-            for itm in item_list:
-                self._send_item(itm)
-                itm.item = 0
+        self._check_connection()
+        command = 'RemoveLst'
+        self._send_line(command)
+        self._send_int(len(item_list))
+        for itm in item_list:
+            self._send_item(itm)
+            itm.item = 0
             
-            self._check_status()     
+        self._check_status()     
         
     def Save(self, filename, itemsave=0):
         """Save an item or a station to a file (formats supported include RDK, STL, ROBOT, TOOL, ...). If no item is provided, the open station is saved.
@@ -1936,15 +1882,14 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.AddFile`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Save'
-            self._send_line(command)
-            self._send_line(filename)
-            self._send_item(itemsave)
-            self.COM.settimeout(60)
-            self._check_status()
-            self.COM.settimeout(self.TIMEOUT)        
+        self._check_connection()
+        command = 'Save'
+        self._send_line(command)
+        self._send_line(filename)
+        self._send_item(itemsave)
+        self.COM.settimeout(60)
+        self._check_status()
+        self.COM.settimeout(self.TIMEOUT)        
     
     def AddStation(self, name='New Station'):
         """Add a new empty station. It returns the station :class:`.Item` created.
@@ -1952,14 +1897,13 @@ class Robolink:
         :param str name: name of the station
         
         .. seealso:: :func:`~robolink.Robolink.AddFile`"""
-        with self._lock:
-            self._check_connection()
-            command = 'NewStation'
-            self._send_line(command)
-            self._send_line(name)
-            newitem = self._rec_item()
-            self._check_status()
-            return newitem
+        self._check_connection()
+        command = 'NewStation'
+        self._send_line(command)
+        self._send_line(name)
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem
         
     def AddTarget(self, name, itemparent=0, itemrobot=0):
         """Add a new target that can be reached with a robot.
@@ -2172,8 +2116,7 @@ class Robolink:
         
     def AddMillingProject(self, name='Milling settings', itemrobot=0):
         """Obsolete, use :func:`~robolink.Robolink.AddMachiningProject` instead"""
-        with self._lock:
-            return self.AddMachiningProject(name, itemrobot)
+        return self.AddMachiningProject(name, itemrobot)
     
     def AddMachiningProject(self, name='Milling settings', itemrobot=0):
         """Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points. 
@@ -2206,16 +2149,15 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.Busy`
         """        
-        with self._lock:
-            if wait_for_finished:
-                prog_item = self.Item(fcn_param, ITEM_TYPE_PROGRAM)
-                if not prog_item.Valid():
-                    raise Exception('Invalid program %s' % fcn_param)
-                prog_status = prog_item.RunProgram()
-                prog_item.WaitFinished()
-            else:
-                prog_status = self.RunCode(fcn_param, True)
-            return prog_status
+        if wait_for_finished:
+            prog_item = self.Item(fcn_param, ITEM_TYPE_PROGRAM)
+            if not prog_item.Valid():
+                raise Exception('Invalid program %s' % fcn_param)
+            prog_status = prog_item.RunProgram()
+            prog_item.WaitFinished()
+        else:
+            prog_status = self.RunCode(fcn_param, True)
+        return prog_status
     
     def RunCode(self, code, code_is_fcn_call=False):
         """Generate a program call or a customized instruction output in a program. 
@@ -2278,49 +2220,45 @@ class Robolink:
         elif always_render == 2:
             auto_render = 2
             
-        with self._lock:
-            self._check_connection()
-            command = 'Render'
-            self._send_line(command)
-            self._send_int(auto_render)
-            self._check_status()
+        self._check_connection()
+        command = 'Render'
+        self._send_line(command)
+        self._send_int(auto_render)
+        self._check_status()
         
     def Update(self):
         """Update the screen. This updates the position of all robots and internal links according to previously set values. 
         This function is useful when Render is turned off (Example: "RDK.Render(False)"). Otherwise, by default RoboDK will update all links after any modification of the station (when robots or items are moved). 
         
         .. seealso:: :func:`~robolink.Robolink.Render`"""
-        with self._lock:
-            self._check_connection()
-            command = 'Refresh'
-            self._send_line(command)
-            self._send_int(0)
-            self._check_status()
+        self._check_connection()
+        command = 'Refresh'
+        self._send_line(command)
+        self._send_int(0)
+        self._check_status()
 
     def IsInside(self, object_inside, object):
         """Return 1 (True) if object_inside is inside the object, otherwise, it returns 0 (False). Both objects must be of type :class:`.Item`"""
-        with self._lock:
-            self._check_connection()
-            self._send_line('IsInside')
-            self._send_item(object_inside)
-            self._send_item(object)        
-            inside = self._rec_int()
-            self._check_status()
-            return inside    
+        self._check_connection()
+        self._send_line('IsInside')
+        self._send_item(object_inside)
+        self._send_item(object)        
+        inside = self._rec_int()
+        self._check_status()
+        return inside    
         
     def setCollisionActive(self, check_state = COLLISION_ON):
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects (:class:`.Item`). This allows altering the collision map for Collision checking.
         
         .. seealso:: :func:`~robolink.Robolink.setCollisionActivePair`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collision_SetState'
-            self._send_line(command)
-            self._send_int(check_state)
-            ncollisions = self._rec_int()
-            self._check_status()
-            return ncollisions
+        self._check_connection()
+        command = 'Collision_SetState'
+        self._send_line(command)
+        self._send_int(check_state)
+        ncollisions = self._rec_int()
+        self._check_status()
+        return ncollisions
         
     def setCollisionActivePair(self, check_state, item1, item2, id1=0, id2=0):
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. Specify the link id for robots or moving mechanisms (id 0 is the base)
@@ -2328,18 +2266,17 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collision_SetPair'
-            self._send_line(command)
-            self._send_item(item1)
-            self._send_item(item2)
-            self._send_int(id1)
-            self._send_int(id2)
-            self._send_int(check_state)
-            success = self._rec_int()
-            self._check_status()
-            return success
+        self._check_connection()
+        command = 'Collision_SetPair'
+        self._send_line(command)
+        self._send_item(item1)
+        self._send_item(item2)
+        self._send_int(id1)
+        self._send_int(id2)
+        self._send_int(check_state)
+        success = self._rec_int()
+        self._check_status()
+        return success
         
         
     def setCollisionActivePairList(self, list_check_state, list_item1, list_item2, list_id1=None, list_id2=None):
@@ -2348,97 +2285,92 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.setCollisionActivePair`
         """
-        with self._lock:
-            npairs = min(len(list_check_state), min(len(list_item1), len(list_item2)))
-            self._check_connection()
-            self._send_line("Collision_SetPairList")
-            self._send_int(npairs)
-            for i in range(npairs):        
-                self._send_item(list_item1[i])
-                self._send_item(list_item2[i])
-                id1 = 0
-                id2 = 0
-                if list_id1 is not None and len(list_id1) > i:
-                    id1 = list_id1[i]
+        npairs = min(len(list_check_state), min(len(list_item1), len(list_item2)))
+        self._check_connection()
+        self._send_line("Collision_SetPairList")
+        self._send_int(npairs)
+        for i in range(npairs):        
+            self._send_item(list_item1[i])
+            self._send_item(list_item2[i])
+            id1 = 0
+            id2 = 0
+            if list_id1 is not None and len(list_id1) > i:
+                id1 = list_id1[i]
                 
-                if list_id2 is not None and len(list_id2) > i:
-                    id2 = list_id2[i]
+            if list_id2 is not None and len(list_id2) > i:
+                id2 = list_id2[i]
                 
-                self._send_int(id1)
-                self._send_int(id2)
-                self._send_int(list_check_state[i])
+            self._send_int(id1)
+            self._send_int(id2)
+            self._send_int(list_check_state[i])
             
-            success = self._rec_int()
-            self._check_status()
-            return success
+        success = self._rec_int()
+        self._check_status()
+        return success
 
     def Collisions(self):
         """Return the number of pairs of objects that are currently in a collision state.
         
         .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collisions'
-            self._send_line(command)
-            ncollisions = self._rec_int()
-            self._check_status()
-            return ncollisions
+        self._check_connection()
+        command = 'Collisions'
+        self._send_line(command)
+        ncollisions = self._rec_int()
+        self._check_status()
+        return ncollisions
         
     def Collision(self, item1, item2):
         """Returns 1 if item1 and item2 collided. Otherwise returns 0.
         
         .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Robolink.CollisionItems`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collided'
-            self._send_line(command)
-            self._send_item(item1)
-            self._send_item(item2)        
-            ncollisions = self._rec_int()
-            self._check_status()
-            return ncollisions
+        self._check_connection()
+        command = 'Collided'
+        self._send_line(command)
+        self._send_item(item1)
+        self._send_item(item2)        
+        ncollisions = self._rec_int()
+        self._check_status()
+        return ncollisions
         
     def CollisionItems(self):
         """Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
         
         .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collision_Items'
-            self._send_line(command)
-            nitems = self._rec_int()
-            item_list = []
-            for i in range(nitems):
-                item_list.append(self._rec_item())
-                link_id = self._rec_int()           # link id for robot items (ignored)
-                collision_times = self._rec_int()   # number of objects it is in collisions with
+        self._check_connection()
+        command = 'Collision_Items'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_list.append(self._rec_item())
+            link_id = self._rec_int()           # link id for robot items (ignored)
+            collision_times = self._rec_int()   # number of objects it is in collisions with
 
-            self._check_status()
-            return item_list
+        self._check_status()
+        return item_list
         
     def CollisionPairs(self):
         """Return the list of pairs of items that are in a collision state.
         
         .. seealso:: :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Collision_Pairs'
-            self._send_line(command)
-            nitems = self._rec_int()
-            item_list = []
-            for i in range(nitems):
-                item_1 = self._rec_item()
-                id_1 = self._rec_int()
-                item_2 = self._rec_item()
-                id_2 = self._rec_int()
-                item_list.append([item_1, item_2, id_1, id_2])
+        self._check_connection()
+        command = 'Collision_Pairs'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_1 = self._rec_item()
+            id_1 = self._rec_int()
+            item_2 = self._rec_item()
+            id_2 = self._rec_int()
+            item_list.append([item_1, item_2, id_1, id_2])
 
-            self._check_status()
-            return item_list
+        self._check_status()
+        return item_list
         
     def setSimulationSpeed(self, speed):
         """Set the simulation speed. 
@@ -2450,12 +2382,11 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.SimulationSpeed`, :func:`~robolink.Robolink.SimulationTime`
         """ 
-        with self._lock:
-            self._check_connection()
-            command = 'SimulateSpeed'
-            self._send_line(command)
-            self._send_int(speed*1000)
-            self._check_status()
+        self._check_connection()
+        command = 'SimulateSpeed'
+        self._send_line(command)
+        self._send_int(speed*1000)
+        self._check_status()
         
     def SimulationSpeed(self):
         """Return the simulation speed. A simulation speed of 1 means real-time simulation.
@@ -2463,13 +2394,12 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setSimulationSpeed`
         """ 
-        with self._lock:
-            self._check_connection()
-            command = 'GetSimulateSpeed'
-            self._send_line(command)
-            speed = self._rec_int()/1000.0
-            self._check_status()
-            return speed
+        self._check_connection()
+        command = 'GetSimulateSpeed'
+        self._send_line(command)
+        speed = self._rec_int()/1000.0
+        self._check_status()
+        return speed
         
     def SimulationTime(self):
         """Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
@@ -2477,13 +2407,12 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setSimulationSpeed`, :func:`~robolink.Robolink.SimulationSpeed`
         """ 
-        with self._lock:
-            self._check_connection()
-            command = 'GetSimTime'
-            self._send_line(command)
-            speed = self._rec_int()/1000.0
-            self._check_status()
-            return speed
+        self._check_connection()
+        command = 'GetSimTime'
+        self._send_line(command)
+        speed = self._rec_int()/1000.0
+        self._check_status()
+        return speed
     
     def setRunMode(self, run_mode=1):
         """Set the run mode (behavior) of the script, for either simulation, offline programming or online programming.
@@ -2507,12 +2436,11 @@ class Robolink:
                 
         .. seealso:: :func:`~robolink.Robolink.RunMode`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'S_RunMode'
-            self._send_line(command)
-            self._send_int(run_mode)
-            self._check_status()
+        self._check_connection()
+        command = 'S_RunMode'
+        self._send_line(command)
+        self._send_int(run_mode)
+        self._check_status()
         
     def RunMode(self):
         """Return the current run mode (behavior) of the script.
@@ -2520,13 +2448,12 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode`
         """            
-        with self._lock:
-            self._check_connection()
-            command = 'G_RunMode'
-            self._send_line(command)
-            runmode = self._rec_int()
-            self._check_status()
-            return runmode
+        self._check_connection()
+        command = 'G_RunMode'
+        self._send_line(command)
+        runmode = self._rec_int()
+        self._check_status()
+        return runmode
 
     def getParams(self):
         """Get all the user parameters from the open RoboDK station.
@@ -2536,21 +2463,20 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.getParam` (Robolink station parameter), :func:`~robolink.Robolink.setParam` (Robolink station parameter)
         """    
-        with self._lock:
-            self._check_connection()
-            command = 'G_Params'
-            self._send_line(command)
-            nparam = self._rec_int()
-            params = []
-            for i in range(nparam):
-                param = self._rec_line()
-                value = self._rec_line()
-                if value.replace('.','',1).isnumeric():
-                    value = float(value) # automatically convert int, long and float
+        self._check_connection()
+        command = 'G_Params'
+        self._send_line(command)
+        nparam = self._rec_int()
+        params = []
+        for i in range(nparam):
+            param = self._rec_line()
+            value = self._rec_line()
+            if value.replace('.','',1).isnumeric():
+                value = float(value) # automatically convert int, long and float
                 
-                params.append([param, value])
-            self._check_status()
-            return params
+            params.append([param, value])
+        self._check_status()
+        return params
         
     def getParam(self, param='PATH_OPENSTATION', str_type=True):
         """Get a global or a station parameter from the open RoboDK station.
@@ -2570,29 +2496,28 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.setParam` (Robolink station parameter), :func:`~robolink.Robolink.getParams`
         """    
-        with self._lock:
-            self._check_connection()
-            if str_type:
-                command = 'G_Param'
-                self._send_line(command)
-                self._send_line(param)
-                value = self._rec_line()
-                self._check_status()
-                if value.startswith('UNKNOWN '):
-                    return None
+        self._check_connection()
+        if str_type:
+            command = 'G_Param'
+            self._send_line(command)
+            self._send_line(param)
+            value = self._rec_line()
+            self._check_status()
+            if value.startswith('UNKNOWN '):
+                return None
             
-                if value.replace('.','',1).isnumeric():
-                    value = float(value) # automatically convert int, long and float
+            if value.replace('.','',1).isnumeric():
+                value = float(value) # automatically convert int, long and float
             
-                return value
+            return value
             
-            else:
-                command = 'G_DataParam'
-                self._send_line(command)
-                self._send_line(param)
-                value = self._rec_bytes()
-                self._check_status()
-                return value
+        else:
+            command = 'G_DataParam'
+            self._send_line(command)
+            self._send_line(param)
+            value = self._rec_bytes()
+            self._check_status()
+            return value
         
     def setParam(self, param, value):
         """Set a station parameter. If the parameters exists, it will be updated. Otherwise, it will be added to the station.
@@ -2602,18 +2527,17 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.getParam`
         """    
-        with self._lock:
-            self._check_connection()
-            if isinstance(value,bytes):            
-                command = 'S_DataParam'
-                self._send_line(command)
-                self._send_line(str(param))
-                self._send_bytes(value)            
-            else:
-                command = 'S_Param'
-                self._send_line(command)
-                self._send_line(str(param))
-                self._send_line(str(value).replace('\n',' '))
+        self._check_connection()
+        if isinstance(value,bytes):            
+            command = 'S_DataParam'
+            self._send_line(command)
+            self._send_line(str(param))
+            self._send_bytes(value)            
+        else:
+            command = 'S_Param'
+            self._send_line(command)
+            self._send_line(str(param))
+            self._send_line(str(value).replace('\n',' '))
             
         self._check_status()
         
@@ -2661,76 +2585,73 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Item.setParam` (Item parameter/command), :func:`~robolink.Robolink.setParam` (Robolink station parameter)
         """   
-        with self._lock:
-            if type(value) == dict:
-                # return dict if we provided a dict
-                value = json.dumps(value) 
+        if type(value) == dict:
+            # return dict if we provided a dict
+            value = json.dumps(value) 
             
-            elif type(value) == robodk.Mat:
-                # Special 2D matrix write/read
-                self._check_connection()
-                command = 'G_Gen_Mat'
-                self._send_line(command)
-                self._send_item(None)
-                self._send_line(str(cmd))
-                self._send_matrix(value)
-                self.COM.settimeout(3600)
-                nmats = self._rec_int()
-                self.COM.settimeout(self.TIMEOUT)
-                mat2d_list = []
-                for i in range(nmats):
-                    mat2d_list.append(self._rec_matrix())
-                            
-                self._check_status()
-                return mat2d_list
-        
-            elif isinstance(value, Item):
-                value = str(value.item)
-        
-            else:
-                value = str(value)
-            
-            value = value.replace('\n','<br>')
-        
+        elif type(value) == robodk.Mat:
+            # Special 2D matrix write/read
             self._check_connection()
-            command = 'SCMD'
+            command = 'G_Gen_Mat'
             self._send_line(command)
+            self._send_item(None)
             self._send_line(str(cmd))
-            self._send_line(value)
+            self._send_matrix(value)
             self.COM.settimeout(3600)
-            line = self._rec_line()
-            self.COM.settimeout(self.TIMEOUT)        
+            nmats = self._rec_int()
+            self.COM.settimeout(self.TIMEOUT)
+            mat2d_list = []
+            for i in range(nmats):
+                mat2d_list.append(self._rec_matrix())
+                            
             self._check_status()
-            return line
+            return mat2d_list
+        
+        elif isinstance(value, Item):
+            value = str(value.item)
+        
+        else:
+            value = str(value)
+            
+        value = value.replace('\n','<br>')
+        
+        self._check_connection()
+        command = 'SCMD'
+        self._send_line(command)
+        self._send_line(str(cmd))
+        self._send_line(value)
+        self.COM.settimeout(3600)
+        line = self._rec_line()
+        self.COM.settimeout(self.TIMEOUT)        
+        self._check_status()
+        return line
         
     def getOpenStations(self):
         """Returns the list of open stations in RoboDK
         
         .. seealso:: :func:`~robolink.Robolink.setActiveStation`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Item.Save`, :func:`~robolink.Robolink.AddStation`
         """    
-        with self._lock:
-            self._check_connection()
-            command = 'G_AllStn'
-            self._send_line(command)
-            nstn = self._rec_int()
-            list_stn = []
-            for i in range(nstn):
-                list_stn.append(self._rec_item())
-            self._check_status()
-            return list_stn
+        self._check_connection()
+        command = 'G_AllStn'
+        self._send_line(command)
+        nstn = self._rec_int()
+        list_stn = []
+        for i in range(nstn):
+            list_stn.append(self._rec_item())
+        self._check_status()
+        return list_stn
         
     def ActiveStation(self):
         """Returns the active station item (station currently visible)
         
         .. seealso:: :func:`~robolink.Robolink.setActiveStation`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Item.Save`, :func:`~robolink.Robolink.AddStation`
         """    
-        with self._lock:
-            self._check_connection()
-            command = 'G_ActiveStn'
-            self._send_line(command)
-            stn = self._rec_item()
-            self._check_status()
-            return stn
+        self._check_connection()
+        command = 'G_ActiveStn'
+        self._send_line(command)
+        stn = self._rec_item()
+        self._check_status()
+        return stn
         
     def setActiveStation(self, stn):
         """Set the active station (project currently visible)
@@ -2740,12 +2661,11 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.ActiveStation`, :func:`~robolink.Robolink.getOpenStations`, :func:`~robolink.Robolink.getParam`, :func:`~robolink.Item.Childs`, :func:`~robolink.Robolink.AddFile`, :func:`~robolink.Robolink.AddStation`
         """    
-        with self._lock:
-            self._check_connection()
-            command = 'S_ActiveStn'
-            self._send_line(command)
-            self._send_item(stn)
-            self._check_status()
+        self._check_connection()
+        command = 'S_ActiveStn'
+        self._send_line(command)
+        self._send_item(stn)
+        self._check_status()
 
     def ShowSequence(self, matrix):
         """Display a sequence of joints given a list of joints as a matrix.
@@ -2756,28 +2676,26 @@ class Robolink:
         
         Tip: use :func:`~robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
         """
-        with self._lock:
-            Item(self, 0).ShowSequence(matrix)
+        Item(self, 0).ShowSequence(matrix)
 
     def LaserTracker_Measure(self, estimate=[0,0,0], search=False):
         """Takes a measurement using the laser tracker with respect to the tracker reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
         Returns the XYZ coordinates of target if it was found. Othewise it retuns None. For trackers that support a 6D measurement, the returned value with be an array of 6 values (list) to include the Euler angles."""
-        with self._lock:
-            self._check_connection()
-            command = 'MeasLT2'
-            self._send_line(command)
-            self._send_xyz(estimate)
-            self._send_int(1 if search else 0)
-            xyz = self._rec_array().list()
-            self._check_status()
-            if len(xyz) < 3:
-                return None
+        self._check_connection()
+        command = 'MeasLT2'
+        self._send_line(command)
+        self._send_xyz(estimate)
+        self._send_int(1 if search else 0)
+        xyz = self._rec_array().list()
+        self._check_status()
+        if len(xyz) < 3:
+            return None
         
         # Old versions require checking against 0 mm    
-            if xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2] < 0.0001:
-                return None
+        if xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2] < 0.0001:
+            return None
         
-            return xyz        
+        return xyz        
         
     def MeasurePose(self, target=-1, time_avg_ms=0, tip_xyz=None):
         """Takes a measurement with a 6D measurement device. It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose.
@@ -2785,19 +2703,18 @@ class Robolink:
         :param time_avg: Take the measurement for a period of time and average the result.
         :param tip_xyz: Offet the measurement to the tip.                
         """
-        with self._lock:
-            array_send = [target, time_avg_ms]
-            if tip_xyz is not None:
-                array_send += [0,0,0]
+        array_send = [target, time_avg_ms]
+        if tip_xyz is not None:
+            array_send += [0,0,0]
             
-            self._check_connection()
-            command = 'MeasPose4'
-            self._send_line(command)
-            self._send_array(array_send)
-            pose1 = self._rec_pose()
-            data = self._rec_array().list()   
-            self._check_status()     
-            return pose1, data
+        self._check_connection()
+        command = 'MeasPose4'
+        self._send_line(command)
+        self._send_array(array_send)
+        pose1 = self._rec_pose()
+        data = self._rec_array().list()   
+        self._check_status()     
+        return pose1, data
         
     def Collision_Line(self, p1, p2, ref=robodk.eye(4)):
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
@@ -2811,19 +2728,18 @@ class Robolink:
         :return: [collision (True or False), item (collided), point (point of collision with respect to the station)]
         :rtype: [bool, :class:`.Item`, list of float as xyz]
         """
-        with self._lock:
-            p1abs = ref*p1
-            p2abs = ref*p2        
-            self._check_connection()
-            command = 'CollisionLine'
-            self._send_line(command)
-            self._send_xyz(p1abs)
-            self._send_xyz(p2abs)
-            itempicked = self._rec_item()
-            xyz = self._rec_xyz()
-            collision = itempicked.Valid()
-            self._check_status()
-            return collision, itempicked, xyz
+        p1abs = ref*p1
+        p2abs = ref*p2        
+        self._check_connection()
+        command = 'CollisionLine'
+        self._send_line(command)
+        self._send_xyz(p1abs)
+        self._send_xyz(p2abs)
+        itempicked = self._rec_item()
+        xyz = self._rec_xyz()
+        collision = itempicked.Valid()
+        self._check_status()
+        return collision, itempicked, xyz
         
     def setPoses(self, items, poses):
         """Sets the relative positions (poses) of a list of items with respect to their parent. For example, the position of an object/frame/target with respect to its parent.
@@ -2831,21 +2747,20 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Item.setPose` (item), :func:`~robolink.Item.Pose` (item), :func:`~robolink.Robolink.setPosesAbs`
         """
-        with self._lock:
-            if len(items) != len(poses):
-                raise Exception('The number of items must match the number of poses')
+        if len(items) != len(poses):
+            raise Exception('The number of items must match the number of poses')
         
-            if len(items) == 0:
-                return
+        if len(items) == 0:
+            return
             
-            self._check_connection()
-            command = 'S_Hlocals'
-            self._send_line(command)
-            self._send_int(len(items))
-            for i in range(len(items)):
-                self._send_item(items[i])
-                self._send_pose(poses[i])
-            self._check_status()        
+        self._check_connection()
+        command = 'S_Hlocals'
+        self._send_line(command)
+        self._send_int(len(items))
+        for i in range(len(items)):
+            self._send_item(items[i])
+            self._send_pose(poses[i])
+        self._check_status()        
                 
     def setPosesAbs(self, items, poses):
         """Set the absolute positions (poses) of a list of items with respect to the station reference. For example, the position of an object/frame/target with respect to its parent.
@@ -2853,59 +2768,56 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Item.setPoseAbs` (item), :func:`~robolink.Item.PoseAbs` (item), :func:`~robolink.Robolink.setPoses`
         """
-        with self._lock:
-            if len(items) != len(poses):
-                raise Exception('The number of items must match the number of poses')
+        if len(items) != len(poses):
+            raise Exception('The number of items must match the number of poses')
         
-            if len(items) == 0:
-                return
+        if len(items) == 0:
+            return
             
-            self._check_connection()
-            command = 'S_Hlocal_AbsS'
-            self._send_line(command)
-            self._send_int(len(items))
-            for i in range(len(items)):
-                self._send_item(items[i])
-                self._send_pose(poses[i])
-            self._check_status()
+        self._check_connection()
+        command = 'S_Hlocal_AbsS'
+        self._send_line(command)
+        self._send_int(len(items))
+        for i in range(len(items)):
+            self._send_item(items[i])
+            self._send_pose(poses[i])
+        self._check_status()
         
     def Joints(self, robot_item_list):
         """Return the current joints of a list of robots.
         
         .. seealso:: :func:`~robolink.Item.setJoints` (item), :func:`~robolink.Item.Joints` (item), :func:`~robolink.Robolink.setJoints`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'G_ThetasList'
-            self._send_line(command)
-            nrobs = len(robot_item_list)
-            self._send_int(nrobs)
-            joints_list = []
-            for i in range(nrobs):
-                self._send_item(robot_item_list[i])
-                joints_i = self._rec_array()
-                joints_list.append(joints_i)
-            self._check_status()
-            return joints_list
+        self._check_connection()
+        command = 'G_ThetasList'
+        self._send_line(command)
+        nrobs = len(robot_item_list)
+        self._send_int(nrobs)
+        joints_list = []
+        for i in range(nrobs):
+            self._send_item(robot_item_list[i])
+            joints_i = self._rec_array()
+            joints_list.append(joints_i)
+        self._check_status()
+        return joints_list
 
     def setJoints(self, robot_item_list, joints_list):
         """Sets the current robot joints for a list of robot items and a list joints.
         
         .. seealso:: :func:`~robolink.Item.setJoints` (item), :func:`~robolink.Item.Joints` (item), :func:`~robolink.Robolink.Joints`"""
-        with self._lock:
-            nrobs = len(robot_item_list)
-            if nrobs != len(joints_list):
-                raise Exception('The size of the robot list does not match the size of the joints list')
+        nrobs = len(robot_item_list)
+        if nrobs != len(joints_list):
+            raise Exception('The size of the robot list does not match the size of the joints list')
             
-            self._check_connection()
-            command = 'S_ThetasList'
-            self._send_line(command)
-            self._send_int(nrobs)
-            for i in range(nrobs):
-                self._send_item(robot_item_list[i])
-                self._send_array(joints_list[i])
+        self._check_connection()
+        command = 'S_ThetasList'
+        self._send_line(command)
+        self._send_int(nrobs)
+        for i in range(nrobs):
+            self._send_item(robot_item_list[i])
+            self._send_array(joints_list[i])
             
-            self._check_status()
+        self._check_status()
         
     def CalibrateTool(self, poses_xyzwpr, input_format=EULER_RX_RY_RZ, algorithm=CALIBRATE_TCP_BY_POINT, robot=None, tool=None):
         """Calibrate a TCP given a list of poses/joints and following a specific algorithm/method. 
@@ -2933,39 +2845,38 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateReference`
         """
-        with self._lock:
-            if type(poses_xyzwpr) == list and len(poses_xyzwpr) > 0 and type(poses_xyzwpr[0]) == robodk.Mat:    
-                nposes = len(poses_xyzwpr)
-                if len(poses_xyzwpr) > 0:
-                    input_format = EULER_RX_RYp_RZpp
-                    matrix = []
-                    for i in range(nposes):
-                        matrix.append(robodk.Pose_2_Staubli(poses_xyzwpr[i]))
+        if type(poses_xyzwpr) == list and len(poses_xyzwpr) > 0 and type(poses_xyzwpr[0]) == robodk.Mat:    
+            nposes = len(poses_xyzwpr)
+            if len(poses_xyzwpr) > 0:
+                input_format = EULER_RX_RYp_RZpp
+                matrix = []
+                for i in range(nposes):
+                    matrix.append(robodk.Pose_2_Staubli(poses_xyzwpr[i]))
                     
-                    poses_xyzwpr = matrix
+                poses_xyzwpr = matrix
         
-            self._check_connection()
-            command = 'CalibTCP3'
-            self._send_line(command)
-            self._send_matrix(poses_xyzwpr)
-            self._send_int(input_format)
-            if type(algorithm) != list:
-                algorithm = [algorithm]
+        self._check_connection()
+        command = 'CalibTCP3'
+        self._send_line(command)
+        self._send_matrix(poses_xyzwpr)
+        self._send_int(input_format)
+        if type(algorithm) != list:
+            algorithm = [algorithm]
             
-            self._send_array(algorithm)
-            self._send_item(robot)
-            self._send_item(tool)        
-            self.COM.settimeout(3600)
-            TCPxyz = self._rec_array()
-            self.COM.settimeout(self.TIMEOUT)
-            errorstats = self._rec_array()
-            errors = self._rec_matrix()
-            self._check_status()
-            if errors.size(1) > 0:
-                errors = errors[:,1].list()
-            else:
-                errors = []
-            return TCPxyz.list(), errorstats.list(), errors
+        self._send_array(algorithm)
+        self._send_item(robot)
+        self._send_item(tool)        
+        self.COM.settimeout(3600)
+        TCPxyz = self._rec_array()
+        self.COM.settimeout(self.TIMEOUT)
+        errorstats = self._rec_array()
+        errors = self._rec_matrix()
+        self._check_status()
+        if errors.size(1) > 0:
+            errors = errors[:,1].list()
+        else:
+            errors = []
+        return TCPxyz.list(), errorstats.list(), errors
         
     def CalibrateReference(self, joints_points, method=CALIBRATE_FRAME_3P_P1_ON_X, use_joints=False, robot=None):
         """Calibrate a reference frame given a number of points and following a specific algorithm/method. 
@@ -2991,24 +2902,23 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.CalibrateTool`        
         """
-        with self._lock:
-            self._check_connection()
-            command = 'CalibFrame'
-            self._send_line(command)
-            self._send_matrix(joints_points)
-            self._send_int(-1 if use_joints else 0)
-            self._send_int(method)
-            self._send_item(robot)
-            reference_pose = self._rec_pose()
-            stats_data = self._rec_array()
-            self._check_status()
+        self._check_connection()
+        command = 'CalibFrame'
+        self._send_line(command)
+        self._send_matrix(joints_points)
+        self._send_int(-1 if use_joints else 0)
+        self._send_int(method)
+        self._send_item(robot)
+        reference_pose = self._rec_pose()
+        stats_data = self._rec_array()
+        self._check_status()
         
-            stats_data = stats_data.list()
-            # We'll receive addditional information when calibrating a 1 axis or 2 axis turntable
-            if len(stats_data) > 3:
-                return reference_pose, stats_data
+        stats_data = stats_data.list()
+        # We'll receive addditional information when calibrating a 1 axis or 2 axis turntable
+        if len(stats_data) > 3:
+            return reference_pose, stats_data
             
-            return reference_pose    
+        return reference_pose    
         
     def ProgramStart(self, programname, folder='', postprocessor='', robot=None):
         """Defines the name of the program when the program is generated (offline programming). 
@@ -3036,20 +2946,19 @@ class Robolink:
             
         .. seealso:: :func:`~robolink.Robolink.setRunMode`, :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.Finish`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'ProgramStart'
-            self._send_line(command)
-            self._send_line(programname)
-            self._send_line(folder)
-            self._send_line(postprocessor)        
-            if robot is None:
-                self._send_item(Item(None))
-            else:
-                self._send_item(robot)        
-            errors = self._rec_int()
-            self._check_status()
-            return errors
+        self._check_connection()
+        command = 'ProgramStart'
+        self._send_line(command)
+        self._send_line(programname)
+        self._send_line(folder)
+        self._send_line(postprocessor)        
+        if robot is None:
+            self._send_item(Item(None))
+        else:
+            self._send_item(robot)        
+        errors = self._rec_int()
+        self._check_status()
+        return errors
         
     def setViewPose(self, pose):
         """Set the pose of the wold reference frame with respect to the view (camera/screen)
@@ -3057,22 +2966,20 @@ class Robolink:
         :param pose: pose of the item with respect to its parent
         :type pose: :class:`robodk.Mat`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'S_ViewPose'
-            self._send_line(command)
-            self._send_pose(pose)
-            self._check_status()
+        self._check_connection()
+        command = 'S_ViewPose'
+        self._send_line(command)
+        self._send_pose(pose)
+        self._check_status()
 
     def ViewPose(self):
         """Get the pose of the wold reference frame with respect to the view (camera/screen)"""
-        with self._lock:
-            self._check_connection()
-            command = 'G_ViewPose'
-            self._send_line(command)
-            pose = self._rec_pose()
-            self._check_status()
-            return pose
+        self._check_connection()
+        command = 'G_ViewPose'
+        self._send_line(command)
+        pose = self._rec_pose()
+        self._check_status()
+        return pose
 
         
     def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=robodk.eye(4), tool=robodk.eye(4), name="New robot", robot=None):
@@ -3152,27 +3059,26 @@ class Robolink:
         """
         
         # calculate the number of degrees of freedom
-        with self._lock:
-            ndofs = len(list_obj) - 1
-            self._check_connection()
-            command = 'BuildMechanism'
-            self._send_line(command)
-            self._send_item(robot)
-            self._send_line(name)
-            self._send_int(type)
-            self._send_int(ndofs)
-            for i in range(ndofs+1):
-                self._send_item(list_obj[i])
-            self._send_pose(base)
-            self._send_pose(tool)
-            self._send_array(parameters)
-            if len(joints_build) < 12:
-                joints_build += [0]*(12-len(joints_build))
-            joints_data = robodk.Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
-            self._send_matrix(joints_data)
-            robot = self._rec_item()
-            self._check_status()
-            return robot
+        ndofs = len(list_obj) - 1
+        self._check_connection()
+        command = 'BuildMechanism'
+        self._send_line(command)
+        self._send_item(robot)
+        self._send_line(name)
+        self._send_int(type)
+        self._send_int(ndofs)
+        for i in range(ndofs+1):
+            self._send_item(list_obj[i])
+        self._send_pose(base)
+        self._send_pose(tool)
+        self._send_array(parameters)
+        if len(joints_build) < 12:
+            joints_build += [0]*(12-len(joints_build))
+        joints_data = robodk.Mat([joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high]).tr()
+        self._send_matrix(joints_data)
+        robot = self._rec_item()
+        self._check_status()
+        return robot
         
     #------------------------------------------------------------------
     #----------------------- CAMERA VIEWS ----------------------------
@@ -3274,25 +3180,24 @@ class Robolink:
 
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Snapshot`, :func:`~robolink.Robolink.Cam2D_Close`, :func:`~robolink.Robolink.Cam2D_SetParams`
         """
-        with self._lock:
-            self._check_connection()
-            if self.CAMERA_AS_ITEM:
-                self._require_build(17779)
-                command = 'Cam2D_PtrAdd'
-                self._send_line(command)
-                self._send_item(item_object)
-                self._send_item(camera_item)
-                self._send_line(cam_params)
-                cam_handle = self._rec_item()
+        self._check_connection()
+        if self.CAMERA_AS_ITEM:
+            self._require_build(17779)
+            command = 'Cam2D_PtrAdd'
+            self._send_line(command)
+            self._send_item(item_object)
+            self._send_item(camera_item)
+            self._send_line(cam_params)
+            cam_handle = self._rec_item()
 
-            else:
-                command = 'Cam2D_Add'
-                self._send_line(command)
-                self._send_item(item_object)
-                self._send_line(cam_params)
-                cam_handle = self._rec_ptr()
-            self._check_status()
-            return cam_handle
+        else:
+            command = 'Cam2D_Add'
+            self._send_line(command)
+            self._send_item(item_object)
+            self._send_line(cam_params)
+            cam_handle = self._rec_ptr()
+        self._check_status()
+        return cam_handle
         
     def Cam2D_Snapshot(self, file_save_img, cam_handle=0, params=""):
         """Take a snapshot from a simulated camera view and save it to a file. Returns 1 if success, 0 otherwise.
@@ -3303,32 +3208,31 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`, :func:`~robolink.Robolink.Cam2D_Close`
         """
-        with self._lock:
-            if type(file_save_img) is not str:
-                raise Exception("The first argument must be a valid file name (str)")
+        if type(file_save_img) is not str:
+            raise Exception("The first argument must be a valid file name (str)")
             
-            self._check_connection()
-            if type(cam_handle) is int:
-                command = 'Cam2D_Snapshot'
-                self._send_line(command)
-                self._send_ptr(int(cam_handle))
-                self._send_line(file_save_img)        
-                success = self._rec_int()
+        self._check_connection()
+        if type(cam_handle) is int:
+            command = 'Cam2D_Snapshot'
+            self._send_line(command)
+            self._send_ptr(int(cam_handle))
+            self._send_line(file_save_img)        
+            success = self._rec_int()
             
-            else:
-                # Camera is an item
-                self._require_build(17779)
-                command = 'Cam2D_PtrSnapshot'
-                self._send_line(command)
-                self._send_item(cam_handle)
-                self._send_line(file_save_img)
-                self._send_line(params)
-                self.COM.settimeout(3600)
-                success = self._rec_int()
-                self.COM.settimeout(self.TIMEOUT)               
+        else:
+            # Camera is an item
+            self._require_build(17779)
+            command = 'Cam2D_PtrSnapshot'
+            self._send_line(command)
+            self._send_item(cam_handle)
+            self._send_line(file_save_img)
+            self._send_line(params)
+            self.COM.settimeout(3600)
+            success = self._rec_int()
+            self.COM.settimeout(self.TIMEOUT)               
         
-            self._check_status()
-            return success
+        self._check_status()
+        return success
         
     def Cam2D_Close(self, cam_handle=0):
         """Closes all camera windows or one specific camera if the camera handle is provided. Returns True if success, False otherwise.
@@ -3337,25 +3241,24 @@ class Robolink:
         :type cam_handle: int
         
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`, :func:`~robolink.Robolink.Cam2D_Snapshot`"""
-        with self._lock:
-            self._check_connection()
-            if type(cam_handle) is int:
-                if cam_handle == 0:
-                    command = 'Cam2D_CloseAll'
-                    self._send_line(command)
-                else:
-                    command = 'Cam2D_Close'
-                    self._send_line(command)
-                    self._send_ptr(cam_handle)
-            else:
-                self._require_build(17779)
-                command = 'Cam2D_PtrClose'
+        self._check_connection()
+        if type(cam_handle) is int:
+            if cam_handle == 0:
+                command = 'Cam2D_CloseAll'
                 self._send_line(command)
-                self._send_item(cam_handle)
+            else:
+                command = 'Cam2D_Close'
+                self._send_line(command)
+                self._send_ptr(cam_handle)
+        else:
+            self._require_build(17779)
+            command = 'Cam2D_PtrClose'
+            self._send_line(command)
+            self._send_item(cam_handle)
                 
-            success = self._rec_int() > 0
-            self._check_status()
-            return success
+        success = self._rec_int() > 0
+        self._check_status()
+        return success
         
     def Cam2D_SetParams(self, params, cam_handle=0):
         """Set the parameters of the simulated camera.
@@ -3365,23 +3268,22 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`
         """
-        with self._lock:
-            self._check_connection()
-            if type(cam_handle) is int:
-                command = 'Cam2D_SetParams'
-                self._send_line(command)
-                self._send_ptr(int(cam_handle))
-                self._send_line(params)        
-                success = self._rec_int()
-            else:
-                command = 'Cam2D_PtrSetParams'
-                self._send_line(command)
-                self._send_item(cam_handle)
-                self._send_line(params)        
-                success = self._rec_int()
+        self._check_connection()
+        if type(cam_handle) is int:
+            command = 'Cam2D_SetParams'
+            self._send_line(command)
+            self._send_ptr(int(cam_handle))
+            self._send_line(params)        
+            success = self._rec_int()
+        else:
+            command = 'Cam2D_PtrSetParams'
+            self._send_line(command)
+            self._send_item(cam_handle)
+            self._send_line(params)        
+            success = self._rec_int()
             
-            self._check_status()
-            return success
+        self._check_status()
+        return success
     
     #------------------------------------------------------------------
     #----------------------- SPRAY GUN SIMULATION ----------------------------
@@ -3460,18 +3362,17 @@ class Robolink:
             RDK.Spray_SetState(SPRAY_ON)
         
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Gun_Add'
-            self._send_line(command)
-            self._send_item(item_tool)
-            self._send_item(item_object)        
-            self._send_line(params)
-            self._send_matrix(points)
-            self._send_matrix(geometry)        
-            id_spray = self._rec_int()
-            self._check_status()
-            return id_spray
+        self._check_connection()
+        command = 'Gun_Add'
+        self._send_line(command)
+        self._send_item(item_tool)
+        self._send_item(item_object)        
+        self._send_line(params)
+        self._send_matrix(points)
+        self._send_matrix(geometry)        
+        id_spray = self._rec_int()
+        self._check_status()
+        return id_spray
         
     def Spray_SetState(self, state=SPRAY_ON, id_spray=-1):
         """Sets the state of a simulated spray gun (ON or OFF)
@@ -3481,15 +3382,14 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Spray_Add`, :func:`~robolink.Robolink.Spray_GetStats`, :func:`~robolink.Robolink.Spray_Clear`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Gun_SetState'
-            self._send_line(command)
-            self._send_int(id_spray)
-            self._send_int(state)        
-            success = self._rec_int()
-            self._check_status()
-            return success
+        self._check_connection()
+        command = 'Gun_SetState'
+        self._send_line(command)
+        self._send_int(id_spray)
+        self._send_int(state)        
+        success = self._rec_int()
+        self._check_status()
+        return success
         
     def Spray_GetStats(self, id_spray=-1):
         """Gets statistics from all simulated spray guns or a specific spray gun.
@@ -3498,17 +3398,16 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Spray_Add`, :func:`~robolink.Robolink.Spray_SetState`, :func:`~robolink.Robolink.Spray_Clear`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Gun_Stats'
-            self._send_line(command)
-            self._send_int(id_spray)
-            info = self._rec_line()
-            info.replace('<br>','\t')
-            print(info)
-            data = self._rec_matrix()
-            self._check_status()
-            return info, data
+        self._check_connection()
+        command = 'Gun_Stats'
+        self._send_line(command)
+        self._send_int(id_spray)
+        info = self._rec_line()
+        info.replace('<br>','\t')
+        print(info)
+        data = self._rec_matrix()
+        self._check_status()
+        return info, data
         
     def Spray_Clear(self, id_spray=-1):
         """Stops simulating a spray gun. This will clear the simulated particles.
@@ -3517,55 +3416,51 @@ class Robolink:
         
         .. seealso:: :func:`~robolink.Robolink.Spray_Add`, :func:`~robolink.Robolink.Spray_SetState`, :func:`~robolink.Robolink.Spray_GetStats`
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Gun_Clear'
-            self._send_line(command)
-            self._send_int(id_spray)
-            success = self._rec_int()
-            self._check_status()
-            return success
+        self._check_connection()
+        command = 'Gun_Clear'
+        self._send_line(command)
+        self._send_int(id_spray)
+        success = self._rec_int()
+        self._check_status()
+        return success
         
     def License(self):
         """Get the license string"""
-        with self._lock:
-            self._check_connection()
-            command = 'G_License2'
-            self._send_line(command)
-            lic_name = self._rec_line()
-            lic_cid = self._rec_line()        
-            self._check_status()
-            return lic_name, lic_cid
+        self._check_connection()
+        command = 'G_License2'
+        self._send_line(command)
+        lic_name = self._rec_line()
+        lic_cid = self._rec_line()        
+        self._check_status()
+        return lic_name, lic_cid
         
     def Selection(self):
         """Return the list of currently selected items
         
         :return: List of items
         :rtype: list of :class:`.Item`"""
-        with self._lock:
-            self._check_connection()
-            command = 'G_Selection'
-            self._send_line(command)
-            nitems = self._rec_int()
-            item_list = []
-            for i in range(nitems):
-                item_list.append(self._rec_item())
-            self._check_status()
-            return item_list
+        self._check_connection()
+        command = 'G_Selection'
+        self._send_line(command)
+        nitems = self._rec_int()
+        item_list = []
+        for i in range(nitems):
+            item_list.append(self._rec_item())
+        self._check_status()
+        return item_list
         
     def setSelection(self, list_items=[]):
         """Set the selection in the tree
         
         :param list list_items: List of items to set as selected"""
-        with self._lock:
-            self._require_build(8896)
-            self._check_connection()
-            command = 'S_Selection'
-            self._send_line(command)
-            nitems = self._send_int(len(list_items))
-            for itm in list_items:
-                self._send_item(itm)
-            self._check_status()
+        self._require_build(8896)
+        self._check_connection()
+        command = 'S_Selection'
+        self._send_line(command)
+        nitems = self._send_int(len(list_items))
+        for itm in list_items:
+            self._send_item(itm)
+        self._check_status()
         
     def MergeItems(self, list_items=[]):
         """Merge multiple object items as one. Source objects are not deleted and a new object is created.
@@ -3573,34 +3468,32 @@ class Robolink:
         :param list list_items: List of items to set as selected
         :return: New object created
         :rtype: :class:`.Item`"""
-        with self._lock:
-            self._require_build(8896)
-            self._check_connection()
-            command = 'MergeItems'
-            self._send_line(command)
-            nitems = self._send_int(len(list_items))
-            for itm in list_items:
-                self._send_item(itm)
-            newitem = self._rec_item()
-            self._check_status()
-            return newitem
+        self._require_build(8896)
+        self._check_connection()
+        command = 'MergeItems'
+        self._send_line(command)
+        nitems = self._send_int(len(list_items))
+        for itm in list_items:
+            self._send_item(itm)
+        newitem = self._rec_item()
+        self._check_status()
+        return newitem
         
     def Popup_ISO9283_CubeProgram(self, robot=0):
         """Popup the menu to create the ISO9283 cube program (Utilities-Create Cube ISO)
         
         :return: Created program. The program is invalid.
         :rtype: :class:`.Item`"""
-        with self._lock:
-            self._require_build(5177)
-            self._check_connection()
-            command = 'Popup_ProgISO9283'
-            self._send_line(command)
-            self._send_item(robot)
-            self.COM.settimeout(3600)
-            iso_program = self._rec_item()
-            self.COM.settimeout(self.TIMEOUT)        
-            self._check_status()
-            return iso_program       
+        self._require_build(5177)
+        self._check_connection()
+        command = 'Popup_ProgISO9283'
+        self._send_line(command)
+        self._send_item(robot)
+        self.COM.settimeout(3600)
+        iso_program = self._rec_item()
+        self.COM.settimeout(self.TIMEOUT)        
+        self._check_status()
+        return iso_program       
        
     def setInteractiveMode(self, mode_type=SELECT_MOVE, default_ref_flags=DISPLAY_REF_DEFAULT, custom_objects=None, custom_ref_flags=None):
         """Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
@@ -3610,22 +3503,21 @@ class Robolink:
         :param list custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)
         :param list custom_ref_flags: Provide a matching list of flags to customize the movement behavior for specific items
         """
-        with self._lock:
-            self._check_connection()
-            command = 'S_InteractiveMode'
-            self._send_line(command)
-            self._send_int(mode_type)
-            self._send_int(default_ref_flags)
-            if custom_objects is None or custom_ref_flags is None:
-                self._send_int(-1)
-            else:
-                nitems = min(len(custom_objects),len(custom_ref_flags))
-                self._send_int(nitems)
-                for i in range(nitems):
-                    self._send_item(custom_objects[i])
-                    self._send_int(custom_ref_flags[i])
+        self._check_connection()
+        command = 'S_InteractiveMode'
+        self._send_line(command)
+        self._send_int(mode_type)
+        self._send_int(default_ref_flags)
+        if custom_objects is None or custom_ref_flags is None:
+            self._send_int(-1)
+        else:
+            nitems = min(len(custom_objects),len(custom_ref_flags))
+            self._send_int(nitems)
+            for i in range(nitems):
+                self._send_item(custom_objects[i])
+                self._send_int(custom_ref_flags[i])
 
-            self._check_status()        
+        self._check_status()        
         
     def CursorXYZ(self, x_coord=-1, y_coord=-1):
         """Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
@@ -3644,17 +3536,16 @@ class Robolink:
                 print(str(item) + " " + str(xyz))
         
         """
-        with self._lock:
-            self._check_connection()
-            command = 'Proj2d3d'
-            self._send_line(command)
-            self._send_int(x_coord)
-            self._send_int(y_coord)
-            selection = self._rec_int()
-            item = self._rec_item()
-            xyz = self._rec_xyz()
-            self._check_status()
-            return xyz, item
+        self._check_connection()
+        command = 'Proj2d3d'
+        self._send_line(command)
+        self._send_int(x_coord)
+        self._send_int(y_coord)
+        selection = self._rec_int()
+        item = self._rec_item()
+        xyz = self._rec_xyz()
+        self._check_status()
+        return xyz, item
         
         
     def PluginLoad(self, plugin_name="", load=1):
@@ -3669,12 +3560,11 @@ class Robolink:
             RDK = Robolink()
             RDK.PluginLoad("C:/RoboDK/bin/plugin/yourplugin.dll")        
         """
-        with self._lock:
-            self._check_connection()
-            command = 'PluginLoad'
-            self._send_line(command)
-            self._send_int(load)
-            self._check_status()
+        self._check_connection()
+        command = 'PluginLoad'
+        self._send_line(command)
+        self._send_int(load)
+        self._check_status()
         
     def PluginCommand(self, plugin_name, plugin_command="", value=""):
         """Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
@@ -3683,18 +3573,17 @@ class Robolink:
         :param str command: Specific command handled by your plugin
         :param str value: Specific value (optional) handled by your plugin        
         """
-        with self._lock:
-            self._check_connection()
-            command = 'PluginCommand'
-            self._send_line(command)
-            self._send_line(plugin_name)
-            self._send_line(plugin_command)
-            self._send_line(str(value))
-            self.COM.settimeout(3600*24*7)
-            result = self._rec_line()
-            self.COM.settimeout(self.TIMEOUT)
-            self._check_status()
-            return result
+        self._check_connection()
+        command = 'PluginCommand'
+        self._send_line(command)
+        self._send_line(plugin_name)
+        self._send_line(plugin_command)
+        self._send_line(str(value))
+        self.COM.settimeout(3600*24*7)
+        result = self._rec_line()
+        self.COM.settimeout(self.TIMEOUT)
+        self._check_status()
+        return result
         
     def EmbedWindow(self, window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
         """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
@@ -3709,23 +3598,22 @@ class Robolink:
         .. seealso:: Use the static function: :func:`~robolink.EmbedWindow` (this function should usually be called on a separate thread)
         
         """
-        with self._lock:
-            if not docked_name:
-                docked_name = window_name
+        if not docked_name:
+            docked_name = window_name
             
-            self._check_connection()
-            command = 'WinProcDock'
-            self._send_line(command)
-            self._send_line(docked_name)
-            self._send_line(window_name)
-            self._send_array([size_w, size_h])
-            self._send_line(str(pid))
-            self._send_int(area_allowed)
-            self._send_int(area_add)        
-            self._send_int(timeout)        
-            result = self._rec_int()
-            self._check_status()
-            return result > 0
+        self._check_connection()
+        command = 'WinProcDock'
+        self._send_line(command)
+        self._send_line(docked_name)
+        self._send_line(window_name)
+        self._send_array([size_w, size_h])
+        self._send_line(str(pid))
+        self._send_int(area_allowed)
+        self._send_int(area_add)        
+        self._send_int(timeout)        
+        result = self._rec_int()
+        self._check_status()
+        return result > 0
     
 class Item():
     """The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
