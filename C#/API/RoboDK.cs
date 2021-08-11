@@ -2417,6 +2417,22 @@ namespace RoboDk.API
             return itemProxy;
         }
 
+        //Receives a byte array
+        internal byte[] rec_bytes()
+        {
+            int bytes_len = rec_int();
+            var data = new byte[bytes_len];
+            _bufferedSocket.ReceiveData(data, bytes_len);
+            return data;
+        }
+
+        //Sends a byte array
+        internal void send_bytes(byte [] data)
+        {
+            send_int(data.Length);
+            _bufferedSocket.SendData(data);
+        }
+
         //Sends an item pointer
         internal void send_ptr(long ptr = 0)
         {

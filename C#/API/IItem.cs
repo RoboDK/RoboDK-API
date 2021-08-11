@@ -232,6 +232,20 @@ namespace RoboDk.API
         string SetParam(string param, string value = "");
 
         /// <summary>
+        /// Set a custom data parameter. Some items can hold custom data parameters.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="value"></param>
+        void SetParam(string param, byte[] value);
+
+        /// <summary>
+        /// Get a custom data parameter. Some items can hold custom data parameters.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        byte[] GetParam(string param);
+
+        /// <summary>
         ///     Sets the local position (pose) of an object, target or reference frame. For example, the position of an
         ///     object/frame/target with respect to its parent.
         ///     If a robot is provided, it will set the pose of the end effector.

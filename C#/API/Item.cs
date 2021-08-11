@@ -396,6 +396,31 @@ namespace RoboDk.API
             return response;
         }
 
+        /// <inheritdoc />
+        public void SetParam(string param, byte[] value)
+        {
+            Link.RequireBuild(7129);
+            Link.check_connection();
+            Link.send_line("S_ItmDataParam");
+            Link.send_item(this);
+            Link.send_line(param);
+            Link.send_bytes(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public byte[] GetParam(string param)
+        {
+            Link.RequireBuild(7129);
+            Link.check_connection();
+            Link.send_line("G_ItmDataParam");
+            Link.send_item(this);
+            Link.send_line(param);
+            byte [] data = Link.rec_bytes();
+            Link.check_status();
+            return data;
+        }
+
 
         /// <inheritdoc />
         public void SetPose(Mat pose)

@@ -1897,6 +1897,33 @@ public class RoboDK
         Int32 type = BitConverter.ToInt32(buffer2, 0);
         return new Item(this, item, type);
     }
+
+    //Receives a byte array
+    internal byte[] _recv_bytes(Socket com = null)
+    {
+        if (com == null)
+            com = _COM;
+
+        int bytes_len = _recv_Int(com);
+        var data = new byte[bytes_len];
+        int bytes_len2 = com.Receive(data, bytes_len, SocketFlags.None);
+        if (bytes_len != bytes_len2)
+        {
+            throw new RDKException("Unexpected byte size received");
+        }
+        return data;
+    }
+
+    //Sends a byte array
+    internal void _send_bytes(byte[] data, Socket com = null)
+    {
+        if (com == null)
+            com = _COM;
+
+        _send_Int(data.Length, com);
+        com.Send(data);
+    }
+
     //Sends an item pointer
     void _send_Ptr(UInt64 ptr = 0)
     {
@@ -4930,9 +4957,24 @@ public class RoboDK
             link._check_status();
         }
 
-        // add more methods
-
+        /// <summary>
+        /// Set a special item parameter (obsolete, use setParam instead)
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public string setParamItem(string param, string value = "")
+        {
+            return setParam(param, value);
+        }
+
+        /// <summary>
+        /// Send a specific parameter to RoboDK. This is reserved for internal purposes.
+        /// </summary>
+        /// <param name="param">Item parameter</param>
+        /// <param name="value">value</param>
+        /// <returns></returns>
+        public string setParam(string param, string value = "")
         {
             link._require_build(7129);
             link._check_connection();
@@ -4940,9 +4982,42 @@ public class RoboDK
             link._send_Item(this);
             link._send_Line(param);
             link._send_Line(value);
-            var response = link._recv_Line();
+            string response = link._recv_Line();
             link._check_status();
             return response;
+        }
+
+        /// <summary>
+        /// Set a custom data parameter. Some items can hold custom data parameters.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="value"></param>
+        public void setParam(string param, byte[] value)
+        {
+            link._require_build(7129);
+            link._check_connection();
+            link._send_Line("S_ItmDataParam");
+            link._send_Item(this);
+            link._send_Line(param);
+            link._send_bytes(value);
+            link._check_status();            
+        }
+
+        /// <summary>
+        /// Get a custom data parameter. Some items can hold custom data parameters.
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public byte[] getParam(string param)
+        {
+            link._require_build(7129);
+            link._check_connection();
+            link._send_Line("G_ItmDataParam");
+            link._send_Item(this);
+            link._send_Line(param);
+            byte [] data = link._recv_bytes();
+            link._check_status();
+            return data;
         }
 
         /// <summary>
@@ -6555,24 +6630,6 @@ public class RoboDK
             return link.Finish();
         }
 
-        /// <summary>
-        /// Send a specific parameter to RoboDK. This is reserved for internal purposes.
-        /// </summary>
-        /// <param name="param">Item parameter</param>
-        /// <param name="value">value</param>
-        /// <returns></returns>
-        public string setParam(string param, string value = "")
-        {
-            link._require_build(7129);
-            link._check_connection();
-            link._send_Line("ICMD");
-            link._send_Item(this);
-            link._send_Line(param);
-            link._send_Line(value);
-            string response = link._recv_Line();
-            link._check_status();
-            return response;
-        }
     }
 
 }
