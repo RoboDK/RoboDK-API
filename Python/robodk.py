@@ -768,6 +768,31 @@ def pose_2_quaternion(Ti):
     q3=sign3*sqrt(max(-a+b-c+1,0))/2
     q4=sign4*sqrt(max(-a-b+c+1,0))/2    
     return [q1, q2, q3, q4]
+    
+def Pose_Split(pose1, pose2, delta_mm=1.0):
+    """Create a sequence of poses that transitions from pose1 to pose2 by steps of delta_mm in mm (the first and last pose are not included in the list)"""
+    pose_delta = invH(pose1) * pose2
+    distance = norm(pose_delta.Pos())    
+    if distance <= delta_mm:
+        return [pose2]
+
+    pose_list = []
+    
+    x,y,z,w,p,r = Pose_2_UR(pose_delta)        
+    
+    steps = max(1,int(distance/delta_mm))   
+
+    xd = x/steps
+    yd = y/steps
+    zd = z/steps
+    wd = w/steps
+    pd = p/steps
+    rd = r/steps
+    for i in range(steps-1):
+        factor = i+1
+        pose_list.append( pose1 * UR_2_Pose([xd*factor,yd*factor,zd*factor,wd*factor,pd*factor,rd*factor]) )
+        
+    return pose_list
 
 def quaternion_2_pose(qin):
     """Returns the pose orientation matrix (4x4 matrix) given a quaternion orientation vector
@@ -816,17 +841,17 @@ def Pose_2_UR(pose):
     
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    NUMERIC_TOLERANCE = 1e-8;
+    NUMERIC_TOLERANCE = 1e-8
     def saturate_1(value):
         return min(max(value,-1.0),1.0)
         
-    angle = acos(  saturate_1((pose[0,0]+pose[1,1]+pose[2,2]-1)/2)   )    
+    angle = acos(  saturate_1((pose[0,0]+pose[1,1]+pose[2,2]-1)*0.5)   )    
     rxyz = [pose[2,1]-pose[1,2], pose[0,2]-pose[2,0], pose[1,0]-pose[0,1]]
     if angle < NUMERIC_TOLERANCE:
         rxyz = [0,0,0]
     else:
         sin_angle = sin(angle)
-        if abs(sin_angle) < NUMERIC_TOLERANCE:
+        if abs(sin_angle) < NUMERIC_TOLERANCE or norm(rxyz) < NUMERIC_TOLERANCE:
             d3 = [pose[0,0],pose[1,1],pose[2,2]]
             mx = max(d3)
             mx_id = d3.index(mx)
@@ -869,7 +894,7 @@ def UR_2_Pose(xyzwpr):
 
 def dh(rz,tx=None,tz=None,rx=None):
     """Returns the Denavit-Hartenberg 4x4 matrix for a robot link.
-    calling dh(rz,tx,tz,rx) is the same as using rotz(rz)*transl(tx,0,tx)*rotx(rx)
+    calling dh(rz,tx,tz,rx) is the same as using rotz(rz)*transl(tx,0,tz)*rotx(rx)
     calling dh(rz,tx,tz,rx) is the same as calling dh([rz,tx,tz,rx])
     """
     if tx is None: [rz,tx,tz,rx] = rz
@@ -886,7 +911,7 @@ def dh(rz,tx=None,tz=None,rx=None):
 def dhm(rx, tx=None, tz=None, rz=None):
     """Returns the Denavit-Hartenberg Modified 4x4 matrix for a robot link (Craig 1986).
     
-    calling dhm(rx,tx,tz,rz) is the same as using rotx(rx)*transl(tx,0,tx)*rotz(rz)
+    calling dhm(rx,tx,tz,rz) is the same as using rotx(rx)*transl(tx,0,tz)*rotz(rz)
     
     calling dhm(rx,tx,tz,rz) is the same as calling dhm([rx,tx,tz,rz])
     """
@@ -1344,6 +1369,7 @@ class Mat(object):
         newmat[:,:sz1[1]] = self
         newmat[:,sz1[1]:] = mat2   
         return newmat
+        
     def __eq__(self, other):
         """Test equality"""
         if other is None:
