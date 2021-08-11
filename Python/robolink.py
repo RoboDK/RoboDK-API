@@ -4711,13 +4711,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Joints`
         """
-        self.link._check_connection()
-        command = 'G_Home'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        joints = self.link._rec_array()
-        self.link._check_status()
-        return joints
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Home'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            joints = self.link._rec_array()
+            self.link._check_status()
+            return joints
         
     def setJointsHome(self, joints):
         """Set the home position of the robot in the joint space.
@@ -5182,53 +5183,52 @@ class Item():
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
         # Never attempt to reconnect if we are already connected
-        with self.link._lock:
-            con_status, status_msg = self.ConnectedState()
-            print(status_msg)
-            if con_status == ROBOTCOM_READY:
-                return con_status
-            
-            trycount = 0
-            refresh_rate = 0.2
-            self.Connect(blocking=False)
-            robodk.tic()
-            timer1 = robodk.toc()
-            robodk.pause(refresh_rate)
-            while True:
-                # Wait up to 2 seconds to see the connected state
-                for i in range(10):
-                    con_status, status_msg = self.ConnectedState()
-                    print(status_msg)
-                    if con_status == ROBOTCOM_READY:
-                        return con_status
-
-                    if callback_abort is not None and callback_abort():
-                        return con_status
-
-                    robodk.pause(refresh_rate)
-                
-                if con_status < 0:
-                    print('Trying to reconnect...')
-                    self.Disconnect()
-                if callback_abort is not None and callback_abort():
-                    return con_status
-
-                time.sleep(refresh_rate)
-                self.Connect()
-                
-                if robodk.toc() - timer1 > wait_connection:
-                    timer1 = robodk.toc()
-                    trycount = trycount + 1
-                    if trycount >= max_attempts:
-                        print('Failed to connect: Timed out')
-                        break
-
-                if callback_abort is not None and callback_abort():
-                    return con_status
-            
-                time.sleep(refresh_rate)
-
+        con_status, status_msg = self.ConnectedState()
+        print(status_msg)
+        if con_status == ROBOTCOM_READY:
             return con_status
+        
+        trycount = 0
+        refresh_rate = 0.2
+        self.Connect(blocking=False)
+        robodk.tic()
+        timer1 = robodk.toc()
+        robodk.pause(refresh_rate)
+        while True:
+            # Wait up to 2 seconds to see the connected state
+            for i in range(10):
+                con_status, status_msg = self.ConnectedState()
+                print(status_msg)
+                if con_status == ROBOTCOM_READY:
+                    return con_status
+
+                if callback_abort is not None and callback_abort():
+                    return con_status
+
+                robodk.pause(refresh_rate)
+            
+            if con_status < 0:
+                print('Trying to reconnect...')
+                self.Disconnect()
+            if callback_abort is not None and callback_abort():
+                return con_status
+
+            time.sleep(refresh_rate)
+            self.Connect()
+            
+            if robodk.toc() - timer1 > wait_connection:
+                timer1 = robodk.toc()
+                trycount = trycount + 1
+                if trycount >= max_attempts:
+                    print('Failed to connect: Timed out')
+                    break
+
+            if callback_abort is not None and callback_abort():
+                return con_status
+        
+            time.sleep(refresh_rate)
+
+        return con_status
         
     def ConnectionParams(self):
         """Returns the robot connection parameters
@@ -5343,12 +5343,11 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        with self.link._lock:
-            if self.type == ITEM_TYPE_PROGRAM:
-                blocking = False
-                if type(target) == Item:
-                    self.addMoveJ(target)
-                    return
+        if self.type == ITEM_TYPE_PROGRAM:
+            blocking = False
+            if type(target) == Item:
+                self.addMoveJ(target)
+                return
                 
         self.link._moveX(target, self, 1, blocking)
     
@@ -5364,12 +5363,11 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        with self.link._lock:
-            if self.type == ITEM_TYPE_PROGRAM:
-                blocking = False
-                if type(target) == Item:
-                    self.addMoveL(target)
-                    return
+        if self.type == ITEM_TYPE_PROGRAM:
+            blocking = False
+            if type(target) == Item:
+                self.addMoveL(target)
+                return
         
         self.link._moveX(target, self, 2, blocking)
         
@@ -5489,9 +5487,8 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setSpeedJoints`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        with self.link._lock: 
-            self.setSpeed(-1,-1,accel_linear,-1)
-            return self
+        self.setSpeed(-1,-1,accel_linear,-1)
+        return self
     
     def setSpeedJoints(self, speed_joints):
         """Sets the joint speed of a robot in deg/s for rotary joints and mm/s for linear joints
@@ -5500,9 +5497,8 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        with self.link._lock: 
-            self.setSpeed(-1,speed_joints,-1,-1)
-            return self
+        self.setSpeed(-1,speed_joints,-1,-1)
+        return self
     
     def setAccelerationJoints(self, accel_joints):
         """Sets the joint acceleration of a robot
@@ -5511,9 +5507,8 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setSpeedJoints`
         """
-        with self.link._lock: 
-            self.setSpeed(-1,-1,-1,accel_joints)  
-            return self        
+        self.setSpeed(-1,-1,-1,accel_joints)  
+        return self        
     
     def setRounding(self, rounding_mm):
         """Sets the rounding accuracy to smooth the edges of corners. In general, it is recommended to allow a small approximation near the corners to maintain a constant speed. 
@@ -5653,8 +5648,7 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode`
         """    
-        with self.link._lock:
-            return self.link.ProgramStart(programname, folder, postprocessor, self)    
+        return self.link.ProgramStart(programname, folder, postprocessor, self)    
     
     def setAccuracyActive(self, accurate = 1):
         """Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
@@ -5791,8 +5785,7 @@ class Item():
     
     def RunProgram(self, prog_parameters=None):
         """Obsolete. Use :func:`~robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility."""
-        with self.link._lock:
-            return self.RunCode(prog_parameters)
+        return self.RunCode(prog_parameters)
         
     def RunCode(self, prog_parameters=None):
         """Run a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
@@ -5835,8 +5828,7 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.RunInstruction`        
         """
-        with self.link._lock:
-            return self.RunInstruction(code, run_type)
+        return self.RunInstruction(code, run_type)
         
     def RunInstruction(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
         """Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
