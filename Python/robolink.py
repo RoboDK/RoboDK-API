@@ -3924,12 +3924,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setParent`
         """
-        self.link._check_connection()
-        command = 'S_Parent_Static'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_item(parent)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Parent_Static'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_item(parent)
+            self.link._check_status()
 
     def AttachClosest(self, keyword='', tolerance_mm=-1, list_objects=[]):
         """Attach the closest object to the tool.
@@ -3941,19 +3942,20 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setParentStatic`
         """
-        self.link._check_connection()
-        command = 'Attach_Closest2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(keyword)
-        self.link._send_array([tolerance_mm])
-        self.link._send_int(len(list_objects))
-        for obji in list_objects:
-            self.link._send_item(obji)
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Attach_Closest2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(keyword)
+            self.link._send_array([tolerance_mm])
+            self.link._send_int(len(list_objects))
+            for obji in list_objects:
+                self.link._send_item(obji)
             
-        item_attached = self.link._rec_item()
-        self.link._check_status()
-        return item_attached
+            item_attached = self.link._rec_item()
+            self.link._check_status()
+            return item_attached
 
     def DetachClosest(self, parent=0):
         """Detach the closest object attached to the tool (see also: setParentStatic).
@@ -3963,14 +3965,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setParentStatic`
         """
-        self.link._check_connection()
-        command = 'Detach_Closest'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_item(parent)
-        item_detached = self.link._rec_item()
-        self.link._check_status()
-        return item_detached        
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Detach_Closest'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_item(parent)
+            item_detached = self.link._rec_item()
+            self.link._check_status()
+            return item_detached        
 
     def DetachAll(self, parent=0):
         """Detaches any object attached to a tool.
@@ -3980,12 +3983,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setParentStatic`
         """
-        self.link._check_connection()
-        command = 'Detach_All'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_item(parent)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Detach_All'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_item(parent)
+            self.link._check_status()
 
     def Parent(self):
         """Return the parent item of this item (:class:`.Item`)
@@ -4007,16 +4011,17 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Parent`
         """
-        self.link._check_connection()
-        command = 'G_Childs'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        nitems = self.link._rec_int()
-        itemlist = []
-        for i in range(nitems):
-            itemlist.append(self.link._rec_item())
-        self.link._check_status()
-        return itemlist
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Childs'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            nitems = self.link._rec_int()
+            itemlist = []
+            for i in range(nitems):
+                itemlist.append(self.link._rec_item())
+            self.link._check_status()
+            return itemlist
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def Visible(self):
@@ -4024,13 +4029,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setVisible`
         """
-        self.link._check_connection()
-        command = 'G_Visible'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        visible = self.link._rec_int()
-        self.link._check_status()
-        return visible
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Visible'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            visible = self.link._rec_int()
+            self.link._check_status()
+            return visible
 
     def setVisible(self, visible, visible_frame=None):
         """Sets the item visiblity. 
@@ -4096,14 +4102,15 @@ class Item():
         elif visible_frame is True:
             visible_frame = -3
         
-        self.link._check_connection()
-        command = 'S_Visible'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(visible)
-        self.link._send_int(visible_frame)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Visible'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(visible)
+            self.link._send_int(visible_frame)
+            self.link._check_status()
+            return self
 
     def Name(self):
         """Returns the item name. The name of the item is always displayed in the RoboDK station tree. 
@@ -4114,13 +4121,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setName`
         """
-        self.link._check_connection()
-        command = 'G_Name'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        name = self.link._rec_line()
-        self.link._check_status()
-        return name
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Name'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            name = self.link._rec_line()
+            self.link._check_status()
+            return name
 
     def setName(self, name):
         """Set the name of the item. The name of the item will be displayed in the station tree. 
@@ -4129,13 +4137,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Name`
         """
-        self.link._check_connection()
-        command = 'S_Name'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(name)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Name'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(name)
+            self.link._check_status()
+            return self
         
     def setValue(self, varname, value):
         """Set a specific property name to a given value. This is reserved for internal purposes and future compatibility.
@@ -4146,22 +4155,23 @@ class Item():
         .. seealso:: :func:`~robolink.Robolink.Command`, :func:`~robolink.Item.setParam`
         
         """
-        self.link._check_connection()
-        if isinstance(value, robodk.Mat):
-            command = 'S_Gen_Mat'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_line(varname)
-            self.link._send_matrix(value)
-        elif isinstance(value,str):
-            command = 'S_Gen_Str'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_line(varname)
-            self.link._send_line(value)
-        else:
-            raise Exception("Unsupported value type")
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            if isinstance(value, robodk.Mat):
+                command = 'S_Gen_Mat'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(varname)
+                self.link._send_matrix(value)
+            elif isinstance(value,str):
+                command = 'S_Gen_Str'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(varname)
+                self.link._send_line(value)
+            else:
+                raise Exception("Unsupported value type")
+            self.link._check_status()
         
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def setPose(self, pose):
@@ -4173,13 +4183,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Robolink.Item`
         """
-        self.link._check_connection()
-        command = 'S_Hlocal'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_pose(pose)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Hlocal'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_pose(pose)
+            self.link._check_status()
+            return self
 
     def Pose(self):
         """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this provide the pose of the end efector with respect to the robot base (same as PoseTool()). It returns the pose as :class:`robodk.Mat`. 
@@ -4202,12 +4213,13 @@ class Item():
     def setGeometryPose(self, pose):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`robodk.Mat`"""
-        self.link._check_connection()
-        command = 'S_Hgeom'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_pose(pose)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Hgeom'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_pose(pose)
+            self.link._check_status()
 
     def GeometryPose(self):
         """Returns the position (pose as :class:`robodk.Mat`) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
@@ -4228,13 +4240,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.PoseAbs`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.Pose`
         """
-        self.link._check_connection()
-        command = 'S_Hlocal_Abs'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_pose(pose)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Hlocal_Abs'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_pose(pose)
+            self.link._check_status()
+            return self
 
     def PoseAbs(self):
         """Return the pose (:class:`robodk.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
@@ -4268,13 +4281,14 @@ class Item():
             RDK.ShowMessage("The relative pose is:\n" + str(pose))
         
         """
-        self.link._check_connection()
-        command = 'G_Hlocal_Abs'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        pose = self.link._rec_pose()
-        self.link._check_status()
-        return pose
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Hlocal_Abs'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            pose = self.link._rec_pose()
+            self.link._check_status()
+            return pose
 
     def Recolor(self, tocolor, fromcolor=None, tolerance=None):
         """Changes the color of an :class:`.Item` (object, tool or robot).
@@ -4290,22 +4304,23 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setColor`
         """
-        self.link._check_connection()
-        if not fromcolor:
-            fromcolor = [0,0,0,0]
-            tolerance = 2
-        elif not tolerance:
-            tolerance= 0.1
-        if not (isinstance(tolerance,int) or isinstance(tolerance,float)):
-            raise Exception("tolerance must be a scalar")
+        with self.link._lock:
+            self.link._check_connection()
+            if not fromcolor:
+                fromcolor = [0,0,0,0]
+                tolerance = 2
+            elif not tolerance:
+                tolerance= 0.1
+            if not (isinstance(tolerance,int) or isinstance(tolerance,float)):
+                raise Exception("tolerance must be a scalar")
             
-        tocolor = self.link._check_color(tocolor)
-        fromcolor = self.link._check_color(fromcolor)
-        command = 'Recolor'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array([tolerance] + fromcolor + tocolor)
-        self.link._check_status()
+            tocolor = self.link._check_color(tocolor)
+            fromcolor = self.link._check_color(fromcolor)
+            command = 'Recolor'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array([tolerance] + fromcolor + tocolor)
+            self.link._check_status()
         
     def setColor(self, tocolor):
         """Set the color of an object, tool or robot. 
@@ -4316,13 +4331,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
         """
-        self.link._check_connection()            
-        tocolor = self.link._check_color(tocolor)
-        command = 'S_Color'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array(tocolor)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()            
+            tocolor = self.link._check_color(tocolor)
+            command = 'S_Color'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(tocolor)
+            self.link._check_status()
         
     def setColorShape(self, tocolor, shape_id):
         """Set the color of an object shape. It can also be used for tools.
@@ -4334,14 +4350,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
         """
-        self.link._check_connection()            
-        tocolor = self.link._check_color(tocolor)
-        command = 'S_ShapeColor'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(shape_id)
-        self.link._send_array(tocolor)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()            
+            tocolor = self.link._check_color(tocolor)
+            command = 'S_ShapeColor'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(shape_id)
+            self.link._send_array(tocolor)
+            self.link._check_status()
         
     def setColorCurve(self, tocolor, curve_id=-1):
         """Set the color of a curve object. It can also be used for tools.
@@ -4353,14 +4370,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Color`, :func:`~robolink.Item.Recolor`
         """
-        self.link._check_connection()            
-        tocolor = self.link._check_color(tocolor)
-        command = 'S_CurveColor'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(curve_id)
-        self.link._send_array(tocolor)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()            
+            tocolor = self.link._check_color(tocolor)
+            command = 'S_CurveColor'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(curve_id)
+            self.link._send_array(tocolor)
+            self.link._check_status()
         
     def Color(self):
         """Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
@@ -4368,13 +4386,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setColor`, :func:`~robolink.Item.Recolor`
         """
-        self.link._check_connection()            
-        command = 'G_Color'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        color = self.link._rec_array()
-        self.link._check_status()
-        return color.tolist()
+        with self.link._lock:
+            self.link._check_connection()            
+            command = 'G_Color'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            color = self.link._rec_array()
+            self.link._check_status()
+            return color.tolist()
     
     def Scale(self, scale, pre_mult=None, post_mult=None):
         """Apply a scale to an object to make it bigger or smaller.
@@ -4384,44 +4403,45 @@ class Item():
         :type scale: float or list of 3 float [scale_x, scale_y, scale_z]
         :param pre_mult: pre multiplication to apply before the scaling(optional)
         :param post_mult: post multiplication to apply after the scaling (optional)"""
-        if pre_mult is not None or post_mult is not None:
-            if pre_mult is None:
-                pre_mult = robodk.eye(4)
-            if post_mult is None:
-                post_mult = robodk.invH(pre_mult)
+        with self.link._lock:
+            if pre_mult is not None or post_mult is not None:
+                if pre_mult is None:
+                    pre_mult = robodk.eye(4)
+                if post_mult is None:
+                    post_mult = robodk.invH(pre_mult)
             
-            self.link._check_connection()
-            if isinstance(scale,float) or isinstance(scale,int):
-                scale = [scale, scale, scale]
-            elif len(scale) > 3:
-                scale = scale[:3]
-            elif len(scale) < 3:
-                raise Exception("scale must be a single value or a 3-vector value")
+                self.link._check_connection()
+                if isinstance(scale,float) or isinstance(scale,int):
+                    scale = [scale, scale, scale]
+                elif len(scale) > 3:
+                    scale = scale[:3]
+                elif len(scale) < 3:
+                    raise Exception("scale must be a single value or a 3-vector value")
                 
-            command = 'TrScale'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_array(scale)
-            self.link._send_pose(pre_mult)
-            self.link._send_pose(post_mult)
-            status = self.link._rec_int()
-            self.link._check_status()
-            return status > 0
+                command = 'TrScale'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_array(scale)
+                self.link._send_pose(pre_mult)
+                self.link._send_pose(post_mult)
+                status = self.link._rec_int()
+                self.link._check_status()
+                return status > 0
         
-        else:
-            self.link._check_connection()
-            if isinstance(scale,float) or isinstance(scale,int):
-                scale = [scale, scale, scale]
-            elif len(scale) > 3:
-                scale = scale[:3]
-            elif len(scale) < 3:
-                raise Exception("scale must be a single value or a 3-vector value")
-            command = 'Scale'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_array(scale)
-            self.link._check_status()
-            return None
+            else:
+                self.link._check_connection()
+                if isinstance(scale,float) or isinstance(scale,int):
+                    scale = [scale, scale, scale]
+                elif len(scale) > 3:
+                    scale = scale[:3]
+                elif len(scale) < 3:
+                    raise Exception("scale must be a single value or a 3-vector value")
+                command = 'Scale'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_array(scale)
+                self.link._check_status()
+                return None
         
     #"""Object specific calls"""
     def AddShape(self, triangle_points):
@@ -4429,28 +4449,32 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddShape`
         """
-        return self.link.AddShape(triangle_points, self)
+        with self.link._lock:
+            return self.link.AddShape(triangle_points, self)
     
     def AddCurve(self, curve_points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         
         .. seealso:: :func:`~robolink.Robolink.AddCurve`
         """
-        return self.link.AddCurve(curve_points, self, add_to_ref, projection_type)        
+        with self.link._lock:
+            return self.link.AddCurve(curve_points, self, add_to_ref, projection_type)        
     
     def AddPoints(self, points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         .. seealso:: :func:`~robolink.Robolink.AddPoints`
         """
-        return self.link.AddPoints(points, self, add_to_ref, projection_type)        
+        with self.link._lock:
+            return self.link.AddPoints(points, self, add_to_ref, projection_type)        
         
     def ProjectPoints(self, points, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Projects a point or a list of points to the object given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
         
         .. seealso:: :func:`~robolink.Robolink.ProjectPoints`
         """
-        return self.link.ProjectPoints(points, self, projection_type)
+        with self.link._lock:
+            return self.link.ProjectPoints(points, self, projection_type)
         
             
     def SelectedFeature(self):
@@ -4476,15 +4500,16 @@ class Item():
             RDK.ShowMessage("Selected Point: %s = [%.3f, %.3f, %.3f]" % (name_selected, point[0], point[1], point[2]))
 
         """
-        self.link._check_connection()
-        command = 'G_ObjSelection'
-        self.link._send_line(command)
-        self.link._send_item(self)        
-        is_selected = self.link._rec_int()
-        feature_type = self.link._rec_int()
-        feature_id = self.link._rec_int()
-        self.link._check_status()
-        return is_selected, feature_type, feature_id
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ObjSelection'
+            self.link._send_line(command)
+            self.link._send_item(self)        
+            is_selected = self.link._rec_int()
+            feature_type = self.link._rec_int()
+            feature_id = self.link._rec_int()
+            self.link._check_status()
+            return is_selected, feature_type, feature_id
         
     def GetPoints(self, feature_type=FEATURE_SURFACE, feature_id=0):
         """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
@@ -4517,21 +4542,23 @@ class Item():
                 
         .. seealso:: :func:`~robolink.Item.SelectedFeature`
         """
-        self.link._check_connection()
-        command = 'G_ObjPoint'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(feature_type)
-        self.link._send_int(feature_id)        
-        points = self.link._rec_matrix()
-        feature_name = self.link._rec_line()
-        self.link._check_status()
-        return list(points), feature_name
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ObjPoint'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(feature_type)
+            self.link._send_int(feature_id)        
+            points = self.link._rec_matrix()
+            feature_name = self.link._rec_line()
+            self.link._check_status()
+            return list(points), feature_name
    
     def setMillingParameters(self, ncfile='', part=0, params=''):
         """Obsolete, use :func:`~robolink.Item.setMachiningParameters` instead"""
-        newprog, status = self.setMachiningParameters(ncfile,part,params)
-        return newprog, status
+        with self.link._lock:
+            newprog, status = self.setMachiningParameters(ncfile,part,params)
+            return newprog, status
         
     def setMachiningParameters(self, ncfile='', part=0, params=''):
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
@@ -4555,19 +4582,20 @@ class Item():
             prog, status = path_settings.setMillingParameters(part=object_curve)
         
         """
-        self.link._check_connection()
-        command = 'S_MachiningParams'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(ncfile)
-        self.link._send_item(part)
-        self.link._send_line(params)
-        self.link.COM.settimeout(3600)
-        newprog = self.link._rec_item()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        status = self.link._rec_int()/1000.0
-        self.link._check_status()
-        return newprog, status
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_MachiningParams'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(ncfile)
+            self.link._send_item(part)
+            self.link._send_line(params)
+            self.link.COM.settimeout(3600)
+            newprog = self.link._rec_item()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            status = self.link._rec_int()/1000.0
+            self.link._check_status()
+            return newprog, status
         
     #"""Target item calls"""
     def setAsCartesianTarget(self):
@@ -4646,34 +4674,36 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Joints`
         """
-        self.link._check_connection()
-        command = 'G_Thetas_Sim'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        joints = self.link._rec_array()
-        self.link._check_status()
-        return joints.list()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Thetas_Sim'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            joints = self.link._rec_array()
+            self.link._check_status()
+            return joints.list()
         
     def JointPoses(self, joints = None):
         """Returns the positions of the joint links for a provided robot configuration (joints). If no joints are provided it will return the poses for the current robot position.
         Out 1 : 4x4 x n -> array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).
         """
-        self.link._check_connection()
-        command = 'G_LinkPoses'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        if joints is None:
-            self.link._send_array([])
-        else:
-            self.link._send_array(joints)
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_LinkPoses'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            if joints is None:
+                self.link._send_array([])
+            else:
+                self.link._send_array(joints)
             
-        nlinks = self.link._rec_int()
-        poses = []
-        for i in range(nlinks):
-            poses.append(self.link._rec_pose())
+            nlinks = self.link._rec_int()
+            poses = []
+            for i in range(nlinks):
+                poses.append(self.link._rec_pose())
             
-        self.link._check_status()
-        return poses
+            self.link._check_status()
+            return poses
     
     def JointsHome(self):
         """Return the home joints of a robot. 
@@ -4681,14 +4711,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Joints`
         """
-        with self.link._lock:
-            self.link._check_connection()
-            command = 'G_Home'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            joints = self.link._rec_array()
-            self.link._check_status()
-            return joints
+        self.link._check_connection()
+        command = 'G_Home'
+        self.link._send_line(command)
+        self.link._send_item(self)
+        joints = self.link._rec_array()
+        self.link._check_status()
+        return joints
         
     def setJointsHome(self, joints):
         """Set the home position of the robot in the joint space.
@@ -4712,14 +4741,15 @@ class Item():
         
         :param int link_id: link index (0 for the robot base, 1 for the first link, ...)        
         """
-        self.link._check_connection()
-        command = 'G_LinkObjId'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(link_id)
-        item = self.link._rec_item()
-        self.link._check_status()
-        return item
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_LinkObjId'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(link_id)
+            item = self.link._rec_item()
+            self.link._check_status()
+            return item
         
     def getLink(self, type_linked=ITEM_TYPE_ROBOT):
         """Returns an item pointer (:class:`.Item`) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
@@ -4727,14 +4757,15 @@ class Item():
         :param int type_linked: type of linked object to retrieve
         
         """
-        self.link._check_connection()
-        command = 'G_LinkType'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(type_linked)
-        item = self.link._rec_item()
-        self.link._check_status()
-        return item
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_LinkType'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(type_linked)
+            item = self.link._rec_item()
+            self.link._check_status()
+            return item
     
     def setJoints(self, joints):
         """Set the current joints of a robot or a target. If robot joints are set, the robot position will be updated on the screen.        
@@ -4744,28 +4775,30 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Joints`
         """
-        self.link._check_connection()
-        command = 'S_Thetas'
-        self.link._send_line(command)
-        self.link._send_array(joints)
-        self.link._send_item(self)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Thetas'
+            self.link._send_line(command)
+            self.link._send_array(joints)
+            self.link._send_item(self)
+            self.link._check_status()
+            return self
         
     def JointLimits(self):
         """Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type).
         
         .. seealso:: :func:`~robolink.Item.setJointLimits`
         """
-        self.link._check_connection()
-        command = 'G_RobLimits'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        lim_inf = self.link._rec_array()
-        lim_sup = self.link._rec_array()        
-        joints_type = self.link._rec_int()/1000.0
-        self.link._check_status()
-        return lim_inf, lim_sup, joints_type
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_RobLimits'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            lim_inf = self.link._rec_array()
+            lim_sup = self.link._rec_array()        
+            joints_type = self.link._rec_int()/1000.0
+            self.link._check_status()
+            return lim_inf, lim_sup, joints_type
         
     def setJointLimits(self, lower_limit, upper_limit):
         """Update the robot joint limits
@@ -4777,13 +4810,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.JointLimits`
         """
-        self.link._check_connection()
-        command = 'S_RobLimits'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array(lower_limit)
-        self.link._send_array(upper_limit)        
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_RobLimits'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(lower_limit)
+            self.link._send_array(upper_limit)        
+            self.link._check_status()
             
     def setRobot(self, robot=None):
         """Assigns a specific robot to a program, target or robot machining project. 
@@ -4791,15 +4825,16 @@ class Item():
         :param robot: robot to link
         :type robot: :class:`.Item`
         """
-        if robot is None:
-            robot = Item(self.link)
-        self.link._check_connection()
-        command = 'S_Robot'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_item(robot)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            if robot is None:
+                robot = Item(self.link)
+            self.link._check_connection()
+            command = 'S_Robot'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_item(robot)
+            self.link._check_status()
+            return self
         
     def setPoseFrame(self, frame):
         """Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
@@ -4830,44 +4865,47 @@ class Item():
         :type tool: :class:`robodk.Mat` or :class:`.Item`
         
         .. seealso:: :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPose`, :func:`~robolink.Item.setPoseFrame`"""
-        self.link._check_connection()
-        if isinstance(tool,Item):
-            command = 'S_Tool_ptr'
-            self.link._send_line(command)
-            self.link._send_item(tool)
-        else:
-            command = 'S_Tool'
-            self.link._send_line(command)
-            self.link._send_pose(tool)        
-        self.link._send_item(self)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            if isinstance(tool,Item):
+                command = 'S_Tool_ptr'
+                self.link._send_line(command)
+                self.link._send_item(tool)
+            else:
+                command = 'S_Tool'
+                self.link._send_line(command)
+                self.link._send_pose(tool)        
+            self.link._send_item(self)
+            self.link._check_status()
+            return self
         
     def PoseTool(self):
         """Returns the pose (:class:`robodk.Mat`) of the robot tool (TCP) with respect to the robot flange
         
         .. seealso:: :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseFrame`
         """
-        self.link._check_connection()
-        command = 'G_Tool'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        pose = self.link._rec_pose()
-        self.link._check_status()
-        return pose
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Tool'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            pose = self.link._rec_pose()
+            self.link._check_status()
+            return pose
         
     def PoseFrame(self):
         """Returns the pose (:class:`robodk.Mat`) of the robot reference frame with respect to the robot base
         
         .. seealso:: :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.PoseTool`
         """
-        self.link._check_connection()
-        command = 'G_Frame'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        pose = self.link._rec_pose()
-        self.link._check_status()
-        return pose    
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Frame'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            pose = self.link._rec_pose()
+            self.link._check_status()
+            return pose    
         
     # Obsolete methods -----------------------   
     def Htool(self):
@@ -4906,16 +4944,17 @@ class Item():
         :param str tool_name: name of the tool
         
         .. seealso:: :func:`~robolink.Robolink.AddFrame`, :func:`~robolink.Item.PoseTool`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.AddFile`
-        """
-        self.link._check_connection()
-        command = 'AddToolEmpty'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_pose(tool_pose)
-        self.link._send_line(tool_name)
-        newtool = self.link._rec_item()
-        self.link._check_status()
-        return newtool
+        """    
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'AddToolEmpty'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_pose(tool_pose)
+            self.link._send_line(tool_name)
+            newtool = self.link._rec_item()
+            self.link._check_status()
+            return newtool
     
     def SolveFK(self, joints, tool=None, reference=None):
         """Calculate the forward kinematics of the robot for the provided joints.
@@ -4967,19 +5006,20 @@ class Item():
             # move the robot to the new position
             robot.MoveJ(new_robot_joints)
             #robot.MoveL(new_robot_joints)
-        """        
-        self.link._check_connection()
-        command = 'G_FK'
-        self.link._send_line(command)
-        self.link._send_array(joints)
-        self.link._send_item(self)
-        pose = self.link._rec_pose()
-        self.link._check_status()                
-        if tool is not None:
-            pose = pose*tool
-        if reference is not None:
-            pose = robodk.invH(reference)*pose
-        return pose
+        """            
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_FK'
+            self.link._send_line(command)
+            self.link._send_array(joints)
+            self.link._send_item(self)
+            pose = self.link._rec_pose()
+            self.link._check_status()                
+            if tool is not None:
+                pose = pose*tool
+            if reference is not None:
+                pose = robodk.invH(reference)*pose
+            return pose
     
     def JointsConfig(self, joints):
         """Returns the robot configuration state for a set of robot joints. 
@@ -5016,14 +5056,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK`
         """
-        self.link._check_connection()
-        command = 'G_Thetas_Config'
-        self.link._send_line(command)
-        self.link._send_array(joints)
-        self.link._send_item(self)
-        config = self.link._rec_array()
-        self.link._check_status()
-        return config
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_Thetas_Config'
+            self.link._send_line(command)
+            self.link._send_array(joints)
+            self.link._send_item(self)
+            config = self.link._rec_array()
+            self.link._check_status()
+            return config
     
     def SolveIK(self, pose, joints_approx = None, tool=None, reference=None):
         """Calculates the inverse kinematics for a given specified pose. The pose must be robot flange with respect to the robot base unless you provide the tool and/or reference. 
@@ -5041,27 +5082,28 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         """
-        if tool is not None:
-            pose = pose*robodk.invH(tool)
-        if reference is not None:
-            pose = reference*pose
+        with self.link._lock:
+            if tool is not None:
+                pose = pose*robodk.invH(tool)
+            if reference is not None:
+                pose = reference*pose
             
-        self.link._check_connection()
-        if joints_approx is None:
-            command = 'G_IK'
-            self.link._send_line(command)
-            self.link._send_pose(pose)
-            self.link._send_item(self)
-            joints = self.link._rec_array()
-        else:
-            command = 'G_IK_jnts'
-            self.link._send_line(command)
-            self.link._send_pose(pose)
-            self.link._send_array(joints_approx)
-            self.link._send_item(self)
-            joints = self.link._rec_array()        
-        self.link._check_status()
-        return joints
+            self.link._check_connection()
+            if joints_approx is None:
+                command = 'G_IK'
+                self.link._send_line(command)
+                self.link._send_pose(pose)
+                self.link._send_item(self)
+                joints = self.link._rec_array()
+            else:
+                command = 'G_IK_jnts'
+                self.link._send_line(command)
+                self.link._send_pose(pose)
+                self.link._send_array(joints_approx)
+                self.link._send_item(self)
+                joints = self.link._rec_array()        
+            self.link._check_status()
+            return joints
     
     def SolveIK_All(self, pose, tool=None, reference=None):
         """Calculates the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
@@ -5071,19 +5113,20 @@ class Item():
         :type pose: :class:`robodk.Mat`
         
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK`, :func:`~robolink.Item.JointsConfig`"""
-        if tool is not None:
-            pose = pose*robodk.invH(tool)
-        if reference is not None:
-            pose = reference*pose
+        with self.link._lock:
+            if tool is not None:
+                pose = pose*robodk.invH(tool)
+            if reference is not None:
+                pose = reference*pose
             
-        self.link._check_connection()
-        command = 'G_IK_cmpl'
-        self.link._send_line(command)
-        self.link._send_pose(pose)
-        self.link._send_item(self)
-        joints_list = self.link._rec_matrix()
-        self.link._check_status()
-        return joints_list
+            self.link._check_connection()
+            command = 'G_IK_cmpl'
+            self.link._send_line(command)
+            self.link._send_pose(pose)
+            self.link._send_item(self)
+            joints_list = self.link._rec_matrix()
+            self.link._check_status()
+            return joints_list
         
     def FilterTarget(self, pose, joints_approx=None):
         """Filters a target to improve accuracy. This option requires a calibrated robot.
@@ -5091,18 +5134,19 @@ class Item():
         :type pose: :class:`robodk.Mat`
         :param joints_approx: approximated desired joints to define the preferred configuration
         :type joints_approx: list of float or :class:`robodk.Mat`"""
-        self.link._check_connection()
-        command = 'FilterTarget'
-        self.link._send_line(command)
-        self.link._send_pose(pose)
-        if joints_approx is None:
-            joints_approx = [0,0,0,0,0,0]
-        self.link._send_array(joints_approx)
-        self.link._send_item(self)
-        pose_filtered = self.link._rec_pose()
-        joints_filtered = self.link._rec_array()
-        self.link._check_status()
-        return pose_filtered, joints_filtered    
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'FilterTarget'
+            self.link._send_line(command)
+            self.link._send_pose(pose)
+            if joints_approx is None:
+                joints_approx = [0,0,0,0,0,0]
+            self.link._send_array(joints_approx)
+            self.link._send_item(self)
+            pose_filtered = self.link._rec_pose()
+            joints_filtered = self.link._rec_array()
+            self.link._check_status()
+            return pose_filtered, joints_filtered    
 
     def Connect(self, robot_ip = '', blocking = True):
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
@@ -5112,15 +5156,16 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.ConnectSafe`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Item.Disconnect`, :func:`~robolink.Robolink.setRunMode`
         """
-        self.link._check_connection()
-        command = 'Connect2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(robot_ip)        
-        self.link._send_int(1 if blocking else 0)        
-        status = self.link._rec_int()
-        self.link._check_status()
-        return status
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Connect2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(robot_ip)        
+            self.link._send_int(1 if blocking else 0)        
+            status = self.link._rec_int()
+            self.link._check_status()
+            return status
         
     def ConnectSafe(self, robot_ip = '', max_attempts=5, wait_connection=4, callback_abort=None):
         """Connect to a real robot and wait for a connection to succeed. Returns the connected state returned by ConnectedState() (0 if connection succeeded and the robot is ready).
@@ -5137,52 +5182,53 @@ class Item():
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`, :func:`~robolink.Robolink.setRunMode`
         """    
         # Never attempt to reconnect if we are already connected
-        con_status, status_msg = self.ConnectedState()
-        print(status_msg)
-        if con_status == ROBOTCOM_READY:
-            return con_status
+        with self.link._lock:
+            con_status, status_msg = self.ConnectedState()
+            print(status_msg)
+            if con_status == ROBOTCOM_READY:
+                return con_status
             
-        trycount = 0
-        refresh_rate = 0.2
-        self.Connect(blocking=False)
-        robodk.tic()
-        timer1 = robodk.toc()
-        robodk.pause(refresh_rate)
-        while True:
-            # Wait up to 2 seconds to see the connected state
-            for i in range(10):
-                con_status, status_msg = self.ConnectedState()
-                print(status_msg)
-                if con_status == ROBOTCOM_READY:
-                    return con_status
+            trycount = 0
+            refresh_rate = 0.2
+            self.Connect(blocking=False)
+            robodk.tic()
+            timer1 = robodk.toc()
+            robodk.pause(refresh_rate)
+            while True:
+                # Wait up to 2 seconds to see the connected state
+                for i in range(10):
+                    con_status, status_msg = self.ConnectedState()
+                    print(status_msg)
+                    if con_status == ROBOTCOM_READY:
+                        return con_status
 
-                if callback_abort is not None and callback_abort():
-                    return con_status
+                    if callback_abort is not None and callback_abort():
+                        return con_status
 
-                robodk.pause(refresh_rate)
+                    robodk.pause(refresh_rate)
                 
-            if con_status < 0:
-                print('Trying to reconnect...')
-                self.Disconnect()
+                if con_status < 0:
+                    print('Trying to reconnect...')
+                    self.Disconnect()
                 if callback_abort is not None and callback_abort():
                     return con_status
 
                 time.sleep(refresh_rate)
                 self.Connect()
                 
-            if robodk.toc() - timer1 > wait_connection:
-                timer1 = robodk.toc()
-                trycount = trycount + 1
-                if trycount >= max_attempts:
-                    print('Failed to connect: Timed out')
-                    break
+                if robodk.toc() - timer1 > wait_connection:
+                    timer1 = robodk.toc()
+                    trycount = trycount + 1
+                    if trycount >= max_attempts:
+                        print('Failed to connect: Timed out')
+                        break
 
-            if callback_abort is not None and callback_abort():
-                return con_status
+                if callback_abort is not None and callback_abort():
+                    return con_status
             
-            time.sleep(refresh_rate)
+                time.sleep(refresh_rate)
 
-        return con_status
+            return con_status
         
     def ConnectionParams(self):
         """Returns the robot connection parameters
@@ -5190,17 +5236,18 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setConnectionParams`, :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectSafe`
         """
-        self.link._check_connection()
-        command = 'ConnectParams'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        robot_ip = self.link._rec_line()
-        port = self.link._rec_int()
-        remote_path = self.link._rec_line()
-        ftp_user = self.link._rec_line()
-        ftp_pass = self.link._rec_line()
-        self.link._check_status()
-        return robot_ip, port, remote_path, ftp_user, ftp_pass
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'ConnectParams'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            robot_ip = self.link._rec_line()
+            port = self.link._rec_int()
+            remote_path = self.link._rec_line()
+            ftp_user = self.link._rec_line()
+            ftp_pass = self.link._rec_line()
+            self.link._check_status()
+            return robot_ip, port, remote_path, ftp_user, ftp_pass
         
     def setConnectionParams(self, robot_ip, port, remote_path, ftp_user, ftp_pass):
         """Set the robot connection parameters
@@ -5218,17 +5265,18 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.ConnectionParams`, :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectSafe`
         """
-        self.link._check_connection()
-        command = 'setConnectParams'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(robot_ip)
-        self.link._send_int(port)
-        self.link._send_line(remote_path)
-        self.link._send_line(ftp_user)
-        self.link._send_line(ftp_pass)
-        self.link._check_status()
-        return self
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'setConnectParams'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(robot_ip)
+            self.link._send_int(port)
+            self.link._send_line(remote_path)
+            self.link._send_line(ftp_user)
+            self.link._send_line(ftp_pass)
+            self.link._check_status()
+            return self
         
     def ConnectedState(self):
         """Check connection status with a real robobt
@@ -5258,14 +5306,15 @@ class Item():
             robot.MoveJ(jnts, False)            
         
         """
-        self.link._check_connection()
-        command = 'ConnectedState'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        robotcom_status = self.link._rec_int()
-        status_msg = self.link._rec_line()        
-        self.link._check_status()
-        return robotcom_status, status_msg
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'ConnectedState'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            robotcom_status = self.link._rec_int()
+            status_msg = self.link._rec_line()        
+            self.link._check_status()
+            return robotcom_status, status_msg
         
     def Disconnect(self):
         """Disconnect from a real robot (when the robot driver is used)
@@ -5273,13 +5322,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.Connect`, :func:`~robolink.Item.ConnectedState`
         """
-        self.link._check_connection()
-        command = 'Disconnect'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        status = self.link._rec_int()
-        self.link._check_status()
-        return status
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Disconnect'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            status = self.link._rec_int()
+            self.link._check_status()
+            return status
     
     def MoveJ(self, target, blocking=True):
         """Move a robot to a specific target ("Move Joint" mode). This function waits (blocks) until the robot finishes its movements. 
@@ -5293,11 +5343,12 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        if self.type == ITEM_TYPE_PROGRAM:
-            blocking = False
-            if type(target) == Item:
-                self.addMoveJ(target)
-                return
+        with self.link._lock:
+            if self.type == ITEM_TYPE_PROGRAM:
+                blocking = False
+                if type(target) == Item:
+                    self.addMoveJ(target)
+                    return
                 
         self.link._moveX(target, self, 1, blocking)
     
@@ -5313,11 +5364,12 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """
-        if self.type == ITEM_TYPE_PROGRAM:
-            blocking = False
-            if type(target) == Item:
-                self.addMoveL(target)
-                return
+        with self.link._lock:
+            if self.type == ITEM_TYPE_PROGRAM:
+                blocking = False
+                if type(target) == Item:
+                    self.addMoveL(target)
+                    return
         
         self.link._moveX(target, self, 2, blocking)
         
@@ -5345,14 +5397,15 @@ class Item():
         :type blocking: bool
         
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
-        """
-        if self.type == ITEM_TYPE_PROGRAM:
-            if type(target1) != Item or type(target2) != Item:
-                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
-            self.addMoveC(target1, target2)
+        """   
+        with self.link._lock: 
+            if self.type == ITEM_TYPE_PROGRAM:
+                if type(target1) != Item or type(target2) != Item:
+                    raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
+                self.addMoveC(target1, target2)
             
-        else:
-            self.link.MoveC(target1, target2, self, blocking)
+            else:
+                self.link.MoveC(target1, target2, self, blocking)
     
     def MoveJ_Test(self, j1, j2, minstep_deg=-1):
         """Checks if a joint movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.
@@ -5366,19 +5419,20 @@ class Item():
         :rtype: int
 
         .. seealso:: :func:`~robolink.Item.MoveL_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
-        """
-        self.link._check_connection()
-        command = 'CollisionMove'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array(j1)
-        self.link._send_array(j2)        
-        self.link._send_int(minstep_deg*1000)
-        self.link.COM.settimeout(3600) # wait up to 1 hour  
-        collision = self.link._rec_int()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        self.link._check_status()
-        return collision
+        """    
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'CollisionMove'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(j1)
+            self.link._send_array(j2)        
+            self.link._send_int(minstep_deg*1000)
+            self.link.COM.settimeout(3600) # wait up to 1 hour  
+            collision = self.link._rec_int()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            self.link._check_status()
+            return collision
     
     def MoveL_Test(self, j1, pose, minstep_mm=-1):
         """Checks if a linear movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination pose if a collision is not detected.
@@ -5395,18 +5449,19 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Item.setPoseFrame`, :func:`~robolink.Item.setPoseTool`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Robolink.AddTarget`
         """
-        self.link._check_connection()
-        command = 'CollisionMoveL'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array(j1)
-        self.link._send_pose(pose)        
-        self.link._send_int(minstep_mm*1000)
-        self.link.COM.settimeout(3600) # wait up to 1 hour  
-        collision = self.link._rec_int()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        self.link._check_status()
-        return collision
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'CollisionMoveL'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array(j1)
+            self.link._send_pose(pose)        
+            self.link._send_int(minstep_mm*1000)
+            self.link.COM.settimeout(3600) # wait up to 1 hour  
+            collision = self.link._rec_int()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            self.link._check_status()
+            return collision
     
     def setSpeed(self, speed_linear, speed_joints=-1, accel_linear=-1, accel_joints=-1):
         """Sets the linear speed of a robot. Additional arguments can be provided to set linear acceleration or joint speed and acceleration.
@@ -5418,13 +5473,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setSpeedJoints`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        self.link._check_connection()
-        command = 'S_Speed4'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array([float(speed_linear), float(speed_joints), float(accel_linear), float(accel_joints)])
-        self.link._check_status()
-        return self
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'S_Speed4'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array([float(speed_linear), float(speed_joints), float(accel_linear), float(accel_joints)])
+            self.link._check_status()
+            return self
     
     def setAcceleration(self, accel_linear):
         """Sets the linear acceleration of a robot in mm/s2
@@ -5433,8 +5489,9 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setSpeedJoints`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        self.setSpeed(-1,-1,accel_linear,-1)
-        return self
+        with self.link._lock: 
+            self.setSpeed(-1,-1,accel_linear,-1)
+            return self
     
     def setSpeedJoints(self, speed_joints):
         """Sets the joint speed of a robot in deg/s for rotary joints and mm/s for linear joints
@@ -5443,8 +5500,9 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setAccelerationJoints`
         """
-        self.setSpeed(-1,speed_joints,-1,-1)
-        return self
+        with self.link._lock: 
+            self.setSpeed(-1,speed_joints,-1,-1)
+            return self
     
     def setAccelerationJoints(self, accel_joints):
         """Sets the joint acceleration of a robot
@@ -5453,8 +5511,9 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`, :func:`~robolink.Item.setAcceleration`, :func:`~robolink.Item.setSpeedJoints`
         """
-        self.setSpeed(-1,-1,-1,accel_joints)  
-        return self        
+        with self.link._lock: 
+            self.setSpeed(-1,-1,-1,accel_joints)  
+            return self        
     
     def setRounding(self, rounding_mm):
         """Sets the rounding accuracy to smooth the edges of corners. In general, it is recommended to allow a small approximation near the corners to maintain a constant speed. 
@@ -5466,17 +5525,19 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.setSpeed`
         """
-        self.link._check_connection()
-        command = 'S_ZoneData'
-        self.link._send_line(command)
-        self.link._send_int(rounding_mm*1000)
-        self.link._send_item(self)
-        self.link._check_status()
-        return self
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'S_ZoneData'
+            self.link._send_line(command)
+            self.link._send_int(rounding_mm*1000)
+            self.link._send_item(self)
+            self.link._check_status()
+            return self
     
     def setZoneData(self, zonedata):
         """Obsolete. Use :func:`~robolink.Item.setRounding` instead."""
-        self.setRounding(zonedata)
+        with self.link._lock: 
+            self.setRounding(zonedata)
     
     def ShowSequence(self, matrix, display_type=-1, timeout=-1):
         """Displays a sequence of joints or poses in RoboDK.
@@ -5484,32 +5545,33 @@ class Item():
         :param matrix: list of joints as a matrix or as a list of joint arrays. A sequence of instructions is also supported (same sequence that was supported with RoKiSim).
         :type matrix: list of list of float or a matrix of joints as a :class:`robodk.Mat`"""
         display_ghost_joints = display_type & 2048
-        if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == robodk.Mat or display_ghost_joints):
-            # poses assumed
-            self.link._check_connection()        
-            command = 'Show_SeqPoses'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_array([display_type, timeout])
-            self.link._send_int(len(matrix))
-            if display_ghost_joints:
-                for jnts in matrix:
-                    self.link._send_array(jnts)               
+        with self.link._lock: 
+            if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == robodk.Mat or display_ghost_joints):
+                # poses assumed
+                self.link._check_connection()        
+                command = 'Show_SeqPoses'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_array([display_type, timeout])
+                self.link._send_int(len(matrix))
+                if display_ghost_joints:
+                    for jnts in matrix:
+                        self.link._send_array(jnts)               
 
+                else:
+                    for pose in matrix:
+                        self.link._send_pose(pose)               
+            
+                self.link._check_status()
+            
             else:
-                for pose in matrix:
-                    self.link._send_pose(pose)               
-            
-            self.link._check_status()
-            
-        else:
-            # list of joints as a Mat assumed
-            self.link._check_connection()        
-            command = 'Show_Seq'
-            self.link._send_line(command)
-            self.link._send_matrix(matrix)
-            self.link._send_item(self)
-            self.link._check_status()
+                # list of joints as a Mat assumed
+                self.link._check_connection()        
+                command = 'Show_Seq'
+                self.link._send_line(command)
+                self.link._send_matrix(matrix)
+                self.link._send_item(self)
+                self.link._check_status()
     
     def Busy(self):
         """Checks if a robot or program is currently running (busy or moving).
@@ -5532,24 +5594,26 @@ class Item():
             print("Program done") 
 
         """
-        self.link._check_connection()
-        command = 'IsBusy'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        busy = self.link._rec_int()
-        self.link._check_status()
-        return busy
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'IsBusy'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            busy = self.link._rec_int()
+            self.link._check_status()
+            return busy
             
     def Stop(self):
         """Stop a program or a robot
         
         .. seealso:: :func:`~robolink.Item.RunProgram`, :func:`~robolink.Item.MoveJ`
         """
-        self.link._check_connection()
-        command = 'Stop'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._check_status()
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'Stop'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._check_status()
     
     def WaitMove(self, timeout=360000):
         """Waits (blocks) until the robot finishes its movement.
@@ -5588,8 +5652,9 @@ class Item():
         :param str postprocessor: name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode`
-        """
-        return self.link.ProgramStart(programname, folder, postprocessor, self)    
+        """    
+        with self.link._lock:
+            return self.link.ProgramStart(programname, folder, postprocessor, self)    
     
     def setAccuracyActive(self, accurate = 1):
         """Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
@@ -5597,26 +5662,28 @@ class Item():
         :param int accurate: set to 1 to use the accurate model or 0 to use the nominal model
         
         .. seealso:: :func:`~robolink.Item.AccuracyActive`
-        """
-        self.link._check_connection()
-        command = 'S_AbsAccOn'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(accurate)
-        self.link._check_status()
+        """    
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_AbsAccOn'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(accurate)
+            self.link._check_status()
         
     def AccuracyActive(self, accurate = 1):
         """Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
                 
         .. seealso:: :func:`~robolink.Item.setAccuracyActive`
         """
-        self.link._check_connection()
-        command = 'G_AbsAccOn'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        isaccurate = self.link._rec_int()
-        self.link._check_status()
-        return isaccurate > 0
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_AbsAccOn'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            isaccurate = self.link._rec_int()
+            self.link._check_status()
+            return isaccurate > 0
         
     def setParamRobotTool(self, tool_mass=5, tool_cog=None):
         """Sets the tool mass and center of gravity. This is only used with accurate robots to improve accuracy.
@@ -5625,16 +5692,17 @@ class Item():
         :param list tool_cog: tool center of gravity as [x,y,z] with respect to the robot flange
         
         """
-        self.link._check_connection()
-        command = 'S_ParamCalibTool'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        values = []
-        values.append(tool_mass)
-        if tool_cog is not None:
-            values += tool_cog            
-        self.link._send_array(values)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_ParamCalibTool'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            values = []
+            values.append(tool_mass)
+            if tool_cog is not None:
+                values += tool_cog            
+            self.link._send_array(values)
+            self.link._check_status()
     
     def FilterProgram(self, filestr):
         """Filter a program file to improve accuracy for a specific robot. The robot must have been previously calibrated.
@@ -5642,15 +5710,16 @@ class Item():
         
         :param str filestr: File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC).
         """
-        self.link._check_connection()
-        command = 'FilterProg2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(filestr)
-        filter_status = self.link._rec_int()
-        filter_msg = self.link._rec_line()        
-        self.link._check_status()
-        return filter_status, filter_msg
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'FilterProg2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(filestr)
+            filter_status = self.link._rec_int()
+            filter_msg = self.link._rec_line()        
+            self.link._check_status()
+            return filter_status, filter_msg
     
     #"""Program item calls"""    
     def MakeProgram(self, folder_path='', run_mode = RUNMODE_MAKE_ROBOTPROG):
@@ -5667,28 +5736,29 @@ class Item():
         if len(folder_path) > 0 and not (folder_path.endswith("/") or folder_path.endswith("\\")):
             folder_path = folder_path + "/"
             
-        self.link._check_connection()
-        command = 'MakeProg2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(folder_path)
-        self.link._send_int(run_mode)
-        self.link.COM.settimeout(300) # wait up to 5 minutes for the program to generate
-        prog_status = self.link._rec_int()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        prog_log_str = self.link._rec_line()
-        transfer_status = self.link._rec_int()
-        self.link._check_status()
-        success = False
-        if prog_status > 0:
-            success = True
-        transfer_ok = False
-        if transfer_status > 0:
-            transfer_ok = True
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'MakeProg2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(folder_path)
+            self.link._send_int(run_mode)
+            self.link.COM.settimeout(300) # wait up to 5 minutes for the program to generate
+            prog_status = self.link._rec_int()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            prog_log_str = self.link._rec_line()
+            transfer_status = self.link._rec_int()
+            self.link._check_status()
+            success = False
+            if prog_status > 0:
+                success = True
+            transfer_ok = False
+            if transfer_status > 0:
+                transfer_ok = True
             
-        self.LAST_STATUS_MESSAGE = prog_log_str
+            self.LAST_STATUS_MESSAGE = prog_log_str
             
-        return success, prog_log_str, transfer_ok
+            return success, prog_log_str, transfer_ok
     
     def setRunType(self, program_run_type):
         """Set the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
@@ -5697,29 +5767,32 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode` :func:`~robolink.Item.RunType`
         """
-        self.link._check_connection()
-        command = 'S_ProgRunType'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(program_run_type)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_ProgRunType'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(program_run_type)
+            self.link._check_status()
         
     def RunType(self):
         """Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
         
         .. seealso:: :func:`~robolink.Robolink.setRunMode` :func:`~robolink.Item.setRunType`
         """
-        self.link._check_connection()
-        command = 'G_ProgRunType'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        program_run_type = self.link._rec_int()
-        self.link._check_status()
-        return program_run_type
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ProgRunType'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            program_run_type = self.link._rec_int()
+            self.link._check_status()
+            return program_run_type
     
     def RunProgram(self, prog_parameters=None):
         """Obsolete. Use :func:`~robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility."""
-        return self.RunCode(prog_parameters)
+        with self.link._lock:
+            return self.RunCode(prog_parameters)
         
     def RunCode(self, prog_parameters=None):
         """Run a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
@@ -5737,31 +5810,33 @@ class Item():
         If setRunMode(RUNMODE_RUN_ROBOT) is used together with program.setRunType(PROGRAM_RUN_ON_ROBOT) -> the program will run sequentially on the robot the same way as if we right clicked the program and selected "Run on robot" in the RoboDK GUI
                 
         """
-        self.link._check_connection()
-        if type(prog_parameters) == list:
-            command = 'RunProgParam'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            parameters = ''
-            if type(prog_parameters) is list:
-                parameters = '<br>'.join(str(param_i) for param_i in prog_parameters)
+        with self.link._lock:
+            self.link._check_connection()
+            if type(prog_parameters) == list:
+                command = 'RunProgParam'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                parameters = ''
+                if type(prog_parameters) is list:
+                    parameters = '<br>'.join(str(param_i) for param_i in prog_parameters)
+                else:
+                    parameters = str(prog_parameters)
+                self.link._send_line(parameters)
             else:
-                parameters = str(prog_parameters)
-            self.link._send_line(parameters)
-        else:
-            command = 'RunProg'
-            self.link._send_line(command)
-            self.link._send_item(self)
-        prog_status = self.link._rec_int()
-        self.link._check_status()
-        return prog_status
+                command = 'RunProg'
+                self.link._send_line(command)
+                self.link._send_item(self)
+            prog_status = self.link._rec_int()
+            self.link._check_status()
+            return prog_status
         
     def RunCodeCustom(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
         """Obsolete, use RunInstruction instead. Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
         
         .. seealso:: :func:`~robolink.Item.RunInstruction`        
         """
-        return self.RunInstruction(code, run_type)
+        with self.link._lock:
+            return self.RunInstruction(code, run_type)
         
     def RunInstruction(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
         """Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
@@ -5790,15 +5865,16 @@ class Item():
             program.RunInstruction('Program1', INSTRUCTION_CALL_PROGRAM)      
         
         """
-        self.link._check_connection()
-        command = 'RunCode2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(code.replace('\r\n','<<br>>').replace('\n','<<br>>'))
-        self.link._send_int(run_type)        
-        prog_status = self.link._rec_int()
-        self.link._check_status()
-        return prog_status
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'RunCode2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(code.replace('\r\n','<<br>>').replace('\n','<<br>>'))
+            self.link._send_int(run_type)        
+            prog_status = self.link._rec_int()
+            self.link._check_status()
+            return prog_status
         
     def Pause(self, time_ms = -1):
         """Pause instruction for a robot or insert a pause instruction to a program (when generating code offline -offline programming- or when connected to the robot -online programming-).
@@ -5807,12 +5883,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'RunPause'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(time_ms*1000.0)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'RunPause'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(time_ms*1000.0)
+            self.link._check_status()
         
     def setDO(self, io_var, io_value):
         """Set a Digital Output (DO). This command can also be used to set any generic variables to a desired value.
@@ -5824,13 +5901,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setAO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
         """
-        self.link._check_connection()
-        command = 'setDO'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(io_var))
-        self.link._send_line(str(io_value))
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'setDO'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(io_var))
+            self.link._send_line(str(io_value))
+            self.link._check_status()
         
     def setAO(self, io_var, io_value):
         """Set an Analog Output (AO).
@@ -5842,13 +5920,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.getAI`
         """
-        self.link._check_connection()
-        command = 'setAO'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(io_var))
-        self.link._send_line(str(io_value))
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'setAO'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(io_var))
+            self.link._send_line(str(io_value))
+            self.link._check_status()
         
     def getDI(self, io_var):
         """Get a Digital Input (DI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (1=True, 0=False). This function returns an empty string if the script is not executed on the robot.
@@ -5858,14 +5937,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getAI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
         """
-        self.link._check_connection()
-        command = 'getDI'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(io_var))
-        io_value = self.link._rec_line()
-        self.link._check_status()
-        return io_value
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'getDI'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(io_var))
+            io_value = self.link._rec_line()
+            self.link._check_status()
+            return io_value
         
     def getAI(self, io_var):
         """Get an Analog Input (AI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (0-1 or other range depending on the robot driver). This function returns an empty string if the script is not executed on the robot.
@@ -5875,14 +5955,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.getDI`, :func:`~robolink.Item.setDO`, :func:`~robolink.Item.setAO`
         """
-        self.link._check_connection()
-        command = 'getAI'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(io_var))
-        io_value = self.link._rec_line()
-        self.link._check_status()
-        return io_value
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'getAI'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(io_var))
+            io_value = self.link._rec_line()
+            self.link._check_status()
+            return io_value
     
     def waitDI(self, io_var, io_value, timeout_ms=-1):
         """Wait for an digital input io_var to attain a given value io_value. Optionally, a timeout can be provided.
@@ -5896,16 +5977,17 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'waitDI'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(io_var))
-        self.link._send_line(str(io_value))
-        self.link._send_int(timeout_ms*1000)
-        self.link.COM.settimeout(3600*24*7) # wait up to 1 week
-        self.link._check_status()
-        self.link.COM.settimeout(self.link.TIMEOUT)        
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'waitDI'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(io_var))
+            self.link._send_line(str(io_value))
+            self.link._send_int(timeout_ms*1000)
+            self.link.COM.settimeout(3600*24*7) # wait up to 1 week
+            self.link._check_status()
+            self.link.COM.settimeout(self.link.TIMEOUT)        
         
     def customInstruction(self, name, path_run, path_icon="", blocking=1, cmd_run_on_robot=""):
         """Add a custom instruction. This instruction will execute a Python file or an executable file.
@@ -5923,16 +6005,17 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'InsCustom2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(name)
-        self.link._send_line(path_run)
-        self.link._send_line(path_icon)
-        self.link._send_line(cmd_run_on_robot)        
-        self.link._send_int(blocking)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'InsCustom2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(name)
+            self.link._send_line(path_run)
+            self.link._send_line(path_icon)
+            self.link._send_line(cmd_run_on_robot)        
+            self.link._send_int(blocking)
+            self.link._check_status()
     
     def addMoveJ(self, itemtarget):
         """Adds a new robot joint move instruction to a program. This function is obsolete. Use MoveJ instead.
@@ -5942,13 +6025,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveJ`
         """
-        self.link._check_connection()
-        command = 'Add_INSMOVE'
-        self.link._send_line(command)
-        self.link._send_item(itemtarget)
-        self.link._send_item(self)
-        self.link._send_int(1)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Add_INSMOVE'
+            self.link._send_line(command)
+            self.link._send_item(itemtarget)
+            self.link._send_item(self)
+            self.link._send_int(1)
+            self.link._check_status()
     
     def addMoveL(self, itemtarget):
         """Adds a new linear move instruction to a program. This function is obsolete. Use MoveL instead.
@@ -5957,14 +6041,15 @@ class Item():
         :type itemtarget: :class:`.Item`
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveL`
-        """
-        self.link._check_connection()
-        command = 'Add_INSMOVE'
-        self.link._send_line(command)
-        self.link._send_item(itemtarget)
-        self.link._send_item(self)
-        self.link._send_int(2)
-        self.link._check_status()
+        """   
+        with self.link._lock: 
+            self.link._check_connection()
+            command = 'Add_INSMOVE'
+            self.link._send_line(command)
+            self.link._send_item(itemtarget)
+            self.link._send_item(self)
+            self.link._send_int(2)
+            self.link._check_status()
         
     def addMoveC(self, itemtarget1, itemtarget2):
         """Adds a new circular move instruction to a program (This function is obsolete. Use MoveL instead.)
@@ -5974,13 +6059,14 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`
         """
-        self.link._check_connection()
-        command = 'Add_INSMOVEC'
-        self.link._send_line(command)
-        self.link._send_item(itemtarget1)
-        self.link._send_item(itemtarget2)
-        self.link._send_item(self)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Add_INSMOVEC'
+            self.link._send_line(command)
+            self.link._send_item(itemtarget1)
+            self.link._send_item(itemtarget2)
+            self.link._send_item(self)
+            self.link._check_status()
         
     def ShowInstructions(self, show=True):
         """Show or hide instruction items of a program in the RoboDK tree
@@ -5990,12 +6076,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.ShowTargets`
         """
-        self.link._check_connection()
-        command = 'Prog_ShowIns'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(1 if show else 0)        
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_ShowIns'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(1 if show else 0)        
+            self.link._check_status()
         
     def ShowTargets(self, show=True):
         """Show or hide targets of a program in the RoboDK tree
@@ -6005,53 +6092,57 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.ShowInstructions`
         """
-        self.link._check_connection()
-        command = 'Prog_ShowTargets'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(1 if show else 0)        
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_ShowTargets'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(1 if show else 0)        
+            self.link._check_status()
         
     def InstructionCount(self):
         """Return the number of instructions of a program.
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'Prog_Nins'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        nins = self.link._rec_int()
-        self.link._check_status()
-        return nins        
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_Nins'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            nins = self.link._rec_int()
+            self.link._check_status()
+            return nins        
         
     def InstructionSelect(self, ins_id=-1):
         """Select an instruction in the program as a reference to add new instructions. New instructions will be added after the selected instruction. If no instruction ID is specified, the active instruction will be selected and returned.
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'Prog_SelIns'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(ins_id)  
-        ins_id = self.link._rec_int()
-        self.link._check_status()
-        return ins_id
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_SelIns'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(ins_id)  
+            ins_id = self.link._rec_int()
+            self.link._check_status()
+            return ins_id
         
     def InstructionDelete(self, ins_id=0):
         """Delete an instruction of a program
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'Prog_DelIns'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(ins_id)  
-        success = self.link._rec_int() > 0
-        self.link._check_status()
-        return success
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_DelIns'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(ins_id)  
+            success = self.link._rec_int() > 0
+            self.link._check_status()
+            return success
     
     def Instruction(self, ins_id=-1):
         """Return the current program instruction or the instruction given the instruction id (if provided).
@@ -6069,24 +6160,25 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Robolink.setInstruction`, :func:`~robolink.Robolink.InstructionDelete`
         """
-        self.link._check_connection()
-        command = 'Prog_GIns'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(ins_id)
-        name = self.link._rec_line()
-        instype = self.link._rec_int()
-        movetype = None
-        isjointtarget = None
-        target = None
-        joints = None
-        if instype == INS_TYPE_MOVE:
-            movetype = self.link._rec_int()
-            isjointtarget = self.link._rec_int()
-            target = self.link._rec_pose()
-            joints = self.link._rec_array()
-        self.link._check_status()
-        return name, instype, movetype, isjointtarget, target, joints
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_GIns'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(ins_id)
+            name = self.link._rec_line()
+            instype = self.link._rec_int()
+            movetype = None
+            isjointtarget = None
+            target = None
+            joints = None
+            if instype == INS_TYPE_MOVE:
+                movetype = self.link._rec_int()
+                isjointtarget = self.link._rec_int()
+                target = self.link._rec_pose()
+                joints = self.link._rec_array()
+            self.link._check_status()
+            return name, instype, movetype, isjointtarget, target, joints
         
     def setInstruction(self, ins_id, name, instype, movetype, isjointtarget, target, joints):
         """Update a program instruction.
@@ -6108,19 +6200,20 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.Instruction`
         """
-        self.link._check_connection()
-        command = 'Prog_SIns'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_int(ins_id)
-        self.link._send_line(name)
-        self.link._send_int(instype)
-        if instype == INS_TYPE_MOVE:
-            self.link._send_int(movetype)
-            self.link._send_int(isjointtarget)
-            self.link._send_pose(target)
-            self.link._send_array(joints)
-        self.link._check_status()
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Prog_SIns'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(ins_id)
+            self.link._send_line(name)
+            self.link._send_int(instype)
+            if instype == INS_TYPE_MOVE:
+                self.link._send_int(movetype)
+                self.link._send_int(isjointtarget)
+                self.link._send_pose(target)
+                self.link._send_array(joints)
+            self.link._check_status()
            
     def Update(self, check_collisions=COLLISION_OFF, timeout_sec = 3600, mm_step=-1, deg_step=-1):
         """Updates a program and returns the estimated time and the number of valid instructions.
@@ -6148,22 +6241,23 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
         """
-        self.link._check_connection()
-        command = 'Update2'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array([check_collisions, mm_step, deg_step])
-        self.link.COM.settimeout(timeout_sec) # wait up to 1 hour user to hit OK
-        values = self.link._rec_array().tolist()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        readable_msg = self.link._rec_line()
-        self.link._check_status()
-        valid_instructions = values[0]
-        program_time = values[1]
-        program_distance = values[2]
-        valid_program = values[3]
-        self.LAST_STATUS_MESSAGE = readable_msg
-        return valid_instructions, program_time, program_distance, valid_program, readable_msg
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Update2'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array([check_collisions, mm_step, deg_step])
+            self.link.COM.settimeout(timeout_sec) # wait up to 1 hour user to hit OK
+            values = self.link._rec_array().tolist()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            readable_msg = self.link._rec_line()
+            self.link._check_status()
+            valid_instructions = values[0]
+            program_time = values[1]
+            program_distance = values[2]
+            valid_program = values[3]
+            self.LAST_STATUS_MESSAGE = readable_msg
+            return valid_instructions, program_time, program_distance, valid_program, readable_msg
         
     def InstructionList(self):
         """Returns the list of program instructions as an MxN matrix, where N is the number of instructions and M equals to 1 plus the number of robot axes. This is the equivalent sequence that used to be supported by RoKiSim.
@@ -6175,14 +6269,15 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.ShowSequence`, :func:`~robolink.Item.InstructionListJoints`
         """
-        self.link._check_connection()
-        command = 'G_ProgInsList'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        insmat = self.link._rec_matrix()
-        errors = self.link._rec_int()
-        self.link._check_status()
-        return insmat, errors
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ProgInsList'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            insmat = self.link._rec_matrix()
+            errors = self.link._rec_int()
+            self.link._check_status()
+            return insmat, errors
           
     def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file = None, collision_check = COLLISION_OFF, flags = 0, time_step=0.1):
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
@@ -6217,24 +6312,25 @@ class Item():
                 
         .. seealso:: :func:`~robolink.Item.ShowSequence`
         """
-        self.link._check_connection()
-        command = 'G_ProgJointList'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
-        joint_list = save_to_file   
-        self.link.COM.settimeout(3600)
-        if save_to_file is None:
-            self.link._send_line('')
-            joint_list = self.link._rec_matrix()
-        else:
-            self.link._send_line(save_to_file)
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ProgJointList'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
+            joint_list = save_to_file   
+            self.link.COM.settimeout(3600)
+            if save_to_file is None:
+                self.link._send_line('')
+                joint_list = self.link._rec_matrix()
+            else:
+                self.link._send_line(save_to_file)
             
-        error_code = self.link._rec_int()
-        self.link.COM.settimeout(self.link.TIMEOUT)
-        error_msg = self.link._rec_line()
-        self.link._check_status()
-        return error_msg, joint_list, error_code
+            error_code = self.link._rec_int()
+            self.link.COM.settimeout(self.link.TIMEOUT)
+            error_msg = self.link._rec_line()
+            self.link._check_status()
+            return error_msg, joint_list, error_code
         
     def getParam(self, param):
         """Get custom binary data from this item. Use setParam to set the data.
@@ -6244,14 +6340,15 @@ class Item():
         .. seealso:: :func:`~robolink.Item.setParam`
         """
         # Setting custom binary data
-        self.link._check_connection()
-        command = 'G_ItmDataParam'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(param))
-        data = self.link._rec_bytes()
-        self.link._check_status()
-        return data
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ItmDataParam'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_line(str(param))
+            data = self.link._rec_bytes()
+            self.link._check_status()
+            return data
     
     def setParam(self, param, value=''):
         """Set a specific item parameter. 
@@ -6312,41 +6409,42 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.getParam`, :func:`~robolink.Robolink.Command` (Robolink), :func:`~robolink.Robolink.setParam` (Robolink: station parameter)
         """
-        import json
+        with self.link._lock:
+            import json
 
-        if type(value) == dict:
-            # return dict if we provided a dict
-            value = json.dumps(value)            
-        elif type(value) == bytes and sys.version_info[0] >= 3:
-            # Setting custom binary data
+            if type(value) == dict:
+                # return dict if we provided a dict
+                value = json.dumps(value)            
+            elif type(value) == bytes and sys.version_info[0] >= 3:
+                # Setting custom binary data
+                self.link._check_connection()
+                command = 'S_ItmDataParam'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(str(param))
+                self.link._send_bytes(value)
+                self.link._check_status()
+                return True
+            else:
+                value = str(value)            
+            value = value.replace('\n','<br>')
+            
             self.link._check_connection()
-            command = 'S_ItmDataParam'
+            command = 'ICMD'
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_line(str(param))
-            self.link._send_bytes(value)
+            self.link._send_line(value)
+        
+            self.link.COM.settimeout(3600)
+            line = self.link._rec_line()
+            self.link.COM.settimeout(self.link.TIMEOUT)        
+        
             self.link._check_status()
-            return True
-        else:
-            value = str(value)            
-        value = value.replace('\n','<br>')
+            if len(value) == 0 and line.startswith("{"):
+                line = json.loads(line)
             
-        self.link._check_connection()
-        command = 'ICMD'
-        self.link._send_line(command)
-        self.link._send_item(self)
-        self.link._send_line(str(param))
-        self.link._send_line(value)
-        
-        self.link.COM.settimeout(3600)
-        line = self.link._rec_line()
-        self.link.COM.settimeout(self.link.TIMEOUT)        
-        
-        self.link._check_status()
-        if len(value) == 0 and line.startswith("{"):
-            line = json.loads(line)
-            
-        return line
+            return line
         
         
 if __name__ == "__main__":
