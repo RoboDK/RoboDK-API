@@ -160,11 +160,15 @@ INSTRUCTION_SHOW_MESSAGE = 4
 
 # Object selection features
 FEATURE_NONE=0
-FEATURE_SURFACE=1
+FEATURE_SURFACE=1       # Gets the surface point under the mouse cursor
 FEATURE_CURVE=2
 FEATURE_POINT=3
-FEATURE_SURFACE_PREVIEW = 8
-FEATURE_MESH = 9
+FEATURE_OBJECT_MESH = 7 # Gets the mesh of the id provided
+FEATURE_SURFACE_PREVIEW = 8 #
+FEATURE_MESH = 9            # Gets the mesh under the mouse cursor for the provided object
+# The following do not require providing an object
+FEATURE_HOVER_OBJECT_MESH = 10  # Gets the object and mesh under the mouse cursor
+FEATURE_HOVER_OBJECT = 11       # Gets the object under the mouse cursor and the selected type and feature
 
 # Spray gun simulation:
 SPRAY_OFF = 0
@@ -2643,6 +2647,7 @@ class Robolink:
         with self._lock:
             if type(value) == dict:
                 # return dict if we provided a dict
+                import json
                 value = json.dumps(value) 
             
             elif type(value) == robodk.Mat:
@@ -3634,6 +3639,59 @@ class Robolink:
             xyz = self._rec_xyz()
             self._check_status()
             return xyz, item
+            
+    def GetPoints(self, feature_type=FEATURE_HOVER_OBJECT_MESH):
+        """Retrieves the object under the mouse cursor.
+        
+        :param int feature_type: set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster).
+        
+        :return: Object under the mouse cursor, selected feature, feature id, list of points and description
+        
+        .. code-block:: python
+                        
+            # Infinite loop to print the item under the mouse cursor
+            while True:
+                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT) # Faster if you don't need the mesh
+                #object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT_MESH)
+                
+                if object.Valid():
+                    print("Mouse on: " + object.Name() + ": " + feature_name + " Type/id=" + str(feature_type) + "/" + str(feature_id))
+                    # print(points)
+                    # RDK.Selection() # returns selection
+                    if object in RDK.Selection():
+                        print("Object is selected!")
+                        #RDK.setSelection([]) # Clear selection
+                        
+                else:
+                    print("Nothing under the mouse cursor")
+                    
+                pause(0.1)
+                
+        .. seealso:: :func:`~robolink.Item.SelectedFeature`
+        """
+        if feature_type < FEATURE_HOVER_OBJECT_MESH:
+            raise Exception("Invalid feature type, use FEATURE_HOVER_OBJECT_MESH, FEATURE_HOVER_OBJECT or equivalent")
+            
+        with self._lock:
+            self._check_connection()
+            command = 'G_ObjPoint'
+            self._send_line(command)
+            self._send_item(None)
+            self._send_int(feature_type)
+            feature_id = 0 #not used here
+            self._send_int(feature_id)
+            points = None
+            if feature_type == FEATURE_HOVER_OBJECT_MESH:
+                points = self._rec_matrix()
+                points = list(points)
+            
+            object = self._rec_item()
+            is_frame = self._rec_int() > 0
+            feature_type = self._rec_int()
+            feature_id = self._rec_int()            
+            feature_name = self._rec_line()
+            self._check_status()
+            return object, feature_type, feature_id, feature_name, points
         
         
     def PluginLoad(self, plugin_name="", load=1):
@@ -4449,32 +4507,28 @@ class Item():
         
         .. seealso:: :func:`~robolink.Robolink.AddShape`
         """
-        with self.link._lock:
-            return self.link.AddShape(triangle_points, self)
+        return self.link.AddShape(triangle_points, self)
     
     def AddCurve(self, curve_points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         
         .. seealso:: :func:`~robolink.Robolink.AddCurve`
         """
-        with self.link._lock:
-            return self.link.AddCurve(curve_points, self, add_to_ref, projection_type)        
+        return self.link.AddCurve(curve_points, self, add_to_ref, projection_type)        
     
     def AddPoints(self, points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         .. seealso:: :func:`~robolink.Robolink.AddPoints`
         """
-        with self.link._lock:
-            return self.link.AddPoints(points, self, add_to_ref, projection_type)        
+        return self.link.AddPoints(points, self, add_to_ref, projection_type)        
         
     def ProjectPoints(self, points, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
         """Projects a point or a list of points to the object given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
         
         .. seealso:: :func:`~robolink.Robolink.ProjectPoints`
         """
-        with self.link._lock:
-            return self.link.ProjectPoints(points, self, projection_type)
+        return self.link.ProjectPoints(points, self, projection_type)
         
             
     def SelectedFeature(self):
@@ -4542,6 +4596,9 @@ class Item():
                 
         .. seealso:: :func:`~robolink.Item.SelectedFeature`
         """
+        if feature_type >= FEATURE_HOVER_OBJECT_MESH:
+            raise Exception("Invalid feature type. Use FEATURE_SURFACE, FEATURE_MESH or equivalent.")
+            
         with self.link._lock:
             self.link._check_connection()
             command = 'G_ObjPoint'
@@ -4556,9 +4613,8 @@ class Item():
    
     def setMillingParameters(self, ncfile='', part=0, params=''):
         """Obsolete, use :func:`~robolink.Item.setMachiningParameters` instead"""
-        with self.link._lock:
-            newprog, status = self.setMachiningParameters(ncfile,part,params)
-            return newprog, status
+        newprog, status = self.setMachiningParameters(ncfile,part,params)
+        return newprog, status
         
     def setMachiningParameters(self, ncfile='', part=0, params=''):
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
