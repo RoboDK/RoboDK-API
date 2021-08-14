@@ -5452,14 +5452,13 @@ class Item():
         
         .. seealso:: :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Item.SearchL`, :func:`~robolink.Robolink.AddTarget`
         """   
-        with self.link._lock: 
-            if self.type == ITEM_TYPE_PROGRAM:
-                if type(target1) != Item or type(target2) != Item:
-                    raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
-                self.addMoveC(target1, target2)
-            
-            else:
-                self.link.MoveC(target1, target2, self, blocking)
+        if self.type == ITEM_TYPE_PROGRAM:
+            if type(target1) != Item or type(target2) != Item:
+                raise Exception("Adding a movement instruction to a program given joints or a pose is not supported. Use a target item instead, for example, add a target as with RDK.AddTarget(...) and set the pose or joints.")                
+            self.addMoveC(target1, target2)
+        
+        else:
+            self.link.MoveC(target1, target2, self, blocking)
     
     def MoveJ_Test(self, j1, j2, minstep_deg=-1):
         """Checks if a joint movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.

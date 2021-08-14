@@ -1,9 +1,17 @@
 import sys
 import time
 from enum import Enum
-from robolink import *
+import os
+
 
 sys.path.insert(0, "..")
+robolink_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
+sys.path.insert(0, robolink_path)
+
+from robolink import *
+from robodk import *
+
+import_install("parameterized")
 
 
 JOINT_SPEED = 225  # [deg/s]

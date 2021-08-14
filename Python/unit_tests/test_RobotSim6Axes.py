@@ -1,7 +1,9 @@
 """Test RoboDK InstructionListJoints() for robot with 6 axes"""
 
-from parameterized import parameterized_class
+
 from path_simulation import *
+
+from parameterized import parameterized_class
 import test_RobotSimBase
 
 
