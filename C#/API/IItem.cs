@@ -491,14 +491,21 @@ namespace RoboDk.API
         /// <returns>double x n -> joints array</returns>
         double[] SimulatorJoints();
 
-
-
         /// <summary>
-        ///     Returns the home joints of a robot. These joints can be manually set in the robot "Parameters" menu, then select
-        ///     "Set home position"
+        /// Returns the home joints of a robot.
+        /// These joints can be manually set in the robot "Parameters" menu, then select "Set home position"
+        /// <seealso cref="SetJointsHome"/>
         /// </summary>
         /// <returns>double x n -> joints array</returns>
         double[] JointsHome();
+
+        /// <summary>
+        /// Set the home position of the robot in the joint space.
+        /// param joints: robot joints
+        /// <seealso cref="JointsHome"/>
+        /// </summary>
+        /// <param name="joints">Home Position of all robot joints</param>
+        void SetJointsHome(double[] joints);
 
         /// <summary>
         /// Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.

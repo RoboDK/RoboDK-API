@@ -818,6 +818,18 @@ namespace RoboDk.API
             return joints;
         }
 
+
+        /// <inheritdoc />
+        public void SetJointsHome(double[] joints)
+        {
+            Link.check_connection();
+            const string command = @"S_Home";
+            Link.send_line(command);
+            Link.send_array(joints);
+            Link.send_item(this);
+            Link.check_status();
+        }
+
         /// <inheritdoc />
         /// <returns></returns>
         public IItem ObjectLink(int linkId = 0)
