@@ -153,13 +153,13 @@ def acos(value):
     return math.acos(value)
     
 def name_2_id(str_name_id):
-    """Returns the number of a numbered object. For example: "Frame 3" returns 3"""
-    words = str_name_id.split()
-    number = words.pop()
-    if number.isdigit():
-        return float(number)
+    """Returns the number of a numbered object. For example: "Frame 3", "Frame3", "Fram3 3" returns 3."""
+    import re
+    numbers = re.findall(r'[0-9]+', str_name_id)
+    if len(numbers) > 0:
+        return float(numbers[-1])
     return -1
-    
+
 
 #----------------------------------------------------
 #--------     Generic matrix usage    ---------------

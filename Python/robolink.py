@@ -5520,7 +5520,7 @@ class Item():
         """Sets the linear speed of a robot. Additional arguments can be provided to set linear acceleration or joint speed and acceleration.
         
         :param float speed_linear: linear speed -> speed in mm/s (-1 = no change)
-        :param float speed_joints: joint speed (optional) -> acceleration in mm/s2 (-1 = no change)
+        :param float speed_joints: joint speed (optional) -> speed in deg/s (-1 = no change)
         :param float accel_linear: linear acceleration (optional) -> acceleration in mm/s2 (-1 = no change)
         :param float accel_joints: joint acceleration (optional) -> acceleration in deg/s2 (-1 = no change)
         
