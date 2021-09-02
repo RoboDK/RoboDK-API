@@ -3712,6 +3712,7 @@ class Robolink:
             self._check_connection()
             command = 'PluginLoad'
             self._send_line(command)
+            self._send_line(plugin_name)
             self._send_int(load)
             self._check_status()
 
