@@ -42,27 +42,33 @@ import time
 import os.path
 import time
 
+
 def searchfiles(pattern='C:\\RoboDK\\Library\\*.rdk'):
     """List the files in a directory with a given extension"""
     import glob
     return glob.glob(pattern)
 
+
 #def CurrentFile(file = __file__):
 #    """Returns the current Python file being executed"""
 #    return os.path.realpath(file)
 
+
 def getFileDir(filepath):
     """Returns the directory of a file path"""
     return os.path.dirname(filepath)
-    
+
+
 def getBaseName(filepath):
     """Returns the file name and extension of a file path"""
     return os.path.basename(filepath)
 
+
 def getFileName(filepath):
     """Returns the file name (with no extension) of a file path"""
     return os.path.splitext(os.path.basename(filepath))[0]
-   
+
+
 def DateModified(filepath, stringformat=False):
     """Returns the time that a file was modified"""
     time_in_s = os.path.getmtime(filepath)
@@ -70,7 +76,8 @@ def DateModified(filepath, stringformat=False):
         return time.ctime(time_in_s)
     else:
         return time_in_s
-    
+
+
 def DateCreated(filepath, stringformat=False):
     """Returns the time that a file was modified"""
     time_in_s = os.path.getctime(filepath)
@@ -78,48 +85,53 @@ def DateCreated(filepath, stringformat=False):
         return time.ctime(time_in_s)
     else:
         return time_in_s
-        
+
+
 def DirExists(folder):
     """Returns true if the folder exists"""
     return os.path.isdir(folder)
 
+
 def FileExists(file):
     """Returns true if the file exists"""
     return os.path.exists(file)
-    
+
+
 def FilterName(namefilter, safechar='P', reserved_names=None):
     """Get a safe program or variable name that can be used for robot programming"""
     # remove non accepted characters
     for c in r' -[]/\;,><&*:%=+@!#^|?^':
-        namefilter = namefilter.replace(c,'')
-    
+        namefilter = namefilter.replace(c, '')
+
     # remove non english characters
     char_list = (c for c in namefilter if 0 < ord(c) < 127)
     namefilter = ''.join(char_list)
-        
+
     # Make sure we have a non empty string
     if len(namefilter) <= 0:
         namefilter = safechar
-        
+
     # Make sure we don't start with a number
     if namefilter[0].isdigit():
         print(namefilter)
         namefilter = safechar + namefilter
-        
+
     # Make sure we are not using a reserved name
     if reserved_names is not None:
         while namefilter.lower() in reserved_names:
             namefilter = safechar + namefilter
-            
+
         # Add the name to reserved names
         reserved_names.append(namefilter)
-        
+
     return namefilter
-    
+
+
 #----------------------------------------------------
 #--------      Generic math usage     ---------------
 
 pi = math.pi
+
 
 def pause(seconds):
     """Pause in seconds
@@ -128,30 +140,37 @@ def pause(seconds):
     :type pause: float"""
     time.sleep(seconds)
 
-def atan2(y,x):
+
+def atan2(y, x):
     """Returns angle of a 2D coordinate in the XY plane"""
-    return math.atan2(y,x)
+    return math.atan2(y, x)
+
 
 def sqrt(value):
     """Returns the square root of a value"""
     return math.sqrt(value)
 
+
 def sin(value):
     """Returns the sinus of an angle in radians"""
     return math.sin(value)
 
+
 def cos(value):
     """Returns the cosinus of an angle in radians"""
     return math.cos(value)
-    
+
+
 def asin(value):
     """Returns the arc sinus in radians"""
     return math.asin(value)
 
+
 def acos(value):
     """Returns the arc cosinus in radians"""
     return math.acos(value)
-    
+
+
 def name_2_id(str_name_id):
     """Returns the number of a numbered object. For example: "Frame 3", "Frame3", "Fram3 3" returns 3."""
     import re
@@ -163,6 +182,7 @@ def name_2_id(str_name_id):
 
 #----------------------------------------------------
 #--------     Generic matrix usage    ---------------
+
 
 def rotx(rx):
     r"""Returns a rotation matrix around the X axis (radians)
@@ -181,7 +201,8 @@ def rotx(rx):
     """
     ct = math.cos(rx)
     st = math.sin(rx)
-    return Mat([[1,0,0,0],[0,ct,-st,0],[0,st,ct,0],[0,0,0,1]])
+    return Mat([[1, 0, 0, 0], [0, ct, -st, 0], [0, st, ct, 0], [0, 0, 0, 1]])
+
 
 def roty(ry):
     r"""Returns a rotation matrix around the Y axis (radians)
@@ -200,7 +221,8 @@ def roty(ry):
     """
     ct = math.cos(ry)
     st = math.sin(ry)
-    return Mat([[ct,0,st,0],[0,1,0,0],[-st,0,ct,0],[0,0,0,1]])
+    return Mat([[ct, 0, st, 0], [0, 1, 0, 0], [-st, 0, ct, 0], [0, 0, 0, 1]])
+
 
 def rotz(rz):
     r"""Returns a rotation matrix around the Z axis (radians)
@@ -219,9 +241,10 @@ def rotz(rz):
     """
     ct = math.cos(rz)
     st = math.sin(rz)
-    return Mat([[ct,-st,0,0],[st,ct,0,0],[0,0,1,0],[0,0,0,1]])
+    return Mat([[ct, -st, 0, 0], [st, ct, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
-def transl(tx,ty=None,tz=None):
+
+def transl(tx, ty=None, tz=None):
     r"""Returns a translation matrix (mm)
 
     .. math::
@@ -245,10 +268,11 @@ def transl(tx,ty=None,tz=None):
     else:
         xx = tx
         yy = ty
-        zz = tz    
-    return Mat([[1,0,0,xx],[0,1,0,yy],[0,0,1,zz],[0,0,0,1]])
-    
-def RelTool(target_pose, x, y, z, rx=0,ry=0,rz=0):
+        zz = tz
+    return Mat([[1, 0, 0, xx], [0, 1, 0, yy], [0, 0, 1, zz], [0, 0, 0, 1]])
+
+
+def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0):
     """Calculates a relative target with respect to the tool coordinates. This procedure has exactly the same behavior as ABB's RelTool instruction.
     X,Y,Z are in mm, W,P,R are in degrees.
 
@@ -263,10 +287,11 @@ def RelTool(target_pose, x, y, z, rx=0,ry=0,rz=0):
     """
     if type(target_pose) != Mat:
         target_pose = target_pose.Pose()
-    new_target = target_pose*transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
+    new_target = target_pose * transl(x, y, z) * rotx(rx * pi / 180) * roty(ry * pi / 180) * rotz(rz * pi / 180)
     return new_target
-    
-def Offset(target_pose, x, y, z, rx=0,ry=0,rz=0):
+
+
+def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0):
     """Calculates a relative target with respect to the reference frame coordinates.
     X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
@@ -284,23 +309,25 @@ def Offset(target_pose, x, y, z, rx=0,ry=0,rz=0):
         target_pose = target_pose.Pose()
     if not target_pose.isHomogeneous():
         raise Exception(MatrixError, "Pose matrix is not homogeneous!")
-    new_target = transl(x,y,z)*rotx(rx*pi/180.0)*roty(ry*pi/180.0)*rotz(rz*pi/180.0)*target_pose
+    new_target = transl(x, y, z) * rotx(rx * pi / 180.0) * roty(ry * pi / 180.0) * rotz(rz * pi / 180.0) * target_pose
     return new_target
 
-def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0,0,1], yaxis_hint2=[0,1,1]):
+
+def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1]):
     """Returns a pose given the origin as a point, a Z axis and a preferred orientation for the Y axis"""
     pose = eye(4)
     pose.setPos(point)
     pose.setVZ(zaxis)
     yaprox = yaxis_hint1
-    if angle3(zaxis, yaprox) < 2*pi/180:
+    if angle3(zaxis, yaprox) < 2 * pi / 180:
         yaprox = yaxis_hint2
     xaxis = normalize3(cross(yaprox, zaxis))
     yaxis = cross(zaxis, xaxis)
     pose.setVX(xaxis)
     pose.setVY(yaxis)
     return pose
-    
+
+
 def eye(size=4):
     r"""Returns the identity matrix
 
@@ -317,14 +344,15 @@ def eye(size=4):
     .. seealso:: :func:`~robodk.transl`, :func:`~robodk.rotx`, :func:`~robodk.roty`, :func:`~robodk.rotz`
     """
     if size == 4:
-        return Mat([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
+        return Mat([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
     else:
-        newmat = Mat(size,size)
+        newmat = Mat(size, size)
         for i in range(size):
-            newmat[i,i] = 1
+            newmat[i, i] = 1
         return newmat
 
-def size(matrix,dim=None):
+
+def size(matrix, dim=None):
     """Returns the size of a matrix (m,n).
     Dim can be set to 0 to return m (rows) or 1 to return n (columns)
 
@@ -335,12 +363,14 @@ def size(matrix,dim=None):
     """
     return matrix.size(dim)
 
+
 def tr(matrix):
     """Returns the transpose of the matrix
 
     :param matrix: pose
     :type matrix: :class:`.Mat`"""
     return matrix.tr()
+
 
 def invH(matrix):
     """Returns the inverse of a homogeneous matrix
@@ -352,19 +382,23 @@ def invH(matrix):
     """
     return matrix.invH()
 
+
 def catV(mat1, mat2):
     """Concatenate 2 matrices (vertical concatenation)"""
     return mat1.catV(mat2)
 
+
 def catH(mat1, mat2):
     """Concatenate 2 matrices (horizontal concatenation)"""
     return mat1.catH(mat2)
+
 
 def tic():
     """Start a stopwatch timer"""
     import time
     global TICTOC_START_TIME
     TICTOC_START_TIME = time.time()
+
 
 def toc():
     """Read the stopwatch timer"""
@@ -376,6 +410,7 @@ def toc():
     else:
         print("Toc: start time not set")
         return -1
+
 
 def LoadList(strfile, separator=',', codec='utf-8'):
     """Load data from a CSV file or a TXT file to a Python list (list of list of numbers)
@@ -401,6 +436,7 @@ def LoadList(strfile, separator=',', codec='utf-8'):
             return float(value)
         except:
             return value
+
     import csv
     import codecs
     # Read all CSV data:
@@ -412,23 +448,25 @@ def LoadList(strfile, separator=',', codec='utf-8'):
             row_nums = [todecimal(i) for i in row]
             csvdata.append(row_nums)
     return csvdata
-    
+
+
 def SaveList(list_variable, strfile, separator=','):
     """Save a list or a list of lists as a CSV or TXT file.
 
     .. seealso:: :func:`~robodk.LoadList`, :func:`~robodk.LoadMat`"""
-    
+
     Mat(list_variable).tr().SaveMat(strfile, separator)
 
-    
+
 def LoadMat(strfile, separator=','):
     """Load data from a CSV file or a TXT file to a :class:`.Mat` Matrix
 
     .. seealso:: :func:`~robodk.LoadList`
 
     """
-    return Mat(LoadList(strfile,separator))
-        
+    return Mat(LoadList(strfile, separator))
+
+
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
 def pose_2_xyzrpw(H):
@@ -442,43 +480,45 @@ def pose_2_xyzrpw(H):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    x = H[0,3]
-    y = H[1,3]
-    z = H[2,3]
-    if (H[2,0] > (1.0 - 1e-10)):
-        p = -pi/2
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    if (H[2, 0] > (1.0 - 1e-10)):
+        p = -pi / 2
         r = 0
-        w = math.atan2(-H[1,2],H[1,1])
-    elif H[2,0] < -1.0 + 1e-10:
-        p = pi/2
+        w = math.atan2(-H[1, 2], H[1, 1])
+    elif H[2, 0] < -1.0 + 1e-10:
+        p = pi / 2
         r = 0
-        w = math.atan2(H[1,2],H[1,1])
+        w = math.atan2(H[1, 2], H[1, 1])
     else:
-        p = math.atan2(-H[2,0],sqrt(H[0,0]*H[0,0]+H[1,0]*H[1,0]))
-        w = math.atan2(H[1,0],H[0,0])
-        r = math.atan2(H[2,1],H[2,2])    
-    return [x, y, z, r*180/pi, p*180/pi, w*180/pi]
-    
+        p = math.atan2(-H[2, 0], sqrt(H[0, 0] * H[0, 0] + H[1, 0] * H[1, 0]))
+        w = math.atan2(H[1, 0], H[0, 0])
+        r = math.atan2(H[2, 1], H[2, 2])
+    return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
+
+
 def xyzrpw_2_pose(xyzrpw):
     """Calculates the pose from the position (mm) and Euler angles (deg), given a [x,y,z,r,p,w] array.
     The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    [x,y,z,r,p,w] = xyzrpw
-    a = r*pi/180
-    b = p*pi/180
-    c = w*pi/180
+    [x, y, z, r, p, w] = xyzrpw
+    a = r * pi / 180
+    b = p * pi / 180
+    c = w * pi / 180
     ca = math.cos(a)
     sa = math.sin(a)
     cb = math.cos(b)
     sb = math.sin(b)
     cc = math.cos(c)
-    sc = math.sin(c)    
-    H = Mat([[cb*cc, cc*sa*sb - ca*sc, sa*sc + ca*cc*sb, x],[cb*sc, ca*cc + sa*sb*sc, ca*sb*sc - cc*sa, y],[-sb, cb*sa, ca*cb, z],[0,0,0,1]])
+    sc = math.sin(c)
+    H = Mat([[cb * cc, cc * sa * sb - ca * sc, sa * sc + ca * cc * sb, x], [cb * sc, ca * cc + sa * sb * sc, ca * sb * sc - cc * sa, y], [-sb, cb * sa, ca * cb, z], [0, 0, 0, 1]])
     return H
-    
-def Pose(tx,ty,tz,rx,ry,rz):
+
+
+def Pose(tx, ty, tz, rx, ry, rz):
     """Returns the pose (:class:`.Mat`) given the position (mm) and Euler angles (deg) as an array [x,y,z,rx,ry,rz].
     The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     This pose format is printed for homogeneous poses automatically. This Pose is the same representation used by Mecademic or Staubli robot controllers.
@@ -492,7 +532,8 @@ def Pose(tx,ty,tz,rx,ry,rz):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`
     """
-    return TxyzRxyz_2_Pose([tx,ty,tz,rx*pi/180,ry*pi/180,rz*pi/180])
+    return TxyzRxyz_2_Pose([tx, ty, tz, rx * pi / 180, ry * pi / 180, rz * pi / 180])
+
 
 def TxyzRxyz_2_Pose(xyzrpw):
     """Returns the pose given the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz].
@@ -503,15 +544,16 @@ def TxyzRxyz_2_Pose(xyzrpw):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    [x,y,z,rx,ry,rz] = xyzrpw
+    [x, y, z, rx, ry, rz] = xyzrpw
     srx = math.sin(rx)
     crx = math.cos(rx)
     sry = math.sin(ry)
     cry = math.cos(ry)
     srz = math.sin(rz)
     crz = math.cos(rz)
-    H = Mat([[ cry*crz, -cry*srz, sry, x],[crx*srz + crz*srx*sry, crx*crz - srx*sry*srz, -cry*srx, y],[srx*srz - crx*crz*sry, crz*srx + crx*sry*srz, crx*cry, z],[0,0,0,1]])
+    H = Mat([[cry * crz, -cry * srz, sry, x], [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y], [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z], [0, 0, 0, 1]])
     return H
+
 
 def Pose_2_TxyzRxyz(H):
     """Retrieve the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz] given a pose.
@@ -523,34 +565,35 @@ def Pose_2_TxyzRxyz(H):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    x = H[0,3]
-    y = H[1,3]
-    z = H[2,3]
-    a = H[0,0]
-    b = H[0,1]
-    c = H[0,2]
-    d = H[1,2]
-    e = H[2,2]
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    a = H[0, 0]
+    b = H[0, 1]
+    c = H[0, 2]
+    d = H[1, 2]
+    e = H[2, 2]
     if c > (1.0 - 1e-10):
-        ry1 = pi/2
+        ry1 = pi / 2
         rx1 = 0
-        rz1 = atan2(H[1,0],H[1,1])
+        rz1 = atan2(H[1, 0], H[1, 1])
     elif c < (-1.0 + 1e-10):
-        ry1 = -pi/2
+        ry1 = -pi / 2
         rx1 = 0
-        rz1 = atan2(H[1,0],H[1,1])
+        rz1 = atan2(H[1, 0], H[1, 1])
     else:
         sy = c
-        cy1 = +sqrt(1-sy*sy)
-        sx1 = -d/cy1
-        cx1 = e/cy1
-        sz1 = -b/cy1
-        cz1 =a/cy1
-        rx1 = atan2(sx1,cx1)
-        ry1 = atan2(sy,cy1)
-        rz1 = atan2(sz1,cz1)
+        cy1 = +sqrt(1 - sy * sy)
+        sx1 = -d / cy1
+        cx1 = e / cy1
+        sz1 = -b / cy1
+        cz1 = a / cy1
+        rx1 = atan2(sx1, cx1)
+        ry1 = atan2(sy, cy1)
+        rz1 = atan2(sz1, cz1)
     return [x, y, z, rx1, ry1, rz1]
-    
+
+
 def Pose_2_Staubli(H):
     """Converts a pose (4x4 matrix) to a Staubli XYZWPR target
 
@@ -560,11 +603,12 @@ def Pose_2_Staubli(H):
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     xyzwpr = Pose_2_TxyzRxyz(H)
-    xyzwpr[3] = xyzwpr[3]*180.0/pi
-    xyzwpr[4] = xyzwpr[4]*180.0/pi
-    xyzwpr[5] = xyzwpr[5]*180.0/pi
+    xyzwpr[3] = xyzwpr[3] * 180.0 / pi
+    xyzwpr[4] = xyzwpr[4] * 180.0 / pi
+    xyzwpr[5] = xyzwpr[5] * 180.0 / pi
     return xyzwpr
-    
+
+
 def Pose_2_Motoman(H):
     """Converts a pose (4x4 matrix) to a Motoman XYZWPR target (mm and deg)
 
@@ -575,7 +619,8 @@ def Pose_2_Motoman(H):
     """
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
-    
+
+
 def Pose_2_Fanuc(H):
     """Converts a pose (4x4 matrix) to a Fanuc XYZWPR target (mm and deg)
 
@@ -586,7 +631,8 @@ def Pose_2_Fanuc(H):
     """
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
-    
+
+
 def Pose_2_Techman(H):
     """Converts a pose (4x4 matrix) to a Techman XYZWPR target (mm and deg)
 
@@ -597,28 +643,32 @@ def Pose_2_Techman(H):
     """
     xyzwpr = pose_2_xyzrpw(H)
     return xyzwpr
-    
+
+
 def Motoman_2_Pose(xyzwpr):
     """Converts a Motoman target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return xyzrpw_2_pose(xyzwpr)
-    
+
+
 def Fanuc_2_Pose(xyzwpr):
     """Converts a Motoman target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return xyzrpw_2_pose(xyzwpr)
-    
+
+
 def Techman_2_Pose(xyzwpr):
     """Converts a Techman target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return xyzrpw_2_pose(xyzwpr)
-    
+
+
 def Pose_2_KUKA(H):
     """Converts a pose (4x4 matrix) to an XYZABC KUKA target (Euler angles), required by KUKA KRC controllers.
 
@@ -627,56 +677,59 @@ def Pose_2_KUKA(H):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    x = H[0,3]
-    y = H[1,3]
-    z = H[2,3]
-    if (H[2,0]) > (1.0 - 1e-10):
-        p = -pi/2
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    if (H[2, 0]) > (1.0 - 1e-10):
+        p = -pi / 2
         r = 0
-        w = atan2(-H[1,2],H[1,1])
-    elif (H[2,0]) < (-1.0 + 1e-10):
-        p = pi/2
+        w = atan2(-H[1, 2], H[1, 1])
+    elif (H[2, 0]) < (-1.0 + 1e-10):
+        p = pi / 2
         r = 0
-        w = atan2(H[1,2],H[1,1])
+        w = atan2(H[1, 2], H[1, 1])
     else:
-        p = atan2(-H[2,0],sqrt(H[0,0]*H[0,0]+H[1,0]*H[1,0]))
-        w = atan2(H[1,0],H[0,0])
-        r = atan2(H[2,1],H[2,2])
-    return [x, y, z, w*180/pi, p*180/pi, r*180/pi]
-    
+        p = atan2(-H[2, 0], sqrt(H[0, 0] * H[0, 0] + H[1, 0] * H[1, 0]))
+        w = atan2(H[1, 0], H[0, 0])
+        r = atan2(H[2, 1], H[2, 2])
+    return [x, y, z, w * 180 / pi, p * 180 / pi, r * 180 / pi]
+
+
 def KUKA_2_Pose(xyzrpw):
     """Converts a KUKA XYZABC target to a pose (4x4 matrix), required by KUKA KRC controllers.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    [x,y,z,r,p,w] = xyzrpw
-    a = r*math.pi/180.0
-    b = p*math.pi/180.0
-    c = w*math.pi/180.0
+    [x, y, z, r, p, w] = xyzrpw
+    a = r * math.pi / 180.0
+    b = p * math.pi / 180.0
+    c = w * math.pi / 180.0
     ca = math.cos(a)
     sa = math.sin(a)
     cb = math.cos(b)
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[cb*ca, ca*sc*sb - cc*sa, sc*sa + cc*ca*sb, x],[cb*sa, cc*ca + sc*sb*sa, cc*sb*sa - ca*sc, y],[-sb, cb*sc, cc*cb, z],[0.0,0.0,0.0,1.0]])
+    return Mat([[cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x], [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y], [-sb, cb * sc, cc * cb, z], [0.0, 0.0, 0.0, 1.0]])
+
 
 def Adept_2_Pose(xyzrpw):
     """Converts an Adept XYZRPW target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    [x,y,z,r,p,w] = xyzrpw
-    a = r*math.pi/180.0
-    b = p*math.pi/180.0
-    c = w*math.pi/180.0
+    [x, y, z, r, p, w] = xyzrpw
+    a = r * math.pi / 180.0
+    b = p * math.pi / 180.0
+    c = w * math.pi / 180.0
     ca = math.cos(a)
     sa = math.sin(a)
     cb = math.cos(b)
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[ca*cb*cc - sa*sc, - cc*sa - ca*cb*sc, ca*sb, x],[ca*sc + cb*cc*sa, ca*cc - cb*sa*sc, sa*sb, y],[-cc*sb, sb*sc, cb, z],[0.0,0.0,0.0,1.0]])
+    return Mat([[ca * cb * cc - sa * sc, -cc * sa - ca * cb * sc, ca * sb, x], [ca * sc + cb * cc * sa, ca * cc - cb * sa * sc, sa * sb, y], [-cc * sb, sb * sc, cb, z], [0.0, 0.0, 0.0, 1.0]])
+
 
 def Pose_2_Adept(H):
     """Converts a pose to an Adept target
@@ -686,36 +739,38 @@ def Pose_2_Adept(H):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    x = H[0,3]
-    y = H[1,3]
-    z = H[2,3]
-    if H[2,2] > (1.0 - 1e-10):
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    if H[2, 2] > (1.0 - 1e-10):
         r = 0
         p = 0
-        w = atan2(H[1,0],H[0,0])
-    elif H[2,2] < (-1.0 + 1e-10):
+        w = atan2(H[1, 0], H[0, 0])
+    elif H[2, 2] < (-1.0 + 1e-10):
         r = 0
         p = pi
-        w = atan2(H[1,0],H[1,1])
+        w = atan2(H[1, 0], H[1, 1])
     else:
-        cb=H[2,2]
-        sb=+sqrt(1-cb*cb)
-        sc=H[2,1]/sb
-        cc=-H[2,0]/sb        
-        sa=H[1,2]/sb
-        ca=H[0,2]/sb        
-        r = atan2(sa,ca)
-        p = atan2(sb,cb)
-        w = atan2(sc,cc)
-    return [x, y, z, r*180/pi, p*180/pi, w*180/pi]
-    
+        cb = H[2, 2]
+        sb = +sqrt(1 - cb * cb)
+        sc = H[2, 1] / sb
+        cc = -H[2, 0] / sb
+        sa = H[1, 2] / sb
+        ca = H[0, 2] / sb
+        r = atan2(sa, ca)
+        p = atan2(sb, cb)
+        w = atan2(sc, cc)
+    return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
+
+
 def Comau_2_Pose(xyzrpw):
     """Converts a Comau XYZRPW target to a pose (4x4 matrix), the same representation required by PDL Comau programs.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return Adept_2_Pose(xyzrpw)
-    
+
+
 def Pose_2_Comau(H):
     """Converts a pose to a Comau target, the same representation required by PDL Comau programs.
 
@@ -724,7 +779,8 @@ def Pose_2_Comau(H):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`"""
     return Pose_2_Adept(H)
-    
+
+
 def Pose_2_Nachi(pose):
     """Converts a pose to a Nachi XYZRPW target
 
@@ -733,16 +789,18 @@ def Pose_2_Nachi(pose):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    [x,y,z,r,p,w] = pose_2_xyzrpw(pose)
-    return [x,y,z,w,p,r]
-    
+    [x, y, z, r, p, w] = pose_2_xyzrpw(pose)
+    return [x, y, z, w, p, r]
+
+
 def Nachi_2_Pose(xyzwpr):
     """Converts a Nachi XYZRPW target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     return xyzrpw_2_pose(xyzwpr)
-    
+
+
 def pose_2_quaternion(Ti):
     """Returns the quaternion orientation vector of a pose (4x4 matrix)
 
@@ -751,48 +809,50 @@ def pose_2_quaternion(Ti):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    a=(Ti[0,0])
-    b=(Ti[1,1])
-    c=(Ti[2,2])
-    sign2=1
-    sign3=1
-    sign4=1
-    if (Ti[2,1]-Ti[1,2])<0:
+    a = (Ti[0, 0])
+    b = (Ti[1, 1])
+    c = (Ti[2, 2])
+    sign2 = 1
+    sign3 = 1
+    sign4 = 1
+    if (Ti[2, 1] - Ti[1, 2]) < 0:
         sign2 = -1
-    if (Ti[0,2]-Ti[2,0])<0:
+    if (Ti[0, 2] - Ti[2, 0]) < 0:
         sign3 = -1
-    if (Ti[1,0]-Ti[0,1])<0:
-        sign4=-1
-    q1=sqrt(max(a+b+c+1,0))/2
-    q2=sign2*sqrt(max(a-b-c+1,0))/2
-    q3=sign3*sqrt(max(-a+b-c+1,0))/2
-    q4=sign4*sqrt(max(-a-b+c+1,0))/2    
+    if (Ti[1, 0] - Ti[0, 1]) < 0:
+        sign4 = -1
+    q1 = sqrt(max(a + b + c + 1, 0)) / 2
+    q2 = sign2 * sqrt(max(a - b - c + 1, 0)) / 2
+    q3 = sign3 * sqrt(max(-a + b - c + 1, 0)) / 2
+    q4 = sign4 * sqrt(max(-a - b + c + 1, 0)) / 2
     return [q1, q2, q3, q4]
-    
+
+
 def Pose_Split(pose1, pose2, delta_mm=1.0):
     """Create a sequence of poses that transitions from pose1 to pose2 by steps of delta_mm in mm (the first and last pose are not included in the list)"""
     pose_delta = invH(pose1) * pose2
-    distance = norm(pose_delta.Pos())    
+    distance = norm(pose_delta.Pos())
     if distance <= delta_mm:
         return [pose2]
 
     pose_list = []
-    
-    x,y,z,w,p,r = Pose_2_UR(pose_delta)        
-    
-    steps = max(1,int(distance/delta_mm))   
 
-    xd = x/steps
-    yd = y/steps
-    zd = z/steps
-    wd = w/steps
-    pd = p/steps
-    rd = r/steps
-    for i in range(steps-1):
-        factor = i+1
-        pose_list.append( pose1 * UR_2_Pose([xd*factor,yd*factor,zd*factor,wd*factor,pd*factor,rd*factor]) )
-        
+    x, y, z, w, p, r = Pose_2_UR(pose_delta)
+
+    steps = max(1, int(distance / delta_mm))
+
+    xd = x / steps
+    yd = y / steps
+    zd = z / steps
+    wd = w / steps
+    pd = p / steps
+    rd = r / steps
+    for i in range(steps - 1):
+        factor = i + 1
+        pose_list.append(pose1 * UR_2_Pose([xd * factor, yd * factor, zd * factor, wd * factor, pd * factor, rd * factor]))
+
     return pose_list
+
 
 def quaternion_2_pose(qin):
     """Returns the pose orientation matrix (4x4 matrix) given a quaternion orientation vector
@@ -801,16 +861,16 @@ def quaternion_2_pose(qin):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    qnorm = sqrt(qin[0]*qin[0]+qin[1]*qin[1]+qin[2]*qin[2]+qin[3]*qin[3])
+    qnorm = sqrt(qin[0] * qin[0] + qin[1] * qin[1] + qin[2] * qin[2] + qin[3] * qin[3])
     q = qin
-    q[0] = q[0]/qnorm
-    q[1] = q[1]/qnorm
-    q[2] = q[2]/qnorm
-    q[3] = q[3]/qnorm
-    pose = Mat([[ 1 - 2*q[2]*q[2] - 2*q[3]*q[3]  ,  2*q[1]*q[2] - 2*q[3]*q[0]  ,  2*q[1]*q[3] + 2*q[2]*q[0]   ,  0],
-          [2*q[1]*q[2] + 2*q[3]*q[0]       ,  1 - 2*q[1]*q[1] - 2*q[3]*q[3] , 2*q[2]*q[3] - 2*q[1]*q[0] ,  0],
-          [2*q[1]*q[3] - 2*q[2]*q[0]       ,  2*q[2]*q[3] + 2*q[1]*q[0]   ,   1 - 2*q[1]*q[1] - 2*q[2]*q[2], 0],
-          [0 , 0 , 0 , 1]])
+    q[0] = q[0] / qnorm
+    q[1] = q[1] / qnorm
+    q[2] = q[2] / qnorm
+    q[3] = q[3] / qnorm
+    pose = Mat([[1 - 2*q[2]*q[2] - 2*q[3]*q[3], 2*q[1]*q[2] - 2*q[3]*q[0],     2*q[1]*q[3] + 2*q[2]*q[0],     0],
+                [2*q[1]*q[2] + 2*q[3]*q[0],     1 - 2*q[1]*q[1] - 2*q[3]*q[3], 2*q[2]*q[3] - 2*q[1]*q[0],     0],
+                [2*q[1]*q[3] - 2*q[2]*q[0],     2*q[2]*q[3] + 2*q[1]*q[0],     1 - 2*q[1]*q[1] - 2*q[2]*q[2], 0],
+                [0,                             0,                             0,                             1]])
     return pose
 
 
@@ -823,7 +883,8 @@ def Pose_2_ABB(H):
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     q = pose_2_quaternion(H)
-    return [H[0,3],H[1,3],H[2,3],q[0],q[1],q[2],q[3]]
+    return [H[0, 3], H[1, 3], H[2, 3], q[0], q[1], q[2], q[3]]
+
 
 def print_pose_ABB(pose):
     """Displays an ABB RAPID target (the same way it is displayed in IRC5 controllers).
@@ -834,7 +895,8 @@ def print_pose_ABB(pose):
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     q = pose_2_quaternion(pose)
-    print('[[%.3f,%.3f,%.3f],[%.6f,%.6f,%.6f,%.6f]]'%(pose[0,3],pose[1,3],pose[2,3],q[0],q[1],q[2],q[3]))
+    print('[[%.3f,%.3f,%.3f],[%.6f,%.6f,%.6f,%.6f]]' % (pose[0, 3], pose[1, 3], pose[2, 3], q[0], q[1], q[2], q[3]))
+
 
 def Pose_2_UR(pose):
     """Calculate the p[x,y,z,u,v,w] position with rotation vector for a pose target. This is the same format required by Universal Robot controllers.
@@ -842,67 +904,71 @@ def Pose_2_UR(pose):
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
     NUMERIC_TOLERANCE = 1e-8
+
     def saturate_1(value):
-        return min(max(value,-1.0),1.0)
-        
-    angle = acos(  saturate_1((pose[0,0]+pose[1,1]+pose[2,2]-1)*0.5)   )    
-    rxyz = [pose[2,1]-pose[1,2], pose[0,2]-pose[2,0], pose[1,0]-pose[0,1]]
+        return min(max(value, -1.0), 1.0)
+
+    angle = acos(saturate_1((pose[0, 0] + pose[1, 1] + pose[2, 2] - 1) * 0.5))
+    rxyz = [pose[2, 1] - pose[1, 2], pose[0, 2] - pose[2, 0], pose[1, 0] - pose[0, 1]]
     if angle < NUMERIC_TOLERANCE:
-        rxyz = [0,0,0]
+        rxyz = [0, 0, 0]
     else:
         sin_angle = sin(angle)
         if abs(sin_angle) < NUMERIC_TOLERANCE or norm(rxyz) < NUMERIC_TOLERANCE:
-            d3 = [pose[0,0],pose[1,1],pose[2,2]]
+            d3 = [pose[0, 0], pose[1, 1], pose[2, 2]]
             mx = max(d3)
             mx_id = d3.index(mx)
             if mx_id == 0:
-                rxyz = [pose[0,0]+1, pose[1,0]  , pose[2,0]  ]
+                rxyz = [pose[0, 0] + 1, pose[1, 0], pose[2, 0]]
             elif mx_id == 1:
-                rxyz = [pose[0,1]  , pose[1,1]+1, pose[2,1]  ]
+                rxyz = [pose[0, 1], pose[1, 1] + 1, pose[2, 1]]
             else:
-                rxyz = [pose[0,2]  , pose[1,2]  , pose[2,2]+1]
-            
-            rxyz = mult3(rxyz, angle/(sqrt(max(0,2*(1+mx)))))            
-        else:            
+                rxyz = [pose[0, 2], pose[1, 2], pose[2, 2] + 1]
+
+            rxyz = mult3(rxyz, angle / (sqrt(max(0, 2 * (1 + mx)))))
+        else:
             rxyz = normalize3(rxyz)
             rxyz = mult3(rxyz, angle)
-    return [pose[0,3], pose[1,3], pose[2,3], rxyz[0], rxyz[1], rxyz[2]]
-    
+    return [pose[0, 3], pose[1, 3], pose[2, 3], rxyz[0], rxyz[1], rxyz[2]]
+
+
 def UR_2_Pose(xyzwpr):
     """Calculate the pose target given a p[x,y,z,u,v,w] cartesian target with rotation vector. This is the same format required by Universal Robot controllers.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`
     """
-    x,y,z,w,p,r = xyzwpr
-    wpr = [w,p,r]
+    x, y, z, w, p, r = xyzwpr
+    wpr = [w, p, r]
     angle = norm(wpr)
-    cosang = cos(0.5*angle)
-    
+    cosang = cos(0.5 * angle)
+
     if angle == 0.0:
-        q234 = [0.0,0.0,0.0]
-    else:    
-        ratio = sin(0.5*angle)/angle
+        q234 = [0.0, 0.0, 0.0]
+    else:
+        ratio = sin(0.5 * angle) / angle
         q234 = mult3(wpr, ratio)
-    
+
     q1234 = [cosang, q234[0], q234[1], q234[2]]
     pose = quaternion_2_pose(q1234)
-    pose.setPos([x,y,z])
+    pose.setPos([x, y, z])
     return pose
-    
+
+
 #----------------------------------------------------
 #-------- ROBOT MODEL (D-H and D-H M) ---------------
 
-def dh(rz,tx=None,tz=None,rx=None):
+
+def dh(rz, tx=None, tz=None, rx=None):
     """Returns the Denavit-Hartenberg 4x4 matrix for a robot link.
     calling dh(rz,tx,tz,rx) is the same as using rotz(rz)*transl(tx,0,tz)*rotx(rx)
     calling dh(rz,tx,tz,rx) is the same as calling dh([rz,tx,tz,rx])
     """
-    if tx is None: [rz,tx,tz,rx] = rz
-        
+    if tx is None: [rz, tx, tz, rx] = rz
+
     crx = math.cos(rx)
     srx = math.sin(rx)
     crz = math.cos(rz)
-    srz = math.sin(rz)    
+    srz = math.sin(rz)
     return Mat( [[crz, -srz*crx,  srz*srx, tx*crz],
                  [srz,  crz*crx, -crz*srx, tx*srz],
                  [  0,      srx,      crx,     tz],
@@ -915,12 +981,12 @@ def dhm(rx, tx=None, tz=None, rz=None):
 
     calling dhm(rx,tx,tz,rz) is the same as calling dhm([rx,tx,tz,rz])
     """
-    if tx is None: [rx,tx,tz,rz] = rx
-        
+    if tx is None: [rx, tx, tz, rz] = rx
+
     crx = math.cos(rx)
     srx = math.sin(rx)
     crz = math.cos(rz)
-    srz = math.sin(rz)    
+    srz = math.sin(rz)
     return Mat([[crz,        -srz,    0,      tx],
                 [crx*srz, crx*crz, -srx, -tz*srx],
                 [srx*srz, crz*srx,  crx,  tz*crx],
@@ -948,6 +1014,7 @@ def joints_2_angles(jin, type):
         jout[5] = -jin[5]
     return jout
 
+
 def angles_2_joints(jin, type):
     """Converts the angles between links into the robot motor space depending on the type of the robot."""
     jout = jin
@@ -967,19 +1034,23 @@ def angles_2_joints(jin, type):
         jout[3] = -jin[3]
         jout[5] = -jin[5]
     return jout
-                
+
+
 #----------------------------------------------------
-#-------- Useful geometric tools ---------------                   
+#-------- Useful geometric tools ---------------
+
 
 def norm(p):
     """Returns the norm of a 3D vector"""
-    return sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2])
-   
+    return sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2])
+
+
 def normalize3(a):
     """Returns the unitary vector"""
-    norminv = 1.0/norm(a)
-    return [a[0]*norminv,a[1]*norminv,a[2]*norminv]
-    
+    norminv = 1.0 / norm(a)
+    return [a[0] * norminv, a[1] * norminv, a[2] * norminv]
+
+
 def cross(a, b):
     """Returns the cross product of two 3D vectors"""
     c = [a[1]*b[2] - a[2]*b[1],
@@ -987,93 +1058,108 @@ def cross(a, b):
          a[0]*b[1] - a[1]*b[0]]
     return c
 
-def dot(a,b):
+
+def dot(a, b):
     """Returns the dot product of two 3D vectors"""
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
-    
-def angle3(a,b):
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+def angle3(a, b):
     """Returns the angle in radians of two 3D vectors"""
-    cos_angle = dot(normalize3(a),normalize3(b))
+    cos_angle = dot(normalize3(a), normalize3(b))
     cos_angle = min(1.0, max(-1.0, cos_angle))
     return acos(cos_angle)
+
 
 def pose_angle(pose):
     """Returns the angle in radians of a 4x4 matrix pose
 
     :param pose: pose
     :type pose: :class:`.Mat`"""
-    cos_ang = (pose[0,0]+pose[1,1]+pose[2,2]-1)/2
-    cos_ang = min(max(cos_ang,-1),1)
+    cos_ang = (pose[0, 0] + pose[1, 1] + pose[2, 2] - 1) / 2
+    cos_ang = min(max(cos_ang, -1), 1)
     return acos(cos_ang)
+
 
 def pose_angle_between(pose1, pose2):
     """Returns the angle in radians between two poses (4x4 matrix pose)"""
-    return pose_angle(invH(pose1)*pose2)
-    
-def mult3(v,d):
+    return pose_angle(invH(pose1) * pose2)
+
+
+def mult3(v, d):
     """Multiplies a 3D vector to a scalar"""
-    return [v[0]*d, v[1]*d, v[2]*d]
+    return [v[0] * d, v[1] * d, v[2] * d]
 
-def subs3(a,b):
+
+def subs3(a, b):
     """Subtracts two 3D vectors c=a-b"""
-    return [a[0]-b[0],a[1]-b[1],a[2]-b[2]]
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 
-def add3(a,b):
+
+def add3(a, b):
     """Adds two 3D vectors c=a+b"""
-    return [a[0]+b[0],a[1]+b[1],a[2]+b[2]]
-    
-def distance(a,b):
-    """Calculates the distance between two points"""
-    return norm(subs3(a,b))
+    return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 
-def pose_is_similar(a,b, tolerance=0.1):
+
+def distance(a, b):
+    """Calculates the distance between two points"""
+    return norm(subs3(a, b))
+
+
+def pose_is_similar(a, b, tolerance=0.1):
     """Check if the pose is similar. Returns True if both poses are less than 0.1 mm or 0.1 deg appart. Optionally provide the tolerance in mm+deg"""
-    if distance(a.Pos(), b.Pos()) + pose_angle_between(a,b) * 180/pi < tolerance:
+    if distance(a.Pos(), b.Pos()) + pose_angle_between(a, b) * 180 / pi < tolerance:
         return True
     return False
 
-def intersect_line_2_plane(pline,vline,pplane,vplane):
+
+def intersect_line_2_plane(pline, vline, pplane, vplane):
     """Calculates the intersection betweeen a line and a plane"""
-    D = -dot(vplane,pplane)
-    k = -(D+dot(vplane,pline))/dot(vplane,vline)
-    p = add3(pline,mult3(vline,k))
+    D = -dot(vplane, pplane)
+    k = -(D + dot(vplane, pline)) / dot(vplane, vline)
+    p = add3(pline, mult3(vline, k))
     return p
 
-def proj_pt_2_plane(point,planepoint,planeABC):
+
+def proj_pt_2_plane(point, planepoint, planeABC):
     """Projects a point to a plane"""
-    return intersect_line_2_plane(point,planeABC,planepoint,planeABC)
+    return intersect_line_2_plane(point, planeABC, planepoint, planeABC)
+
 
 def proj_pt_2_line(point, paxe, vaxe):
     """Projects a point to a line"""
-    vpaxe2point = subs3(point,paxe)
-    dist = dot(vaxe,vpaxe2point)/dot(vaxe,vaxe)
-    return add3(paxe,mult3(vaxe,dist))
+    vpaxe2point = subs3(point, paxe)
+    dist = dot(vaxe, vpaxe2point) / dot(vaxe, vaxe)
+    return add3(paxe, mult3(vaxe, dist))
+
 
 def fitPlane(points):
     """Best fits a plane to a cloud of points"""
     import numpy as np
-    XYZ = np.array(points)    
-    [rows,cols] = XYZ.shape
+    XYZ = np.array(points)
+    [rows, cols] = XYZ.shape
     # Set up constraint equations of the form  AB = 0,
     # where B is a column vector of the plane coefficients
     # in the form b(1)*X + b(2)*Y +b(3)*Z + b(4) = 0.
-    p = (np.ones((rows,1)))
-    AB = np.hstack([XYZ,p])
-    [u, d, v] = np.linalg.svd(AB,0)        
-    B = v[3,:]                  # Solution is last column of v.
+    p = (np.ones((rows, 1)))
+    AB = np.hstack([XYZ, p])
+    [u, d, v] = np.linalg.svd(AB, 0)
+    B = v[3, :]  # Solution is last column of v.
     nn = np.linalg.norm(B[0:3])
     B = B / nn
-    pplane = [0,0,-(B[3]/B[2])]
+    pplane = [0, 0, -(B[3] / B[2])]
     vplane = B[0:3].tolist()
-    return pplane, vplane  
+    return pplane, vplane
 
-                
+
 #----------------------------------------------------
 #--------       Mat matrix class      ---------------
+
 
 class MatrixError(Exception):
     """ An exception class for Matrix """
     pass
+
 
 class Mat(object):
     """Mat is a matrix object. The main purpose of this object is to represent a pose in the 3D space (position and orientation).
@@ -1118,72 +1204,71 @@ class Mat(object):
             robot.MoveJ(pose2)                      # Make a joint move to the new position
             # target.setPose(pose2)                  # We can also update the pose to targets, tools, reference frames, objects, ...
     """
-    
     def __init__(self, rows=None, ncols=None):
         if ncols is None:
             if rows is None:
                 m = 4
                 n = 4
-                self.rows = [[0]*n for x in range(m)]
+                self.rows = [[0] * n for x in range(m)]
             else:
-                if isinstance(rows,Mat):
+                if isinstance(rows, Mat):
                     rows = rows.copy().rows
                 m = len(rows)
                 transpose = 0
-                if isinstance(rows,list) and len(rows) == 0:
+                if isinstance(rows, list) and len(rows) == 0:
                     # Check empty matrix
                     self.rows = [[]]
                     n = 0
                     return
-                    
-                if not isinstance(rows[0],list):
+
+                if not isinstance(rows[0], list):
                     rows = [rows]
                     transpose = 1
-                    
+
                 n = len(rows[0])
-                if any([len(row) != n for row in rows[1:]]):# Validity check
+                if any([len(row) != n for row in rows[1:]]):  # Validity check
                     #raise Exception(MatrixError, "inconsistent row length")
                     # make the size uniform (fill blanks with zeros)
                     n = max([len(i) for i in rows])
                     for row in rows:
-                        row += [0]*(n-len(row))
-                    
+                        row += [0] * (n - len(row))
+
                 self.rows = rows
                 if transpose:
                     self.rows = [list(item) for item in zip(*self.rows)]
         else:
-            m = max(rows,0)
-            n = max(ncols,0)
+            m = max(rows, 0)
+            n = max(ncols, 0)
             if m == 0:
                 m = 1
                 n = 0
-                
-            self.rows = [[0]*n for x in range(m)]
-            
+
+            self.rows = [[0] * n for x in range(m)]
+
     def __iter__(self):
         if self.size(0) == 0 or self.size(1) == 0:
             return iter([])
         return iter(self.tr().rows)
-            
+
     def copy(self):
         sz = self.size()
-        newmat = Mat(sz[0],sz[1])
+        newmat = Mat(sz[0], sz[1])
         for i in range(sz[0]):
             for j in range(sz[1]):
-                newmat[i,j] = self[i,j]
+                newmat[i, j] = self[i, j]
         return newmat
-        
+
     def __len__(self):
         """Return the number of columns"""
         return len(self.rows[0])
-        
+
     def ColsCount(self):
         """Return the number of coumns. Same as len().
 
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.RowsCount`
         """
         return len(self.rows[0])
-        
+
     def RowsCount(self):
         """Return the number of rows
 
@@ -1191,7 +1276,7 @@ class Mat(object):
 
         """
         return len(self.rows[0])
-        
+
     def Cols(self):
         """Retrieve the matrix as a list of columns (list of list of float).
 
@@ -1208,40 +1293,40 @@ class Mat(object):
                 [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [10, 20, 30, 1]]
         """
         return self.tr().rows
-        
+
     def Rows(self):
         """Get the matrix as a list of lists
 
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
         """
         return self.rows
-        
+
     def __getitem__(self, idx):
-        if isinstance(idx,int):#integer A[1]
+        if isinstance(idx, int):  #integer A[1]
             return tr(Mat(self.rows[idx]))
-        elif isinstance(idx,slice):#one slice: A[1:3]
+        elif isinstance(idx, slice):  #one slice: A[1:3]
             return Mat(self.rows[idx])
-        else:#two slices: A[1:3,1:3]
+        else:  #two slices: A[1:3,1:3]
             idx1 = idx[0]
             idx2 = idx[1]
-            if isinstance(idx1,int) and isinstance(idx2,int):
+            if isinstance(idx1, int) and isinstance(idx2, int):
                 return self.rows[idx1][idx2]
-            matsize =self.size()
-            if isinstance(idx1,slice):
+            matsize = self.size()
+            if isinstance(idx1, slice):
                 indices1 = idx1.indices(matsize[0])
                 rg1 = range(*indices1)
-            else: #is int
-                rg1 = range(idx1,idx1+1)
-            if isinstance(idx2,slice):
+            else:  #is int
+                rg1 = range(idx1, idx1 + 1)
+            if isinstance(idx2, slice):
                 indices2 = idx2.indices(matsize[1])
                 rg2 = range(*indices2)
-            else: #is int
-                rg2 = range(idx2,idx2+1)                    
+            else:  #is int
+                rg2 = range(idx2, idx2 + 1)
             #newm = int(abs((rg1.stop-rg1.start)/rg1.step))
             #newn = int(abs((rg2.stop-rg2.start)/rg2.step))
             newm = rg1
             newn = rg2
-            newmat = Mat(len(newm),len(newn))
+            newmat = Mat(len(newm), len(newn))
             cm = 0
             for i in rg1:
                 cn = 0
@@ -1250,19 +1335,20 @@ class Mat(object):
                     cn = cn + 1
                 cm = cm + 1
             return newmat
+
     def __setitem__(self, idx, item):
-        if isinstance(item,float) or isinstance(item,int):
+        if isinstance(item, float) or isinstance(item, int):
             item = Mat([[item]])
         elif isinstance(item, list):
             item = Mat(item)
-        
+
         matsize = self.size()
-        if isinstance(idx,int):#integer A[1]
+        if isinstance(idx, int):  #integer A[1]
             idx1 = idx
             idx2 = 0
             #raise Exception(MatrixError, "Cannot set item. Use [i,:] instead.")
             #self.rows[idx] = item
-        elif isinstance(idx,slice):#one slice: A[1:3]
+        elif isinstance(idx, slice):  #one slice: A[1:3]
             # raise Exception(MatrixError, "Cannot set item. Use [a:b,:] instead.")
             idx1 = idx
             idx2 = 0
@@ -1270,24 +1356,24 @@ class Mat(object):
             idx1 = idx[0]
             idx2 = idx[1]
 
-        # at this point we have two slices: example A[1:3,1:3]       
-        if isinstance(idx1,slice):
+        # at this point we have two slices: example A[1:3,1:3]
+        if isinstance(idx1, slice):
             indices1 = idx1.indices(matsize[0])
             rg1 = range(*indices1)
-        else: #is int
-            rg1 = range(idx1,idx1+1)
-        if isinstance(idx2,slice):
+        else:  #is int
+            rg1 = range(idx1, idx1 + 1)
+        if isinstance(idx2, slice):
             indices2 = idx2.indices(matsize[1])
             rg2 = range(*indices2)
-        else: #is int
-            rg2 = range(idx2,idx2+1)
+        else:  #is int
+            rg2 = range(idx2, idx2 + 1)
         #newm = int(abs((rg1.stop-rg1.start)/rg1.step))
         #newn = int(abs((rg2.stop-rg2.start)/rg2.step))
         newm = rg1
         newn = rg2
         itmsz = item.size()
         if len(newm) != itmsz[0] or len(newn) != itmsz[1]:
-            raise Exception(MatrixError, "Submatrix indices does not match the new matrix sizes",itmsz[0],"x",itmsz[1],"<-",newm,"x",newn)
+            raise Exception(MatrixError, "Submatrix indices does not match the new matrix sizes", itmsz[0], "x", itmsz[1], "<-", newm, "x", newn)
         #newmat = Mat(newm,newn)
         cm = 0
         for i in rg1:
@@ -1295,32 +1381,32 @@ class Mat(object):
             for j in rg2:
                 self.rows[i][j] = item.rows[cm][cn]
                 cn = cn + 1
-            cm = cm + 1        
-        
+            cm = cm + 1
+
     def __str__(self):
         #s='\n [ '.join([(', '.join([str(item) for item in row])+' ],') for row in self.rows])
         str_add = ''
         if self.isHomogeneous():
-            x,y,z,rx,ry,rz = Pose_2_TxyzRxyz(self)
-            str_add = 'Pose(%.3f, %.3f, %.3f,  %.3f, %.3f, %.3f):\n' % (x,y,z,rx*180/pi,ry*180/pi,rz*180/pi)
-        
-        s='\n [ '.join([(', '.join([('%.3f'%item if type(item) == float else str(item)) for item in row])+' ],') for row in self.rows])
+            x, y, z, rx, ry, rz = Pose_2_TxyzRxyz(self)
+            str_add = 'Pose(%.3f, %.3f, %.3f,  %.3f, %.3f, %.3f):\n' % (x, y, z, rx * 180 / pi, ry * 180 / pi, rz * 180 / pi)
+
+        s = '\n [ '.join([(', '.join([('%.3f' % item if type(item) == float else str(item)) for item in row]) + ' ],') for row in self.rows])
         return str_add + '[[ ' + s[:-1] + ']\n'
 
     def __repr__(self):
-        s=str(self)
+        s = str(self)
         rank = str(self.size())
-        rep="Matrix: %s\n%s" % (rank,s)
+        rep = "Matrix: %s\n%s" % (rank, s)
         return rep
-                         
+
     def tr(self):
         """Returns the transpose of the matrix"""
         if self.size(0) == 0 or self.size(1) == 0:
-            return Mat(0,0)
-        mat = Mat([list(item) for item in zip(*self.rows)])      
+            return Mat(0, 0)
+        mat = Mat([list(item) for item in zip(*self.rows)])
         return mat
 
-    def size(self,dim=None):
+    def size(self, dim=None):
         """Returns the size of a matrix (m,n).
         Dim can be set to 0 to return m (rows) or 1 to return n (columns)"""
         m = len(self.rows)
@@ -1331,14 +1417,14 @@ class Mat(object):
 
         if dim is None:
             return (m, n)
-        elif dim==0:
+        elif dim == 0:
             return m
-        elif dim==1:
+        elif dim == 1:
             return n
         else:
             raise Exception(MatrixError, "Invalid dimension!")
-        
-    def catV(self,mat2):
+
+    def catV(self, mat2):
         """Concatenate with another matrix (vertical concatenation)"""
         if not isinstance(mat2, Mat):
             #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
@@ -1349,12 +1435,12 @@ class Mat(object):
         if sz1[1] != sz2[1]:
             raise Exception(MatrixError, "Horizontal size of matrices does not match")
 
-        newmat = Mat(sz1[0]+sz2[0],sz1[1])
-        newmat[0:sz1[0],:] = self
-        newmat[sz1[0]:,:] = mat2        
+        newmat = Mat(sz1[0] + sz2[0], sz1[1])
+        newmat[0:sz1[0], :] = self
+        newmat[sz1[0]:, :] = mat2
         return newmat
-    
-    def catH(self,mat2):
+
+    def catH(self, mat2):
         """Concatenate with another matrix (horizontal concatenation)"""
         if not isinstance(mat2, Mat):
             #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
@@ -1365,28 +1451,28 @@ class Mat(object):
         if sz1[0] != sz2[0]:
             raise Exception(MatrixError, "Horizontal size of matrices does not match")
 
-        newmat = Mat(sz1[0],sz1[1]+sz2[1])
-        newmat[:,:sz1[1]] = self
-        newmat[:,sz1[1]:] = mat2   
+        newmat = Mat(sz1[0], sz1[1] + sz2[1])
+        newmat[:, :sz1[1]] = self
+        newmat[:, sz1[1]:] = mat2
         return newmat
-        
+
     def __eq__(self, other):
         """Test equality"""
         if other is None:
             return False
         #return (other.rows == self.rows)
         return pose_is_similar(other, self)
-        
+
     def __ne__(self, other):
         return not (self == other)
-        
+
     def __add__(self, mat):
         """Add a matrix to this matrix and
         return the new matrix. It doesn't modify
         the current matrix"""
-        if isinstance(mat,int) or isinstance(mat,float):
-            m, n = self.size()     
-            result = Mat(m, n)        
+        if isinstance(mat, int) or isinstance(mat, float):
+            m, n = self.size()
+            result = Mat(m, n)
             for x in range(m):
                 for y in range(n):
                     result.rows[x][y] = self.rows[x][y] + mat
@@ -1394,9 +1480,9 @@ class Mat(object):
         sz = self.size()
         m = sz[0]
         n = sz[1]
-        ret = Mat(m,n)
+        ret = Mat(m, n)
         if sz != mat.size():
-            raise Exception(MatrixError, "Can not add matrices of sifferent sizes!")   
+            raise Exception(MatrixError, "Can not add matrices of sifferent sizes!")
         for x in range(m):
             row = [sum(item) for item in zip(self.rows[x], mat.rows[x])]
             ret.rows[x] = row
@@ -1406,9 +1492,9 @@ class Mat(object):
         """Subtract a matrix from this matrix and
         return the new matrix. It doesn't modify
         the current matrix"""
-        if isinstance(mat,int) or isinstance(mat,float):
-            m, n = self.size()     
-            result = Mat(m, n)        
+        if isinstance(mat, int) or isinstance(mat, float):
+            m, n = self.size()
+            result = Mat(m, n)
             for x in range(m):
                 for y in range(n):
                     result.rows[x][y] = self.rows[x][y] - mat
@@ -1416,11 +1502,11 @@ class Mat(object):
         sz = self.size()
         m = sz[0]
         n = sz[1]
-        ret = Mat(m,n)
+        ret = Mat(m, n)
         if sz != mat.size():
-            raise Exception(MatrixError, "Can not subtract matrices of sifferent sizes!")    
+            raise Exception(MatrixError, "Can not subtract matrices of sifferent sizes!")
         for x in range(m):
-            row = [item[0]-item[1] for item in zip(self.rows[x], mat.rows[x])]
+            row = [item[0] - item[1] for item in zip(self.rows[x], mat.rows[x])]
             ret.rows[x] = row
         return ret
 
@@ -1428,42 +1514,42 @@ class Mat(object):
         """Multiply a matrix with this matrix and
         return the new matrix. It doesn't modify
         the current matrix"""
-        if isinstance(mat,int) or isinstance(mat,float):
-            m, n = self.size()     
-            mulmat = Mat(m, n)        
+        if isinstance(mat, int) or isinstance(mat, float):
+            m, n = self.size()
+            mulmat = Mat(m, n)
             for x in range(m):
                 for y in range(n):
-                    mulmat.rows[x][y] = self.rows[x][y]*mat
+                    mulmat.rows[x][y] = self.rows[x][y] * mat
             return mulmat
-        if isinstance(mat,list):#case of a matrix times a vector            
+        if isinstance(mat, list):  #case of a matrix times a vector
             szvect = len(mat)
             m = self.size(0)
-            matvect = Mat(mat)            
+            matvect = Mat(mat)
             if szvect + 1 == m:
-                vectok = catV(matvect,Mat([[1]]))
-                result = self*vectok
-                return (result[:-1,:]).tr().rows[0]
+                vectok = catV(matvect, Mat([[1]]))
+                result = self * vectok
+                return (result[:-1, :]).tr().rows[0]
             elif szvect == m:
-                result = self*Mat(matvect)
+                result = self * Mat(matvect)
                 return result.tr().rows[0]
             else:
-                raise Exception(MatrixError, "Invalid product")       
+                raise Exception(MatrixError, "Invalid product")
         else:
             matm, matn = mat.size()
             m, n = self.size()
             if (n != matm):
-                raise Exception(MatrixError, "Matrices cannot be multipled (unexpected size)!")        
+                raise Exception(MatrixError, "Matrices cannot be multipled (unexpected size)!")
             mat_t = mat.tr()
-            mulmat = Mat(m, matn)        
+            mulmat = Mat(m, matn)
             for x in range(m):
                 for y in range(mat_t.size(0)):
-                    mulmat.rows[x][y] = sum([item[0]*item[1] for item in zip(self.rows[x], mat_t.rows[y])])
+                    mulmat.rows[x][y] = sum([item[0] * item[1] for item in zip(self.rows[x], mat_t.rows[y])])
             return mulmat
-    
+
     def eye(self, m=4):
         """Make identity matrix of size (mxm)"""
-        rows = [[0]*m for x in range(m)]
-        idx = 0        
+        rows = [[0] * m for x in range(m)]
+        idx = 0
         for row in rows:
             row[idx] = 1
             idx += 1
@@ -1471,127 +1557,127 @@ class Mat(object):
 
     def isHomogeneous(self):
         """returns 1 if it is a Homogeneous matrix"""
-        m,n = self.size()
+        m, n = self.size()
         if m != 4 or n != 4:
             return False
         #if self[3,:] != Mat([[0.0,0.0,0.0,1.0]]):
         #    return False
-        test = self[0:3,0:3]
-        test = test*test.tr()
-        test[0,0] = test[0,0] - 1.0
-        test[1,1] = test[1,1] - 1.0
-        test[2,2] = test[2,2] - 1.0
+        test = self[0:3, 0:3]
+        test = test * test.tr()
+        test[0, 0] = test[0, 0] - 1.0
+        test[1, 1] = test[1, 1] - 1.0
+        test[2, 2] = test[2, 2] - 1.0
         zero = 0.0
         for x in range(3):
             for y in range(3):
-                zero = zero + abs(test[x,y])
+                zero = zero + abs(test[x, y])
         if zero > 1e-4:
             return False
         return True
 
-    def RelTool(self, x, y, z, rx=0,ry=0,rz=0):
+    def RelTool(self, x, y, z, rx=0, ry=0, rz=0):
         """Calculates a target relative with respect to the tool coordinates.
         X,Y,Z are in mm, W,P,R are in degrees. The behavior of this function is the same as ABB's RAPID RelTool command."""
         return RelTool(self, x, y, z, rx, ry, rz)
-    
-    def Offset(self, x, y, z, rx=0,ry=0,rz=0):
+
+    def Offset(self, x, y, z, rx=0, ry=0, rz=0):
         """Calculates a relative target with respect to the reference frame coordinates.
         X,Y,Z are in mm, W,P,R are in degrees."""
-        return Offset(self, x, y, z, rx, ry, rz)        
-    
+        return Offset(self, x, y, z, rx, ry, rz)
+
     def invH(self):
         """Returns the inverse of this pose (homogeneous matrix assumed)"""
         if not self.isHomogeneous():
             raise Exception(MatrixError, "Pose matrix is not homogeneous. invH() can only compute the inverse of a homogeneous matrix")
         Hout = self.tr()
-        Hout[3,0:3] = Mat([[0,0,0]])
-        Hout[0:3,3] = (Hout[0:3,0:3]*self[0:3,3])*(-1)
+        Hout[3, 0:3] = Mat([[0, 0, 0]])
+        Hout[0:3, 3] = (Hout[0:3, 0:3] * self[0:3, 3]) * (-1)
         return Hout
-    
+
     def inv(self):
         """Returns the inverse of this pose (homogeneous matrix assumed)"""
         return self.invH()
-    
+
     def tolist(self):
         """Returns the first column of the matrix as a list"""
         return tr(self).rows[0]
-    
+
     def list(self):
         """Returns the first column of the matrix as a list"""
         return tr(self).rows[0]
-        
+
     def list2(self):
         """Returns the matrix as list of lists (one list per column)"""
         return tr(self).rows
-                
+
     def Pos(self):
         """Returns the position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3,3].tolist()
-        
+        return self[0:3, 3].tolist()
+
     def VX(self):
         """Returns the X vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3,0].tolist()
-        
+        return self[0:3, 0].tolist()
+
     def VY(self):
         """Returns the Y vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3,1].tolist()
-        
+        return self[0:3, 1].tolist()
+
     def VZ(self):
         """Returns the Z vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3,2].tolist()
-        
+        return self[0:3, 2].tolist()
+
     def Rot33(self):
         """Returns the sub 3x3 rotation matrix"""
-        return self[0:3,0:3]
-        
+        return self[0:3, 0:3]
+
     def setPos(self, newpos):
         """Sets the XYZ position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        self[0,3] = newpos[0]
-        self[1,3] = newpos[1]
-        self[2,3] = newpos[2]
+        self[0, 3] = newpos[0]
+        self[1, 3] = newpos[1]
+        self[2, 3] = newpos[2]
         return self
-        
+
     def setVX(self, v_xyz):
         """Sets the VX vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0,0] = v_xyz[0]
-        self[1,0] = v_xyz[1]
-        self[2,0] = v_xyz[2]
+        self[0, 0] = v_xyz[0]
+        self[1, 0] = v_xyz[1]
+        self[2, 0] = v_xyz[2]
         return self
-        
+
     def setVY(self, v_xyz):
         """Sets the VY vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0,1] = v_xyz[0]
-        self[1,1] = v_xyz[1]
-        self[2,1] = v_xyz[2]
+        self[0, 1] = v_xyz[0]
+        self[1, 1] = v_xyz[1]
+        self[2, 1] = v_xyz[2]
         return self
-        
+
     def setVZ(self, v_xyz):
         """Sets the VZ vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0,2] = v_xyz[0]
-        self[1,2] = v_xyz[1]
-        self[2,2] = v_xyz[2]
+        self[0, 2] = v_xyz[0]
+        self[1, 2] = v_xyz[1]
+        self[2, 2] = v_xyz[2]
         return self
-        
+
     def translationPose(self):
         """Return the translation pose of this matrix. The rotation returned is set to identity (assumes that a 4x4 homogeneous matrix is being used)"""
         return transl(self.Pos())
-        
+
     def rotationPose(self):
         """Return the rotation pose of this matrix. The position returned is set to [0,0,0] (assumes that a 4x4 homogeneous matrix is being used)"""
         mat_rotation = Mat(self)
-        mat_rotation.setPos([0,0,0])
+        mat_rotation.setPos([0, 0, 0])
         return mat_rotation
-        
+
     def SaveCSV(self, strfile):
         """Save the :class:`.Mat` Matrix to a CSV (Comma Separated Values) file. The file can be easily opened as a spreadsheet such as Excel.
 
         .. seealso:: :func:`~Mat.SaveMat`, :func:`~robodk.SaveList`, :func:`~robodk.LoadList`, :func:`~robodk.LoadMat`
         """
         self.tr().SaveMat(strfile)
-    
+
     def SaveMat(self, strfile, separator=','):
         """Save the :class:`.Mat` Matrix to a CSV or TXT file
 
@@ -1603,15 +1689,16 @@ class Mat(object):
         file = open(strfile, 'w')
         for j in range(n):
             for i in range(m):
-                file.write(('%.6f'+separator) % self.rows[i][j])          
-            file.write('\n')                
+                file.write(('%.6f' + separator) % self.rows[i][j])
+            file.write('\n')
         file.close()
-    
+
+
 #-------------------------------------------------------
 # FTP TRANSFER Tools
 def RemoveFileFTP(ftp, filepath):
     """Delete a file on a remote server."""
-    import ftplib    
+    import ftplib
     try:
         ftp.delete(filepath)
     except ftplib.all_errors as e:
@@ -1619,9 +1706,10 @@ def RemoveFileFTP(ftp, filepath):
         print('POPUP: Could not remove file {0}: {1}'.format(filepath, e))
         sys.stdout.flush()
 
+
 def RemoveDirFTP(ftp, path):
     """Recursively delete a directory tree on a remote server."""
-    import ftplib    
+    import ftplib
     wd = ftp.pwd()
     try:
         names = ftp.nlst(path)
@@ -1634,11 +1722,11 @@ def RemoveDirFTP(ftp, path):
         if os.path.split(name)[1] in ('.', '..'): continue
         print('RemoveDirFTP: Checking {0}'.format(name))
         try:
-            ftp.cwd(path+'/'+name)  # if we can cwd to it, it's a folder
+            ftp.cwd(path + '/' + name)  # if we can cwd to it, it's a folder
             ftp.cwd(wd)  # don't try a nuke a folder we're in
-            RemoveDirFTP(ftp, path+'/'+name)
+            RemoveDirFTP(ftp, path + '/' + name)
         except ftplib.all_errors:
-            ftp.delete(path+'/'+name)
+            ftp.delete(path + '/' + name)
             #RemoveFileFTP(ftp, name)
 
     try:
@@ -1646,12 +1734,13 @@ def RemoveDirFTP(ftp, path):
     except ftplib.all_errors as e:
         print('RemoveDirFTP: Could not remove {0}: {1}'.format(path, e))
 
+
 def UploadDirFTP(localpath, server_ip, remote_path, username, password):
     """Upload a folder to a robot through FTP recursively"""
     import ftplib
     import os
     import sys
-    main_folder = os.path.basename(os.path.normpath(localpath))    
+    main_folder = os.path.basename(os.path.normpath(localpath))
     print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (server_ip, username))
     sys.stdout.flush()
     try:
@@ -1659,7 +1748,7 @@ def UploadDirFTP(localpath, server_ip, remote_path, username, password):
         print('Connection established')
     except:
         error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip,error_str))
+        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
         sys.stdout.flush()
         pause(4)
         return False
@@ -1682,7 +1771,7 @@ def UploadDirFTP(localpath, server_ip, remote_path, username, password):
         pause(4)
         #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
         return False
-        
+
     def uploadThis(path):
         files = os.listdir(path)
         os.chdir(path)
@@ -1701,12 +1790,14 @@ def UploadDirFTP(localpath, server_ip, remote_path, username, password):
                 uploadThis(path + r'\{}'.format(f))
         myFTP.cwd('..')
         os.chdir('..')
-    uploadThis(myPath) # now call the recursive function
+
+    uploadThis(myPath)  # now call the recursive function
     myFTP.close()
     print("POPUP: Folder trasfer completed: <font color=\"blue\">%s</font>" % remote_path)
     sys.stdout.flush()
     return True
-    
+
+
 def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
     """Upload a file to a robot through FTP"""
     filepath = getFileDir(file_path_name)
@@ -1720,7 +1811,7 @@ def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
         myFTP = ftplib.FTP(server_ip, username, password)
     except:
         error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip,error_str))
+        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
         sys.stdout.flush()
         pause(4)
         return False
@@ -1740,7 +1831,7 @@ def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
         pause(4)
         #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
         return False
-        
+
     def uploadThis(localfile, filename):
         print('  Sending file: %s' % localfile)
         print("POPUP: Sending file: %s" % filename)
@@ -1755,7 +1846,8 @@ def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
     sys.stdout.flush()
     return True
 
-def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec = 2):
+
+def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec=2):
     """Upload a program or a list of programs to the robot through FTP provided the connection parameters"""
     # Iterate through program list if it is a list of files
     if isinstance(program, list):
@@ -1764,25 +1856,25 @@ def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec = 2)
             sys.stdout.flush()
             pause(pause_sec)
             return
-        
+
         for prog in program:
-            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, 0)        
-        
+            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, 0)
+
         print("POPUP: <font color=\"blue\">Done: %i files and folders successfully transferred</font>" % len(program))
         sys.stdout.flush()
         pause(pause_sec)
         print("POPUP: Done")
         sys.stdout.flush()
         return
-    
+
     import os
     if os.path.isfile(program):
         print('Sending program file %s...' % program)
         UploadFileFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)
     else:
         print('Sending program folder %s...' % program)
-        UploadDirFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)    
-    
+        UploadDirFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)
+
     pause(pause_sec)
     print("POPUP: Done")
     sys.stdout.flush()
@@ -1807,84 +1899,85 @@ else:
         from tkinter import messagebox
     except ModuleNotFoundError:
         _tkinter_available = False
-       
+
 #------------------
 
 #------------------
 if _tkinter_available:
-    def getOpenFile(path_preference="C:/RoboDK/Library/", strfile = '', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+
+    def getOpenFile(path_preference="C:/RoboDK/Library/", strfile='', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to open. Returns a file object opened in read-only mode. Use returned value.name to retrieve the file path."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
-        options['defaultextension'] = defaultextension #'.txt'
-        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['defaultextension'] = defaultextension  #'.txt'
+        options['filetypes'] = filetypes  # [('all files', '.*'), ('text files', '.txt')]
         options['initialfile'] = strfile
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         file_path = filedialog.askopenfilename(**options)
         # same as: file_path = tkinter.filedialog.askopenfilename()
         return file_path
-        
-    def getSaveFile(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+
+    def getSaveFile(path_preference="C:/RoboDK/Library/", strfile='file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to save. Returns a file object opened in write-only mode. Use returned value.name to retrieve the file path."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
-        options['defaultextension'] = defaultextension #'.txt'
-        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['defaultextension'] = defaultextension  #'.txt'
+        options['filetypes'] = filetypes  # [('all files', '.*'), ('text files', '.txt')]
         options['initialfile'] = strfile
         #options['parent'] = root
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         file_path = filedialog.asksaveasfile(**options)
         #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
         return file_path
-        
-    def getOpenFileName(path_preference="C:/RoboDK/Library/", strfile = '', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+
+    def getOpenFileName(path_preference="C:/RoboDK/Library/", strfile='', strtitle='Open file ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to open. Returns the file path as a string."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
-        options['defaultextension'] = defaultextension #'.txt'
-        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['defaultextension'] = defaultextension  #'.txt'
+        options['filetypes'] = filetypes  # [('all files', '.*'), ('text files', '.txt')]
         options['initialfile'] = strfile
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         file_path = filedialog.askopenfilename(**options)
         # same as: file_path = tkinter.filedialog.askopenfilename()
         return file_path
-        
-    def getSaveFileName(path_preference="C:/RoboDK/Library/", strfile = 'file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
+
+    def getSaveFileName(path_preference="C:/RoboDK/Library/", strfile='file.txt', strtitle='Save file as ...', defaultextension='.txt', filetypes=[('All files', '.*'), ('Text files', '.txt')]):
         """Pop up a file dialog window to select a file to save. Returns the file path as a string."""
         options = {}
         options['initialdir'] = path_preference
         options['title'] = strtitle
-        options['defaultextension'] = defaultextension #'.txt'
-        options['filetypes'] = filetypes # [('all files', '.*'), ('text files', '.txt')]
+        options['defaultextension'] = defaultextension  #'.txt'
+        options['filetypes'] = filetypes  # [('all files', '.*'), ('text files', '.txt')]
         options['initialfile'] = strfile
         #options['parent'] = root
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         file_path = filedialog.asksaveasfilename(**options)
         #same as: file_path = tkinter.filedialog.asksaveasfile(**options)
         return file_path
-        
-    def getSaveFolder(path_programs='/',popup_msg='Select a directory to save your program'):
-        """Ask the user to select a folder to save a program or other file. Returns the path of the folder as a string."""   
+
+    def getSaveFolder(path_programs='/', popup_msg='Select a directory to save your program'):
+        """Ask the user to select a folder to save a program or other file. Returns the path of the folder as a string."""
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         dirname = filedialog.askdirectory(initialdir=path_programs, title=popup_msg)
         if len(dirname) < 1:
             dirname = None
-            
+
         return dirname
-        
+
     def getOpenFolder(path_preference="C:/RoboDK/Library/", strtitle='Open folder ...'):
         """Pop up a folder dialog window to select a folder to open. Returns the path of the folder as a string."""
         options = {}
@@ -1892,22 +1985,21 @@ if _tkinter_available:
         options['initialdir'] = path_preference
         root = tkinter.Tk()
         root.withdraw()
-        root.attributes("-topmost", True)    
+        root.attributes("-topmost", True)
         file_path = filedialog.askdirectory(**options)
         return file_path
-        
-         
+
     def ShowMessage(msg, title=None):
         """Show a blocking message"""
         print(msg)
         if title is None:
             title = msg
-            
+
         root = tkinter.Tk()
         root.overrideredirect(1)
         root.withdraw()
-        root.attributes("-topmost", True)        
-        result = messagebox.showinfo(title, msg) #, icon='warning')#, parent=texto)
+        root.attributes("-topmost", True)
+        result = messagebox.showinfo(title, msg)  #, icon='warning')#, parent=texto)
         root.destroy()
         return result
 
@@ -1916,12 +2008,12 @@ if _tkinter_available:
         print(msg)
         if title is None:
             title = msg
-            
+
         root = tkinter.Tk()
         root.overrideredirect(1)
         root.withdraw()
-        root.attributes("-topmost", True)        
-        result = messagebox.askyesno(title, msg) #, icon='warning')#, parent=texto)
+        root.attributes("-topmost", True)
+        result = messagebox.askyesno(title, msg)  #, icon='warning')#, parent=texto)
         root.destroy()
         return result
 
@@ -1930,18 +2022,16 @@ if _tkinter_available:
         print(msg)
         if title is None:
             title = msg
-            
+
         root = tkinter.Tk()
         root.overrideredirect(1)
         root.withdraw()
-        root.attributes("-topmost", True)        
-        result = messagebox.askyesnocancel(title, msg)#, icon='warning')#, parent=texto)
+        root.attributes("-topmost", True)
+        result = messagebox.askyesnocancel(title, msg)  #, icon='warning')#, parent=texto)
         root.destroy()
-        return result  
-        
-        
-    class MessageBox(object):
+        return result
 
+    class MessageBox(object):
         def __init__(self, msg, b1, b2, frame, t, entry):
 
             root = self.root = tkinter.Tk()
@@ -1997,7 +2087,7 @@ if _tkinter_available:
             # a trick to activate the window (on windows 7)
             #root.deiconify()
             # if t is specified: call time_out after t seconds
-            if t: root.after(int(t*1000), func=self.time_out)
+            if t: root.after(int(t * 1000), func=self.time_out)
 
         def b1_action(self, event=None):
             try:
@@ -2031,9 +2121,8 @@ if _tkinter_available:
 
         def to_clip(self, event=None):
             self.root.clipboard_clear()
-            self.root.clipboard_append(self.msg)       
-            
-            
+            self.root.clipboard_append(self.msg)
+
     def mbox(msg, b1='OK', b2='Cancel', frame=True, t=False, entry=None):
         """Create an instance of MessageBox, and get data back from the user.
 
@@ -2064,18 +2153,16 @@ if _tkinter_available:
 
         """
         msgbox = MessageBox(msg, b1, b2, frame, t, entry)
-        
+
         try:
             from robolink import getPathIcon
             iconpath = getPathIcon()
-            msgbox.root.iconbitmap(iconpath)  
+            msgbox.root.iconbitmap(iconpath)
         except:
             print("RoboDK's Robolink module not found")
-        
-        msgbox.root.attributes("-topmost", True)           
+
+        msgbox.root.attributes("-topmost", True)
         msgbox.root.mainloop()
         # the function pauses here until the mainloop is quit
         msgbox.root.destroy()
         return msgbox.returning
-
-
