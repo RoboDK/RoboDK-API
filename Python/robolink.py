@@ -2297,7 +2297,7 @@ class Robolink:
             return inside
 
     def setCollisionActive(self, check_state=COLLISION_ON):
-        """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects (:class:`.Item`). This allows altering the collision map for Collision checking.
+        """Set global collision checking ON or OFF (COLLISION_ON/COLLISION_OFF).
 
         .. seealso:: :func:`~robolink.Robolink.setCollisionActivePair`, :func:`~robolink.Item.Visible`
         """
@@ -2311,7 +2311,9 @@ class Robolink:
             return ncollisions
 
     def setCollisionActivePair(self, check_state, item1, item2, id1=0, id2=0):
-        """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects. Specify the link id for robots or moving mechanisms (id 0 is the base)
+        """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects (:class:`.Item`).
+        This allows altering the collision map for Collision checking.
+        Specify the link id for robots or moving mechanisms (id 0 is the base)
         Returns 1 if succeeded. Returns 0 if setting the pair failed (wrong id is provided)
 
         .. seealso:: :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Robolink.Collisions`, :func:`~robolink.Item.Visible`
@@ -4312,8 +4314,6 @@ class Item():
     def PoseAbs(self):
         """Return the pose (:class:`robodk.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
 
-        .. seealso:: :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPose`
-
         Example:
 
         .. code-block:: python
@@ -4339,8 +4339,9 @@ class Item():
 
             # Display the result
             print(pose)
-            RDK.ShowMessage("The relative pose is:\n" + str(pose))
+            RDK.ShowMessage("The relative pose is: " + str(pose))
 
+        .. seealso:: :func:`~robolink.Item.setPoseAbs`, :func:`~robolink.Item.Pose`, :func:`~robolink.Item.setPose`
         """
         with self.link._lock:
             self.link._check_connection()
