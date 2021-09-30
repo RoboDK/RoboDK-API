@@ -1495,7 +1495,7 @@ class Robolink:
             self._check_status()
 
     def Version(self):
-        """Close RoboDK window and finish RoboDK's execution."""
+        """Return RoboDK's version as a string"""
         with self._lock:
             self._check_connection()
             command = 'Version'
@@ -3283,7 +3283,7 @@ class Robolink:
             self._check_status()
             return cam_handle
 
-    def Cam2D_Snapshot(self, file_save_img, cam_handle=0, params=""):
+    def Cam2D_Snapshot(self, file_save_img="", cam_handle=0, params=""):
         """Take a snapshot from a simulated camera view and save it to a file. Returns 1 if success, 0 otherwise.
 
         :param str file_save_img: file path to save. Formats supported include PNG, JPEG, TIFF, ...
@@ -3313,7 +3313,11 @@ class Robolink:
                 self._send_line(file_save_img)
                 self._send_line(params)
                 self.COM.settimeout(3600)
-                success = self._rec_int()
+                if len(file_save_img) == 0:
+                    # If the file name is empty we are expecting a byte array as PNG file
+                    success = self._rec_bytes()
+                else:
+                    success = self._rec_int()
                 self.COM.settimeout(self.TIMEOUT)
 
             self._check_status()
@@ -6511,6 +6515,9 @@ if __name__ == "__main__":
         ref = RDK.AddFrame("Ref")
         prm = ''
         c = RDK.Cam2D_Add(ref, prm)
+        b = RDK.Cam2D_Snapshot("", c)
+        with open("./Test.png", 'wb') as fid:
+            fid.write(b)
 
     def TestCollision():
         RDK = Robolink()
