@@ -1,4 +1,4 @@
-# Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -469,6 +469,22 @@ def LoadMat(strfile, separator=','):
 
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
+def Pose(x,y,z,r,p,w):
+    """Create a pose from XYZRPW coordinates. The pose format is the one used by KUKA (XYZABC coordinates). This is function is the same as KUKA_2_Pose (with the difference that the input values are not a list). This function is used as "p" by the intermediate file when generating a robot program.
+    
+    .. seealso:: :func:`~robodk.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
+    """
+    a = r*math.pi/180.0
+    b = p*math.pi/180.0
+    c = w*math.pi/180.0
+    ca = math.cos(a)
+    sa = math.sin(a)
+    cb = math.cos(b)
+    sb = math.sin(b)
+    cc = math.cos(c)
+    sc = math.sin(c)
+    return Mat([[cb*ca,ca*sc*sb-cc*sa,sc*sa+cc*ca*sb,x],[cb*sa,cc*ca+sc*sb*sa,cc*sb*sa-ca*sc,y],[-sb,cb*sc,cc*cb,z],[0.0,0.0,0.0,1.0]])
+    
 def pose_2_xyzrpw(H):
     """Calculates the equivalent position (mm) and Euler angles (deg) as an [x,y,z,r,p,w] array, given a pose.
     It returns the values that correspond to the following operation:
