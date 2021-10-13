@@ -718,8 +718,8 @@ class Robolink:
 
     def _is_connected(self):
         """Returns 1 if connection is valid, returns 0 if connection is invalid"""
-        #with self._lock:
-        if not self.COM: return 0
+        if not self.COM:
+            return 0
         connected = 1
         #try:
         #    self.COM.settimeout(0)
@@ -2194,16 +2194,15 @@ class Robolink:
 
         .. seealso:: :func:`~robolink.Robolink.Item`, :func:`~robolink.Robolink.AddProgram`, :func:`~robolink.Item.Busy`
         """
-        with self._lock:
-            if wait_for_finished:
-                prog_item = self.Item(fcn_param, ITEM_TYPE_PROGRAM)
-                if not prog_item.Valid():
-                    raise Exception('Invalid program %s' % fcn_param)
-                prog_status = prog_item.RunProgram()
-                prog_item.WaitFinished()
-            else:
-                prog_status = self.RunCode(fcn_param, True)
-            return prog_status
+        if wait_for_finished:
+            prog_item = self.Item(fcn_param, ITEM_TYPE_PROGRAM)
+            if not prog_item.Valid():
+                raise Exception('Invalid program %s' % fcn_param)
+            prog_status = prog_item.RunProgram()
+            prog_item.WaitFinished()
+        else:
+            prog_status = self.RunCode(fcn_param, True)
+        return prog_status
 
     def RunCode(self, code, code_is_fcn_call=False):
         """Generate a program call or a customized instruction output in a program.
@@ -2746,7 +2745,6 @@ class Robolink:
 
         Tip: use :func:`~robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
         """
-        #with self._lock:
         Item(self, 0).ShowSequence(matrix)
 
     def LaserTracker_Measure(self, estimate=[0, 0, 0], search=False):
@@ -2811,8 +2809,13 @@ class Robolink:
             self._send_xyz(p2abs)
             itempicked = self._rec_item()
             xyz = self._rec_xyz()
-            collision = itempicked.Valid()
             self._check_status()
+
+            # Avoid a deadlock
+            self._lock.release()
+            collision = itempicked.Valid()
+            self._lock.acquire()
+
             return collision, itempicked, xyz
 
     def setPoses(self, items, poses):
@@ -3956,12 +3959,11 @@ class Item():
                 print("The tool item does not exist!")
                 quit()
         """
-        with self.link._lock:
-            if self.item == 0: return False
-            if check_deleted:
-                return self.Type() >= 0
-
-            return True
+        if self.item == 0:
+            return False
+        if check_deleted:
+            return self.Type() >= 0
+        return True
 
     def setParent(self, parent):
         """Attaches the item to a new parent while maintaining the relative position with its parent.
