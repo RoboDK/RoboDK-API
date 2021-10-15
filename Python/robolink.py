@@ -2591,6 +2591,8 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.getParam`
         """
         with self._lock:
+            if isinstance(value,Item):
+                value = str(value.item)
             self._check_connection()
             if isinstance(value, bytes):
                 command = 'S_DataParam'
@@ -6049,15 +6051,15 @@ class Item():
     def customInstruction(self, name, path_run, path_icon="", blocking=1, cmd_run_on_robot=""):
         """Add a custom instruction. This instruction will execute a Python file or an executable file.
 
-        :param name: digital input (string or number)
+        :param name: Name of the instruction
         :type name: str or int
-        :param path_run: path to run (relative to RoboDK/bin folder or absolute path)
+        :param path_run: path of the executable or Python script to run (relative to RoboDK/bin/ folder or absolute path)
         :type path_run: str
-        :param path_icon: icon path (relative to RoboDK/bin folder or absolute path)
+        :param path_icon: instruction image/icon path (relative to RoboDK/bin/ folder or absolute path)
         :type path_icon: str
         :param blocking: 1 if blocking, 0 if it is a non blocking executable trigger
         :type blocking: int
-        :param cmd_run_on_robot: Command to run through the driver when connected to the robot
+        :param cmd_run_on_robot: Command to send to the driver when connected to the robot
         :type cmd_run_on_robot: str
 
         .. seealso:: :func:`~robolink.Robolink.AddProgram`
@@ -6482,6 +6484,8 @@ class Item():
                 self.link._send_bytes(value)
                 self.link._check_status()
                 return True
+            elif isinstance(value,Item):
+                value = str(value.item)
             else:
                 value = str(value)
             value = value.replace('\n', '<br>')
