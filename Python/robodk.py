@@ -534,7 +534,7 @@ def xyzrpw_2_pose(xyzrpw):
     return H
 
 
-def Pose(tx, ty, tz, rx, ry, rz):
+def Pose(x, y, z, rx, ry, rz):
     """Returns the pose (:class:`.Mat`) given the position (mm) and Euler angles (deg) as an array [x,y,z,rx,ry,rz].
     The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     This pose format is printed for homogeneous poses automatically. This Pose is the same representation used by Mecademic or Staubli robot controllers.
@@ -548,8 +548,13 @@ def Pose(tx, ty, tz, rx, ry, rz):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`
     """
-    return TxyzRxyz_2_Pose([tx, ty, tz, rx * pi / 180, ry * pi / 180, rz * pi / 180])
-
+    srx = math.sin(rx)
+    crx = math.cos(rx)
+    sry = math.sin(ry)
+    cry = math.cos(ry)
+    srz = math.sin(rz)
+    crz = math.cos(rz)
+    return Mat([[cry * crz, -cry * srz, sry, x], [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y], [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z], [0, 0, 0, 1]])
 
 def TxyzRxyz_2_Pose(xyzrpw):
     """Returns the pose given the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz].
