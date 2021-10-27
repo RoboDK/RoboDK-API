@@ -193,4 +193,5 @@ class TestRobotSim6Axes(test_RobotSimBase.TestRobotSimBase):
         
 
 if __name__ == '__main__':
+    import unittest
     unittest.main()

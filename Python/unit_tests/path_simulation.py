@@ -330,4 +330,5 @@ class Program():
 
 # ---------------- Convert Frame (x,y,z,rx,ry,rz) to a RoboDK Matrix ----------------------
 def xyzrp2ToPose(pose):
+    #from robodk import Pose
     return Pose(pose[0], pose[1], pose[2], pose[3], pose[4], pose[5])

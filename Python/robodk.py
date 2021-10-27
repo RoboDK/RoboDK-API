@@ -469,7 +469,7 @@ def LoadMat(strfile, separator=','):
 
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
-def Pose(x,y,z,r,p,w):
+def PosePP(x,y,z,r,p,w):
     """Create a pose from XYZRPW coordinates. The pose format is the one used by KUKA (XYZABC coordinates). This is function is the same as KUKA_2_Pose (with the difference that the input values are not a list). This function is used as "p" by the intermediate file when generating a robot program.
     
     .. seealso:: :func:`~robodk.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
@@ -534,7 +534,7 @@ def xyzrpw_2_pose(xyzrpw):
     return H
 
 
-def Pose(x, y, z, rx, ry, rz):
+def Pose(x, y, z, rxd, ryd, rzd):
     """Returns the pose (:class:`.Mat`) given the position (mm) and Euler angles (deg) as an array [x,y,z,rx,ry,rz].
     The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     This pose format is printed for homogeneous poses automatically. This Pose is the same representation used by Mecademic or Staubli robot controllers.
@@ -542,12 +542,15 @@ def Pose(x, y, z, rx, ry, rz):
     :param float tx: position (X coordinate)
     :param float ty: position (Y coordinate)
     :param float tz: position (Z coordinate)
-    :param float rx: first rotation (X coordinate)
-    :param float ry: first rotation (Y coordinate)
-    :param float rz: first rotation (Z coordinate)
+    :param float rxd: first rotation in deg (X coordinate)
+    :param float ryd: first rotation in deg (Y coordinate)
+    :param float rzd: first rotation in deg (Z coordinate)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`
     """
+    rx = rxd * pi / 180
+    ry = ryd * pi / 180
+    rz = rzd * pi / 180
     srx = math.sin(rx)
     crx = math.cos(rx)
     sry = math.sin(ry)
