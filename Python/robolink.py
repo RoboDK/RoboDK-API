@@ -2257,13 +2257,16 @@ class Robolink:
 
         .. seealso:: :func:`~robolink.Robolink.Update`
         """
-        #auto_render = not always_render
+        auto_render = None
         if always_render is True:
             auto_render = 0
         elif always_render is False:
             auto_render = 1
         elif always_render == 2:
             auto_render = 2
+
+        if auto_render is None:
+            return
 
         with self._lock:
             self._check_connection()
