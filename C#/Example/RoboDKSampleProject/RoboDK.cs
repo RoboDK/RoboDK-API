@@ -2966,6 +2966,29 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Shows a RoboDK popup to select one object from the open station.
+    /// An item type can be specified to filter desired items. If no type is specified, all items are selectable.
+    /// </summary>
+    /// <param name="message">Message to pop up</param>
+    /// <param name="list of items">optionally filter by RoboDK.ITEM_TYPE_*</param>
+    /// <returns></returns>
+    public Item ItemUserPick(string message, List<Item> itemlist)
+    {
+        _check_connection();
+        _send_Line("PickItemList");
+        _send_Line(message);
+        _send_Int(itemlist.Count);
+        foreach (Item itm in itemlist){
+            _send_Item(itm);
+        }
+        _COM.ReceiveTimeout = 3600 * 1000;
+        Item item = _recv_Item();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return item;
+    }
+
+    /// <summary>
     /// Shows or raises the RoboDK window
     /// </summary>
     public void ShowRoboDK()
