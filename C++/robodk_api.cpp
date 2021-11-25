@@ -2126,17 +2126,15 @@ RoboDK::~RoboDK(){
 quint64 RoboDK::ProcessID(){
     if (_PROCESS == 0) {
         QString response = Command("MainProcess_ID");
-        _PROCESS = response.toInt();
+        _PROCESS = response.toULongLong();
     }
     return _PROCESS;
 }
 
 quint64 RoboDK::WindowID(){
     qint64 window_id;
-    if (window_id == 0) {
-        QString response = Command("MainWindow_ID");
-        window_id = response.toInt();
-    }
+	QString response = Command("MainWindow_ID");
+	window_id = response.toULongLong();
     return window_id;
 }
 
@@ -3199,6 +3197,32 @@ void RoboDK::setSelection(QList<Item> list_items){
         _send_Item(list_items[i]);
     }
     _check_status();
+}
+
+
+/// <summary>
+/// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
+/// </summary>
+void RoboDK::PluginLoad(const QString &pluginName, int load){
+    _check_connection();
+    _send_Line("PluginLoad");
+	_send_Line(pluginName);
+    _send_Int(load);
+    _check_status();
+}
+
+/// <summary>
+/// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
+/// </summary>
+QString RoboDK::PluginCommand(const QString &pluginName, const QString &pluginCommand, const QString &pluginValue){
+    _check_connection();
+    _send_Line("PluginCommand");
+	_send_Line(pluginName);
+	_send_Line(pluginCommand);
+	_send_Line(pluginValue);
+	QString result = _recv_Line();
+    _check_status();
+	return result;
 }
 
 

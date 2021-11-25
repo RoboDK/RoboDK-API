@@ -1535,17 +1535,17 @@ int Item::MoveL_Test(const tJoints &j1, const Mat &pose2, double minstep_deg){
 /// Sets the speed and/or the acceleration of a robot.
 /// </summary>
 /// <param name="speed_linear">linear speed in mm/s (-1 = no change)</param>
-/// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
 /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
+/// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
 /// <param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
-void Item::setSpeed(double speed_linear, double accel_linear, double speed_joints, double accel_joints){
+void Item::setSpeed(double speed_linear, double speed_joints, double accel_linear, double accel_joints){
     _RDK->_check_connection();
     _RDK->_send_Line("S_Speed4");
     _RDK->_send_Item(this);
     double speed_accel[4];
     speed_accel[0] = speed_linear;
-    speed_accel[1] = accel_linear;
-    speed_accel[2] = speed_joints;
+    speed_accel[1] = speed_joints;
+    speed_accel[2] = accel_linear;
     speed_accel[3] = accel_joints;
     _RDK->_send_Array(speed_accel, 4);
     _RDK->_check_status();
@@ -2126,14 +2126,15 @@ RoboDK::~RoboDK(){
 quint64 RoboDK::ProcessID(){
     if (_PROCESS == 0) {
         QString response = Command("MainProcess_ID");
-        _PROCESS = response.toInt();
+        _PROCESS = response.toULongLong();
     }
     return _PROCESS;
 }
 
 quint64 RoboDK::WindowID(){
-    QString response = Command("MainWindow_ID");
-    quint64 window_id = response.toInt();
+    qint64 window_id;
+	QString response = Command("MainWindow_ID");
+	window_id = response.toULongLong();
     return window_id;
 }
 
@@ -3196,6 +3197,32 @@ void RoboDK::setSelection(QList<Item> list_items){
         _send_Item(list_items[i]);
     }
     _check_status();
+}
+
+
+/// <summary>
+/// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
+/// </summary>
+void RoboDK::PluginLoad(const QString &pluginName, int load){
+    _check_connection();
+    _send_Line("PluginLoad");
+	_send_Line(pluginName);
+    _send_Int(load);
+    _check_status();
+}
+
+/// <summary>
+/// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
+/// </summary>
+QString RoboDK::PluginCommand(const QString &pluginName, const QString &pluginCommand, const QString &pluginValue){
+    _check_connection();
+    _send_Line("PluginCommand");
+	_send_Line(pluginName);
+	_send_Line(pluginCommand);
+	_send_Line(pluginValue);
+	QString result = _recv_Line();
+    _check_status();
+	return result;
 }
 
 

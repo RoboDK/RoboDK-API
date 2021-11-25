@@ -1,7 +1,6 @@
 #-------------------------------------------------
-#
-# Project created by QtCreator 2018-01-24T15:26:12
-#
+# RoboDK API sample project in C++
+# This example uses Qt5 and the robodk_api.cpp file
 #-------------------------------------------------
 
 QT       += core gui

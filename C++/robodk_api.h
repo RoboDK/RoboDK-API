@@ -1,4 +1,4 @@
-// Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
+// Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -1283,6 +1283,16 @@ public:
     /// </summary>
     /// <returns>List of items to set as selected</returns>
     void setSelection(QList<Item> list_items);
+	
+	/// <summary>
+	/// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
+	/// </summary>
+	void PluginLoad(const QString &pluginName, int load=1);	
+	
+	/// <summary>
+	/// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
+	/// </summary>
+	QString PluginCommand(const QString &pluginName, const QString &pluginCommand, const QString &pluginValue="");
 
     /// <summary>
     /// Show the popup menu to create the ISO9283 path for position accuracy, repeatability and path accuracy performance testing.
@@ -2228,10 +2238,10 @@ public:
     /// Sets the speed and/or the acceleration of a robot.
     /// </summary>
     /// <param name="speed_linear">linear speed in mm/s (-1 = no change)</param>
-    /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
     /// <param name="accel_linear">linear acceleration in mm/s2 (-1 = no change)</param>
+    /// <param name="speed_joints">joint speed in deg/s (-1 = no change)</param>
     /// <param name="accel_joints">joint acceleration in deg/s2 (-1 = no change)</param>
-    void setSpeed(double speed_linear, double speed_joints = -1, double accel_linear = -1, double accel_joints = -1);
+    void setSpeed(double speed_linear, double accel_linear = -1, double speed_joints = -1, double accel_joints = -1);
 
     /// <summary>
     /// Sets the robot movement smoothing accuracy (also known as zone data value).
