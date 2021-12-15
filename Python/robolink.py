@@ -72,6 +72,7 @@ INS_TYPE_PAUSE = 6
 INS_TYPE_EVENT = 7
 INS_TYPE_CODE = 8
 INS_TYPE_PRINT = 9
+INS_TYPE_ROUNDING = 10
 
 # Move types
 MOVE_TYPE_INVALID = -1
@@ -805,18 +806,12 @@ class Robolink:
 
     def _rec_line(self):
         """Receives a string. It reads until if finds LF (\\n)"""
-        string = b''
+        bytes_list = []  # this method is significantly faster than a byte string
         chari = self.COM.recv(1)
         while chari != b'\n':  # read until LF
-            string = string + chari
+            bytes_list.append(chari)
             chari = self.COM.recv(1)
-        return str(string.decode('utf-8'))  # python 2 and python 3 compatible
-        #string = ''
-        #chari = self.COM.recv(1).decode('utf-8')
-        #while chari != '\n':    # read until LF
-        #    string = string + chari
-        #    chari = self.COM.recv(1).decode('utf-8')
-        #return str(string) # python 2 and python 3 compatible
+        return str(b''.join(bytes_list).decode('utf-8'))  # python 2 and python 3 compatible
 
     def _send_item(self, item):
         """Sends an item pointer"""
@@ -849,12 +844,15 @@ class Robolink:
         """Receives a byte array"""
         buffer = self.COM.recv(4)
         bytes_len = struct.unpack('>I', buffer)[0]  #q=unsigned long long (64 bits), d=float64
-        data = b''
+        bytes_list = []  # this method is significantly faster than a byte string
+        bytes_count = 0
         bytes_remaining = bytes_len
         while bytes_remaining > 0:
-            data += self.COM.recv(bytes_remaining)
-            bytes_remaining = bytes_len - len(data)
-        return data
+            data = self.COM.recv(bytes_remaining)
+            bytes_list.append(data)
+            bytes_count += len(data)
+            bytes_remaining = bytes_len - bytes_count
+        return b''.join(bytes_list)
 
     def _send_ptr(self, ptr_h):
         """Sends a generic pointer"""
@@ -966,17 +964,19 @@ class Robolink:
         recvsize = size1 * size2 * 8
         BUFFER_SIZE = 512
         if recvsize > 0:
-            matbytes = b''
-            to_receive = min(recvsize, BUFFER_SIZE)
-            while to_receive > 0:
-                matbytes += self.COM.recv(to_receive)
-                to_receive = min(recvsize - len(matbytes), BUFFER_SIZE)
-            matnums = struct.unpack('>' + str(size1 * size2) + 'd', matbytes)
+            bytes_list = []  # this method is significantly faster than a byte string
+            bytes_count = 0
+            bytes_remaining = min(recvsize, BUFFER_SIZE)
+            while bytes_remaining > 0:
+                data = self.COM.recv(bytes_remaining)
+                bytes_list.append(data)
+                bytes_count += len(data)
+                bytes_remaining = min(recvsize - bytes_count, BUFFER_SIZE)
+            matnums = struct.unpack('>' + str(size1 * size2) + 'd', b''.join(bytes_list))
             mat = robodk.Mat(size1, size2)
             cnt = 0
             for j in range(size2):
                 for i in range(size1):
-                    #mat[i,j] = matnums[cnt]
                     mat.rows[i][j] = matnums[cnt]
                     cnt = cnt + 1
         else:
@@ -1206,6 +1206,7 @@ class Robolink:
     def Connect(self):
         """Establish a connection with RoboDK. If RoboDK is not running it will attempt to start RoboDK from the default installation path (otherwise APPLICATION_DIR must be set properly).
         If the connection succeeds it returns 1, otherwise it returns 0"""
+
         def start_robodk(command):
             print('Starting %s\n' % self.APPLICATION_DIR)
             import subprocess
@@ -1264,7 +1265,7 @@ class Robolink:
                     p.stdout.close()
                 else:
                     #import threading
-                    t = threading.Thread(target=output_reader, args=(p, ))
+                    t = threading.Thread(target=output_reader, args=(p,))
                     t.start()
 
             return True
@@ -2594,7 +2595,7 @@ class Robolink:
         .. seealso:: :func:`~robolink.Robolink.getParam`
         """
         with self._lock:
-            if isinstance(value,Item):
+            if isinstance(value, Item):
                 value = str(value.item)
             self._check_connection()
             if isinstance(value, bytes):
@@ -3804,6 +3805,7 @@ class Item():
             robot.setPoseTool(tool)
             robot.MoveJ(target)             # Move the robot to the target using the selected reference frame
     """
+
     def __init__(self, link, ptr_item=0, itemtype=-1):
 
         self.link = link  # it is recommended to keep the link as a reference and not a duplicate (otherwise it will establish a new connection at every call)
@@ -6487,7 +6489,7 @@ class Item():
                 self.link._send_bytes(value)
                 self.link._check_status()
                 return True
-            elif isinstance(value,Item):
+            elif isinstance(value, Item):
                 value = str(value.item)
             else:
                 value = str(value)
