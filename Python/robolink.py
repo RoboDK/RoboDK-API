@@ -706,6 +706,9 @@ class Robolink:
     PORT = -1  # current port
     BUILD = 0  # This variable holds the build id and is used for version checking
 
+    NEW_INSTANCE = None  # If not None, a new RoboDK instance was spawned when initiating connection
+    QUIT_ON_CLOSE = False  # If true, new instances of RoboDK will be closed when this object is deleted
+
     # Remember last status message
     LAST_STATUS_MESSAGE = ''
 
@@ -1069,13 +1072,14 @@ class Robolink:
                 self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False):
+    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False, quit_on_close=False):
         """A connection is attempted upon creation of the object
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
         In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
         In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
+        In  6 (optional) : quit_on_close -> Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
 
         """
         with self._lock:
@@ -1088,6 +1092,8 @@ class Robolink:
             self.IP = robodk_ip
             self.ARGUMENTS = args
             self.CLOSE_STD_OUT = close_std_out
+            self.QUIT_ON_CLOSE = quit_on_close
+
             if robodk_path is not None:
                 self.APPLICATION_DIR = robodk_path
             else:
@@ -1173,6 +1179,13 @@ class Robolink:
 
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
+        if self.QUIT_ON_CLOSE and self.NEW_INSTANCE is not None:
+            print('Stopping %s\n' % self.APPLICATION_DIR)
+            self.CloseRoboDK()
+            with self._lock:
+                self.NEW_INSTANCE.wait()
+                self.NEW_INSTANCE = None
+
         with self._lock:
             if self.COM:
                 self.COM.close()
@@ -1207,6 +1220,9 @@ class Robolink:
         except:
             print("Failed to reconnect (2)")
 
+    def isNewInstance(self):
+        return self.NEW_INSTANCE is not None
+
     def Connect(self):
         """Establish a connection with RoboDK. If RoboDK is not running it will attempt to start RoboDK from the default installation path (otherwise APPLICATION_DIR must be set properly).
         If the connection succeeds it returns 1, otherwise it returns 0"""
@@ -1225,27 +1241,29 @@ class Robolink:
                         print(ln)
 
             from sys import platform as _platform
-            p = None
+            if self.NEW_INSTANCE is not None:
+                print('Warning: A new instance of RoboDK is being created.')
+            self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                p = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
-                startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
+                #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
                 try:
-                    #p = subprocess.Popen(command,stdout=subprocess.PIPE)
-                    p = subprocess.Popen(command, stdout=subprocess.PIPE)
+                    #self.NEW_INSTANCE = subprocess.Popen(command,stdout=subprocess.PIPE)
+                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
                 except Exception as e:
                     print(str(e))
                     return False
 
-                #p = subprocess.call(startapp)
+                #self.NEW_INSTANCE = subprocess.call(startapp)
             else:
-                p = subprocess.Popen(command, stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
 
             emptyln = 0
-            if p:
+            if self.NEW_INSTANCE:
                 while True:
-                    lineb = p.stdout.readline()
+                    lineb = self.NEW_INSTANCE.stdout.readline()
                     line = str(lineb.decode("utf-8")).strip()
                     if len(lineb) > 0:
                         print(line)
@@ -1266,17 +1284,17 @@ class Robolink:
                 #if self.DEBUG:
                 # Important! Make sure we consume stdout (at least in Debug mode)
                 if self.CLOSE_STD_OUT:
-                    p.stdout.close()
+                    self.NEW_INSTANCE.stdout.close()
                 else:
                     #import threading
-                    t = threading.Thread(target=output_reader, args=(p,))
+                    t = threading.Thread(target=output_reader, args=(self.NEW_INSTANCE,))
                     t.start()
 
             return True
 
-            #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as p:
-            #    self._ProcessID = p.pid
-            #    for line in p.stdout:
+            #with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as self.NEW_INSTANCE:
+            #    self._ProcessID = self.NEW_INSTANCE.pid
+            #    for line in self.NEW_INSTANCE.stdout:
             #        line_ok = line.strip()
             #        print(line_ok)
             #        if 'running' in line_ok.lower():
