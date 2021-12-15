@@ -1135,6 +1135,9 @@ class Robolink:
         # This is already locked
         self.Connect()
 
+    def __del__(self):
+        self.Disconnect()
+
     def _verify_connection(self):
         """Verify that we are connected to the RoboDK API server"""
         # Imortant! this should not thread locked
@@ -1171,7 +1174,8 @@ class Robolink:
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
         with self._lock:
-            self.COM.close()
+            if self.COM:
+                self.COM.close()
 
     def Finish(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated.
@@ -3893,7 +3897,7 @@ class Item():
     def Save(self, filename):
         """Save a station or object to a file
 
-        :param str filename: file to save. Use \*.rdk name for RoboDK stations, \*.stl file for objects, \*.robot file for robots, etc.
+        :param str filename: file to save. Use \\*.rdk name for RoboDK stations, \\*.stl file for objects, \\*.robot file for robots, etc.
 
         .. seealso:: :func:`~robolink.Robolink.AddFile`, :func:`~robolink.Item.AddFile`
         """
