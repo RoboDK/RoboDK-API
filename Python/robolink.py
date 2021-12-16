@@ -3318,7 +3318,7 @@ class Robolink:
         """Take a snapshot from a simulated camera view and save it to a file. Returns 1 if success, 0 otherwise.
 
         :param str file_save_img: file path to save. Formats supported include PNG, JPEG, TIFF, ...
-        :param int cam_handle: camera handle (pointer returned by Cam2D_Add)
+        :param int cam_handle: camera handle (item returned by Cam2D_Add). If the camera handle is set to None it will take a snapshot of the full 3D views.
         :param str params: additional options (use, "Grayscale", "Depth" or "Color" to modify the camera snapshot)
 
         .. seealso:: :func:`~robolink.Robolink.Cam2D_Add`, :func:`~robolink.Robolink.Cam2D_Close`
