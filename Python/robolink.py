@@ -5474,8 +5474,47 @@ class Item():
         :type target: :class:`robodk.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
-
+        
         .. seealso:: :func:`~robolink.Item.MoveJ`, :func:`~robolink.Item.MoveL`, :func:`~robolink.Item.MoveC`, :func:`~robolink.Robolink.AddTarget`
+        
+        
+        Example:
+
+        .. code-block:: python
+
+            from robolink import *      # import the robolink library
+            RDK = Robolink()            # Connect to the RoboDK API
+            r = RDK.Item('', ITEM_TYPE_ROBOT)
+            r.MoveJ(pose_from) # Move to the approach point
+            r.SearchL(pose_to) # Move towards the search location
+
+            # Retrieve the contact point as joints and pose:
+            targetJoints = r.Joints().list()
+            targetPose = r.Pose()
+
+            status = r.setParam("Driver", "Status")
+            # Status is "1" a contact was found or "0" if not found (empty string means the driver does not support it)
+            
+            if len(status) > 0: 
+                # Important! Not all robot drivers support this "Driver Status" flag
+                # This works in simulation
+                if "1" in status:
+                    # Contact found! We already have the robot joints and pose as targetJoints and targetPose respectively
+                    pass
+                else:
+                    # Nothing found!
+                    targetJoints = None
+                    targetPose = None
+
+            else:
+                # When the driver does not support the Driver Status flag, we can use this workaround to check if we found an interference
+                # Check if we are near the end point (for drivers that don't support the first option)
+                if pose_is_similar(r.Pose(), pose_to, 0.1):
+                    # The robot was not able to detect any interference
+                    targetJoints = None
+                    targetPose = None
+                    
+                    
         """
         self.link._moveX(target, self, 5, blocking)
         return self.SimulatorJoints()
