@@ -80,7 +80,7 @@ MOVE_TYPE_INVALID = -1
 MOVE_TYPE_JOINT = 1
 MOVE_TYPE_LINEAR = 2
 MOVE_TYPE_CIRCULAR = 3
-MOVE_TYPE_LINEARSEARCH = 4  # Such as ABB's SearchL function
+MOVE_TYPE_LINEARSEARCH = 5  # Such as ABB's SearchL function
 
 # Station parameters request
 PATH_OPENSTATION = 'PATH_OPENSTATION'
@@ -1033,7 +1033,7 @@ class Robolink:
                 command = 'MoveC'
 
             self._send_line(command)
-            self._send_int(3)
+            self._send_int(MOVE_TYPE_CIRCULAR)
             if isinstance(target1, Item):  # target1 is an item
                 self._send_int(3)
                 self._send_array([])
@@ -5445,7 +5445,7 @@ class Item():
                 self.addMoveJ(target)
                 return
 
-        self.link._moveX(target, self, 1, blocking)
+        self.link._moveX(target, self, MOVE_TYPE_JOINT, blocking)
 
     def MoveL(self, target, blocking=True):
         """Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements. This function can also be called on Programs and a new movement instruction will be added at the end of the program.
@@ -5465,7 +5465,7 @@ class Item():
                 self.addMoveL(target)
                 return
 
-        self.link._moveX(target, self, 2, blocking)
+        self.link._moveX(target, self, MOVE_TYPE_LINEAR, blocking)
 
     def SearchL(self, target, blocking=True):
         """Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode). This function waits (blocks) until the robot finishes its movements.
@@ -5516,7 +5516,7 @@ class Item():
                     
                     
         """
-        self.link._moveX(target, self, 5, blocking)
+        self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, blocking)
         return self.SimulatorJoints()
 
     def MoveC(self, target1, target2, blocking=True):
