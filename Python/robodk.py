@@ -431,6 +431,7 @@ def LoadList(strfile, separator=',', codec='utf-8'):
             # SaveList(csvdata, strfile, ',')
 
     """
+
     def todecimal(value):
         try:
             return float(value)
@@ -469,22 +470,23 @@ def LoadMat(strfile, separator=','):
 
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
-def PosePP(x,y,z,r,p,w):
+def PosePP(x, y, z, r, p, w):
     """Create a pose from XYZRPW coordinates. The pose format is the one used by KUKA (XYZABC coordinates). This is function is the same as KUKA_2_Pose (with the difference that the input values are not a list). This function is used as "p" by the intermediate file when generating a robot program.
     
     .. seealso:: :func:`~robodk.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.TxyzRxyz_2_Pose`, :func:`~robodk.Pose_2_TxyzRxyz`, :func:`~robodk.Pose_2_ABB`, :func:`~robodk.Pose_2_Adept`, :func:`~robodk.Pose_2_Comau`, :func:`~robodk.Pose_2_Fanuc`, :func:`~robodk.Pose_2_KUKA`, :func:`~robodk.Pose_2_Motoman`, :func:`~robodk.Pose_2_Nachi`, :func:`~robodk.Pose_2_Staubli`, :func:`~robodk.Pose_2_UR`, :func:`~robodk.quaternion_2_pose`
     """
-    a = r*math.pi/180.0
-    b = p*math.pi/180.0
-    c = w*math.pi/180.0
+    a = r * math.pi / 180.0
+    b = p * math.pi / 180.0
+    c = w * math.pi / 180.0
     ca = math.cos(a)
     sa = math.sin(a)
     cb = math.cos(b)
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[cb*ca,ca*sc*sb-cc*sa,sc*sa+cc*ca*sb,x],[cb*sa,cc*ca+sc*sb*sa,cc*sb*sa-ca*sc,y],[-sb,cb*sc,cc*cb,z],[0.0,0.0,0.0,1.0]])
-    
+    return Mat([[cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x], [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y], [-sb, cb * sc, cc * cb, z], [0.0, 0.0, 0.0, 1.0]])
+
+
 def pose_2_xyzrpw(H):
     """Calculates the equivalent position (mm) and Euler angles (deg) as an [x,y,z,r,p,w] array, given a pose.
     It returns the values that correspond to the following operation:
@@ -558,6 +560,7 @@ def Pose(x, y, z, rxd, ryd, rzd):
     srz = math.sin(rz)
     crz = math.cos(rz)
     return Mat([[cry * crz, -cry * srz, sry, x], [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y], [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z], [0, 0, 0, 1]])
+
 
 def TxyzRxyz_2_Pose(xyzrpw):
     """Returns the pose given the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz].
@@ -987,7 +990,8 @@ def dh(rz, tx=None, tz=None, rx=None):
     calling dh(rz,tx,tz,rx) is the same as using rotz(rz)*transl(tx,0,tz)*rotx(rx)
     calling dh(rz,tx,tz,rx) is the same as calling dh([rz,tx,tz,rx])
     """
-    if tx is None: [rz, tx, tz, rx] = rz
+    if tx is None:
+        [rz, tx, tz, rx] = rz
 
     crx = math.cos(rx)
     srx = math.sin(rx)
@@ -1005,7 +1009,8 @@ def dhm(rx, tx=None, tz=None, rz=None):
 
     calling dhm(rx,tx,tz,rz) is the same as calling dhm([rx,tx,tz,rz])
     """
-    if tx is None: [rx, tx, tz, rz] = rx
+    if tx is None:
+        [rx, tx, tz, rz] = rx
 
     crx = math.cos(rx)
     srx = math.sin(rx)
@@ -1228,6 +1233,7 @@ class Mat(object):
             robot.MoveJ(pose2)                      # Make a joint move to the new position
             # target.setPose(pose2)                  # We can also update the pose to targets, tools, reference frames, objects, ...
     """
+
     def __init__(self, rows=None, ncols=None):
         if ncols is None:
             if rows is None:
@@ -1743,7 +1749,8 @@ def RemoveDirFTP(ftp, path):
         return
 
     for name in names:
-        if os.path.split(name)[1] in ('.', '..'): continue
+        if os.path.split(name)[1] in ('.', '..'):
+            continue
         print('RemoveDirFTP: Checking {0}'.format(name))
         try:
             ftp.cwd(path + '/' + name)  # if we can cwd to it, it's a folder
@@ -2056,6 +2063,7 @@ if _tkinter_available:
         return result
 
     class MessageBox(object):
+
         def __init__(self, msg, b1, b2, frame, t, entry):
 
             root = self.root = tkinter.Tk()
@@ -2064,13 +2072,16 @@ if _tkinter_available:
             # ctrl+c to copy self.msg
             root.bind('<Control-c>', func=self.to_clip)
             # remove the outer frame if frame=False
-            if not frame: root.overrideredirect(True)
+            if not frame:
+                root.overrideredirect(True)
             # default values for the buttons to return
             self.b1_return = True
             self.b2_return = False
             # if b1 or b2 is a tuple unpack into the button text & return value
-            if isinstance(b1, tuple): b1, self.b1_return = b1
-            if isinstance(b2, tuple): b2, self.b2_return = b2
+            if isinstance(b1, tuple):
+                b1, self.b1_return = b1
+            if isinstance(b2, tuple):
+                b2, self.b2_return = b2
             # main frame
             frm_1 = tkinter.Frame(root)
             frm_1.pack(ipadx=2, ipady=2)
@@ -2092,7 +2103,8 @@ if _tkinter_available:
             btn_1 = tkinter.Button(frm_2, width=8, text=b1)
             btn_1['command'] = self.b1_action
             btn_1.pack(side='left')
-            if not entry: btn_1.focus_set()
+            if not entry:
+                btn_1.focus_set()
             btn_2 = tkinter.Button(frm_2, width=8, text=b2)
             btn_2['command'] = self.b2_action
             btn_2.pack(side='left')
@@ -2111,7 +2123,8 @@ if _tkinter_available:
             # a trick to activate the window (on windows 7)
             #root.deiconify()
             # if t is specified: call time_out after t seconds
-            if t: root.after(int(t * 1000), func=self.time_out)
+            if t:
+                root.after(int(t * 1000), func=self.time_out)
 
         def b1_action(self, event=None):
             try:
