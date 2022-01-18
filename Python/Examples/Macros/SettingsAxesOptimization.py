@@ -85,7 +85,7 @@ AxesOptimSettings = {
 # Update one value, for example, make it active:
 ToUpdate = {}
 ToUpdate["Active"] = 1
-json_str = json.dumps(json.dumps(ToUpdate))
+json_str = json.dumps(ToUpdate)
 status = robot.setParam("OptimAxes", json_str)
 print(status)
 
@@ -99,7 +99,7 @@ while True:
         ToUpdate["AbsOn_" + str(i+1)] = count % 2
         ToUpdate["AbsW_" + str(i+1)] = (count+i)
 
-        json_str = json.dumps(json.dumps(ToUpdate))
+        json_str = json.dumps(ToUpdate)
         status = robot.setParam("OptimAxes", json_str)
         print(status)
         

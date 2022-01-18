@@ -22,29 +22,32 @@ else:
     # Option one, retrieve joint list as a matrix (not through a file):
     prog = RDK.ItemUserPick('Select a Program', ITEM_TYPE_PROGRAM)
     
-    # Define the way we want to output
-    Position = 1 # Only provide the joint position and XYZ values
-    Speed = 2 # Calculate speed (added to position)
+    # Define the way we want to output the list of joints
+    Position = 1        # Only provide the joint position and XYZ values
+    Speed = 2           # Calculate speed (added to position)
     SpeedAndAcceleration = 3 # Calculate speed and acceleration (added to position)
-    TimeBased = 4 # Make the calculation time-based (adds a time stamp added to the previous options)
-    TimeBasedFast = 5 # Make the calculation time-based and avoids calculating speeds and accelerations (adds a time stamp added to the previous options)
+    TimeBased = 4       # Make the calculation time-based (adds a time stamp added to the previous options)
+    TimeBasedFast = 5   # Make the calculation time-based and avoids calculating speeds and accelerations (adds a time stamp added to the previous options)
     
     STEP_MM = 1
     STEP_DEG = 1
     FLAGS = TimeBasedFast
-    TIME_STEP = 0.01
-    error_msg, joint_list, error_code = prog.InstructionListJoints(STEP_MM, STEP_DEG, flags=FLAGS, time_step=TIME_STEP)
+    #FLAGS = TimeBased
+    TIME_STEP = 0.025 # time step in seconds
+    status_msg, joint_list, status_code = prog.InstructionListJoints(STEP_MM, STEP_DEG, flags=FLAGS, time_step=TIME_STEP)
 
-    # Option two, write the joint list to a file (recommended if step is very small
+    # Option two, write the joint list to a file (recommended if step is very small)
     #STEP_MM = 0.5
     #STEP_DEG = 0.5
-    #error_msg, joint_list, error_code = prog.InstructionListJoints(STEP_MM, STEP_DEG, 'C:/Users/Albert/Desktop/file.txt')
+    #status_msg, joint_list, status_code = prog.InstructionListJoints(STEP_MM, STEP_DEG, 'C:/Users/user/Desktop/InstructionListJoints' + prog.Name() + '.csv', flags=FLAGS, time_step=TIME_STEP)
+    #quit(0)
     
-    print("Error code:" + str(error_code))
-    print("Error message: " + error_msg)
+    # Status code is negative if there are errors in the program
+    print(joint_list.tr())    
+    print("Size: " + str(len(joint_list)))
+    print("Status code:" + str(status_code))
+    print("Status message: " + status_msg)
     
-print(joint_list.tr())    
-print("Size: " + str(len(joint_list)))
 
 
 # Show as a sequence

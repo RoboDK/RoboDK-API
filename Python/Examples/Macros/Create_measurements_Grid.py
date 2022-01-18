@@ -1,15 +1,24 @@
-# type help("robolink") or help("robodk") for more information
-# (note: you do not need to keep a copy of this file, your python script is saved with the station)
+# This script allows you to schedule taking measurements in a cube
+# The script makes sure that points are reachable
 from robolink import *    # API to communicate with robodk
 from robodk import *      # basic matrix operations
 from random import uniform
 import sys      # to exit the script without errors (sys.exit(0))
 import re       # to convert a string list into a list of values
 
+# Default number of measurements
 DEFAULT_NMEASURES = 80
-# Default limit space in the Cartesian space
-DEFAULT_XYZ_MIN = [-5000, -5000, 0]
-DEFAULT_XYZ_MAX = [ 5000,  5000, 5000]
+
+# Define the cube range to create poses with respect to the reference position
+#           MIN,  MAX, STEP
+TX_RANGE = [-200, 200, 100]
+TY_RANGE = [-200, 200, 100]
+TZ_RANGE = [-100, 100, 100]
+
+# Use the tag CHECK_COLLISION_NAME to automatically turn the objects visible. This will allow to detect collisions.
+CHECK_WORKSPACE = False
+CHECK_WORKSPACE_NAME = 'Workspace'
+
 
 TRACKER_REF_NAME = 'Tracker reference' # keyword of the measurement system reference (in RoboDK)
 TCP_PREFIX = 'CalibTool'
@@ -20,10 +29,9 @@ CHECK_COLLISION_MOVE = True
 CHECK_COLLISION_NAME = 'collision'
 CHECK_COLLISION_STEP = -1 # in degrees, step to check for collisions. higher is faster.
 
-# Use the tag CHECK_COLLISION_NAME to automatically turn the objects visible. This will allow to detect collisions.
-CHECK_WORKSPACE = False
-CHECK_WORKSPACE_NAME = 'Workspace'
-
+# Default limit space in the Cartesian space
+DEFAULT_XYZ_MIN = [-5000, -5000, 0]
+DEFAULT_XYZ_MAX = [ 5000,  5000, 5000]
 
 # Avoid a cylinder located at X=0, Y=0 or radius R_MIN
 R_MIN = 100
@@ -31,6 +39,17 @@ R_MIN_Z = 200
 
 # use FILE_SAVE_PREFIX to automatically save the file, otherwise, comment this line
 # FILE_SAVE_PREFIX = 'CalibrationSequence'
+
+# Create the list of poses:
+POSES = []
+# You can optionally add rotation around Z axis:
+#for rz in [-60, -30, 30, 60]:
+for rz in [0]:
+    for tz in range(TZ_RANGE[0], TZ_RANGE[1]+1, TZ_RANGE[2]):
+        for ty in range(TY_RANGE[0], TY_RANGE[1]+1, TY_RANGE[2]):
+            for tx in range(TX_RANGE[0], TX_RANGE[1]+1, TX_RANGE[2]):            
+                pose = transl(tx,ty,tz)*rotz(rz*pi/180.0)
+                POSES.append(pose)
 
 
 # --------------------------------------------------------------
@@ -89,6 +108,7 @@ robot = RDK.ItemUserPick("Select a robot for calibration/validation", ITEM_TYPE_
 if not robot.Valid():
     raise Exception('Robot not selected or no robot available')
 print('Using robot: %s' % robot.Name())
+robot.setAccuracyActive(False)
 #------------------------------------------------------------
 
 #----------------------- Select tracker ------------------
@@ -123,7 +143,7 @@ if CHECK_WORKSPACE:
 
 if JOINTS_REF is None:
     # Use robot home position as default reference joints
-    JOINTS_REF = robot.Joints() #.JointsHome().tolist()
+    JOINTS_REF = robot.Joints().list() #.JointsHome().tolist()
 
 else:
     robot.setJoints(JOINTS_REF)
@@ -164,22 +184,22 @@ while True:
         RDK.setParam('CALIB_JOINTS_REF', JOINTS_REF)
 
         # ---------------- getting the Joint limits (lower bound)
-        robot.setJoints(ANG_MIN)
-        answer = mbox('Set the Joint limits (LOWER bound, in deg), then select OK.\nCurrent values: %s' % str(ANG_MIN))
-        if answer is False:
-            stop_script()
+        #robot.setJoints(ANG_MIN)
+        #answer = mbox('Set the Joint limits (LOWER bound, in deg), then select OK.\nCurrent values: %s' % str(ANG_MIN))
+        #if answer is False:
+        #    stop_script()
 
-        ANG_MIN = robot.Joints().tolist()
-        RDK.setParam('CALIB_JOINTLIM_LOW', ANG_MIN)
+        #ANG_MIN = robot.Joints().tolist()
+        #RDK.setParam('CALIB_JOINTLIM_LOW', ANG_MIN)
 
         # ---------------- getting the Joint limits (upper bound)
-        robot.setJoints(ANG_MAX)
-        answer = mbox('Set the Joint limits (UPPER bound, in deg), then select OK.\nCurrent values: %s' % str(ANG_MAX))
-        if answer is False:
-            stop_script()
+        #robot.setJoints(ANG_MAX)
+        #answer = mbox('Set the Joint limits (UPPER bound, in deg), then select OK.\nCurrent values: %s' % str(ANG_MAX))
+        #if answer is False:
+        #    stop_script()
 
-        ANG_MAX = robot.Joints().tolist()
-        RDK.setParam('CALIB_JOINTLIM_HIGH', ANG_MAX)
+        #ANG_MAX = robot.Joints().tolist()
+        #RDK.setParam('CALIB_JOINTLIM_HIGH', ANG_MAX)
 
         # ---------------- getting the XYZ limits (lower bound)
         #XYZ_MIN = get_values('Enter the Cartesian limits (lower bound, in mm), then select OK.', XYZ_MIN, 3)
@@ -316,14 +336,6 @@ ptracker = Htracker_wrt_robot[0:3,3].tolist()
 
 # -----------------------------------------------------------------------
 print('Generating calibration/validation measurements.')
-
-POSES = []
-for rz in [-60, -30, 30, 60]:
-    for tz in range(0, 251, 75):
-        for ty in range(0, 501, 100):
-            for tx in range(0, -251, -75):            
-                pose = transl(tx,ty,tz)*rotz(rz*pi/180.0)
-                POSES.append(pose)
 
 NMEASURES = len(POSES)
 print("Scheduled points: %i" % NMEASURES)
