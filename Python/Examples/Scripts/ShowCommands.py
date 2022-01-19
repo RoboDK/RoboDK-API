@@ -12,7 +12,7 @@ print(list_cmd)
 # Convert the string returnted by RoboDK as an HTML table
 table_html = ''
 table_html += "<style type=\"text/css\">"
-table_html += "table.tbl {border-width: 1px;border-style: solid;border-color: gray;margin-top: 0px;margin-bottom: 0px;color: black;}"
+table_html += "table.tbl {border-width: 1px;border-style: solid;border-color: gray;margin-top: 0px;margin-bottom: 0px;}"
 table_html += "table.tbl td {padding: 1px;text-align: left}"
 table_html += "table.tbl th {padding: 1px;}"
 #table_html += "table.tbl td:nth-child(1){text-align:left;}"

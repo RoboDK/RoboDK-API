@@ -1,14 +1,33 @@
-# This macro allows simulating a spray gun
-# It is possible to call SprayOn(1) to simulate turning the Spray gun ON or GunOn(0) to stop simulating the gun
+# This macro allows simulating a spray gun for painting or to simulate the trace of inspaction
+#
+# You can call SprayOn(1) to simulate turning the Spray gun ON or SprayOn(0) to stop simulating the gun
 # Calling SprayOn(-1) clears all displayed data
 # The macro will output spray gun statistics
 #
-# More information about the RoboDK API here:
-# https://robodk.com/doc/en/RoboDK-API.html
-# For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# --------------------------------------------------------------
+# This script shows how to create "spray" object in RoboDK that allows simulating particle deposition by using:
+# RDK.Spray_Add(tool, object, options_command, volume, geometry)
+#    tool: tool item (TCP) to use
+#    object: object to project the particles
+#    options_command (optional): string to specify options.
+#    volume (optional): Matrix of parameters defining the volume of the spray gun
+#    geometry (optional): Matrix of vertices defining the triangles.
 #
+# More information here:
+# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Spray_Add
+# https://robodk.com/doc/en/RoboDK-API.html
+#
+# The scripts ArcStart, ArcEnd and WeldOn and SpindleOn behave in a similar way, the only difference is the default behavior
+# This behavior simmulates Fanuc Arc Welding and triggers appropriate output when using the customized post processor.
+# Select ESC to clear the trace manually.
+#
+# Example scripts that use Spray_Add:
+#     SpindleOn / SpindleOff    -> Turn trace On/Off
+#     ArcOn / ArcOff            -> Turn trace On/Off
+#     SprayOn / SprayOff        -> Simulate a spray given a workspace volume (for painting)
+#     WeldOn / WeldOff          -> Support for multiple weld guns
 
+#------------------------------------------------------------------
 
 # Use a specific tool as a spray gun
 Tool_Name = None
