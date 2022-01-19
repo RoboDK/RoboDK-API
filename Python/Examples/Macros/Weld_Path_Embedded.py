@@ -5,8 +5,8 @@
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 # Note: It is not required to keep a copy of this file, your python script is saved with the station
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
 from tkinter import *
 
 NUM_SIDES = 7
@@ -24,6 +24,7 @@ target = RDK.Item('Target Reference')
 if not target.Valid():
     raise Exception("Target Reference not available")
 
+
 def RunProgram():
     global NUM_SIDES
     global LENGTH
@@ -33,29 +34,33 @@ def RunProgram():
     robot.MoveJ(home)
     robot.MoveJ(target)
     for i in range((NUM_SIDES) + 1):
-        angle = i*2*pi/NUM_SIDES
-        posei = target_pose * rotz(angle) * transl(LENGTH,0,0) * rotz(-angle)
+        angle = i * 2 * pi / NUM_SIDES
+        posei = target_pose * rotz(angle) * transl(LENGTH, 0, 0) * rotz(-angle)
         robot.MoveL(posei)
     robot.MoveL(target)
     robot.MoveJ(home)
     #RDK.Finish()
-    
+
+
 # Create option window
 root = Tk()
 num_sides = StringVar()
 num_sides.set(str(NUM_SIDES))
 length = StringVar()
 length.set(str(LENGTH))
-Label(root,text = "Enter the number of sides for polygon").pack()
-Entry(root,textvariable = num_sides).pack()
+Label(root, text="Enter the number of sides for polygon").pack()
+Entry(root, textvariable=num_sides).pack()
 
-Label(root,text = "Enter the radius").pack()
-Entry(root,textvariable = length).pack()
+Label(root, text="Enter the radius").pack()
+Entry(root, textvariable=length).pack()
 
 import threading
+
 rdk_lock = threading.Lock()
 
+
 def ExecuteChoice():
+
     def thread_ExecuteChoice():
         """We need to run on a separate thread to make sure we don't block the main loop, otherwise, RoboDK will freeze"""
         global NUM_SIDES
@@ -73,7 +78,8 @@ def ExecuteChoice():
 
     threading.Thread(target=thread_ExecuteChoice).start()
 
-Button(root,text = "Start",command = ExecuteChoice).pack()
+
+Button(root, text="Start", command=ExecuteChoice).pack()
 
 # Embed the window in RoboDK
 window_title = "Weld path"
@@ -81,9 +87,3 @@ root.title(window_title)
 EmbedWindow(window_title)
 
 root.mainloop()
-
-
-
-
-
-

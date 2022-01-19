@@ -1,7 +1,7 @@
 # This program simulates changing the value of virtual Input/Outputs in RoboDK (or Station parameters)
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-import sys # allows getting the passed argument parameters
+import sys  # allows getting the passed argument parameters
 from robodk import *
 
 # Name or number of the IO
@@ -26,7 +26,6 @@ else:
     IO_NAME = sys.argv[1]
     IO_VALUE = sys.argv[2]
 
-
 if IO_NAME.isdigit():
     IO_NAME = 'IO_' + IO_NAME
 
@@ -36,12 +35,8 @@ if not IO_VALUE.isdigit():
     else:
         IO_VALUE = 0
 
+from robolink import *  # API to communicate with RoboDK
 
-from robolink import *    # API to communicate with RoboDK
 RDK = Robolink()
 # Set the IO as a station parameter
 RDK.setParam(IO_NAME, IO_VALUE)
-
-
-
-

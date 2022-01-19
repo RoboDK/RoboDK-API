@@ -8,8 +8,8 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # Start RoboDK API
 RDK = Robolink()
@@ -23,16 +23,16 @@ csvdata = LoadList(RDK.getParam('PATH_OPENSTATION') + '/' + CSV_VILE)
 
 # Iterate between consecutive points and check distances
 print('p1\tp2\tNominal dist (mm)\terror nominal (mm)\terror accurate (mm)')
-num_points = len(csvdata)-1
+num_points = len(csvdata) - 1
 
 # Faster calculation (do not render every time)
 RDK.Render()
 
 # Iterate:
-for i in range(1,num_points):
+for i in range(1, num_points):
     # Retrieve the robot Joints for point i
     ji = csvdata[i][0:6]
-    
+
     # Retrieve the measured point i, measured by the tracker
     pi_ref = csvdata[i][6:9]
 
@@ -45,20 +45,20 @@ for i in range(1,num_points):
 
     # Calculate TCP using accurate kinematics (pi_acc)
     robot.setAccuracyActive(True)
-    pi_acc = robot.SolveFK(ji)*tcp_i
+    pi_acc = robot.SolveFK(ji) * tcp_i
 
-    for j in range(i+1, num_points+1):
-    
+    for j in range(i + 1, num_points + 1):
+
         #RDK.Render()
 
         # Same calculation for point j
         jj = csvdata[j][0:6]
         pj_ref = csvdata[j][6:9]
-        tcp_j = csvdata[j][9:12]            
+        tcp_j = csvdata[j][9:12]
         robot.setAccuracyActive(False)
-        pj_nom = robot.SolveFK(jj)*tcp_j
+        pj_nom = robot.SolveFK(jj) * tcp_j
         robot.setAccuracyActive(True)
-        pj_acc = robot.SolveFK(jj)*tcp_j
+        pj_acc = robot.SolveFK(jj) * tcp_j
 
         # Calculate the distances seen by the tracker, by the nominal kinematics and by the accurate kinematics:
         dist_ref = distance(pi_ref, pj_ref)
@@ -68,12 +68,10 @@ for i in range(1,num_points):
         # Calculate the robot errors compared to the tracker errors
         error_nom = abs(dist_nom - dist_ref)
         error_acc = abs(dist_acc - dist_ref)
-        
+
         # Skip large errors (same tolerance as RoboDK)
         if error_nom > 50:
             continue
 
         # Display the data
-        print('%i\t%i\t%.3f\t%.3f\t%.3f' % (i,j,dist_nom,error_nom, error_acc))
-  
-        
+        print('%i\t%i\t%.3f\t%.3f\t%.3f' % (i, j, dist_nom, error_nom, error_acc))

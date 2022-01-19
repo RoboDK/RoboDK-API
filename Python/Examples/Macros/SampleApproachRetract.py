@@ -8,8 +8,6 @@ m = RDK.ItemUserPick('Select a robot machining project to change approach/retrac
 if not m.Valid():
     raise Exception("Add a robot machining project, curve follow or point follow")
 
-
-
 # Units are in mm and degrees
 
 # Apply a tangency approach (mm)
@@ -24,11 +22,10 @@ m.setParam("Approach", "Normal 100")
 m.setParam("UpdatePath")
 
 pause(1)
-    
+
 # Apply a normal approach/retract of 100 mm
 m.setParam("ApproachRetract", "Normal 250")
 m.setParam("UpdatePath")
-
 
 pause(1)
 
@@ -59,4 +56,3 @@ pause(1)
 # Apply a side arc approach (diameter in mm and arc in deg)
 m.setParam("Approach", "ArcS 50 100")
 m.setParam("UpdatePath")
-

@@ -4,7 +4,7 @@
 # More information here:
 # https://robodk.com/doc/en/PythonAPI/examples.html#robot-machining-settings
 
-from robolink import *    # RoboDK API
+from robolink import *  # RoboDK API
 
 # JSON tools
 import json
@@ -20,7 +20,7 @@ robot = m.getLink(ITEM_TYPE_ROBOT)
 if not robot.Valid():
     print("Robot not selected: select a robot for this robot machining project")
     quit()
- 
+
 #--------------------------------------------
 # Get or set preferred start joints:
 joints = m.Joints()
@@ -43,8 +43,6 @@ print("Using reference: " + frame.Name())
 #m.setPoseFrame(frame)
 #m.setPoseTool(tool)
 
-
-
 #--------------------------------------------
 # Get or set robot machining parameters
 # Read Program Events settings for selected machining project
@@ -52,7 +50,6 @@ machiningsettings = m.setParam("Machining")
 print("Robot machining settings:")
 print(json.dumps(machiningsettings, indent=4))
 
-    
 #--------------------------------------------
 # Read Program Events settings for selected machining project
 progevents = m.setParam("ProgEvents")
@@ -64,10 +61,10 @@ print(json.dumps(progevents, indent=4))
 #json_data = station.setParam("ProgEvents")
 #json_object = json.loads(json_data)
 #print(json.dumps(json_object, indent=4))
-  
+
 # Sample dict for robot machining settings
 MachiningSettings = {
-    "Algorithm": 0, # 0: minimum tool orientation change, 1: tool orientation follows path
+    "Algorithm": 0,  # 0: minimum tool orientation change, 1: tool orientation follows path
     "ApproachRetractAll": 1,
     "AutoUpdate": 0,
     "AvoidCollisions": 0,
@@ -123,8 +120,8 @@ MachiningProgEvents = {
     "IO_On": "default",
     "IO_OnMotion": "OutOnMov(%1)",
     "Mcode": "M_RunCode(%1)",
-    "RapidSpeed": 1000, # rapid speed to move to/from the path
-    "Rounding": 1, # blending radius
+    "RapidSpeed": 1000,  # rapid speed to move to/from the path
+    "Rounding": 1,  # blending radius
     "RoundingOn": 0,
     "SpindleCCW": "",
     "SpindleCW": "",
@@ -152,7 +149,6 @@ print("Updating program events")
 status = m.setParam("ProgEvents", ProgEventsUpdate)
 print(status)
 
-
 #---------------------------------------------------------------------------
 # This section shows how to change the approach/retract settings for a robot machining project
 # Units are in mm and degrees
@@ -166,10 +162,10 @@ m.setParam("ApproachRetract", "Tangent 50")
 #m.setParam("Approach", "XYZ 50 60 70") # XYZ offset
 #m.setParam("Approach", "NTS 50 60 70") #Normal/Tangent/Side Coordinates
 #m.setParam("ApproachRetract", "ArcN 50 100") # Normal arc (diameter/angle)
-m.setParam("UpdatePath") # recalculate toolpath
+m.setParam("UpdatePath")  # recalculate toolpath
 
 # Update machining project (validates robot feasibility)
-status = m.Update() 
+status = m.Update()
 
 # Get the generated robot program
 prog = m.getLink(ITEM_TYPE_PROGRAM)
@@ -179,4 +175,3 @@ prog.RunProgram()
 
 # Save program file to specific folder
 #program.MakeProgram("""C:/Path-to-Folder/""")
-

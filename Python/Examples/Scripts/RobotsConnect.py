@@ -4,8 +4,8 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # Start RoboDK API
 RDK = Robolink()
@@ -29,4 +29,3 @@ for i in range(nrobots):
     else:
         RDK.ShowMessage("Connection with %s Failed" % robot_name, False)
         pause(2)
-

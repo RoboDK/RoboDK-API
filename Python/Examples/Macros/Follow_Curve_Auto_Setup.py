@@ -3,8 +3,9 @@
 # 2 - Curve follow project or point follow project
 # Then, it creates a curve follow project if the object has curves, or a point follow project if it has points but no curves
 
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
+
 RDK = Robolink()
 
 #-------------------------------------------------------------
@@ -25,7 +26,3 @@ proj.setMachiningParameters(part=obj, params="RotZ_Range=45 RotZ_Step=5 NormalAp
 # Generate the program, if possible
 status = proj.Update()
 print(status)
-
-    
-
-

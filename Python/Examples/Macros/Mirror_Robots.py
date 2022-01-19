@@ -1,7 +1,7 @@
 # This script will copy the motion from one robot to other robots
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # Ask the user to select the leader robot
 RDK = Robolink()
@@ -18,16 +18,18 @@ if not r_lead.Valid():
 
 robots.remove(r_lead)
 
+
 def joints_changed(j1, j2, tolerance=0.0001):
     """Returns True if joints 1 and joints 2 are different"""
     if j1 is None or j2 is None:
         return True
-        
-    for j1,j2 in zip(j1,j2):
-        if abs(j1-j2) > tolerance:
+
+    for j1, j2 in zip(j1, j2):
+        if abs(j1 - j2) > tolerance:
             return True
-            
+
     return False
+
 
 # Infinite loop to record robot joints
 joints_last = None
@@ -39,9 +41,6 @@ while True:
         for r in robots:
             r.setJoints(joints)
             #r.MoveJ(joints) # to use with the driver
-            
+
         RDK.Render(True)
         pause(0.00)
-
-
-            

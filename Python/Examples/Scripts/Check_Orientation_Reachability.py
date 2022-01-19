@@ -6,19 +6,20 @@
 # Note: It is not required to keep a copy of this file, your python script is saved with the station
 
 # Define the ranges to test
-Range_RX = range(-180,180, 60)
+Range_RX = range(-180, 180, 60)
 Range_RY = Range_RX
 Range_RZ = Range_RX
 
 # Reachable display timeouts in milliseconds
-timeout_reachable = 60*60*1000
+timeout_reachable = 60 * 60 * 1000
 
 # Non reachable display timeout in milliseconds
 timeout_unreachable = 1000
 
 # Start the RoboDK API
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
+
 RDK = Robolink()
 
 # Get the robot
@@ -38,8 +39,8 @@ unreachable_poses = []
 for rx in Range_RX:
     for ry in Range_RY:
         for rz in Range_RZ:
-            print("Testing rotation: " + str([rx,ry,rz]))
-            pose_add = rotx(rx*pi/180) * roty(ry*pi/180) * rotz(rz*pi/180)
+            print("Testing rotation: " + str([rx, ry, rz]))
+            pose_add = rotx(rx * pi / 180) * roty(ry * pi / 180) * rotz(rz * pi / 180)
             pose_test = robot_pose_ref * pose_add
             jnts_sol = robot.SolveIK(pose_test, None, robot_tool, robot_base)
             print(jnts_sol.list())
@@ -57,7 +58,6 @@ Display_Normal = 2
 Display_Green = 3
 Display_Red = 4
 
-
 Display_Invisible = 64
 Display_NotActive = 128
 Display_RobotPoses = 256
@@ -65,16 +65,12 @@ Display_RobotPosesRotZ = 512
 Display_Reset = 1048
 
 Display_Options = 0
-Display_Options += Display_Invisible # Show invisible tools
-Display_Options += Display_NotActive # Show non active tools
-Display_Options += Display_RobotPoses # Show robot joints if reachable
+Display_Options += Display_Invisible  # Show invisible tools
+Display_Options += Display_NotActive  # Show non active tools
+Display_Options += Display_RobotPoses  # Show robot joints if reachable
 #Display_Options += Display_RobotPosesRotZ # Show robot joints if reachable (tests rotating around the Z axis)
 #Display_Options += Display_Reset # Reset flag (clears the trace)
 
-
-robot.ShowSequence([]) # Force reset
-robot.ShowSequence(reachable_poses, Display_Options+Display_Default, timeout_reachable)
-robot.ShowSequence(unreachable_poses, Display_Options+Display_Red, timeout_unreachable)
-
-
-
+robot.ShowSequence([])  # Force reset
+robot.ShowSequence(reachable_poses, Display_Options + Display_Default, timeout_reachable)
+robot.ShowSequence(unreachable_poses, Display_Options + Display_Red, timeout_unreachable)

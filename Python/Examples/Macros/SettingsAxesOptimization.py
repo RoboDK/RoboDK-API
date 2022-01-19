@@ -7,7 +7,7 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *    # RoboDK API
+from robolink import *  # RoboDK API
 
 # JSON tools
 import json
@@ -16,15 +16,15 @@ import json
 RDK = Robolink()
 
 # Ask the user to select a robot arm (6 axis robot wich can have external axes)
-robot = RDK.ItemUserPick("Select a robot arm",ITEM_TYPE_ROBOT_ARM)
+robot = RDK.ItemUserPick("Select a robot arm", ITEM_TYPE_ROBOT_ARM)
 
 # Default optimization settings test template
 AxesOptimSettings = {
     # Optimization parameters:
-    "Active": 1, # Use generic axes optimization: 0=Disabled or 1=Enabled
-    "Algorithm": 2, # Optimization algorithm to use: 1=Nelder Mead, 2=Samples, 3=Samples+Nelder Mead
-    "MaxIter": 650, # Max. number of iterations
-    "Tol": 0.0016, # Tolerance to stop iterations
+    "Active": 1,  # Use generic axes optimization: 0=Disabled or 1=Enabled
+    "Algorithm": 2,  # Optimization algorithm to use: 1=Nelder Mead, 2=Samples, 3=Samples+Nelder Mead
+    "MaxIter": 650,  # Max. number of iterations
+    "Tol": 0.0016,  # Tolerance to stop iterations
 
     # Absolute Reference joints (double):
     "AbsJnt_1": 104.17,
@@ -38,7 +38,7 @@ AxesOptimSettings = {
     "AbsJnt_9": 0,
 
     # Using Absolute reference joints (0: No, 1: Yes):
-    "AbsOn_1": 1, 
+    "AbsOn_1": 1,
     "AbsOn_2": 1,
     "AbsOn_3": 1,
     "AbsOn_4": 1,
@@ -91,25 +91,25 @@ print(status)
 
 # Example to make a partial or full update
 count = 1
-while True:    
+while True:
     for i in range(7):
         # Partial update
         ToUpdate = {}
-        ToUpdate["AbsJnt_" + str(i+1)] = (count+i)*4        
-        ToUpdate["AbsOn_" + str(i+1)] = count % 2
-        ToUpdate["AbsW_" + str(i+1)] = (count+i)
+        ToUpdate["AbsJnt_" + str(i + 1)] = (count + i) * 4
+        ToUpdate["AbsOn_" + str(i + 1)] = count % 2
+        ToUpdate["AbsW_" + str(i + 1)] = (count + i)
 
         json_str = json.dumps(ToUpdate)
         status = robot.setParam("OptimAxes", json_str)
         print(status)
-        
+
         # Full update
         #OptimAxes_TEST["RefJoint_" + str(i+1)] = (count+i)*4
         #OptimAxes_TEST["RefWeight_" + str(i+1)] = (count+i)
         #OptimAxes_TEST["RefOn_" + str(i+1)] = count % 2
 
     # Full update
-    #print(robot.setParam("OptimAxes", str(AxesOptimSettings)))        
+    #print(robot.setParam("OptimAxes", str(AxesOptimSettings)))
     count = count + 1
 
     # Read settings
@@ -117,7 +117,6 @@ while True:
     json_object = json.loads(json_data)
     print(json.dumps(json_object, indent=4))
     pause(0.2)
-    
 
 # Example to read the current axes optimization settings:
 while True:

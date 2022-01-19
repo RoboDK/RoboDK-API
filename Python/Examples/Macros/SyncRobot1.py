@@ -6,8 +6,8 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-import sys                # allows getting the argument parameters
-from robodk import *      # required by mbox()
+import sys  # allows getting the argument parameters
+from robodk import *  # required by mbox()
 from robolink import *
 
 #---------------------------------------------
@@ -28,7 +28,6 @@ TOTAL_ROBOTS = 2
 #    which will automatically increase the move ID by 1 each time
 #    on start, we can force it to SyncRobot1(0) to reset the counter
 
-
 # Station variable used to save the current Move ID for each robot
 # We can access station variables by right clicking the station, then, select "Station variables"
 MOVE_ID_VAR_STN = 'MOVE_ID_R%i' % ROBOT_ID
@@ -40,7 +39,7 @@ RDK = Robolink()
 MOVE_ID = 0
 if len(sys.argv) > 1:
     # If a value is provided as an argument, take the move ID * 1000 to allow decimal numbers
-    MOVE_ID = int(float(sys.argv[1])*1000)
+    MOVE_ID = int(float(sys.argv[1]) * 1000)
 else:
     # If no move ID provided for synchronization, automatically increase index
     MOVE_ID = RDK.getParam(MOVE_ID_VAR_STN)
@@ -64,7 +63,7 @@ waiting = True
 while waiting:
     waiting = False
     for i in range(TOTAL_ROBOTS):
-        Rid = i+1
+        Rid = i + 1
 
         # Skip the same robot ID
         if Rid == ROBOT_ID:
@@ -77,5 +76,3 @@ while waiting:
     pause(0.1)
 
 print('All robots are at MOVE_ID = %i' % MOVE_ID)
-        
-

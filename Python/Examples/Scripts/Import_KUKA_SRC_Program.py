@@ -4,15 +4,15 @@
 
 ## Example program:
 # DEF Milling ( )
-# 
+#
 # $BASE = {FRAME: X 0.000,Y -1000.000,Z 0.000,A 0.000,B 0.000,C 0.000}
 # $TOOL = {FRAME: X 466.604,Y -4.165,Z 109.636,A -0.000,B 90.000,C 0.000}
-# 
+#
 # $VEL.CP = 1.00000
-# 
+#
 # PTP {A1 107.78457,A2 -44.95260,A3 141.64681,A4 107.66839,A5 -87.93467,A6 6.37710}
 # LIN {X -0.000,Y -0.000,Z 6.350,A -180.000,B 0.000,C -180.000}
-# 
+#
 # $VEL.CP = 0.02117
 # LIN {X 276.225,Y 0.000,Z 6.350,A 180.000,B 0.000,C -180.000}
 # LIN {X 276.225,Y 323.850,Z 6.350,A -160.000,B 0.000,C 180.000}
@@ -20,9 +20,8 @@
 # LIN {X -0.000,Y -0.000,Z 6.350,A -180.000,B 0.000,C -180.000}
 # $VEL.CP = 1.00000
 # LIN {X -0.000,Y -0.000,Z 106.350,A -180.000,B 0.000,C -180.000}
-# 
+#
 # END
-
 
 from robodk import *
 from robolink import *
@@ -45,9 +44,10 @@ print("Loading program: " + program_name)
 if not src_file_path.lower().endswith(".src"):
     raise Exception("Invalid file selected. Select an SRC file.")
 
+
 def GetValues(line):
     """Get all the numeric values from a line"""
-    # LIN {X 1671.189,Y -562.497,Z -243.070,A 173.363,B -8.525,C -113.306} C_DIS    
+    # LIN {X 1671.189,Y -562.497,Z -243.070,A 173.363,B -8.525,C -113.306} C_DIS
     line = line.replace(",", " ")
     line = line.replace("}", " ")
     values = line.split(" ")
@@ -60,11 +60,12 @@ def GetValues(line):
             continue
 
         list_values.append(value)
-    
+
     return list_values
 
-# Ask the user to select a robot (if more than a robot is available)    
-robot = RDK.ItemUserPick('Select a robot',ITEM_TYPE_ROBOT)
+
+# Ask the user to select a robot (if more than a robot is available)
+robot = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT)
 if not robot.Valid():
     raise Exception("Robot not selected or not valid")
 
@@ -102,9 +103,9 @@ for line in f:
 
     # Update TCP speed (KUKA works in m/s, RoboDK works in mm/s)
     if line.startswith("$VEL.CP"):
-        program.setSpeed(values[0]*1000)
+        program.setSpeed(values[0] * 1000)
         continue
-        
+
     # Check operations that involve a pose
     if len(values) < 6:
         print("Warning! Invalid line: " + line)
@@ -112,13 +113,13 @@ for line in f:
 
     # Check what instruction we need to add:
     if line.startswith("LIN"):
-        target = RDK.AddTarget('T%i'% count, frame)
+        target = RDK.AddTarget('T%i' % count, frame)
         target.setPose(KUKA_2_Pose(values))
         program.MoveL(target)
 
     # Check PTP move
     elif line.startswith("PTP"):
-        target = RDK.AddTarget('T%i'% count, frame)
+        target = RDK.AddTarget('T%i' % count, frame)
         target.setAsJointTarget()
         target.setJoints(values)
         program.MoveJ(target)
@@ -141,5 +142,5 @@ program.ShowTargets(False)
 # Show the instructions
 program.ShowInstructions(True)
 
-RDK.ShowMessage("Done",False)
+RDK.ShowMessage("Done", False)
 print("Done")

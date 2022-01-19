@@ -1,6 +1,6 @@
 # This macro allows simulating the material deposition of a weld gun
 # By default, this macro will activate the trace once it is called.
-# Run the macro ArcEnd to stop the trace. 
+# Run the macro ArcEnd to stop the trace.
 #
 # The macros WeldOn, ArcEnd and Arc, all behave the same way, the only difference is the default behavior
 # This behavior simmulates Fanuc Arc Welding and triggers appropriate output when using the customized post processor.
@@ -55,9 +55,9 @@
 #----------------------------------------------------------
 
 # Constant variables for the first parameter:
-ACTION_RESET    = -1    # Same as: RESET (clear all traces)
-ACTION_OFF      =  0    # Same as: OFF (turn on)
-ACTION_ON       =  1    # Same as: ON (turn off)
+ACTION_RESET = -1  # Same as: RESET (clear all traces)
+ACTION_OFF = 0  # Same as: OFF (turn on)
+ACTION_ON = 1  # Same as: ON (turn off)
 
 # Define the default Action (ACTION_OFF to deactivate, ACTION_ON to activate, ACTION_RESET to clear any spray gun/trace)
 # Setting it to None will display a message
@@ -65,10 +65,10 @@ Action = ACTION_OFF
 
 # Define the default color as a named color or as #AARRGGBB (Alpha, Red, Green Blue)
 # COLOR = 'blue'
-COLOR = '#CC3344FF' # AARRGGBB
+COLOR = '#CC3344FF'  # AARRGGBB
 
 # Use a specific tool as a spray gun
-Tool_Name = None    # Use the active tool
+Tool_Name = None  # Use the active tool
 #Tool_Name = 'Torch1'
 
 # Use a specific object to project particles:
@@ -77,8 +77,9 @@ Object_Name = None  # Use the first object in the active reference frame
 
 # --------------------------------------------------
 # Program start:
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # quit if we are not in simulation mode
@@ -97,12 +98,12 @@ if len(sys.argv) > 1:
         Action = ACTION_RESET
     else:
         Action = int(Action_str)
-    
+
     if len(sys.argv) > 2:
         Tool_Name = sys.argv[2].strip()
         if Tool_Name == '':
             Tool_Name = None
-            
+
         if len(sys.argv) > 3:
             COLOR = sys.argv[3].lower().strip()
 
@@ -119,15 +120,14 @@ if n_sprays > 0 and Tool_Name is not None:
     spray_id = RDK.getParam(Tool_Name)
     if spray_id is None or Action == ACTION_ON or type(spray_id) == str or spray_id >= n_sprays:
         spray_id = -1
-        
+
     print("Spray gun statistics:")
     print(info)
     print(data.tr())
     # # Diplay statistics
     # RDK.ShowMessage("Material used: %.1f%%<br>Material waisted: %.1f%%<br>Total particles: %.1f" % (data[1,0],data[2,0],data[3,0]), True)
     # # Clear previous spray
-    # RDK.Spray_Clear() 
-
+    # RDK.Spray_Clear()
 
 # If the default Action is None, display a message to activate/deactivate the spray gun
 if Action is None:
@@ -135,17 +135,17 @@ if Action is None:
     entry = mbox('Turn gun ON or OFF', ('On', '1'), ('Off', '0'))
     if not entry:
         quit()
-    Action = int(entry)    
+    Action = int(entry)
 
 # Apply the desired action
 if Action == ACTION_OFF:
     # Turn the gun off
     RDK.Spray_SetState(SPRAY_OFF, spray_id)
-    
+
 elif Action == ACTION_OFF:
     # Clear all spray simulations (same as pressing ESC key)
     RDK.Spray_Clear(spray_id)
-    
+
 elif Action == ACTION_ON:
     # Create a new spray gun object in RoboDK
     # by using RDK.Spray_Add(tool, object, options_command, volume, geometry)
@@ -167,11 +167,11 @@ elif Action == ACTION_ON:
     # geometry (optional): Matrix of vertices defining the triangles.
 
     if spray_id < 0:
-        tool = 0    # auto detect active tool
-        obj = 0     # auto detect object in active reference frame
+        tool = 0  # auto detect active tool
+        obj = 0  # auto detect object in active reference frame
         if Tool_Name is not None:
             tool = RDK.Item(Tool_Name, ITEM_TYPE_TOOL)
-        
+
         if Object_Name is not None:
             obj = RDK.Item(Object_Name, ITEM_TYPE_OBJECT)
         # We can specify a given tool object and/or object
@@ -183,20 +183,12 @@ elif Action == ACTION_ON:
 
         # Create volume parameters
         options_command = "NO_PROJECT PARTICLE=SPHERE(2,8,1,1,1) STEP=1x0 RAND=0 COLOR=" + COLOR
-        
+
         spray_id = RDK.Spray_Add(tool, obj, options_command)
-    
+
     # Remember the ID of the spray gun for later
     if Tool_Name is not None:
         RDK.setParam(Tool_Name, spray_id)
-        
+
     # Apply the state to activate the trace
     RDK.Spray_SetState(SPRAY_ON, spray_id)
-    
-
-
-    
-
-
-
-

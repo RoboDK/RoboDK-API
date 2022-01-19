@@ -6,8 +6,8 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # Start RoboDK API
 RDK = Robolink()
@@ -36,37 +36,37 @@ RDK.Render(False)
 
 # Iterate between consecutive points and check distances
 print('p1\tp2\tposition error nominal (mm)\tposition error accurate (mm)\tangle error nominal (deg)\tangle error accurate (deg)')
-num_points = len(csvdata)-1
-for i in range(1,num_points):
+num_points = len(csvdata) - 1
+for i in range(1, num_points):
     # TCP pose (i) measured by the tracker
-    hi_ref = TxyzRxyz_2_Pose(csvdata[i][6:12])*shift_tcp
+    hi_ref = TxyzRxyz_2_Pose(csvdata[i][6:12]) * shift_tcp
 
     # Robot joints for point i
     ji = csvdata[i][0:6]
 
     # Calculate the pose (homogeneous matrix) of the TCP using nominal kinematics (hi_nom)
     robot.setAccuracyActive(False)
-    hi_nom = robot.SolveFK(ji)*htcp
+    hi_nom = robot.SolveFK(ji) * htcp
 
     # Calculate TCP using accurate kinematics (hi_acc)
     robot.setAccuracyActive(True)
-    hi_acc = robot.SolveFK(ji)*htcp
+    hi_acc = robot.SolveFK(ji) * htcp
 
     # Iterate through pairs of points
-    for j in range(i+1,num_points+1):
+    for j in range(i + 1, num_points + 1):
         # Same pose calculations for pose j
-        hj_ref = TxyzRxyz_2_Pose(csvdata[j][6:12])*shift_tcp  
-        jj = csvdata[j][0:6]        
+        hj_ref = TxyzRxyz_2_Pose(csvdata[j][6:12]) * shift_tcp
+        jj = csvdata[j][0:6]
         robot.setAccuracyActive(False)
-        hj_nom = robot.SolveFK(jj)*htcp
+        hj_nom = robot.SolveFK(jj) * htcp
         robot.setAccuracyActive(True)
-        hj_acc = robot.SolveFK(jj)*htcp
+        hj_acc = robot.SolveFK(jj) * htcp
 
         # Calculate the distances seen by the tracker, by the nominal kinematics and by the accurate kinematics:
         d_ref = norm(subs3(hi_ref.Pos(), hj_ref.Pos()))
         d_nom = norm(subs3(hi_nom.Pos(), hj_nom.Pos()))
         d_acc = norm(subs3(hi_acc.Pos(), hj_acc.Pos()))
-        
+
         # Calculate distance errors
         dist_error_nom = abs(d_nom - d_ref)
         dist_error_acc = abs(d_acc - d_ref)
@@ -75,18 +75,16 @@ for i in range(1,num_points):
             # This is an ivalid measurement, skip.
             continue
 
-        # Calculate the pose shifts (to calculate orientation errors)                     
-        Href = invH(hi_ref)*hj_ref
-        Hnom = invH(hi_nom)*hj_nom
-        Hacc = invH(hi_acc)*hj_acc
+        # Calculate the pose shifts (to calculate orientation errors)
+        Href = invH(hi_ref) * hj_ref
+        Hnom = invH(hi_nom) * hj_nom
+        Hacc = invH(hi_acc) * hj_acc
 
         # Calculate angle errors
-        Hnom_error = invH(Href)*Hnom
-        Hacc_error = invH(Href)*Hacc   
-        ang_error_nom = pose_angle(Hnom_error)*180.0/pi
-        ang_error_acc = pose_angle(Hacc_error)*180.0/pi
+        Hnom_error = invH(Href) * Hnom
+        Hacc_error = invH(Href) * Hacc
+        ang_error_nom = pose_angle(Hnom_error) * 180.0 / pi
+        ang_error_acc = pose_angle(Hacc_error) * 180.0 / pi
 
         # Display the data
-        print('%i\t%i\t%.3f\t%.3f\t%.3f\t%.3f' % (i,j,dist_error_nom, dist_error_acc, ang_error_nom, ang_error_acc))
-  
-        
+        print('%i\t%i\t%.3f\t%.3f\t%.3f\t%.3f' % (i, j, dist_error_nom, dist_error_acc, ang_error_nom, ang_error_acc))

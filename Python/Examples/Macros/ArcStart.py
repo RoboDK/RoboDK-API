@@ -3,7 +3,7 @@
 # Note: Select Esc key or close the RDK project to clear any trace added using this method
 # Note: You can pass an ID as first agurment to specify the trace color
 #
-# Example: 
+# Example:
 #    SpindleOn(2)           show the trace in blue
 #    SpindleOn(red)         show the trace in red
 #    SpindleOff             turn off the trace
@@ -52,39 +52,39 @@ COLOR = "white"
 #COLOR = "#ffff55bb" # pink-red
 
 # Color list to use if we provide an argument
-# Example: 
+# Example:
 #    SpindleOn(2) will show blue
 #    SpindleOn(red) will show red
 COLOR_LIST = [COLOR, "red", "green", "blue", "cyan", "magenta", "#ffff55bb"]
 
 #------------------------------------------------------------------
-import sys # allows getting the passed argument parameters
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+import sys  # allows getting the passed argument parameters
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # If an arguments from the object events are provided, retrieve the argument
 # (index 0 is the file name)
 # Use argument index 1 as color index or named color
 if len(sys.argv) >= 2:
     # Use argument 1 as color ID if it is numeric
-    arg_1 = sys.argv[1]   
+    arg_1 = sys.argv[1]
     if arg_1.isnumeric():
         color_id = int(arg_1)
-        if color_id >= 0:            
+        if color_id >= 0:
             color_id = color_id % len(COLOR_LIST)
             COLOR = COLOR_LIST[color_id]
     else:
         # Use the named color (or # color)
         COLOR = arg_1
-        
+
 # Use argument index 2 to set the radius
 if len(sys.argv) >= 3:
     # Use argument 1 as color ID if it is numeric
-    arg_2 = sys.argv[2]   
+    arg_2 = sys.argv[2]
     try:
         SPHERE_RADIUS = float(arg_2)
     except:
-        print("Unable to read paramter 2 as radius");
+        print("Unable to read paramter 2 as radius")
 
 #------------------------------------------------------------------
 
@@ -94,24 +94,22 @@ RDK = Robolink()
 # Stop if we are not simulating
 if RDK.RunMode() != RUNMODE_SIMULATE:
     quit()
-    
+
 # Create a new spray gun
 tool = 0  # auto detect active tool
-object = 0 # auto detect object to attach particles
+object = 0  # auto detect object to attach particles
 
 # Use specific tool and part if we provided it
-if TOOL_NAME is not None:    
+if TOOL_NAME is not None:
     tool = RDK.Item(TOOL_NAME, ITEM_TYPE_TOOL)
-    
-if PART_NAME is not None:    
-    object = RDK.Item(PART_NAME, ITEM_TYPE_OBJECT) 
 
-    
+if PART_NAME is not None:
+    object = RDK.Item(PART_NAME, ITEM_TYPE_OBJECT)
+
 # Create a new object with a spray gun
-RDK.Spray_Add(tool, object, "PARTICLE=SPHERE(%.2f) NO_PROJECT COLOR=%s" % (SPHERE_RADIUS, COLOR)) # Do not project
+RDK.Spray_Add(tool, object, "PARTICLE=SPHERE(%.2f) NO_PROJECT COLOR=%s" % (SPHERE_RADIUS, COLOR))  # Do not project
 # RDK.Spray_Add(tool, object, "PARTICLE=SPHERE(4) PROJECT") # Project to part
 RDK.Spray_SetState(SPRAY_ON)
-
 
 # Option to use a spread
 # coordinates must be provided with respect to the TCP
@@ -132,7 +130,6 @@ RDK.Spray_SetState(SPRAY_ON)
 #RDK.Spray_Add(tool, obj, "PARTICLE=SPHERE(4,8) STEP=1x0")
 #RDK.Spray_Add(tool, obj, "STEP=8x8 RANDX=3", volume.tr(), geom.tr())
 #RDK.Spray_SetState(SPRAY_ON)
-
 
 # Available options:
 #     STEP=AxB: Defines the grid to be projected 1x1 means only one line of particle projection (for example, for welding)
