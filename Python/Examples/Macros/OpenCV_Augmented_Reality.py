@@ -33,6 +33,7 @@ CAMERA_WIDTH = 1920  # px
 CAMERA_HEIGHT = 1080  # px
 CAMERA_APERTURE = 2.0  # mm
 
+
 #----------------------------------------------
 # Utility function to merge the RoboDK image with the input image
 def merge_img(img_bg, img_fg):
@@ -49,6 +50,7 @@ def merge_img(img_bg, img_fg):
 
     # Merge
     return cv.add(img1_bg, img2_fg)
+
 
 #----------------------------------------------
 # Link to RoboDK

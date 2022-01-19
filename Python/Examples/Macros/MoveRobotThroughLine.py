@@ -7,9 +7,10 @@
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
 # Default parameters:
-P_START = [1755, -500, 2155]    # Start point with respect to the robot base frame
-P_END   = [1755,  600, 2155]    # End point with respect to the robot base frame
-NUM_POINTS  = 10                # Number of points to interpolate
+P_START = [1755, -500, 2155]  # Start point with respect to the robot base frame
+P_END = [1755, 600, 2155]  # End point with respect to the robot base frame
+NUM_POINTS = 10  # Number of points to interpolate
+
 
 # Function definition to create a list of points (line)
 def MakePoints(xStart, xEnd, numPoints):
@@ -18,7 +19,7 @@ def MakePoints(xStart, xEnd, numPoints):
         raise Exception("Start and end point must be 3-dimensional vectors")
     if numPoints < 2:
         raise Exception("At least two points are required")
-    
+
     # Starting Points
     pt_list = []
     x = xStart[0]
@@ -26,13 +27,13 @@ def MakePoints(xStart, xEnd, numPoints):
     z = xStart[2]
 
     # How much we add/subtract between each interpolated point
-    x_steps = (xEnd[0] - xStart[0])/(numPoints-1)
-    y_steps = (xEnd[1] - xStart[1])/(numPoints-1)
-    z_steps = (xEnd[2] - xStart[2])/(numPoints-1)
+    x_steps = (xEnd[0] - xStart[0]) / (numPoints - 1)
+    y_steps = (xEnd[1] - xStart[1]) / (numPoints - 1)
+    z_steps = (xEnd[2] - xStart[2]) / (numPoints - 1)
 
     # Incrementally add to each point until the end point is reached
     for i in range(numPoints):
-        point_i = [x,y,z] # create a point
+        point_i = [x, y, z]  # create a point
         #append the point to the list
         pt_list.append(point_i)
         x = x + x_steps
@@ -40,10 +41,11 @@ def MakePoints(xStart, xEnd, numPoints):
         z = z + z_steps
     return pt_list
 
+
 #---------------------------------------------------
 #--------------- PROGRAM START ---------------------
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic library for robots operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic library for robots operations
 
 # Generate the points curve path
 POINTS = MakePoints(P_START, P_END, NUM_POINTS)
@@ -52,10 +54,10 @@ POINTS = MakePoints(P_START, P_END, NUM_POINTS)
 RDK = Robolink()
 
 # turn off auto rendering (faster)
-RDK.Render(False) 
+RDK.Render(False)
 
 # Automatically delete previously generated items (Auto tag)
-list_names = RDK.ItemList() # list all names
+list_names = RDK.ItemList()  # list all names
 for item_name in list_names:
     if item_name.startswith('Auto'):
         RDK.Item(item_name).Delete()
@@ -64,7 +66,7 @@ for item_name in list_names:
 robot = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT)
 
 # Turn rendering ON before starting the simulation
-RDK.Render(True) 
+RDK.Render(True)
 
 # Abort if the user hits Cancel
 if not robot.Valid():
@@ -82,8 +84,6 @@ print(Pose_2_TxyzRxyz(pose_ref))
 # a pose can also be defined as xyzwpr / xyzABC
 #pose_ref = TxyzRxyz_2_Pose([100,200,300,0,0,pi])
 
-
-
 #-------------------------------------------------------------
 # Option 1: Move the robot using the Python script
 
@@ -95,13 +95,12 @@ for i in range(NUM_POINTS):
     # update the reference target with the desired XYZ coordinates
     pose_i = pose_ref
     pose_i.setPos(POINTS[i])
-    
+
     # Move the robot to that target:
     robot.MoveJ(pose_i)
-    
+
 # Done, stop program execution
 quit()
-
 
 #-------------------------------------------------------------
 # Option 2: Create the program on the graphical user interface
@@ -112,7 +111,7 @@ prog = RDK.AddProgram('AutoProgram')
 # Iterate through all the points
 for i in range(NUM_POINTS):
     # add a new target and keep the reference to it
-    ti = RDK.AddTarget('Auto Target %i' % (i+1))
+    ti = RDK.AddTarget('Auto Target %i' % (i + 1))
     # use the reference pose and update the XYZ position
     pose_i = pose_ref
     pose_i.setPos(POINTS[i])
@@ -124,7 +123,7 @@ for i in range(NUM_POINTS):
     prog.MoveL(ti)
 
 # Turn rendering ON before starting the simulation
-RDK.Render(True) 
+RDK.Render(True)
 
 # Run the program on the simulator (simulate the program):
 prog.RunProgram()
@@ -139,7 +138,6 @@ prog.RunProgram()
 # Done, stop program execution
 quit()
 
-
 #-------------------------------------------------------------
 # Option 3: Move the robot using the Python script and detect if movements can be linear
 # This is an improved version of option 1
@@ -153,7 +151,7 @@ for i in range(NUM_POINTS):
     # update the reference target with the desired XYZ coordinates
     pose_i = pose_ref
     pose_i.setPos(POINTS[i])
-    
+
     # Move the robot to that target:
     if i == 0:
         # important: make the first movement a joint move!
@@ -166,10 +164,9 @@ for i in range(NUM_POINTS):
         else:
             robot.MoveJ(pose_i)
         ROBOT_JOINTS = robot.Joints()
-    
+
 # Done, stop program execution
 quit()
-
 
 #-------------------------------------------------------------
 # Option 4: Create a follow curve project
@@ -197,8 +194,6 @@ prog.RunProgram()
 
 # Done
 quit()
-
-
 
 #-------------------------------------------------------------
 # Option 5: Create a follow points project (similar to Option 4)
@@ -228,9 +223,6 @@ prog.RunProgram()
 # Done
 quit()
 
-
-
-
 #-------------------------------------------------------------
 # Option 6: Move the robot using the Python script and measure using an external measurement system
 # This example is meant to help validating robot accuracy through distance measurements and using a laser tracker or a stereo camera
@@ -238,18 +230,18 @@ quit()
 if robot.ConnectSafe() <= 0:
     raise Exception("Can't connect to robot")
 
-RDK.setRunMode(RUNMODE_RUN_ROBOT) # It is redundant if connection worked successfully
+RDK.setRunMode(RUNMODE_RUN_ROBOT)  # It is redundant if connection worked successfully
 
 POINTS_NOMINAL = []
 POINTS_ACCURATE = []
-STABILIZATION_TIME = 2 # stabilization time in seconds before taking a measurement
+STABILIZATION_TIME = 2  # stabilization time in seconds before taking a measurement
 for i in range(NUM_POINTS):
     # build a target using the reference orientation and the XYZ coordinates
     pose_i = pose_ref
     pose_i.setPos(LINE[i])
-    
-    # Move to the target with the nomrinal kinematics    
-    RDK.RunMessage('Moving to point %i (Nominal kinematics)' % (i+1))
+
+    # Move to the target with the nomrinal kinematics
+    RDK.RunMessage('Moving to point %i (Nominal kinematics)' % (i + 1))
     RDK.RunMessage(str(Pose_2_KUKA(pose_i)))
     # Solve nominal inverse kinematics
     robot.setAccuracyActive(False)
@@ -265,13 +257,13 @@ for i in range(NUM_POINTS):
             pause(2)
         else:
             # calculate the pose of the tool with respect to the reference frame
-            measured = invH(pose1)*pose2
+            measured = invH(pose1) * pose2
             # retrieve XYZ value of the measurement
             POINTS_NOMINAL = measured.Pos()
             break
-        
+
     # Move to the target with the accurate kinematics
-    RDK.RunMessage('Moving to point %i (Accurate kinematics)' % (i+1))
+    RDK.RunMessage('Moving to point %i (Accurate kinematics)' % (i + 1))
     robot.setAccuracyActive(True)
     ji = robot.SolveIK(pose_i)
     robot.MoveL(ji)
@@ -283,7 +275,7 @@ for i in range(NUM_POINTS):
             pause(2)
         else:
             # calculate the pose of the tool with respect to the reference frame
-            measured = invH(pose1)*pose2
+            measured = invH(pose1) * pose2
             # retrieve XYZ value of the measurement
             POINTS_ACCURATE = measured.Pos()
             break
@@ -291,14 +283,12 @@ for i in range(NUM_POINTS):
 # At this point we can check the accurate vs the nominal kinematics and create the following table:
 print('pa\tpb\tdist\tdist nom\tdist acc\terror nom\terror acc')
 for i in range(numPoints):
-    for j in range(numPoints+1, numPoints):
+    for j in range(numPoints + 1, numPoints):
         dist_program = distance(LINE[i], LINE[j])
         dist_nominal = distance(POINTS_NOMINAL[i], POINTS_NOMINAL[j])
         dist_accurate = distance(POINTS_ACCURATE[i], POINTS_ACCURATE[j])
         error_nominal = abs(dist_nominal - dist_program)
-        error_accurate = abs(dist_accurate - dist_program)        
-        print('%i\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f' % (i+1,j+1,dist_program, dist_nominal, dist_accurate, error_nominal, error_accurate))
+        error_accurate = abs(dist_accurate - dist_program)
+        print('%i\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f' % (i + 1, j + 1, dist_program, dist_nominal, dist_accurate, error_nominal, error_accurate))
 
 quit()
-
-

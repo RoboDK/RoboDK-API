@@ -3,8 +3,9 @@
 # 2 - Object with surface (additional features are ignored)
 # This example projects the features (points/curves) to the reference surface and calculates the normals to the surface
 
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
+
 RDK = Robolink()
 
 # Set to True to invert the normals (flip the normals)
@@ -61,8 +62,8 @@ while True:
     # Optionally flip the normals (ijk vector)
     if FlipNormals:
         for ci in range(len(curve_points_proj)):
-            x,y,z,i,j,k = curve_points_proj[ci]
-            curve_points_proj[ci] = [x,y,z,-i,-j,-k]
+            x, y, z, i, j, k = curve_points_proj[ci]
+            curve_points_proj[ci] = [x, y, z, -i, -j, -k]
 
     RDK.AddCurve(curve_points_proj, new_object, True, PROJECTION_NONE)
 
@@ -70,16 +71,16 @@ while True:
 point_list, name_feature = object_features.GetPoints(FEATURE_POINT)
 npoints = len(point_list)
 print("Adding %i points" % npoints)
-if npoints > 0:    
+if npoints > 0:
     #RDK.AddPoints(point_list, new_object, True, PROJECTION_ALONG_NORMAL_RECALC)
     point_list_proj = RDK.ProjectPoints(point_list, object_surface, ProjectionType)
     RDK.AddPoints(point_list_proj, new_object, True, PROJECTION_NONE)
     #RDK.AddCurve(curve_points, new_object, True, PROJECTION_NONE)
 
 # Set the curve width
-new_object.setValue('DISPLAY','LINEW=2')
+new_object.setValue('DISPLAY', 'LINEW=2')
 # Set the curve color
-new_object.setColorCurve([0.0,0.5,0.5])
+new_object.setColorCurve([0.0, 0.5, 0.5])
 
 # Turn On rendering (Optional)
 RDK.Render(True)

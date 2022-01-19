@@ -11,11 +11,10 @@ NOM_TCP_MOBILE = 'TCP Mecanisme'
 # Option pour garder le TCP a jour en permanence
 MISE_A_JOUR_PERMANENTE = True
 
-
-
 #--------------------------------------------------
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
+
 RDK = Robolink()
 
 mecanisme = None
@@ -41,9 +40,9 @@ if not tcp.Valid():
 # Boucle infini pour garder le TCP à jour:
 while True:
     # Extraire la position absolue du flange robot
-    robot_flange_abs      = robot.PoseAbs()*robot.SolveFK(robot.Joints())
+    robot_flange_abs = robot.PoseAbs() * robot.SolveFK(robot.Joints())
     # Extraire la position absolue du flange mecanisme
-    mechanisme_flange_abs = mecanisme.PoseAbs()*mecanisme.SolveFK(mecanisme.Joints())
+    mechanisme_flange_abs = mecanisme.PoseAbs() * mecanisme.SolveFK(mecanisme.Joints())
 
     # Calculer le TCP (relation entre les 2 derniers)
     pose_tcp = invH(robot_flange_abs) * mechanisme_flange_abs

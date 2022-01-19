@@ -19,11 +19,11 @@ if len(sys.argv) < 2:
     if not entry:
         print('Operation cancelled')
         quit(0)
-        
+
     name_value = entry.split('-')
     if len(name_value) < 2:
         raise Exception('Invalid entry: ' + entry)
-        
+
     ItemName = name_value[0].strip()
     visible = name_value[1].strip().lower() != "hide"
 else:
@@ -32,7 +32,6 @@ else:
     visible = sys.argv[2].strip().lower() != "hide"
 
 # Start the RoboDK API and set the item visibility
-RDK = Robolink()    
+RDK = Robolink()
 item = RDK.Item(ItemName)
 item.setVisible(visible)
-

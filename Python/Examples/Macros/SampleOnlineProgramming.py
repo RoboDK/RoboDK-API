@@ -14,8 +14,8 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # robodk robotics toolbox
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # robodk robotics toolbox
 
 # Any interaction with RoboDK must be done through RDK:
 RDK = Robolink()
@@ -24,7 +24,6 @@ RDK = Robolink()
 robot = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT)
 if not robot.Valid():
     raise Exception('No robot selected or available')
-
 
 RUN_ON_ROBOT = True
 
@@ -37,27 +36,25 @@ if RDK.RunMode() != RUNMODE_SIMULATE:
 if RUN_ON_ROBOT:
     # Update connection parameters if required:
     # robot.setConnectionParams('192.168.2.35',30000,'/', 'anonymous','')
-    
+
     # Connect to the robot using default IP
-    success = robot.Connect() # Try to connect once
+    success = robot.Connect()  # Try to connect once
     #success robot.ConnectSafe() # Try to connect multiple times
     status, status_msg = robot.ConnectedState()
     if status != ROBOTCOM_READY:
         # Stop if the connection did not succeed
         print(status_msg)
         raise Exception("Failed to connect: " + status_msg)
-    
+
     # This will set to run the API programs on the robot and the simulator (online programming)
     RDK.setRunMode(RUNMODE_RUN_ROBOT)
     # Note: This is set automatically when we Connect() to the robot through the API
 
 #else:
-    # This will run the API program on the simulator (offline programming)
-    # RDK.setRunMode(RUNMODE_SIMULATE)
-    # Note: This is the default setting if we do not execute robot.Connect()
-    # We should not set the RUNMODE_SIMULATE if we want to be able to generate the robot programm offline
-
-
+# This will run the API program on the simulator (offline programming)
+# RDK.setRunMode(RUNMODE_SIMULATE)
+# Note: This is the default setting if we do not execute robot.Connect()
+# We should not set the RUNMODE_SIMULATE if we want to be able to generate the robot programm offline
 
 # Get the current joint position of the robot
 # (updates the position on the robot simulator)
@@ -70,7 +67,6 @@ pos_ref = target_ref.Pos()
 print("Drawing a polygon around the target: ")
 print(Pose_2_TxyzRxyz(target_ref))
 
-
 # move the robot to the first point:
 robot.MoveJ(target_ref)
 
@@ -78,29 +74,29 @@ robot.MoveJ(target_ref)
 # It is important to update the TCP on the robot mostly when using the driver
 robot.setPoseFrame(robot.PoseFrame())
 robot.setPoseTool(robot.PoseTool())
-robot.setZoneData(10) # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
-robot.setSpeed(200) # Set linear speed in mm/s
+robot.setZoneData(10)  # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
+robot.setSpeed(200)  # Set linear speed in mm/s
 
 # Set the number of sides of the polygon:
 n_sides = 6
 R = 100
 
 # make a hexagon around reference target:
-for i in range(n_sides+1):
-    ang = i*2*pi/n_sides #angle: 0, 60, 120, ...
+for i in range(n_sides + 1):
+    ang = i * 2 * pi / n_sides  #angle: 0, 60, 120, ...
 
     #-----------------------------
     # Movement relative to the reference frame
     # Create a copy of the target
     target_i = Mat(target_ref)
     pos_i = target_i.Pos()
-    pos_i[0] = pos_i[0] + R*cos(ang)
-    pos_i[1] = pos_i[1] + R*sin(ang)
+    pos_i[0] = pos_i[0] + R * cos(ang)
+    pos_i[1] = pos_i[1] + R * sin(ang)
     target_i.setPos(pos_i)
-    print("Moving to target %i: angle %.1f" % (i, ang*180/pi))
+    print("Moving to target %i: angle %.1f" % (i, ang * 180 / pi))
     print(str(Pose_2_TxyzRxyz(target_i)))
     robot.MoveL(target_i)
-    
+
     #-----------------------------
     # Post multiply: relative to the tool
     #target_i = target_ref * rotz(ang) * transl(R,0,0) * rotz(-ang)
@@ -111,8 +107,6 @@ robot.MoveL(target_ref)
 
 print('Done')
 
-
-
 ## Example to run a program created using the GUI from the API
 #prog = RDK.Item('MainProgram', ITEM_TYPE_PROGRAM)
 ## prog.setRunType(PROGRAM_RUN_ON_ROBOT) # Run on robot option
@@ -120,6 +114,4 @@ print('Done')
 #prog.RunProgram()
 #while prog.Busy() == 1:
 #    pause(0.1)
-#print("Program done") 
-
-
+#print("Program done")

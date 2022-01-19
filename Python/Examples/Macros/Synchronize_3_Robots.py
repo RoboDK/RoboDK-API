@@ -5,8 +5,8 @@
 #
 # This example shows to synchronize multiple robots at the same time
 
-from robolink import *    # API to communicate with RoboDK for offline/online programming
-from robodk import *      # Robotics toolbox for industrial robots
+from robolink import *  # API to communicate with RoboDK for offline/online programming
+from robodk import *  # Robotics toolbox for industrial robots
 
 import threading
 import queue
@@ -22,17 +22,19 @@ SYNC_TOTAL = 0
 SYNC_ID = 0
 lock = threading.Lock()
 
+
 def SyncSet(total_sync):
     """SyncSet will set the number of total robot programs (threads) that must be synchronized togeter.
     Every time SyncSet is called SYNC_ID is increased by one."""
     global SYNC_COUNT
     global SYNC_TOTAL
-    global SYNC_ID    
+    global SYNC_ID
     with lock:
         SYNC_COUNT = 0
         SYNC_TOTAL = total_sync
         SYNC_ID = SYNC_ID + 1
         #print('SyncSet')
+
 
 def SyncWait():
     """SyncWait will block the robot movements for a robot when necessary, synchronizing the movements sequentially.
@@ -54,12 +56,12 @@ def SyncWait():
         time.sleep(0.0001)
 
 
-# Main procedure to move each robot   
+# Main procedure to move each robot
 def DoWeld(q, robotname):
     # Any interaction with RoboDK must be done through Robolink()
     # Each robot movement requires a new Robolink() object (new link of communication).
     # Two robots can't be moved by the same communication link.
-    
+
     rdk = Robolink()
 
     # get the robot item:
@@ -77,7 +79,7 @@ def DoWeld(q, robotname):
 
     # get the pose of the target (4x4 matrix):
     poseref = target.Pose()
-    pose_approach = poseref*transl(0,0,-100)
+    pose_approach = poseref * transl(0, 0, -100)
 
     # move the robot to home, then to the center:
     robot.MoveJ(home)
@@ -87,8 +89,8 @@ def DoWeld(q, robotname):
 
     # make an hexagon around the center:
     for i in range(7):
-        ang = i*2*pi/6 #angle: 0, 60, 120, ...
-        posei = poseref*rotz(ang)*transl(200,0,0)*rotz(-ang)
+        ang = i * 2 * pi / 6  #angle: 0, 60, 120, ...
+        posei = poseref * rotz(ang) * transl(200, 0, 0) * rotz(-ang)
         SyncWait()
         robot.MoveL(posei)
 
@@ -99,9 +101,10 @@ def DoWeld(q, robotname):
     robot.MoveJ(home)
     q.put('Robot %s finished' % robotname)
 
+
 #----------------------------------------
-# Python program start 
-    
+# Python program start
+
 # retrieve all available robots in the RoboDK station (as a list of names)
 RDK = Robolink()
 robots = RDK.ItemList(ITEM_TYPE_ROBOT)
@@ -118,7 +121,7 @@ q = queue.Queue()
 threads = []
 for i in range(nrobots):
     robotname = robots[i]
-    t = threading.Thread(target=DoWeld, args = (q, robotname))
+    t = threading.Thread(target=DoWeld, args=(q, robotname))
     t.daemon = True
     t.start()
     threads.append(t)

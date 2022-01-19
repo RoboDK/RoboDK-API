@@ -37,14 +37,13 @@ Tool_Name = None
 Object_Name = None
 #Object_Name = 'Part'
 
-
-
 # Define the default action (0 to deactivate, +1 to activate, -1 to clear any spray gun simulation)
 # Setting it to None will display a message
 ACTION = None
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # quit if we are not in simulation mode
@@ -60,7 +59,7 @@ if data.size(1) > 0:
     # # Diplay statistics
     # RDK.ShowMessage("Material used: %.1f%%<br>Material waisted: %.1f%%<br>Total particles: %.1f" % (data[1,0],data[2,0],data[3,0]), True)
     # # Clear previous spray
-    # RDK.Spray_Clear() 
+    # RDK.Spray_Clear()
 
 # Check if we are running this program inside another program and passing arguments
 import sys
@@ -73,16 +72,16 @@ if ACTION is None:
     entry = mbox('Turn gun ON or OFF', ('On', '1'), ('Off', '0'))
     if not entry:
         quit()
-    ACTION = int(entry)    
+    ACTION = int(entry)
 
 if ACTION == 0:
     # Turn the gun off
     RDK.Spray_SetState(SPRAY_OFF)
-    
+
 elif ACTION < 0:
     # Clear all spray simulations (same as pressing ESC key)
     RDK.Spray_Clear()
-    
+
 elif ACTION > 0:
     # Create a new spray gun object in RoboDK
     # by using RDK.Spray_Add(tool, object, options_command, volume, geometry)
@@ -103,12 +102,11 @@ elif ACTION > 0:
     # volume (optional): Matrix of parameters defining the volume of the spray gun
     # geometry (optional): Matrix of vertices defining the triangles.
 
-    
-    tool = 0    # auto detect active tool
-    obj = 0     # auto detect object in active reference frame
+    tool = 0  # auto detect active tool
+    obj = 0  # auto detect object in active reference frame
     if Tool_Name is not None:
         tool = RDK.Item(Tool_Name, ITEM_TYPE_TOOL)
-    
+
     if Object_Name is not None:
         obj = RDK.Item(Object_Name, ITEM_TYPE_OBJECT)
     # We can specify a given tool object and/or object
@@ -118,34 +116,32 @@ elif ACTION > 0:
     #    tool = tools[0]
     #obj = RDK.Item('object', ITEM_TYPE_OBJECT)
 
-    options_command = "ELLYPSE PROJECT PARTICLE=SPHERE(4,8,1,1,0.5) STEP=8x8 RAND=2" # simulate 
+    options_command = "ELLYPSE PROJECT PARTICLE=SPHERE(4,8,1,1,0.5) STEP=8x8 RAND=2"  # simulate
     #options_command = "PARTICLE=CUBE(10,10,2) STEP=8x8"
     #options_command = "PARTICLE=SPHERE(4,8) STEP=8x8"
     #options_command = "PARTICLE=SPHERE(4,8,1,1,0.1) STEP=8x8 RAND=3"
 
     # Example commands for welding:
     # options_command = "PROJECT PARTICLE=SPHERE(4,8)"
-    # options_command = PARTICLE=SPHERE(4,8) STEP=1x0   
-    
+    # options_command = PARTICLE=SPHERE(4,8) STEP=1x0
 
     # define the ellypse volume as p0, pA, pB, colorRGBA (close and far), in mm
     # coordinates must be provided with respect to the TCP
-    close_p0 = [   0,   0, -200] # xyz in mm: Center of the conical ellypse (side 1)
-    close_pA = [   5,   0, -200] # xyz in mm: First vertex of the conical ellypse (side 1)
-    close_pB = [   0,  10, -200] # xyz in mm: Second vertex of the conical ellypse (side 1)
-    close_color = [ 1, 0, 0, 1]  # RGBA (0-1)
-    
-    far_p0   = [   0,   0,  50] # xyz in mm: Center of the conical ellypse (side 2)
-    far_pA   = [  60,   0,  50] # xyz in mm: First vertex of the conical ellypse (side 2)
-    far_pB   = [   0, 120,  50] # xyz in mm: Second vertex of the conical ellypse (side 2)
-    far_color   = [ 0, 0, 1, 0.2]  # RGBA (0-1)
+    close_p0 = [0, 0, -200]  # xyz in mm: Center of the conical ellypse (side 1)
+    close_pA = [5, 0, -200]  # xyz in mm: First vertex of the conical ellypse (side 1)
+    close_pB = [0, 10, -200]  # xyz in mm: Second vertex of the conical ellypse (side 1)
+    close_color = [1, 0, 0, 1]  # RGBA (0-1)
+
+    far_p0 = [0, 0, 50]  # xyz in mm: Center of the conical ellypse (side 2)
+    far_pA = [60, 0, 50]  # xyz in mm: First vertex of the conical ellypse (side 2)
+    far_pB = [0, 120, 50]  # xyz in mm: Second vertex of the conical ellypse (side 2)
+    far_color = [0, 0, 1, 0.2]  # RGBA (0-1)
 
     close_param = close_p0 + close_pA + close_pB + close_color
-    far_param = far_p0 + far_pA + far_pB + far_color    
+    far_param = far_p0 + far_pA + far_pB + far_color
     volume = Mat([close_param, far_param]).tr()
     RDK.Spray_Add(tool, obj, options_command, volume)
     RDK.Spray_SetState(SPRAY_ON)
-
 
     # Another example with a varying rectancular shape
     # define the rectangular volume as p0, pA, pB, colorRGBA (close and far)
@@ -159,8 +155,3 @@ elif ACTION > 0:
     # geom = Mat([[0,0,0,   0,0,1], [5,0,0,   0,0,1], [0,5,0,   0,0,1]])
     # RDK.Spray_Add(tool, obj, "STEP=8x8 RANDX=3", volume.tr(), geom.tr())
     # RDK.Spray_SetState(SPRAY_ON)
-    
-
-
-
-

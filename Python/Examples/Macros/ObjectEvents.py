@@ -17,9 +17,9 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 
-import sys                # allows getting the argument parameters
-from robodk import *      # required by mbox()
-from robolink import *    # API to communicate with RoboDK
+import sys  # allows getting the argument parameters
+from robodk import *  # required by mbox()
+from robolink import *  # API to communicate with RoboDK
 
 print('Number of arguments: ' + str(len(sys.argv)) + ' arguments.')
 
@@ -32,12 +32,12 @@ RDK = Robolink()
 
 # If the two arguments from the object events are provided, retrieve the command and the object ID
 if len(sys.argv) >= 3:
-    COMMAND = sys.argv[1]   
+    COMMAND = sys.argv[1]
     OBJECT = Item(RDK, int(sys.argv[2]))
     #RDK.ShowMessage("%s : %s" % (str(sys.argv), COMMAND))
-    
+
 else:
-# If the macro is double clicked, pop up a message
+    # If the macro is double clicked, pop up a message
     OBJECT = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
     if not OBJECT.Valid():
         quit()
@@ -51,8 +51,8 @@ if COMMAND == "SHOWPOINT_ALL":
     i = 0
     for pt in points:
         i = i + 1
-        message += "p%i : %.3f , %.3f , %.3f <br>" % (i, pt[0], pt[1], pt[2])        
-        
+        message += "p%i : %.3f , %.3f , %.3f <br>" % (i, pt[0], pt[1], pt[2])
+
     RDK.ShowMessage(message)
 
 elif COMMAND == "SHOWPOINT":
@@ -61,7 +61,7 @@ elif COMMAND == "SHOWPOINT":
     if feature_type != FEATURE_POINT:
         RDK.ShowMessage("The selected feature is not a point")
         quit()
-        
+
     points, name_selected = OBJECT.GetPoints(feature_type, feature_id)
     point = None
     if len(points) > 1:
@@ -76,24 +76,24 @@ elif COMMAND == "NEWPOINT":
     if feature_type != FEATURE_SURFACE:
         RDK.ShowMessage("The selected feature is not a surface")
         quit()
-        
+
     point_mouse, name_feature = OBJECT.GetPoints(FEATURE_SURFACE)
     if 'point on surface' in name_feature.lower():
-        point_rel = point_mouse[0] 
+        point_rel = point_mouse[0]
         RDK.ShowMessage("%s -> XYZ = [%.3f, %.3f, %.3f] , ijk = [%.3f, %.3f, %.3f]" % (name_feature, point_rel[0], point_rel[1], point_rel[2], point_rel[3], point_rel[4], point_rel[5]), False)
         ADD_POINT_ON_OBJECT = True
         OBJECT.AddPoints([point_rel], ADD_POINT_ON_OBJECT, PROJECTION_NONE)
     else:
         RDK.ShowMessage("Select a surface")
-        
+
 elif COMMAND == "NEWTARGET":
     # create a new point under the mouse cursor
     point_mouse, name_feature = OBJECT.GetPoints(FEATURE_SURFACE)
     if 'point on surface' in name_feature.lower():
-        point_rel = point_mouse[0] 
+        point_rel = point_mouse[0]
         RDK.ShowMessage("%s -> XYZ = [%.3f, %.3f, %.3f] , ijk = [%.3f, %.3f, %.3f]" % (name_feature, point_rel[0], point_rel[1], point_rel[2], point_rel[3], point_rel[4], point_rel[5]), False)
 
-        angle_Z = 0 * pi/180
+        angle_Z = 0 * pi / 180
         pose = point_Zaxis_2_pose(point_rel[0:3], point_rel[3:6]) * rotx(pi) * rotz(angle_Z)
         # poseref = robot.Pose()
         target = RDK.AddTarget('NewTarget', OBJECT.Parent())
@@ -107,7 +107,7 @@ elif COMMAND == "CURVE_2_TARGETS":
     if feature_type != FEATURE_CURVE:
         RDK.ShowMessage("The selected feature is not a curve")
         quit()
-        
+
     point_list, name_feature = OBJECT.GetPoints(FEATURE_CURVE, feature_id)
     last_pose = None
     npoints = len(point_list)
@@ -118,37 +118,29 @@ elif COMMAND == "CURVE_2_TARGETS":
     TOLERANCE = 1
 
     pi_last = None
-    
+
     for i in range(npoints):
         p_i = point_list[i]
         if pi_last is not None and distance(pi_last, p_i) < TOLERANCE:
             continue
-        
+
         pose = last_pose
         if i < npoints - 1:
-            p_i2 = point_list[i+1]            
+            p_i2 = point_list[i + 1]
             vy = subs3(p_i2, p_i)
             vz = [-p_i[3], -p_i[4], -p_i[5]]
             pose = point_Zaxis_2_pose(p_i[0:3], vz, vy)
-            
+
         else:
             pose.setPos(p_i[0:3])
-        
+
         target = RDK.AddTarget("T%i " % i + name_feature, OBJECT.Parent())
         target.setPose(pose)
         last_pose = pose
 
         pi_last = p_i
-        
-        RDK.ShowMessage("Adding target", False)        
-        
+
+        RDK.ShowMessage("Adding target", False)
+
 else:
     raise Exception("Invalid operation specified")
-
-    
-
-    
-
-
-
-

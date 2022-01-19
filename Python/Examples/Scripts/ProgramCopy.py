@@ -5,8 +5,9 @@
 # Press F5 to run the script
 # Or visit: http://www.robodk.com/doc/PythonAPI/
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # Enter the step tolerance in MM and Degrees
@@ -31,10 +32,9 @@ if False:
     new_prog.ShowInstructions(True)
     quit()
 
-
 #--------------------------------
 # Method 2: Create a new program and use setParam and copy instruction by instruction
-# This is useful 
+# This is useful
 RDK.Render(False)
 robot = prog.getLink(ITEM_TYPE_ROBOT)
 new_prog = RDK.AddProgram(new_prog_name, robot)

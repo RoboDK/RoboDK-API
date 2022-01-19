@@ -3,7 +3,7 @@
 # This macro can be used together with a robot machining project to change the tool as it simulates
 # Double click your robot machining project, select Program Events, and enter SetTool(%1) on change tool event
 # https://robodk.com/doc/en/RoboDK-API.html
-import sys # allows getting the passed argument parameters
+import sys  # allows getting the passed argument parameters
 from robodk import *
 from robolink import *
 
@@ -38,7 +38,3 @@ if not tool.Valid():
 robot.setTool(tool)
 
 print("Done!")
-
-
-
-

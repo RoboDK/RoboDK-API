@@ -3,7 +3,7 @@
 #    MoveAxis(0)
 #    MoveAxis(100)
 # https://robodk.com/doc/en/RoboDK-API.html
-import sys # allows getting the passed argument parameters
+import sys  # allows getting the passed argument parameters
 from robodk import *
 
 # Enter the name of the axis (leave empty to select the first mechanism/robot available
@@ -14,7 +14,6 @@ DEFAULT_VALUE = 0
 
 # Set to blocking to make the program wait until it the axis stopped moving
 BLOCKING = True
-
 
 # --------------- PROGRAM START -------------------------
 VALUE = DEFAULT_VALUE
@@ -36,7 +35,8 @@ else:
     VALUE = float(sys.argv[1])
 
 # Use the RoboDK API:
-from robolink import *    # API to communicate with RoboDK
+from robolink import *  # API to communicate with RoboDK
+
 RDK = Robolink()
 
 # Get the robot item:
@@ -44,8 +44,3 @@ axis = RDK.Item(MECHANISM_NAME, ITEM_TYPE_ROBOT)
 
 # Move the robot/mechanism
 axis.MoveJ([VALUE], BLOCKING)
-
-
-
-
-

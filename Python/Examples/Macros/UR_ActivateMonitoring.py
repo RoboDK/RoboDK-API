@@ -5,8 +5,8 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 # Press F5 to run the script
 # Or visit: https://robodk.com/doc/en/PythonAPI/index.html
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 import threading
 import socket
 import struct
@@ -14,12 +14,12 @@ import os
 import time
 
 # Refresh the screen every time the robot position changes
-TOLERANCE_JOINTS_REFRESH   = 0.1
+TOLERANCE_JOINTS_REFRESH = 0.1
 RETRIEVE_JOINTS_ONCE = False  # If True, the current robot position will be retrieved once only
 
 # Create targets given a tolerance in degrees
 CREATE_TARGETS = False
-TOLERANCE_JOINTS_NEWTARGET = 10 # in degrees
+TOLERANCE_JOINTS_NEWTARGET = 10  # in degrees
 
 REFRESH_RATE = 0.01
 
@@ -28,14 +28,15 @@ global ROBOT_JOINTS
 
 
 # Procedure to check if robot joint positions are different according to a certain tolerance
-def Robot_Joints_Check(jA,jB, tolerance_deg=1):
+def Robot_Joints_Check(jA, jB, tolerance_deg=1):
     if jA is None:
         return True
-    
+
     for i in range(6):
-        if abs(jA[i]-jB[i]) > tolerance_deg*pi/180:
+        if abs(jA[i] - jB[i]) > tolerance_deg * pi / 180:
             return True
     return False
+
 
 #########################################################################
 # Byte shifts to point to the right byte data inside a packet
@@ -45,44 +46,49 @@ UR_GET_JOINT_SPEEDS = 300
 UR_GET_JOINT_CURRENTS = 348
 UR_GET_TCP_FORCES = 540
 
+
 # Get packet size according to the byte array
 def packet_size(buf):
     if len(buf) < 4:
         return 0
     return struct.unpack_from("!i", buf, 0)[0]
-   
+
+
 # Check if a packet is complete
 def packet_check(buf):
     msg_sz = packet_size(buf)
     if len(buf) < msg_sz:
         print("Incorrect packet size %i vs %i" % (msg_sz, len(buf)))
         return False
-    
+
     return True
+
 
 # Get specific information from a packet
 def packet_value(buf, offset, nval=6):
-    if len(buf) < offset+nval:
+    if len(buf) < offset + nval:
         print("Not available offset (maybe older Polyscope version?): %i - %i" % (len(buf), offset))
         return None
     format = '!'
     for i in range(nval):
-        format+='d'
-    return list(struct.unpack_from(format, buf, offset))    #return list(struct.unpack_from("!dddddd", buf, offset))
+        format += 'd'
+    return list(struct.unpack_from(format, buf, offset))  #return list(struct.unpack_from("!dddddd", buf, offset))
+
 
 # Action to take when a new packet arrives
 def on_packet(packet):
     global ROBOT_JOINTS
     # Retrieve desired information from a packet
     rob_joints_RAD = packet_value(packet, UR_GET_JOINT_POSITIONS)
-    ROBOT_JOINTS = [ji * 180.0/pi for ji in rob_joints_RAD]
+    ROBOT_JOINTS = [ji * 180.0 / pi for ji in rob_joints_RAD]
     #ROBOT_SPEED = packet_value(packet, UR_GET_JOINT_SPEEDS)
     #ROBOT_CURRENT = packet_value(packet, UR_GET_JOINT_CURRENTS)
     #print(ROBOT_JOINTS)
 
+
 # Monitor thread to retrieve information from the robot
 def UR_Monitor():
-    while True:        
+    while True:
         rt_socket = socket.create_connection((ROBOT_IP, ROBOT_PORT))
         buf = b''
         packet_count = 0
@@ -92,21 +98,23 @@ def UR_Monitor():
             if more:
                 buf = buf + more
                 if packet_check(buf):
-                    packet_len = packet_size(buf) 
+                    packet_len = packet_size(buf)
                     packet, buf = buf[:packet_len], buf[packet_len:]
                     on_packet(packet)
                     packet_count += 1
                     if packet_count % 125 == 0:
                         t_now = time.time()
-                        print("Monitoring at %.1f packets per second" % (packet_count/(t_now-packet_time_last)))
+                        print("Monitoring at %.1f packets per second" % (packet_count / (t_now - packet_time_last)))
                         packet_count = 0
                         packet_time_last = t_now
-                        
+
         rt_socket.close()
+
+
 #########################################################################
 
 # Enter RoboDK IP and Port
-ROBOT_IP = None #'192.168.2.31'
+ROBOT_IP = None  #'192.168.2.31'
 ROBOT_PORT = 30003
 
 # Start RoboDK API
@@ -119,10 +127,8 @@ if not robot.Valid():
 
 # Retrieve Robot's IP:
 if ROBOT_IP is None:
-    ip,port,path,ftpuser,ftppass = robot.ConnectionParams()
+    ip, port, path, ftpuser, ftppass = robot.ConnectionParams()
     ROBOT_IP = ip
-
-
 
 ROBOT_JOINTS = None
 last_joints_target = None
@@ -144,7 +150,7 @@ while True:
 
     # Set the robot to that position
     if Robot_Joints_Check(last_joints_refresh, ROBOT_JOINTS, TOLERANCE_JOINTS_REFRESH):
-        last_joints_refresh = ROBOT_JOINTS    
+        last_joints_refresh = ROBOT_JOINTS
         robot.setJoints(ROBOT_JOINTS)
 
     # Stop here if we need only the current position
@@ -157,7 +163,5 @@ while True:
         target_count = target_count + 1
         newtarget = RDK.AddTarget('T %i' % target_count, 0, robot)
 
-    # Take a short break        
+    # Take a short break
     pause(REFRESH_RATE)
-    
-    

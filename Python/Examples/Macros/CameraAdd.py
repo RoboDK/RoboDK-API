@@ -1,12 +1,12 @@
 # This macro shows how you can add a new camera from a simulation event
 #
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # library for basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # library for basic matrix operations
+
 RDK = Robolink()
 
 # Close any open 2D camera views
 RDK.Cam2D_Close()
-
 
 camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object)')
 #camref = RDK.Item('Frame 7',ITEM_TYPE_FRAME)
@@ -29,7 +29,6 @@ camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object
 #  ALWAYS_VISIBLE: Keep the window on top of all other windows
 #  SHADER_VERTEX: File to a vertex shader (GLSL file)
 #  SHADER_FRAGMENT: File to a fragment shader (GLSL file)
-
 
 # Examples to call Camd2D_Add:
 
@@ -82,7 +81,3 @@ path_library = RDK.getParam("PATH_LIBRARY")
 file_shader_fragment = path_library + '/Macros/Camera-Shaders/shader_fragment.glsl'
 file_shader_vertex = path_library + '/Macros/Camera-Shaders/shader_vertex.glsl'
 cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
-
-
-
-

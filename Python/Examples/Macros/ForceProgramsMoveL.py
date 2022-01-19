@@ -1,7 +1,8 @@
 # This macro will override the first joint move in each program and set it as a linear move
 # WARNING! The configuration might not be set as desired and the robot may move in an undesired way (different from the simulated movements)
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 progs = []
@@ -14,7 +15,6 @@ for prog in progs_all:
     #    print('Programme %s selected automatically' % prog_name)
     #    progs.append(prog)
     progs.append(prog)
-
 
 if len(progs) == 0:
     print('No programs found')
@@ -30,13 +30,10 @@ for prog in progs:
         ins_name, ins_type, move_type, isjointtarget, pose, joints = prog.Instruction(ins_id)
         if ins_type == INS_TYPE_MOVE:
             if move_type == MOVE_TYPE_JOINT:
-                prog.setInstruction(ins_id, '*MoveL', ins_type, MOVE_TYPE_LINEAR, False, pose, joints)                
+                prog.setInstruction(ins_id, '*MoveL', ins_type, MOVE_TYPE_LINEAR, False, pose, joints)
                 RDK.ShowMessage('Program %s modified Successfully' % prog_name, False)
-                
+
             else:
                 RDK.ShowMessage('The first movements for %s is already linear' % prog_name, False)
-                
+
             break
-
-
-

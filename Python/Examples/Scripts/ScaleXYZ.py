@@ -3,8 +3,8 @@
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 # Note: It is not required to keep a copy of this file, your python script is saved with the station
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
 
 
 def str2floatlist(str_values, expected_values):
@@ -19,6 +19,7 @@ def str2floatlist(str_values, expected_values):
         values[i] = float(values[i])
     #print('Read values: ' + repr(values))
     return values
+
 
 def mbox_getfloatlist(title_msg, show_value, expected_values):
     """Get a list of values from the user, stops the script if the user hits cancel"""
@@ -48,14 +49,9 @@ obj = RDK.ItemUserPick('Select an object or tool to scale')
 if not obj.Valid():
     quit(0)
 
-scale_xyz = mbox_getfloatlist("Enter a per-axis scale", [1,1,1], 3)
+scale_xyz = mbox_getfloatlist("Enter a per-axis scale", [1, 1, 1], 3)
 if not scale_xyz:
     quit(0)
 
 # Trigger scaling
 obj.Scale(scale_xyz)
-
-
-
-
-

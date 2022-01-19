@@ -1,12 +1,13 @@
-# This macro shows how to convert any program to only linear movements. 
+# This macro shows how to convert any program to only linear movements.
 # Circular movements will be replaced by small linear movements given a step tolerance.
 
 # Type help("robolink") or help("robodk") for more information
 # Press F5 to run the script
 # Or visit: http://www.robodk.com/doc/PythonAPI/
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # Enter the step tolerance in MM and Degrees
@@ -43,19 +44,19 @@ for target in targets:
 if njoints < 2:
     raise Exception('Invalid program!')
 
-new_prog = RDK.AddProgram(prog.Name()+'Lin',robot)
+new_prog = RDK.AddProgram(prog.Name() + 'Lin', robot)
 
 new_prog.setTool(robot.Childs()[0])
 new_prog.setFrame(robot.Parent())
 target = RDK.AddTarget('MovJ 1', reference, robot)
-target.setJoints(joint_list[:6,0].tolist())
+target.setJoints(joint_list[:6, 0].tolist())
 new_prog.MoveJ(target)
 
-for i in range(1,njoints):
-    targeti = RDK.AddTarget('MovL %i' % (i+1), reference, robot)
-    joints_i = joint_list[:6,i].tolist()
+for i in range(1, njoints):
+    targeti = RDK.AddTarget('MovL %i' % (i + 1), reference, robot)
+    joints_i = joint_list[:6, i].tolist()
     targeti.setJoints(joints_i)
-    targeti.setPose(robot.SolveFK(joints_i)*pose_tool)
+    targeti.setPose(robot.SolveFK(joints_i) * pose_tool)
     new_prog.MoveL(targeti)
 
 RDK.Render(True)

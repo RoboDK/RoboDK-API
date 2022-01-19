@@ -3,10 +3,10 @@
 # This script meant to work when we are running 3D printing with the driver ("Run on robot" option)
 
 # Send the E_Value over Ethernet (ASCII numbers)
-EXTRUDER_IP = '10.10.10.12'    # The IP of the extruder
-EXTRUDER_PORT = 100            # The same port as used by the Extruder server
+EXTRUDER_IP = '10.10.10.12'  # The IP of the extruder
+EXTRUDER_PORT = 100  # The same port as used by the Extruder server
 
-from robodk import *    # required for mbox
+from robodk import *  # required for mbox
 
 E_Value = None
 # Check if we are running this program inside another program and passing arguments
@@ -20,7 +20,7 @@ if E_Value is None:
     entry = mbox('Turn Extruder ON or OFF', ('On', '1'), ('Off', '-1'))
     if not entry:
         quit()
-        
+
     E_Value = int(entry)
 
 ## Optionally, ignore sending the command if we are running in simulation mode
@@ -30,10 +30,10 @@ if E_Value is None:
 # stop if we in simulation mode
 #if RDK.RunMode() == RUNMODE_SIMULATE:
 #    quit()
-   
 
 # Implement socket communication to send the E_Value over Ethernet/socket
 import socket
+
 BUFFER_SIZE = 1024
 
 # Build the byte array to send
@@ -52,8 +52,3 @@ bytes_recv = s.recv(BUFFER_SIZE)
 str_recv = bytes_recv.decode('ascii')
 s.close()
 print("Response: " + str_recv)
-
-
-
-
-

@@ -2,18 +2,19 @@
 # This example is an improvement of the weld Hexagon
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # robodk robotics toolbox
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # robodk robotics toolbox
 
 # Set up default parameters
-PROGRAM_NAME = "DoWeld"     # Name of the program
-APPROACH = 300              # Approach distance
-RADIUS = 200                # Radius of the polygon
-SPEED_WELD = 50             # Speed in mn/s of the welding path
-SPEED_MOVE = 200            # Speed in mm/s of the approach/retract movements
-SIDES = 8                   # Number of sides for the polygon
-DRY_RUN = 1                 # If 0, it will generate SprayOn/SprayOff program calls, otherwise it will not activate the tool
-RUN_MODE = RUNMODE_SIMULATE # Simulation behavior (simulate, generate program or generate the program and send it to the robot)
+PROGRAM_NAME = "DoWeld"  # Name of the program
+APPROACH = 300  # Approach distance
+RADIUS = 200  # Radius of the polygon
+SPEED_WELD = 50  # Speed in mn/s of the welding path
+SPEED_MOVE = 200  # Speed in mm/s of the approach/retract movements
+SIDES = 8  # Number of sides for the polygon
+DRY_RUN = 1  # If 0, it will generate SprayOn/SprayOff program calls, otherwise it will not activate the tool
+RUN_MODE = RUNMODE_SIMULATE  # Simulation behavior (simulate, generate program or generate the program and send it to the robot)
+
 # use RUNMODE_SIMULATE to simulate only
 # use RUNMODE_MAKE_ROBOTPROG to generate the program
 # use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD to generate the program and send it to the robot
@@ -29,11 +30,11 @@ def RunProgram():
     global SPEED_MOVE
     global SIDES
     global DRY_RUN
-    global RUN_MODE   
-    
+    global RUN_MODE
+
     # Any interaction with RoboDK must be done through RDK:
     RDK = Robolink()
-    
+
     # get the home target and the welding targets:
     home = RDK.Item('Home')
     target = RDK.Item('Target Reference')
@@ -52,13 +53,13 @@ def RunProgram():
     # move the robot to home, then to an approach position
     robot.MoveJ(home)
     robot.setSpeed(SPEED_MOVE)
-    robot.MoveJ(transl(0,0,APPROACH)*poseref)
+    robot.MoveJ(transl(0, 0, APPROACH) * poseref)
 
     # make an polygon of n SIDES around the reference target
-    for i in range(SIDES+1):
-        ang = i*2*pi/SIDES #angle: 0, 60, 120, ...
+    for i in range(SIDES + 1):
+        ang = i * 2 * pi / SIDES  #angle: 0, 60, 120, ...
         # Calculate next position
-        posei = poseref*rotz(ang)*transl(RADIUS,0,0)*rotz(-ang)
+        posei = poseref * rotz(ang) * transl(RADIUS, 0, 0) * rotz(-ang)
         robot.MoveL(posei)
 
         # Impose weld speed only for the first point
@@ -75,7 +76,7 @@ def RunProgram():
     robot.setSpeed(SPEED_MOVE)
 
     # move back to the approach point, then home:
-    robot.MoveL(transl(0,0,APPROACH)*poseref)
+    robot.MoveL(transl(0, 0, APPROACH) * poseref)
     robot.MoveJ(home)
 
     # Provoke program generation (automatic when RDK is finished)
@@ -91,10 +92,10 @@ root.title("Program settings")
 
 # Use variables linked to the global variables
 runmode = IntVar()
-runmode.set(RUN_MODE)   # setting up default value
+runmode.set(RUN_MODE)  # setting up default value
 
 dryrun = IntVar()
-dryrun.set(DRY_RUN)     # setting up default value
+dryrun.set(DRY_RUN)  # setting up default value
 
 entry_name = StringVar()
 entry_name.set(PROGRAM_NAME)
@@ -102,9 +103,11 @@ entry_name.set(PROGRAM_NAME)
 entry_speed = StringVar()
 entry_speed.set(str(SPEED_WELD))
 
+
 # Define feedback call
 def ShowRunMode():
     print("Selected run mode: " + str(runmode.get()))
+
 
 # Define a label and entry text for the program name
 Label(root, text="Program name").pack()
@@ -115,22 +118,23 @@ Label(root, text="Weld speed (mm/s)").pack()
 Entry(root, textvariable=entry_speed).pack()
 
 # Define a check box to do a dry run
-Checkbutton(root, text = "Dry run", variable=dryrun, onvalue=1, offvalue=0, height=5, width=20).pack()
+Checkbutton(root, text="Dry run", variable=dryrun, onvalue=1, offvalue=0, height=5, width=20).pack()
 
 # Add a display label for the run mode
 Label(root, text="Run mode", justify=LEFT, padx=20).pack()
 
 # Set up the run modes (radio buttons)
-runmodes = [("Simulate",RUNMODE_SIMULATE),("Generate program",RUNMODE_MAKE_ROBOTPROG),("Send program to robot",RUNMODE_MAKE_ROBOTPROG_AND_START)]
+runmodes = [("Simulate", RUNMODE_SIMULATE), ("Generate program", RUNMODE_MAKE_ROBOTPROG), ("Send program to robot", RUNMODE_MAKE_ROBOTPROG_AND_START)]
 for txt, val in runmodes:
     Radiobutton(root, text=txt, padx=20, variable=runmode, command=ShowRunMode, value=val).pack(anchor=W)
+
 
 # Add a button and default action to execute the current choice of the user
 def ExecuteChoice():
     global DRY_RUN
     global RUN_MODE
     global SPEED_WELD
-    global PROGRAM_NAME    
+    global PROGRAM_NAME
     DRY_RUN = dryrun.get()
     RUN_MODE = runmode.get()
     SPEED_WELD = float(entry_speed.get())
@@ -138,9 +142,8 @@ def ExecuteChoice():
     # Run the main program once all the global variables have been set
     RunProgram()
 
+
 Button(root, text='Simulate/Generate', command=ExecuteChoice).pack()
 
 # Important to display the graphical user interface
 root.mainloop()
-
-
