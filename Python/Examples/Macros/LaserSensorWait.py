@@ -3,8 +3,9 @@
 # Type help("robolink") or help("robodk") for more information
 # Press F5 to run the script
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # This script allows to simulate a laser sensor
@@ -31,7 +32,6 @@ part_objects = []
 for obj in all_objects:
     if obj.Name().count(PART_KEYWORD) > 0:
         part_objects.append(obj)
-    
 
 # Loop forever to detect parts
 detected_status = -1
@@ -51,7 +51,3 @@ while True:
 
     # Wait some time...
     pause(RECHECK_PERIOD)
-
- 
-        
-        

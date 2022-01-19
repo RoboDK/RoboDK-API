@@ -1,6 +1,6 @@
 # This example shows how to automatically move and measure a set of points using a laser tracker.
-from robolink import *    # API to communicate with RoboDK for simulation and offline/online programming
-from robodk import *      # Robotics toolbox for industrial robots
+from robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
+from robodk import *  # Robotics toolbox for industrial robots
 
 # Any interaction with RoboDK must be done through RDK:
 RDK = Robolink()
@@ -32,27 +32,25 @@ if RDK.RunMode() != RUNMODE_SIMULATE:
 if RUN_ON_ROBOT:
     # Update connection parameters if required:
     # robot.setConnectionParams('192.168.2.35',30000,'/', 'anonymous','')
-    
+
     # Connect to the robot using default IP
-    success = robot.Connect() # Try to connect once
+    success = robot.Connect()  # Try to connect once
     #success robot.ConnectSafe() # Try to connect multiple times
     status, status_msg = robot.ConnectedState()
     if status != ROBOTCOM_READY:
         # Stop if the connection did not succeed
         print(status_msg)
         raise Exception("Failed to connect: " + status_msg)
-    
+
     # This will set to run the API programs on the robot and the simulator (online programming)
     RDK.setRunMode(RUNMODE_RUN_ROBOT)
     # Note: This is set automatically when we Connect() to the robot through the API
 
 #else:
-    # This will run the API program on the simulator (offline programming)
-    # RDK.setRunMode(RUNMODE_SIMULATE)
-    # Note: This is the default setting if we do not execute robot.Connect()
-    # We should not set the RUNMODE_SIMULATE if we want to be able to generate the robot programm offline
-
-
+# This will run the API program on the simulator (offline programming)
+# RDK.setRunMode(RUNMODE_SIMULATE)
+# Note: This is the default setting if we do not execute robot.Connect()
+# We should not set the RUNMODE_SIMULATE if we want to be able to generate the robot programm offline
 
 # Get the current joint position of the robot
 # (updates the position on the robot simulator)
@@ -72,7 +70,7 @@ joints_ref = robot.Joints()
 #robot.setPoseFrame(robot.PoseFrame())
 #robot.setPoseTool(robot.PoseTool())
 #robot.setZoneData(-1) # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
-robot.setSpeed(100) # Set linear speed in mm/s
+robot.setSpeed(100)  # Set linear speed in mm/s
 
 # Run the measurements
 njoints = len(JOINTS_LIST)
@@ -83,7 +81,7 @@ DATA = []
 for i in range(njoints):
     joints = JOINTS_LIST[i]
 
-    print("Moving robot to %i = %s" % (i,str(joints)))
+    print("Moving robot to %i = %s" % (i, str(joints)))
     robot.MoveJ(joints)
     print("Done")
 
@@ -93,7 +91,7 @@ for i in range(njoints):
     #measure = mbox("Robot at position %i=%s. Select OK to take measurement or Cancel to continue." % (i, str(joints)))
     measure = True
     pause(1)
-    
+
     while measure:
         print("Measuring target")
         xyz = RDK.LaserTracker_Measure()
@@ -103,14 +101,13 @@ for i in range(njoints):
             else:
                 measure = False
                 break
-        
-        x,y,z = xyz
+
+        x, y, z = xyz
 
         # Display the data as [time, x,y,z]
         data = '%i, %.3f, %.6f, %.6f, %.6f' % (i, toc(), x, y, z)
         print(data)
         measure = False
-
 
 # Optionally, save the data to a file
 #DATA_MAT = Mat(DATA).tr()

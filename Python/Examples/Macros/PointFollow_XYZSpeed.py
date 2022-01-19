@@ -16,7 +16,7 @@ REFERENCE_NAME = 'Reference CSV'
 
 # Set the name of the reference target
 # (orientation will be kept constant with respect to this target)
-TARGET_NAME = 'Home' 
+TARGET_NAME = 'Home'
 
 #---------------------------
 # Start the RoboDK API
@@ -42,13 +42,13 @@ data = LoadList(path_file)
 #        RDK.Item(item_name).Delete()
 
 # Select the robot (the popup is diplayed only if there are 2 or more robots)
-robot = RDK.ItemUserPick('Select a robot',ITEM_TYPE_ROBOT)
+robot = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT)
 if not robot.Valid():
     raise Exception("Robot not selected or not valid")
     quit()
 
 # Get the reference frame to generate the path
-frame = RDK.Item(REFERENCE_NAME,ITEM_TYPE_FRAME)
+frame = RDK.Item(REFERENCE_NAME, ITEM_TYPE_FRAME)
 if not frame.Valid():
     raise Exception("Reference frame not found. Use name: %s" % REFERENCE_NAME)
 
@@ -94,7 +94,7 @@ if LOAD_AS_PROGRAM:
                 program.setSpeed(speed)
                 current_speed = speed
 
-        target = RDK.AddTarget('T%i'% i, frame)
+        target = RDK.AddTarget('T%i' % i, frame)
         target.setPose(pi)
         pi = target
 
@@ -107,11 +107,11 @@ if LOAD_AS_PROGRAM:
         # Update from time to time to notify the user about progress
         if i % 100 == 0:
             program.ShowTargets(False)
-            RDK.ShowMessage("Loading %s: %.1f %%" % (program_name, 100*i/len(data)),False)
+            RDK.ShowMessage("Loading %s: %.1f %%" % (program_name, 100 * i / len(data)), False)
             RDK.Render()
 
     program.ShowTargets(False)
-    
+
 else:
     # Very important: Make sure we set the reference frame and tool frame so that the robot is aware of it
     robot.setPoseFrame(frame)
@@ -141,11 +141,7 @@ else:
 
         # Update from time to time to notify the user about progress
         #if i % 200 == 0:
-        RDK.ShowMessage("Program %s: %.1f %%" % (program_name, 100*i/len(data)),False)
+        RDK.ShowMessage("Program %s: %.1f %%" % (program_name, 100 * i / len(data)), False)
 
-
-RDK.ShowMessage("Done",False)
+RDK.ShowMessage("Done", False)
 print("Done")
-
-
-

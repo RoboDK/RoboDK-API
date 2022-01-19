@@ -17,19 +17,19 @@
 # Press F5 to run the script
 # Type help("robolink") or help("robodk") for more information
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 import threading
 
 # Set default/global parameters. This is only useful for the first time we execute this macro on a new RDK file.
 # These global parameters are saved with the RoboDK station as Station parameters (right click the Station root and select "Station Parameters" to see the parameters saved)
-SIZE_X = 500   # Size along the X axis
-SIZE_Y = 500   # Size along the Y axis
-STEP_X = 20    # Step along the X axis
-STEP_Y = 50    # Step along the Y axis
-SPEED_OPERATION = 20 # Operation speed
-REPEAT_TIMES = 3    # Number of times to run the same program
-REPEAT_OFFSET = 2   # Offset along Z axis in mm
+SIZE_X = 500  # Size along the X axis
+SIZE_Y = 500  # Size along the Y axis
+STEP_X = 20  # Step along the X axis
+STEP_Y = 50  # Step along the Y axis
+SPEED_OPERATION = 20  # Operation speed
+REPEAT_TIMES = 3  # Number of times to run the same program
+REPEAT_OFFSET = 2  # Offset along Z axis in mm
 ANGLE_TCP_X = 10
 ANGLE_TCP_Y = 20
 OVERTRAVEL = 25
@@ -44,22 +44,22 @@ PARAM_VARS += ["STEP_X", "STEP_Y"]
 PARAM_LABELS += ["Step along X (mm)", "Step along Y (mm)"]
 
 PARAM_VARS += ["SPEED_OPERATION"]
-PARAM_LABELS +=  ["Operation speed (mm/s)"]
+PARAM_LABELS += ["Operation speed (mm/s)"]
 
 PARAM_VARS += ["REPEAT_TIMES", "REPEAT_OFFSET"]
-PARAM_LABELS +=  ["Repeat times", "Repeat Offset along Z (mm)"]
+PARAM_LABELS += ["Repeat times", "Repeat Offset along Z (mm)"]
 
 PARAM_VARS += ["ANGLE_TCP_X", "ANGLE_TCP_Y"]
-PARAM_LABELS +=  ["Tool angle X (deg)", "Tool angle Y (deg)"]
+PARAM_LABELS += ["Tool angle X (deg)", "Tool angle Y (deg)"]
 
 PARAM_VARS += ["OVERTRAVEL"]
-PARAM_LABELS +=  ["Overtravel (mm)"]
+PARAM_LABELS += ["Overtravel (mm)"]
 
 PARAM_VARS += ["SIZE_X", "SIZE_Y"]
 PARAM_LABELS += ["Size along X (mm)", "Size along Y (mm)"]
 
 # Optionally provide a part name to auto select it without asking the user
-PART_NAME = None # 'Paint Part'
+PART_NAME = None  # 'Paint Part'
 
 #------------------------------------------------------------------
 #--------------- PROGRAM START ---------------------
@@ -68,7 +68,7 @@ PART_NAME = None # 'Paint Part'
 RDK = Robolink()
 
 # Set other constants:
-TOL_PROJ_Z = sqrt(2)    # Tolerance to ignore a point as a ratio (if it falls through a window for example)
+TOL_PROJ_Z = sqrt(2)  # Tolerance to ignore a point as a ratio (if it falls through a window for example)
 
 #---------------------------------------------
 # First: Retrieve the part item
@@ -125,13 +125,15 @@ root = Tk()
 # define a label to notify the user
 NotifyGUI = StringVar()
 
+
 #---------------------------------------------
 # Function to change the coordinates of a point and a normal
 # given a pose. The point and the normal must be in xyzijk format
 def Pose_x_XYZijk(pose, xyzijk):
-    new_xyz = pose*xyzijk[0:3]
-    new_ijk = pose[:3,:3]*xyzijk[3:6]
+    new_xyz = pose * xyzijk[0:3]
+    new_ijk = pose[:3, :3] * xyzijk[3:6]
     return new_xyz + new_ijk
+
 
 #---------------------------------------------
 # Function definition to create a list of points as zig-zag pattern (curve)
@@ -146,27 +148,29 @@ def GridPoints(ref, size_x, size_y, step_x, step_y):
             yy = 0
         else:
             yy = size_y
-            
+
         while yy <= size_y and yy >= 0:
             # Create a new point as [x,y,z , i,j,k]
-            xyzijk = Pose_x_XYZijk(ref, [xx,yy,0 , 0,0,-1])        
+            xyzijk = Pose_x_XYZijk(ref, [xx, yy, 0, 0, 0, -1])
             points.append(xyzijk)
-            yy = yy + flip*step_y
-            
+            yy = yy + flip * step_y
+
         xx = xx + step_x
-        flip = -1*flip
+        flip = -1 * flip
     return points
+
 
 #---------------------------------------------
 # Function definition to offset a list of points
 def PointsOffset(points, offset):
     points_offset = []
     for pi in points:
-        x,y,z,i,j,k = pi
-        xyz2 = add3([x,y,z], mult3([i,j,k], offset))
-        xyzijk2 = xyz2 + [i,j,k]
+        x, y, z, i, j, k = pi
+        xyz2 = add3([x, y, z], mult3([i, j, k], offset))
+        xyzijk2 = xyz2 + [i, j, k]
         points_offset.append(xyzijk2)
     return points_offset
+
 
 # Show message through the GUI, RoboDK and the console
 def ShowMsg(msg):
@@ -175,18 +179,19 @@ def ShowMsg(msg):
     root.update_idletasks()
     RDK.ShowMessage(msg, False)
 
+
 #---------------------------------------------
 # Main program call that will project the path to a surface
-def CreatePaths():    
+def CreatePaths():
     prog_name_list = []
     for REF in REF_PATTERN_LIST:
         # Retrieve the reference name
         REF_NAME = REF.Name()
 
         ShowMsg("Working with %s ..." % REF_NAME)
-        
+
         # Get the pose of the reference with respect to the part:
-        pose_ref_wrt_part = invH(PART.Parent().PoseAbs())*REF.PoseAbs()
+        pose_ref_wrt_part = invH(PART.Parent().PoseAbs()) * REF.PoseAbs()
 
         # For later: calculate the inverse pose (part with respect to the reference)
         pose_part_wrt_ref = invH(pose_ref_wrt_part)
@@ -216,12 +221,12 @@ def CreatePaths():
         points_projected_filtered = []
 
         ShowMsg("Filtering %s..." % REF_NAME)
-        
+
         # Remember the last valid projection
         pti_last = None
-        for i in range(0,len(points_projected)-1):
+        for i in range(0, len(points_projected) - 1):
             # retrieve projected and non projected points, with respect to the reference frame
-            # retrieve the next point to test if the projection went too far 
+            # retrieve the next point to test if the projection went too far
             pti = Pose_x_XYZijk(pose_part_wrt_ref, points[i])
             pti_proj = Pose_x_XYZijk(pose_part_wrt_ref, points_projected[i])
 
@@ -237,7 +242,7 @@ def CreatePaths():
                 continue
 
             # Check if the projection falls through a "window" or "climbs" a wall with respect to the previous pointS
-            if distance(pti_proj, pti_proj_last) < TOL_PROJ_Z*distance(pti, pti_last):
+            if distance(pti_proj, pti_proj_last) < TOL_PROJ_Z * distance(pti, pti_last):
                 # List the point as valid
                 points_projected_filtered.append(pti_proj)
 
@@ -257,33 +262,31 @@ def CreatePaths():
         points_object.setParent(REF)
         points_object.setName(REF_NAME)
 
-        for rep in range(1,round(REPEAT_TIMES)):
-            # Calculate a new curve with respect to the reference curve            
+        for rep in range(1, round(REPEAT_TIMES)):
+            # Calculate a new curve with respect to the reference curve
             points_projected_filtered_rep = PointsOffset(points_projected_filtered, REPEAT_OFFSET * rep)
 
             #  Add the shifted curve without projecting it
             points_object = RDK.AddCurve(points_projected_filtered_rep, points_object, True, PROJECTION_NONE)
 
-        
         curve_follow = RDK.Item(REF_NAME, ITEM_TYPE_MACHINING)
         if not curve_follow.Valid():
             curve_follow = RDK.AddMillingProject(REF_NAME)
 
         ShowMsg("Solving toolpath for %s" % REF_NAME)
-        
+
         # Use the current reference frame:
         curve_follow.setPoseFrame(REF)
 
         # RoboDK 3.3.7 or later required:
         curve_follow.setSpeed(SPEED_OPERATION)
-        curve_follow.setPoseTool(rotx(ANGLE_TCP_X*pi/180.0)*roty(ANGLE_TCP_Y*pi/180.0))
+        curve_follow.setPoseTool(rotx(ANGLE_TCP_X * pi / 180.0) * roty(ANGLE_TCP_Y * pi / 180.0))
         prog, status = curve_follow.setMillingParameters(part=points_object)
         print(status)
         if status == 0:
             ShowMsg("Program %s generated successfully" % REF_NAME)
         else:
             ShowMsg("Issues found generating program %s!" % REF_NAME)
-
 
         # get the program name
         prog_name = prog.Name()
@@ -300,14 +303,13 @@ def CreatePaths():
 
     # Add a number of program calls to the first program by providing inline code
     #prog_main.RunCodeCustom("FOR i=1 TO 5", INSTRUCTION_INSERT_CODE)
-    #prog_main.RunCodeCustom(prog_name, INSTRUCTION_CALL_PROGRAM)        
+    #prog_main.RunCodeCustom(prog_name, INSTRUCTION_CALL_PROGRAM)
     #prog_main.RunCodeCustom("NEXT", INSTRUCTION_INSERT_CODE)
     #for i in range(4):
     for pr_name in prog_name_list:
         prog_main.RunCodeCustom(pr_name, INSTRUCTION_CALL_PROGRAM)
-            
 
-    # Start the program simulation:    
+    # Start the program simulation:
     prog_main.RunProgram()
     ShowMsg("Done!!")
 
@@ -315,12 +317,9 @@ def CreatePaths():
 #-----------------------------------------
 # Create a GUI menu using tkinter
 
-
-
 # Use StringVar variables linked to the global variables for the GUI
 txtSpeed_Operation = StringVar()
 txtSpeed_Operation.set(str(SPEED_OPERATION))
-
 
 for strvar, hint in zip(PARAM_VARS, PARAM_LABELS):
     var = eval(strvar)
@@ -333,19 +332,19 @@ for strvar, hint in zip(PARAM_VARS, PARAM_LABELS):
     exec(txtvar + ".set(str(" + str(var) + "))")
     exec("Label(root, text='" + hint + "').pack()")
     exec("Entry(root, textvariable=" + txtvar + ").pack()")
-    
+
 
 # Add a button and default action to execute the current choice of the user
 def btnUpdate():
     # List the global variables so that we can read or modify the latest values
     #exec(PARAM_GLOBALS)
     def run_thread():
-        try:        
+        try:
             for strvar in PARAM_VARS:
                 #SIZE_X = float(txtSize_X.get())
                 # Update global variable
                 exec("%s = float(txt%s.get())" % (strvar, strvar), globals())
-                
+
         except Exception as e:
             RDK.ShowMessage("Invalid input!! " + str(e), False)
             return
@@ -357,13 +356,14 @@ def btnUpdate():
 
         # Run the main program once all the global variables have been set
         CreatePaths()
-        
+
     threading.Thread(target=run_thread).start()
+
 
 # Add an update button that calls btnUpdate()
 font_large = font.Font(family='Helvetica', size=18, weight=font.BOLD)
-Label(root, text=" ").pack() # Just a spacer
-Label(root, textvariable=NotifyGUI).pack() # information variable
+Label(root, text=" ").pack()  # Just a spacer
+Label(root, textvariable=NotifyGUI).pack()  # information variable
 Button(root, text='Update', font=font_large, width=20, height=3, command=btnUpdate, bg='green').pack()
 
 # Set window name
@@ -376,4 +376,3 @@ EmbedWindow(window_title)
 
 # Important to display the graphical user interface
 root.mainloop()
-

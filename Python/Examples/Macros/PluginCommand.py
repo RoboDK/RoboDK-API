@@ -10,7 +10,6 @@
 # Specify a plugin name (if you leave it empty it will send the command to all the loaded plugins
 plugin_name = ""
 
-
 import sys
 from robolink import *
 
@@ -19,7 +18,7 @@ RDK = Robolink()
 
 # Check that we have 2 arguments (0th index is the name of the file)
 if len(sys.argv) >= 3:
-    from robolink import *    # RoboDK API
+    from robolink import *  # RoboDK API
     plugin_command = sys.argv[1]
     plugin_value = sys.argv[2]
     RDK.ShowMessage("Running plugin command: " + plugin_command + "=" + plugin_value, True)
@@ -29,5 +28,3 @@ if len(sys.argv) >= 3:
 
 else:
     RDK.ShowMessage("Non supported entry: " + str(sys.argv), False)
-    
-    

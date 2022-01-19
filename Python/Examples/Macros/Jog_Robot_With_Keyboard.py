@@ -4,8 +4,9 @@
 # Type help("robolink") or help("robodk") for more information
 # Press F5 to run the script
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # Arrow keys program example
@@ -27,26 +28,26 @@ move_speed = 10
 from msvcrt import getch
 while True:
     key = (ord(getch()))
-    move_direction = [0,0,0]
+    move_direction = [0, 0, 0]
     # print(key)
     if key == 75:
         print('arrow left (Y-)')
-        move_direction = [0,-1,0]
+        move_direction = [0, -1, 0]
     elif key == 77:
         print('arrow right (Y+)')
-        move_direction = [0,1,0]
+        move_direction = [0, 1, 0]
     elif key == 72:
         print('arrow up (X-)')
-        move_direction = [-1,0,0]
+        move_direction = [-1, 0, 0]
     elif key == 80:
         print('arrow down (X+)')
-        move_direction = [1,0,0]
+        move_direction = [1, 0, 0]
     elif key == 113:
         print('Q (Z+)')
-        move_direction = [0,0,1]
+        move_direction = [0, 0, 1]
     elif key == 97:
         print('A (Z-)')
-        move_direction = [0,0,-1]
+        move_direction = [0, 0, -1]
 
     # make sure that a movement direction is specified
     if norm(move_direction) <= 0:
@@ -65,7 +66,7 @@ while True:
     robot_config = robot.JointsConfig(robot_joints)
 
     # calculate the new robot position
-    new_robot_position = transl(xyz_move)*robot_position
+    new_robot_position = transl(xyz_move) * robot_position
 
     # calculate the new robot joints
     new_robot_joints = robot.SolveIK(new_robot_position)
@@ -85,5 +86,3 @@ while True:
         # move the robot joints to the new position
         robot.MoveJ(new_robot_joints)
         #robot.MoveL(new_robot_joints)
-    
-

@@ -1,9 +1,9 @@
 # This scripts allows creating points to calibrate a rail (1 to 3 axis rail, with a robot mounted on it or not)
-from robolink import *    # API to communicate with robodk
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with robodk
+from robodk import *  # basic matrix operations
 from random import uniform
-import sys      # to exit the script without errors (sys.exit(0))
-import re       # to convert a string list into a list of values
+import sys  # to exit the script without errors (sys.exit(0))
+import re  # to convert a string list into a list of values
 
 # Default calibration steps
 CALIB_STEPS = [20, 2, 4]
@@ -22,7 +22,7 @@ if robot != parent_robot:
     print("User selected a rail linked to a robot")
 
 robot = parent_robot
-    
+
 joints_ref = robot.Joints().list()
 lim_inf, lim_sup, type = robot.JointLimits()
 lim_inf = lim_inf.list()
@@ -42,16 +42,15 @@ if ndofs_ext > 3:
 if ndofs_ext == 0 or ndofs_ext > 4:
     RDK.ShowMessage("Invalid robot selected: select a rail or a robot synchronized with a rail")
     quit()
-    
+
 lim_inf_ext = lim_inf[id_from:id_to]
 lim_sup_ext = lim_sup[id_from:id_to]
 
-lim_inf_ext = [ round(elem, 0) for elem in lim_inf_ext ]
-lim_sup_ext = [ round(elem, 0) for elem in lim_sup_ext ]
+lim_inf_ext = [round(elem, 0) for elem in lim_inf_ext]
+lim_sup_ext = [round(elem, 0) for elem in lim_sup_ext]
 print("Using limit ranges: ")
 print(lim_inf_ext)
 print(lim_sup_ext)
-
 
 # Retrieve tools
 tools = robot.Childs()
@@ -69,13 +68,13 @@ for i in range(ntools):
 
 ntools = len(Htools)
 
-tool_cal_1 = [0,0,0]
+tool_cal_1 = [0, 0, 0]
 
 # Automatically add tools if they are not found, warn the user
 if ntools < 3:
     # Retrieve targets
     for i in range(4):
-        ti = RDK.Item(TARGET_PREFIX + ' ' + str(i+1), ITEM_TYPE_TARGET)
+        ti = RDK.Item(TARGET_PREFIX + ' ' + str(i + 1), ITEM_TYPE_TARGET)
         if ti.Valid():
             print('Using target %s to calibrate' % ti.Name())
             #print(Htooli)
@@ -89,11 +88,11 @@ if ntools < 3:
         #    quit()
 
         tool_cal_1 = Htools[0].Pos()
-        Htools = [] # do not use tools
+        Htools = []  # do not use tools
 
     else:
-        for i in range(ntools,4):
-            tooli = robot.AddTool(transl(100,0,100), TCP_PREFIX + ' ' + str(i+1))
+        for i in range(ntools, 4):
+            tooli = robot.AddTool(transl(100, 0, 100), TCP_PREFIX + ' ' + str(i + 1))
             Htools.append(tooli.PoseTool())
             ntools = len(Htools)
             # raise Exception('No tools found with prefix: ' + TCP_PREFIX + '.\nRename the tools that you need to calibrate with the prefix: ' + TCP_PREFIX)
@@ -102,7 +101,8 @@ if ntools < 3:
         quit()
 
 # Use 4 tools at most
-Htools = Htools[:min(4,ntools)]
+Htools = Htools[:min(4, ntools)]
+
 
 # --------------------------------------------------------------
 def to_list(str_values, expected_values):
@@ -128,97 +128,97 @@ def get_values(title_msg, show_value, expected_values):
     values = to_list(answer, expected_values)
     return values
 
+
 CALIB_STEPS = get_values("Enter the rail steps", CALIB_STEPS[0:ndofs_ext], ndofs_ext)
-    
+
 #-----------------------------------------------------------------------
 SAVE_MAT = []
-SAVE_MAT.append([0]*len(joints_ref) + [0,0,0,0,0,0])
+SAVE_MAT.append([0] * len(joints_ref) + [0, 0, 0, 0, 0, 0])
 JLIST = []
 if ndofs_ext == 1:
-    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0])/CALIB_STEPS[0]
+    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0]) / CALIB_STEPS[0]
     jnts = list(joints_ref)
-    
+
     val_e1 = lim_inf_ext[0]
-    for i in range(int(CALIB_STEPS[0])+1):
+    for i in range(int(CALIB_STEPS[0]) + 1):
         jnts[id_from] = val_e1
-        
-        for tl in Htools:            
-            col_add = jnts + [0,0,0] + tl.Pos()
+
+        for tl in Htools:
+            col_add = jnts + [0, 0, 0] + tl.Pos()
             JLIST.append(list(jnts))
             SAVE_MAT.append(col_add)
 
         for jnts in list_Targets:
             jnts[id_from] = val_e1
-            col_add = jnts + [0,0,0] + tool_cal_1
+            col_add = jnts + [0, 0, 0] + tool_cal_1
             JLIST.append(list(jnts))
             SAVE_MAT.append(col_add)
 
         val_e1 = val_e1 + dlta_e1
 
 elif ndofs_ext == 2:
-    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0])/CALIB_STEPS[0]
-    dlta_e2 = (lim_sup_ext[1] - lim_inf_ext[1])/CALIB_STEPS[1]
+    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0]) / CALIB_STEPS[0]
+    dlta_e2 = (lim_sup_ext[1] - lim_inf_ext[1]) / CALIB_STEPS[1]
     jnts = list(joints_ref)
-    
+
     val_e1 = lim_inf_ext[0]
-    for i in range(int(CALIB_STEPS[0])+1):
-        jnts[id_from+0] = val_e1
-        
-        val_e2 = lim_inf_ext[1]   
-        for j in range(int(CALIB_STEPS[1])+1):
-            jnts[id_from+1] = val_e2
-            
+    for i in range(int(CALIB_STEPS[0]) + 1):
+        jnts[id_from + 0] = val_e1
+
+        val_e2 = lim_inf_ext[1]
+        for j in range(int(CALIB_STEPS[1]) + 1):
+            jnts[id_from + 1] = val_e2
+
             for tl in Htools:
                 JLIST.append(list(jnts))
-                col_add = jnts + [0,0,0] + tl.Pos()
+                col_add = jnts + [0, 0, 0] + tl.Pos()
                 SAVE_MAT.append(col_add)
 
             for jnts in list_Targets:
                 jnts[id_from] = val_e1
-                jnts[id_from+1] = val_e2
-                col_add = jnts + [0,0,0] + tool_cal_1
+                jnts[id_from + 1] = val_e2
+                col_add = jnts + [0, 0, 0] + tool_cal_1
                 JLIST.append(list(jnts))
                 SAVE_MAT.append(col_add)
-                
+
             val_e2 = val_e2 + dlta_e2
-        
+
         val_e1 = val_e1 + dlta_e1
-        
+
 else:
-    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0])/CALIB_STEPS[0]
-    dlta_e2 = (lim_sup_ext[1] - lim_inf_ext[1])/CALIB_STEPS[1]
-    dlta_e3 = (lim_sup_ext[2] - lim_inf_ext[2])/CALIB_STEPS[2]
+    dlta_e1 = (lim_sup_ext[0] - lim_inf_ext[0]) / CALIB_STEPS[0]
+    dlta_e2 = (lim_sup_ext[1] - lim_inf_ext[1]) / CALIB_STEPS[1]
+    dlta_e3 = (lim_sup_ext[2] - lim_inf_ext[2]) / CALIB_STEPS[2]
     jnts = list(joints_ref)
-    
+
     val_e1 = lim_inf_ext[0]
-    for i in range(int(CALIB_STEPS[0])+1):
-        jnts[id_from+0] = val_e1        
+    for i in range(int(CALIB_STEPS[0]) + 1):
+        jnts[id_from + 0] = val_e1
         val_e2 = lim_inf_ext[1]
-        for j in range(int(CALIB_STEPS[1])+1):
-            jnts[id_from+1] = val_e2
+        for j in range(int(CALIB_STEPS[1]) + 1):
+            jnts[id_from + 1] = val_e2
             val_e3 = lim_inf_ext[2]
-            for k in range(int(CALIB_STEPS[2])+1):
-                jnts[id_from+2] = val_e3
-                
+            for k in range(int(CALIB_STEPS[2]) + 1):
+                jnts[id_from + 2] = val_e3
+
                 for tl in Htools:
-                    col_add = jnts + [0,0,0] + tl.Pos()
+                    col_add = jnts + [0, 0, 0] + tl.Pos()
                     JLIST.append(list(jnts))
                     SAVE_MAT.append(col_add)
 
                 for jnts in list_Targets:
                     jnts[id_from] = val_e1
-                    jnts[id_from+1] = val_e2
-                    jnts[id_from+2] = val_e3
-                    col_add = jnts + [0,0,0] + tool_cal_1
+                    jnts[id_from + 1] = val_e2
+                    jnts[id_from + 2] = val_e3
+                    col_add = jnts + [0, 0, 0] + tool_cal_1
                     JLIST.append(list(jnts))
                     SAVE_MAT.append(col_add)
 
                 val_e3 = val_e3 + dlta_e3
 
             val_e2 = val_e2 + dlta_e2
-        
-        val_e1 = val_e1 + dlta_e1
 
+        val_e1 = val_e1 + dlta_e1
 
 # Load the data to the project
 calibitem = RDK.ItemUserPick("Select the calibration project", ITEM_TYPE_CALIBPROJECT)
@@ -232,5 +232,3 @@ calibitem.setValue(value, SAVE_MAT)
 # Display the robot sequence
 robot.ShowSequence(JLIST)
 RDK.ShowMessage('Done', False)
-
-

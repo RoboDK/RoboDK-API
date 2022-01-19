@@ -1,10 +1,10 @@
 # This script allows you to schedule taking measurements in a cube
 # The script makes sure that points are reachable
-from robolink import *    # API to communicate with robodk
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with robodk
+from robodk import *  # basic matrix operations
 from random import uniform
-import sys      # to exit the script without errors (sys.exit(0))
-import re       # to convert a string list into a list of values
+import sys  # to exit the script without errors (sys.exit(0))
+import re  # to convert a string list into a list of values
 
 # Default number of measurements
 DEFAULT_NMEASURES = 80
@@ -19,19 +19,18 @@ TZ_RANGE = [-100, 100, 100]
 CHECK_WORKSPACE = False
 CHECK_WORKSPACE_NAME = 'Workspace'
 
-
-TRACKER_REF_NAME = 'Tracker reference' # keyword of the measurement system reference (in RoboDK)
+TRACKER_REF_NAME = 'Tracker reference'  # keyword of the measurement system reference (in RoboDK)
 TCP_PREFIX = 'CalibTool'
 
 # Use the tag CHECK_COLLISION_NAME to automatically turn the objects visible. This will allow to detect collisions.
 CHECK_COLLISION = True
 CHECK_COLLISION_MOVE = True
 CHECK_COLLISION_NAME = 'collision'
-CHECK_COLLISION_STEP = -1 # in degrees, step to check for collisions. higher is faster.
+CHECK_COLLISION_STEP = -1  # in degrees, step to check for collisions. higher is faster.
 
 # Default limit space in the Cartesian space
 DEFAULT_XYZ_MIN = [-5000, -5000, 0]
-DEFAULT_XYZ_MAX = [ 5000,  5000, 5000]
+DEFAULT_XYZ_MAX = [5000, 5000, 5000]
 
 # Avoid a cylinder located at X=0, Y=0 or radius R_MIN
 R_MIN = 100
@@ -45,10 +44,10 @@ POSES = []
 # You can optionally add rotation around Z axis:
 #for rz in [-60, -30, 30, 60]:
 for rz in [0]:
-    for tz in range(TZ_RANGE[0], TZ_RANGE[1]+1, TZ_RANGE[2]):
-        for ty in range(TY_RANGE[0], TY_RANGE[1]+1, TY_RANGE[2]):
-            for tx in range(TX_RANGE[0], TX_RANGE[1]+1, TX_RANGE[2]):            
-                pose = transl(tx,ty,tz)*rotz(rz*pi/180.0)
+    for tz in range(TZ_RANGE[0], TZ_RANGE[1] + 1, TZ_RANGE[2]):
+        for ty in range(TY_RANGE[0], TY_RANGE[1] + 1, TY_RANGE[2]):
+            for tx in range(TX_RANGE[0], TX_RANGE[1] + 1, TX_RANGE[2]):
+                pose = transl(tx, ty, tz) * rotz(rz * pi / 180.0)
                 POSES.append(pose)
 
 
@@ -64,6 +63,7 @@ def str2floatlist(str_values, expected_values):
         values[i] = float(values[i])
     #print('Read values: ' + repr(values))
     return values
+
 
 def mbox_getfloatlist(title_msg, show_value, expected_values):
     """Get a list of values from the user, stops the script if the user hits cancel"""
@@ -81,11 +81,13 @@ def mbox_getfloatlist(title_msg, show_value, expected_values):
     #    raise Exception('%i values expected' % expected_values)
     return values
 
+
 def stop_script():
     """Forces the script to finish with/without errors"""
     # raise Exception('Operation cancelled by user')
     print('Operation cancelled by user')
     sys.exit(0)
+
 
 # ---------------------------------
 RDK = Robolink()
@@ -94,9 +96,8 @@ RDK = Robolink()
 JOINTS_REF = str2floatlist(RDK.getParam('CALIB_JOINTS_REF'), 6)
 ANG_MIN = str2floatlist(RDK.getParam('CALIB_JOINTLIM_LOW'), 6)
 ANG_MAX = str2floatlist(RDK.getParam('CALIB_JOINTLIM_HIGH'), 6)
-XYZ_MIN = None #str2floatlist(RDK.getParam('CALIB_XYZLIM_LOW'), 3)
-XYZ_MAX = None #str2floatlist(RDK.getParam('CALIB_XYZLIM_HIGH'), 3)
-
+XYZ_MIN = None  #str2floatlist(RDK.getParam('CALIB_XYZLIM_LOW'), 3)
+XYZ_MAX = None  #str2floatlist(RDK.getParam('CALIB_XYZLIM_HIGH'), 3)
 
 INPUT_VALUES = False
 # force user input if one of the variables is not set
@@ -115,14 +116,13 @@ robot.setAccuracyActive(False)
 tracker = RDK.Item(TRACKER_REF_NAME)
 if not tracker.Valid():
     frame_ref = RDK.AddFrame('Measurements Reference', robot.Parent())
-    frame_ref.setPose(transl(2000,0,1000))
+    frame_ref.setPose(transl(2000, 0, 1000))
     tracker = RDK.AddFrame(TRACKER_REF_NAME, frame_ref)
-    tracker.setPose(transl(0,0,0))
+    tracker.setPose(transl(0, 0, 0))
     tracker.setVisible(False)
 #    tracker = RDK.ItemUserPick('Select the measurement system reference:<br>(avoid this message by naming the tracker reference "%s")' % TRACKER_REF_NAME, ITEM_TYPE_FRAME)
 #    if not tracker.Valid():
 #        stop_script()
-
 
 #----------------------- Select tool and workspace object to verify if tool is inside the object
 tool_object = None
@@ -135,15 +135,14 @@ if CHECK_WORKSPACE:
             tool_object = tooli
     if tool_object is None and len(robot_tools) > 0:
         tool_object = robot_tools[0]
-    
+
     # workspace object is the workspace of the tracker (object)
     workspace_object = RDK.Item(CHECK_WORKSPACE_NAME, ITEM_TYPE_OBJECT)
 #------------------------------------------------------------
 
-
 if JOINTS_REF is None:
     # Use robot home position as default reference joints
-    JOINTS_REF = robot.Joints().list() #.JointsHome().tolist()
+    JOINTS_REF = robot.Joints().list()  #.JointsHome().tolist()
 
 else:
     robot.setJoints(JOINTS_REF)
@@ -159,17 +158,16 @@ if ANG_MIN is None or ANG_MAX is None:
     ANG_MIN = ang_min_robot.tolist()
     ANG_MAX = ang_max_robot.tolist()
     # limit joint axes from -180 to +180 (no need to go farther for calibration)
-    for i in [0,3,5]:
+    for i in [0, 3, 5]:
         ANG_MIN[i] = max(ANG_MIN[i], -180)
-        ANG_MAX[i] = min(ANG_MAX[i],  180)
-        
+        ANG_MAX[i] = min(ANG_MAX[i], 180)
+
     ANG_MIN[4] = max(ANG_MIN[4], -90)
-    ANG_MAX[4] = min(ANG_MAX[4],  90)    
+    ANG_MAX[4] = min(ANG_MAX[4], 90)
 
     print('Using default robot joint limits:')
     print(ANG_MIN)
     print(ANG_MAX)
-    
 
 while True:
     # Loop until the user inputs variables that are accepted
@@ -218,7 +216,7 @@ while True:
     else:
         CHECK_WORKSPACE = False
         summary_msg += ('Skip creating targets inside the tracker workspace (show workspace to activate)\n\n')
-    
+
     summary_msg += ('Reference joints   (deg): %s\n' % str(JOINTS_REF))
     summary_msg += ('Lower joint limits (deg): %s\n' % str(ANG_MIN))
     summary_msg += ('Upper joint limits (deg): %s\n\n' % str(ANG_MAX))
@@ -227,7 +225,7 @@ while True:
     summary_msg += ('Important: Define collision map settings to check for collisions (select: Tools->Collision Map)\n\n')
     summary_msg += ('Continue?')
 
-    answer = mbox(summary_msg, b1=('Start','s'), b2=('Edit','e'))
+    answer = mbox(summary_msg, b1=('Start', 's'), b2=('Edit', 'e'))
     if answer == 'e':
         # Continue loop until the summary is accepted
         INPUT_VALUES = True
@@ -236,13 +234,10 @@ while True:
     # if paramters are OK, exit the loop and continue
     break
 
-
-
 # raise Exception('done')
 
-
-
 NDOFS = len(ANG_MAX)
+
 
 # -----------------------------------------------------
 # Custom-made procedures
@@ -256,26 +251,28 @@ def check_joints(jin):
     angles = jin.tolist()
     for i in range(NDOFS):
         if angles[i] > ANG_MAX[i] or angles[i] < ANG_MIN[i]:
-            print("        Joint %i out of limits (%.1f)" % ((i+1),angles[i]))
+            print("        Joint %i out of limits (%.1f)" % ((i + 1), angles[i]))
             return False
     return True
 
+
 def check_pose(hin):
     """Returns true if the pose is within the accepted limits."""
-    x = hin[0,3]
-    y = hin[1,3]
-    z = hin[2,3]
+    x = hin[0, 3]
+    y = hin[1, 3]
+    z = hin[2, 3]
     if x < XYZ_MIN[0] or x > XYZ_MAX[0]:
         print("        X coordinate out of limits %.1f" % x)
     elif y < XYZ_MIN[1] or y > XYZ_MAX[1]:
         print("        Y coordinate out of limits %.1f" % y)
     elif z < XYZ_MIN[2] or z > XYZ_MAX[2]:
         print("        Z coordinate out of limits %.1f" % z)
-    elif x*x + y*y < R_MIN*R_MIN and z < R_MIN_Z:
+    elif x * x + y * y < R_MIN * R_MIN and z < R_MIN_Z:
         print("        Robot wrist too close to the robot")
     else:
         return True
     return False
+
 
 # -------------------------------------------------------------
 # Program start:
@@ -303,9 +300,9 @@ for i in range(ntools):
         print('Using TCP %s to check collision' % tooli_name)
         # Set the tool visible and remember if it was invisible to turn it off
         if not tooli.Visible():
-            sethidden.append(tooli)       
+            sethidden.append(tooli)
             tooli.setVisible(True)
-            
+
 # Get objects to check collisions:
 all_objects = RDK.ItemList(ITEM_TYPE_OBJECT, True)
 nobjects = len(all_objects)
@@ -316,23 +313,21 @@ for i in range(nobjects):
         print('Using object %s to check collision' % objecti_name)
         # Set the object visible and remember if it was hidden to turn it off
         if not objecti.Visible():
-            sethidden.append(objecti)       
+            sethidden.append(objecti)
             objecti.setVisible(True)
 
-   
 ntools = len(Htools)
 if ntools <= 0:
-    tooli = robot.AddTool(transl(100,0,100), TCP_PREFIX + ' 1')
+    tooli = robot.AddTool(transl(100, 0, 100), TCP_PREFIX + ' 1')
     Htools.append(tooli.PoseTool())
     ntools = len(Htools)
     # raise Exception('No tools found with prefix: ' + TCP_PREFIX + '.\nRename the tools that you need to calibrate with the prefix: ' + TCP_PREFIX)
 
 # Calculate the reference pose according to the first tool
-POSE_REF =robot.SolveFK(JOINTS_REF, Htools[0])
+POSE_REF = robot.SolveFK(JOINTS_REF, Htools[0])
 
-
-Htracker_wrt_robot = invH(robot.PoseAbs())*tracker.PoseAbs()
-ptracker = Htracker_wrt_robot[0:3,3].tolist()
+Htracker_wrt_robot = invH(robot.PoseAbs()) * tracker.PoseAbs()
+ptracker = Htracker_wrt_robot[0:3, 3].tolist()
 
 # -----------------------------------------------------------------------
 print('Generating calibration/validation measurements.')
@@ -340,10 +335,10 @@ print('Generating calibration/validation measurements.')
 NMEASURES = len(POSES)
 print("Scheduled points: %i" % NMEASURES)
 
-JLIST = Mat(6,0)
+JLIST = Mat(6, 0)
 JOINTS_REF = robot.JointsHome()
-LAST_JOINTS = JOINTS_REF #robot.Joints()
-TCPLIST = Mat(3,0)
+LAST_JOINTS = JOINTS_REF  #robot.Joints()
+TCPLIST = Mat(3, 0)
 id_measure = 0
 
 for pose in POSES:
@@ -352,17 +347,17 @@ for pose in POSES:
     ptool = Htool.Pos()
     iHtool = invH(Htool)
     hi = pose.translationPose() * POSE_REF * pose.rotationPose()
-    pose_flange = hi*iHtool
+    pose_flange = hi * iHtool
     print(pose_flange)
     ji = robot.SolveIK(pose_flange, JOINTS_REF)
     if not check_joints(ji):
         print('    Joint outside limits')
         continue
-        
-    if not check_pose(pose_flange): #check_pose(hi):
+
+    if not check_pose(pose_flange):  #check_pose(hi):
         print('    Pose outside limits')
         continue
-        
+
     # display potentially good configuration
     robot.setJoints(ji)
     if CHECK_COLLISION and RDK.Collisions():
@@ -374,7 +369,7 @@ for pose in POSES:
     if CHECK_COLLISION_MOVE and robot.MoveJ_Test(LAST_JOINTS, ji, CHECK_COLLISION_STEP) > 0:
         print('    MoveJ causes collision %i' % i)
         continue
-    
+
     # robot.setJoints(ji) #this is made automatically by MoveJ_Collision
     LAST_JOINTS = ji
 
@@ -396,7 +391,7 @@ for pose in POSES:
 
 if id_measure < 0:
     RDK.ShowMessage("No measurements found. Make sure your collisions map settings is properly set")
-        
+
 NMEASURES_OK = id_measure
 SAVE_MAT = catV(JLIST, TCPLIST)
 

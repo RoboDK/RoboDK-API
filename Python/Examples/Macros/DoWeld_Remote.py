@@ -6,8 +6,8 @@
 # Python needs to be installed only on the device running the script
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 import threading
 import queue
 
@@ -43,7 +43,7 @@ def DoWeld(q, robotname, ipaddress):
 
     # get the pose of the target (4x4 matrix):
     poseref = target.Pose()
-    pose_approach = poseref*transl(0,0,-100)
+    pose_approach = poseref * transl(0, 0, -100)
 
     # move the robot to home, then to the center:
     robot.MoveJ(home)
@@ -52,8 +52,8 @@ def DoWeld(q, robotname, ipaddress):
 
     # make an hexagon around the center:
     for i in range(7):
-        ang = i*2*pi/6 #angle: 0, 60, 120, ...
-        posei = poseref*rotz(ang)*transl(200,0,0)*rotz(-ang)
+        ang = i * 2 * pi / 6  #angle: 0, 60, 120, ...
+        posei = poseref * rotz(ang) * transl(200, 0, 0) * rotz(-ang)
         robot.MoveL(posei)
 
     # move back to the center, then home:
@@ -63,6 +63,7 @@ def DoWeld(q, robotname, ipaddress):
     status = 'Done with %s' % robotname
     print(status)
     q.put(status)
+
 
 # define the Queue thread
 q = queue.Queue()
@@ -78,17 +79,8 @@ print(robots)
 # iterate through all robots and do welding
 for i in range(len(robots)):
     robotname = robots[i]
-    t = threading.Thread(target=DoWeld, args = (q, robotname, IP_REMOTE_ADDRESS))
+    t = threading.Thread(target=DoWeld, args=(q, robotname, IP_REMOTE_ADDRESS))
     t.daemon = True
     t.start()
 
 #print(q.get())
-
-
-
-    
-    
-    
-
-
-

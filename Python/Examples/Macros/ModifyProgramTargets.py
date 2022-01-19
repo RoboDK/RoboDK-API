@@ -3,6 +3,7 @@
 # Start the RoboDK API
 from robolink import *
 from robodk import *
+
 RDK = Robolink()
 
 # set the rotation in radians
@@ -23,8 +24,8 @@ for ins_id in range(nins):
     ins_name, ins_type, move_type, isjointtarget, pose, joints = prog.Instruction(ins_id)
     if ins_type == INS_TYPE_MOVE:
         if move_type == MOVE_TYPE_LINEAR:
-            pose_rotated = pose*rotz(TOOL_RZ)
-            prog.setInstruction(ins_id, ins_name, ins_type, move_type, isjointtarget, pose_rotated, joints)                
+            pose_rotated = pose * rotz(TOOL_RZ)
+            prog.setInstruction(ins_id, ins_name, ins_type, move_type, isjointtarget, pose_rotated, joints)
             print("Changing instruction " + ins_name)
 
 RDK.ShowMessage("Done modifying program " + prog_name, False)

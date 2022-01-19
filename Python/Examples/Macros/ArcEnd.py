@@ -11,7 +11,7 @@
 # Note: Select Esc key or close the RDK project to clear any trace added using this method
 # Note: You can pass an ID as first agurment to specify the trace color
 #
-# Example: 
+# Example:
 #    SpindleOn(2)           show the trace in blue
 #    SpindleOn(red)         show the trace in red
 #    SpindleOff             turn off the trace
@@ -20,9 +20,10 @@
 #    SpindleOn(2,2.5)       show the trace in blue with a sphere of radius 2.5 mm
 # ---------------------------------------------------------------
 #
-import sys                # allows getting the passed argument parameters
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+import sys  # allows getting the passed argument parameters
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # quit if we are not simulating
@@ -31,5 +32,3 @@ if RDK.RunMode() != RUNMODE_SIMULATE:
 
 # Stop the trace
 RDK.Spray_SetState(SPRAY_OFF)
-
-

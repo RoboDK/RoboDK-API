@@ -20,11 +20,11 @@ if len(selection) > 0:
     if not selected.type == ITEM_TYPE_OBJECT or selected.type == ITEM_TYPE_TOOL:
         selected = None
         RDK.setSelection([])
-        
+
 # If nothing is selected, ask the user to select an item
 if selected is None:
     selected = RDK.ItemUserPick('Select an object to optimize for point cloud', ITEM_TYPE_OBJECT)
-    
+
     if not selected.Valid():
         # User cancelled object selection
         exit()
@@ -40,7 +40,7 @@ selected.setParam('Display', 'POINTSIZE=4 COLOR=#FF771111')
 #selected.setParam('Display','PARTICLE=SPHERE(4,8) COLOR=red')
 
 # Example to change the size of displayed curves:
-#selected.setParam('Display','LINEW=4')   
+#selected.setParam('Display','LINEW=4')
 
 # Example to change the curve colors
 #selected.setColorCurve([1,1,1,1])

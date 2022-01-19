@@ -25,7 +25,7 @@ for l in file_stream:
     try:
         file_output.write(l)
     except:
-        print('Error reading line %i' % line)       
+        print('Error reading line %i' % line)
         try:
             idx = unknown_names.index(l)
         except ValueError:
@@ -35,7 +35,6 @@ for l in file_stream:
 
 file_stream.close()
 file_output.close()
-
 
 RDK.AddFile(file_location_ok)
 #input()

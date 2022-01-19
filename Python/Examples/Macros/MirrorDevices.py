@@ -3,8 +3,8 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 import threading
 import queue
 
@@ -20,11 +20,11 @@ IP_REMOTE = ['192.168.1.147', '192.168.1.171']
 PROJECT = 'Offline programming - 3 robots simultaneously.rdk'
 
 
-def MirrorRobots(q, ip_source, ip_destination, project_path = None):
+def MirrorRobots(q, ip_source, ip_destination, project_path=None):
     # Any interaction with RoboDK must be done through Robolink()
     # The source and destination devices need a Robolink() instance each
-    # 
-    RDK_src = Robolink(ip_source)    
+    #
+    RDK_src = Robolink(ip_source)
     RDK_dest = Robolink(ip_destination)
 
     # check connection with source device
@@ -44,16 +44,17 @@ def MirrorRobots(q, ip_source, ip_destination, project_path = None):
 
     # get the robot item identifiers on source device:
     robots_src = RDK_src.ItemList(ITEM_TYPE_ROBOT, False)
-    
+
     # get the robot items identifiers on destination device:
     robots_dest = RDK_dest.ItemList(ITEM_TYPE_ROBOT, False)
-    
+
     # Loop forever to update the joints
     while True:
         robot_jointstate = RDK_src.Joints(robots_src)
         RDK_dest.setJoints(robots_dest, robot_jointstate)
-        
+
     q.put('Done with %s' % ip_destination)
+
 
 q = queue.Queue()
 
@@ -66,18 +67,9 @@ if PROJECT is not None:
 
 # iterate through all devices and start a new thread
 for i in range(len(IP_REMOTE)):
-    ip_remote = IP_REMOTE[i]        
-    t = threading.Thread(target=MirrorRobots, args = (q, IP_SOURCE, ip_remote, PROJECT))
+    ip_remote = IP_REMOTE[i]
+    t = threading.Thread(target=MirrorRobots, args=(q, IP_SOURCE, ip_remote, PROJECT))
     t.daemon = True
     t.start()
 
 print(q.get())
-
-
-
-    
-    
-    
-
-
-

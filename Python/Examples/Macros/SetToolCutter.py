@@ -1,6 +1,6 @@
 # This example shows how to programmatically select (and, if necessary, automatically create) a tool that does not exist
 # This is meant to be used for robot machining projects where a tool holder is used as a reference tool
-# 
+#
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 # Note: It is not required to keep a copy of this file, your python script is saved with the station
@@ -8,10 +8,10 @@
 # Set the tool to use as a reference (tool holder or robot flange if the robot has the spindle)
 FLANGE_NAME = "Flange"
 
-
 # ---------------------------------------------------------
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
+
 RDK = Robolink()
 
 # Get the tool holder or create it if it does not exist
@@ -19,7 +19,7 @@ tool_holder = None
 tools_available = RDK.ItemList(ITEM_TYPE_TOOL)
 
 if len(tools_available) == 0:
-    robot  = RDK.ItemUserPick('Select the robot to add a new tool', ITEM_TYPE_ROBOT)
+    robot = RDK.ItemUserPick('Select the robot to add a new tool', ITEM_TYPE_ROBOT)
     if not robot.Valid():
         print("Operation aborted")
         quit()
@@ -29,7 +29,7 @@ if len(tools_available) == 0:
 else:
     tool_holder = RDK.Item(FLANGE_NAME, ITEM_TYPE_TOOL)
 
-if not tool_holder.Valid(): 
+if not tool_holder.Valid():
     # Ask the user to select a tool holder
     tool_holder = RDK.ItemUserPick('Select a the tool holder (TCP spindle reference)', ITEM_TYPE_TOOL)
 # Alernatively, pick a named tool holder:
@@ -67,7 +67,7 @@ if tool_i.Valid():
 else:
     # If the tool holder Z axis points towards the outsite:
     tool_i = None
-    tool_i_pose = tool_holder.PoseTool() * transl(0,0,length)
+    tool_i_pose = tool_holder.PoseTool() * transl(0, 0, length)
 
     if True:
         # Add as a tool
@@ -76,9 +76,9 @@ else:
         tool_i.setPoseTool(tool_i_pose)
         tool_i_shape = tool_i
         tool_i_shape.setGeometryPose(rotx(0))
-                
+
     else:
-        # Add as an object nested to a tool        
+        # Add as an object nested to a tool
         # If the tool holder Z axis points towards the inside:
         #tool_i_pose = tool_holder.PoseTool() * transl(0,0,length) * rotx(pi)
         tool_i = robot.AddTool(tool_i_pose, tool_i_name)
@@ -86,19 +86,16 @@ else:
         # RoboDK library comes with a sample part that always has the same name
         # this Part.sld is 80 mm in diameter and 100 mm long
         tool_i_shape = RDK.AddFile(RDK.getParam('PATH_LIBRARY') + '/Part.sld', tool_i)
-        
+
         tool_i_shape.setName("Cutter %s" % user_input)
 
         # Move the tool geometry to make it point against negative Z axis
         tool_i_shape.setGeometryPose(rotx(pi))
 
     # Scale the object accordingly
-    tool_i_shape.Scale([ diameter/60,   diameter/60,   length/80  ])
+    tool_i_shape.Scale([diameter / 60, diameter / 60, length / 80])
     # Change the color
-    tool_i_shape.Recolor([0,0,1,0.6]) # make the drill bit blue & transparent (RGBA): if transparency is under 80% it won't check for collisions (when you activate collision checking).
-
+    tool_i_shape.Recolor([0, 0, 1, 0.6])  # make the drill bit blue & transparent (RGBA): if transparency is under 80% it won't check for collisions (when you activate collision checking).
 
 # Set the tool as the active tool
 robot.setTool(tool_i)
-
-

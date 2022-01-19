@@ -4,22 +4,22 @@
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 # Note: It is not required to keep a copy of this file, your python script is saved with the station
-from robolink import *    # RoboDK API
-from robodk import *      # Robot toolbox
+from robolink import *  # RoboDK API
+from robodk import *  # Robot toolbox
 
 # ***** Set the program parameters ******
 
 # Set the step increment in degrees
-STEP = 1 
+STEP = 1
 
 # Another option is to provoke a popup
-# STEP = float(mbox("Enter the step in deg", entry=0.1)) 
+# STEP = float(mbox("Enter the step in deg", entry=0.1))
 
 # Minimum rotation in degrees
-ROT_MIN = -20 
+ROT_MIN = -20
 
 # Maximum rotation in degrees
-ROT_MAX = 20 
+ROT_MAX = 20
 
 # Set a pause in milliseconds
 PAUSE = 500
@@ -27,7 +27,7 @@ PAUSE = 500
 #******************************
 
 # Start the RoboDK API
-RDK = Robolink()          
+RDK = Robolink()
 
 # Choose the tool used for relative movements
 tool = RDK.ItemUserPick("Select a tool for incremental movements", ITEM_TYPE_TOOL)
@@ -59,7 +59,7 @@ robot.MoveJ(robot_joints)
 # Move around the reference position
 rz = ROT_MIN
 while rz <= ROT_MAX:
-    pose_delta = rotz(rz * pi/180)
+    pose_delta = rotz(rz * pi / 180)
     # you can also do:
     # pose_delta = rotx(rx * pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     # Post multiply: the movement is made relative to the TCP
@@ -69,4 +69,3 @@ while rz <= ROT_MAX:
     rz = rz + STEP
 
 robot.MoveL(robot_pose)
-

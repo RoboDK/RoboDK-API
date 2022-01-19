@@ -3,8 +3,9 @@
 # Type help("robolink") or help("robodk") for more information
 # Press F5 to run the script
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+
 RDK = Robolink()
 
 # This script simulates a conveyor belt
@@ -12,7 +13,7 @@ CONVEYOR_NAME = 'Conveyor'
 PICKABLE_OBJECTS_KEYWORD = 'Part'
 
 # Speed of movement in MM/S with respect to the conveyor coordinates:
-MOVE_SPEED_MMS = [0,5,0]
+MOVE_SPEED_MMS = [0, 5, 0]
 REFRESH_RATE = 0.005
 
 # Define workspace of the conveyor to pick the objects:
@@ -24,7 +25,7 @@ CONV_SZ_Z_MIN = -200
 CONV_SZ_Z_MAX = +500
 
 # Move objects that reached the end of the conveyor and were not picked:
-FALLEN_OBJECTS = [0,0,-500]
+FALLEN_OBJECTS = [0, 0, -500]
 
 # Get the conveyor item and reference for work space:
 conv = RDK.Item(CONVEYOR_NAME)
@@ -34,6 +35,7 @@ poseconv = conv_reference.PoseAbs()
 # One second in real life means 1 second of simulation. The simulation speed is taken from the station
 SIMULATION_SPEED = 1
 
+
 def is_inside_conveyor(pose):
     """Checks if a pose is inside the conveyor workspace"""
     pos = pose.Pos()
@@ -41,11 +43,13 @@ def is_inside_conveyor(pose):
         return True
     return False
 
+
 def conveyor_move_object(pose, delta_time):
     """Moves the object pose through the conveyor depending on the time and speed"""
     delta_mm = mult3(MOVE_SPEED_MMS, delta_time)
-    newpose = transl(delta_mm)*pose
+    newpose = transl(delta_mm) * pose
     return newpose
+
 
 # Get all objects (string list)
 all_objects = RDK.ItemList(ITEM_TYPE_OBJECT)
@@ -58,12 +62,11 @@ objects_active = []
 for i in range(len(all_objects)):
     if all_objects[i].count(PICKABLE_OBJECTS_KEYWORD) > 0:
         objects.append(RDK.Item(all_objects[i]))
-        objects_name.append(all_objects[i])        
+        objects_name.append(all_objects[i])
         objects_active.append(False)
 
 # The number of objects that can go in the conveyor
 nobjects = len(objects)
-
 
 # Infinite loop to simulate the conveyor behavior
 current_time = 0
@@ -73,18 +76,18 @@ while True:
     # First: Look for objects that are not in the conveyor but are in the conveyor workspace
     for i in range(nobjects):
         obj_i = objects[i]
-        
+
         # Skip if the object is already in the conveyor
         if objects_active[i]:
             continue
-        
+
         # Check if the object has already been taken by a tool. If so, do not take it in the conveyor
         if obj_i.Parent().Type() == ITEM_TYPE_TOOL:
             continue
 
         # Check if the object is within the conveyor work area
         posei = obj_i.PoseAbs()
-        poseirel = invH(poseconv)*posei
+        poseirel = invH(poseconv) * posei
         if is_inside_conveyor(poseirel):
             # take the object
             obj_i.setParentStatic(conv)
@@ -96,7 +99,7 @@ while True:
     time_current = toc()
     time_delta = time_current - time_last
     time_last = time_current
-    current_time = current_time + time_delta*SIMULATION_SPEED
+    current_time = current_time + time_delta * SIMULATION_SPEED
 
     # Make a list of objects with their matching positions to update
     obj_items = []
@@ -115,26 +118,20 @@ while True:
             continue
 
         # Update the position of the object
-        posei = invH(poseconv)*obj_i.PoseAbs()
-        newposei = conveyor_move_object(posei, time_delta*SIMULATION_SPEED)
+        posei = invH(poseconv) * obj_i.PoseAbs()
+        newposei = conveyor_move_object(posei, time_delta * SIMULATION_SPEED)
         if not is_inside_conveyor(newposei):
             print('Warning!! Object %s fell from the conveyor at %.1f seconds after simulation started' % (objects_name[i], current_time))
             raise Exception('Object %s was not picked from the conveyor!' % objects_name[i])
-            newposei = transl(FALLEN_OBJECTS)*newposei
+            newposei = transl(FALLEN_OBJECTS) * newposei
             objects_active[i] = False
-        
+
         #obj_i.setPose(newposei) # this will provoke a refresh (can be slow)
         obj_items.append(obj_i)
-        obj_poses_abs.append(poseconv*newposei)
+        obj_poses_abs.append(poseconv * newposei)
 
     # Update the object positions
     RDK.setPosesAbs(obj_items, obj_poses_abs)
 
     # Take a break...
     pause(REFRESH_RATE)
-    
-
-        
-        
-    
-

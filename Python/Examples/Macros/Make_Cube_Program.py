@@ -1,9 +1,9 @@
 # This macro shows how you can create a program that moves the robot through a set of points
 # The points are automatically created as a cube grid around a reference target
 # If a linear movement can't be done from one point to the next one the robot will follow a joint movement
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
-from random import uniform # to randomly calculate rz (rotation around the Z axis)
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
+from random import uniform  # to randomly calculate rz (rotation around the Z axis)
 
 # Name of the reference target
 REFERENCE_TARGET = 'RefTarget'
@@ -37,7 +37,7 @@ frame_pose = robot.PoseFrame()
 # Get the active tool
 tool = robot.getLink(ITEM_TYPE_TOOL)
 if not tool.Valid():
-    tool = robot.AddTool(transl(0,0,75), "Tool Grid")
+    tool = robot.AddTool(transl(0, 0, 75), "Tool Grid")
     robot.setPoseTool(tool)
 
 # Get the target reference RefTarget
@@ -58,6 +58,7 @@ num_dofs = len(robot.JointsHome().list())
 
 # Get the reference frame of the target reference
 ref_frame = target_ref.Parent()
+
 
 # Function definition to check if 2 robot configurations are the same
 # Configurations are set as [Rear/Front,LowerArm/UpperArm,Flip/NonFlip] bits (int values)
@@ -87,10 +88,10 @@ for tz in range(-100, 101, 100):
             ntargets = ntargets + 1
             # calculate a random rotation around the Z axis of the tool
             #rz = uniform(-20*pi/180, 20*pi/180)
-                        
+
             # Calculate the position of the new target: translate with respect to the robot base and rotate around the tool
-            newtarget_pose = transl(tx,ty,tz)*pose_ref*rotz(rz)
-            
+            newtarget_pose = transl(tx, ty, tz) * pose_ref * rotz(rz)
+
             # First, make sure the target is reachable:
             newtarget_joints = robot.SolveIK(newtarget_pose, lastjoints, tool_pose, frame_pose)
             if len(newtarget_joints.list()) < num_dofs:
@@ -98,14 +99,14 @@ for tz in range(-100, 101, 100):
                 continue
 
             # Create a new target:
-            newtarget_name = 'Auto T%.0f,%.0f,%.0f Rz=%.1f' % (tx,ty,tz,rz)
+            newtarget_name = 'Auto T%.0f,%.0f,%.0f Rz=%.1f' % (tx, ty, tz, rz)
             print('Creating target %i: %s' % (ntargets, newtarget_name))
             newtarget = RDK.AddTarget(newtarget_name, ref_frame, robot)
 
             # At this point, the target is reachable.
             # We have to check if we can do a linear move or not. We have 2 methods:
             can_move_linear = True
-            
+
             # ------------------------------
             # Validation method 1: check the joints at the destination target
             # and make sure we have the same configuration
@@ -118,12 +119,10 @@ for tz in range(-100, 101, 100):
                     # We can't do a linear movement
                     can_move_linear = False
                     print("Warning! configuration is not the same as the reference target! Linear move will not be possible")
-                    
+
                     # update the reference configuration to the new one
                     config_ref = target_joints_config
             # -------------------------------
-
-
 
             # -------------------------------
             # Validation method 2: use the robot.MoveL_Test option to check if the robot can make a linear movement
@@ -134,20 +133,20 @@ for tz in range(-100, 101, 100):
             # We can retrieve the final joint position by retrieving the robot joints
             if can_move_linear:
                 newtarget_joints = robot.Joints()
-            
+
             # ---------------------------------
 
             if can_move_linear:
                 # All good, we don't need to modify the target.
                 # However, we could set the joints in the target as this may allow us to retrieve the robot configuration if we ever need it
-                newtarget.setAsCartesianTarget() # default behavior
+                newtarget.setAsCartesianTarget()  # default behavior
                 newtarget.setJoints(newtarget_joints)
                 # It is important to have setPose after setJoints as it may recalculate the joints to match the target
-                newtarget.setPose(newtarget_pose) 
+                newtarget.setPose(newtarget_pose)
 
                 # Add the linear movement
                 program_or_robot.MoveL(newtarget)
-                
+
             else:
                 #print(newtarget_joints)
                 # Check if we can do a joint movement (check for collisions)
@@ -159,8 +158,8 @@ for tz in range(-100, 101, 100):
                     continue
 
                 # Make sure we have a joint target and a joint movement
-                newtarget.setAsJointTarget() # default behavior
-                
+                newtarget.setAsJointTarget()  # default behavior
+
                 # Setting the pose for a joint target is not important unless we want to retrieve the pose later
                 # or we want to use the Cartesian coordinates for post processing
                 newtarget.setPose(newtarget_pose)
@@ -170,7 +169,6 @@ for tz in range(-100, 101, 100):
 
                 # Add the joint movement
                 program_or_robot.MoveJ(newtarget)
-
 
             # Remember the joint poisition of the last movement
             lastjoints = newtarget_joints
@@ -182,6 +180,3 @@ prog.ShowInstructions(True)
 #prog.ShowTargets(False)
 
 print('Program done with %i targets' % ntargets)
-
-
-            

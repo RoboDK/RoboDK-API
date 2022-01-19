@@ -5,8 +5,8 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 
 # Start RoboDK API
 RDK = Robolink()
@@ -24,13 +24,10 @@ for i in range(nrobots):
     RDK.ShowMessage("Disconnecting robot %s..." % robot_name, False)
     robot.Disconnect()
     # robot.Disconnect() # calling disconnect twice in a row will force stop (same as double click)
-    
 
 # Iterate through all programs and uncheck the "Run on robot" option
 programs = RDK.ItemList(ITEM_TYPE_PROGRAM, False)
 for prog in programs:
     prog.setRunType(PROGRAM_RUN_ON_SIMULATOR)
-    #if prog.Name().startswith("Curve"):        
+    #if prog.Name().startswith("Curve"):
     #    prog.setRunType(PROGRAM_RUN_ON_SIMULATOR)
-
-        

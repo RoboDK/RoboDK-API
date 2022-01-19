@@ -4,8 +4,8 @@
 TIME_MATCH = False
 MEASURE_COLLISIONS = False
 
-from robolink import *    # API to communicate with RoboDK
-from robodk import *      # basic matrix operations
+from robolink import *  # API to communicate with RoboDK
+from robodk import *  # basic matrix operations
 from time import gmtime, strftime
 
 RDK = Robolink()
@@ -14,7 +14,7 @@ RDK = Robolink()
 RDK.setCollisionActive(COLLISION_OFF)
 
 # Ask the user to select a robot arm (mechanisms are ignored)
-robot = RDK.ItemUserPick('Select a robot',ITEM_TYPE_ROBOT_ARM)
+robot = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT_ARM)
 if not robot.Valid():
     raise Exception("Robot is not available")
 
@@ -40,7 +40,7 @@ for row in csvdata:
     if TIME_MATCH and last_row is not None:
         t_step = row[-1] - last_row[-1]
         pause(t_step)
-    
+
     robot.setJoints(row)
 
     lastrow = row
@@ -49,7 +49,7 @@ for row in csvdata:
     if MEASURE_COLLISIONS:
         ncol = RDK.Collisions()
         collision_time = int(RDK.Command("CollisionCalcTime"))
-        
+
         total_collision_time = total_collision_time + collision_time
         count = count + 1
         max_collision_time = max(max_collision_time, collision_time)
@@ -57,13 +57,3 @@ for row in csvdata:
         msg = "Collision time (ms):    Max: %i | Average: %.1f | Last: %i" % (max_collision_time, time_average, collision_time)
         RDK.ShowMessage(msg, False)
         print(msg)
-
-
-        
-
-
-
-
-
-
-            
