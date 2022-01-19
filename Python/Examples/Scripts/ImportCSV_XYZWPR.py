@@ -24,8 +24,8 @@ if not ROBOT.Valid():
     quit()
 
 # Automatically retrieve active reference and tool
-FRAME = robot.getLink(ITEM_TYPE_FRAME)
-TOOL = robot.getLink(ITEM_TYPE_TOOL)
+FRAME = ROBOT.getLink(ITEM_TYPE_FRAME)
+TOOL = ROBOT.getLink(ITEM_TYPE_TOOL)
 
 #FRAME = RDK.ItemUserPick('Select a reference frame', ITEM_TYPE_FRAME)
 #TOOL = RDK.ItemUserPick('Select a tool', ITEM_TYPE_TOOL)
@@ -56,7 +56,9 @@ def load_targets(strfile):
     for i in range(0, len(csvdata)):
         x,y,z,rx,ry,rz = csvdata[i][0:6]
         poses.append(xyzwpr_to_pose([x,y,z,rx,ry,rz]))
-        idxs.append(csvdata[i][6])
+        #idxs.append(csvdata[i][6])
+        idxs.append(i)
+        
     return poses, idxs
 
 # Load and display Targets from P_Var.CSV in RoboDK   

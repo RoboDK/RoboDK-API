@@ -1,6 +1,7 @@
 # This macro will update all tools that have a Length flag in the tool name (Tool L220.551) with respect to a reference tool.
 # The reference tool must have a reference Length (example: Calib Point L164.033).
 # This is useful to specify a standoff or define a specific milling tool with respect to a reference tool.
+# Tip: Define the first tool with a length of 0 Example: Spindle L0 and it will be placed at the root of the tool holder
 #
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html

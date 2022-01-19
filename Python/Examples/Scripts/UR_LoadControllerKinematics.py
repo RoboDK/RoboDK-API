@@ -4,6 +4,7 @@
 
 import os
 from robolink import *
+from robodk import *
 import tkinter as tk
 from tkinter import filedialog
 import xml.etree.ElementTree as ET
@@ -33,14 +34,18 @@ if not robot.Valid():
     quit()
 
 # Retrieve URP file
-root = tk.Tk()
-root.withdraw()
-#root.lift()
-root.attributes("-topmost", True)
-rdk_path = RDK.getParam('PATH_OPENSTATION')
-fileopen_urp = filedialog.askopenfilename(initialdir=rdk_path, title = "Select a URP file generated using Polyscope on the real robot (not generated using RoboDK or UR Simulator)", filetypes = (("URP files","*.urp"),("all files","*.*")))
-if not fileopen_urp:
-    quit()
+import sys
+if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
+    fileopen_urp = sys.argv[1]
+else:
+    root = tk.Tk()
+    root.withdraw()
+    #root.lift()
+    root.attributes("-topmost", True)
+    rdk_path = RDK.getParam('PATH_OPENSTATION')
+    fileopen_urp = filedialog.askopenfilename(initialdir=rdk_path, title = "Select a URP file generated using Polyscope on the real robot (not generated using RoboDK or UR Simulator)", filetypes = (("URP files","*.urp"),("all files","*.*")))
+    if not fileopen_urp:
+        quit()
 
 # Read the compressed URP file
 urp_xml = None
