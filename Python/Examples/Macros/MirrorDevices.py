@@ -3,8 +3,7 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 import threading
 import queue
 

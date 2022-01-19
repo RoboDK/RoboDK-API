@@ -7,7 +7,8 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *  # RoboDK API
+from robodk.robolink import *    # RoboDK API
+from robodk.robomath import *
 
 # JSON tools
 import json

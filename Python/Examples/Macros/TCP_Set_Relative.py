@@ -4,9 +4,9 @@
 # Press F5 to run the script
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
-
+from robodk.robolink import *    # RoboDK API
+from robodk.robomath import *    # basic matrix operations
+from robodk.robodialogs import *
 RDK = Robolink()
 
 # Retrieve the reference tool

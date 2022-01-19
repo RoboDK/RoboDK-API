@@ -8,8 +8,9 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *    # RoboDK API
+from robodk.robomath import *    # Robot toolbox
+from robodk.robodialogs import *
 
 # Name of the reference tool (name in the RoboDK tree)
 # The name must contain the length in mm

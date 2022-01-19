@@ -41,9 +41,9 @@ Object_Name = None
 # Setting it to None will display a message
 ACTION = None
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
-
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
+from robodk.robodialogs import *
 RDK = Robolink()
 
 # quit if we are not in simulation mode

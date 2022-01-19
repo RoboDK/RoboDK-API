@@ -1,6 +1,7 @@
 # This example shows how to automatically move and measure a set of points using a laser tracker.
-from robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
-from robodk import *  # Robotics toolbox for industrial robots
+from robodk.robolink import *    # API to communicate with RoboDK for simulation and offline/online programming
+from robodk.robomath import *    # Robotics toolbox for industrial robots
+from robodk.robodialogs import *
 
 # Any interaction with RoboDK must be done through RDK:
 RDK = Robolink()

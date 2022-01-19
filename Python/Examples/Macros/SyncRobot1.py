@@ -7,8 +7,8 @@
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
 import sys  # allows getting the argument parameters
-from robodk import *  # required by mbox()
-from robolink import *
+from robodk.robolink import *
+from robodk.robomath import *    # basic matrix operations
 
 #---------------------------------------------
 # Synchronization program for a specific robot

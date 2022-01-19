@@ -2,8 +2,9 @@
 # The list must be provided as X,Y,Z,Speed. Speed is optional. Units must be mm and mm/s respectively
 # The file can be loaded as a program in the GUI or directly simulated.
 
-from robodk import *
-from robolink import *
+from robodk.robodialogs import *
+from robodk.robofileio import *
+from robodk.robolink import *
 
 #----------------------------
 # Global variables:

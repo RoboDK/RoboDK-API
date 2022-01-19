@@ -59,8 +59,7 @@ COLOR_LIST = [COLOR, "red", "green", "blue", "cyan", "magenta", "#ffff55bb"]
 
 #------------------------------------------------------------------
 import sys  # allows getting the passed argument parameters
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 
 # If an arguments from the object events are provided, retrieve the argument
 # (index 0 is the file name)

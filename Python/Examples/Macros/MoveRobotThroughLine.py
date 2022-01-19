@@ -44,8 +44,8 @@ def MakePoints(xStart, xEnd, numPoints):
 
 #---------------------------------------------------
 #--------------- PROGRAM START ---------------------
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic library for robots operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
 
 # Generate the points curve path
 POINTS = MakePoints(P_START, P_END, NUM_POINTS)

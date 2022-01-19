@@ -6,8 +6,9 @@
 # For more information visit:
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
+from robodk.robofileio import *
 
 # Start RoboDK API
 RDK = Robolink()

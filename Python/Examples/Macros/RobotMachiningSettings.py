@@ -4,7 +4,7 @@
 # More information here:
 # https://robodk.com/doc/en/PythonAPI/examples.html#robot-machining-settings
 
-from robolink import *  # RoboDK API
+from robodk.robolink import *    # RoboDK API
 
 # JSON tools
 import json

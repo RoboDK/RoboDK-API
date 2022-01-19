@@ -34,8 +34,8 @@ Measurement_Point = [-850.078, 0, 0, 0, 0, 0]
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
 import math
 
 # Calculate poses

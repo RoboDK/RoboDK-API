@@ -1,7 +1,6 @@
 # Change the color of object curves
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *    # RoboDK API
 
 RDK = Robolink()
 

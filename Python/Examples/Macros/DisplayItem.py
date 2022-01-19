@@ -4,7 +4,8 @@
 # DisplayItem(KUKA KR3, Show)
 # DisplayItem(KUKA KR3, Hide)
 
-from robolink import *
+from robodk.robolink import *
+from robodk.robodialogs import *
 
 # Name and visible variables
 ItemName = ''

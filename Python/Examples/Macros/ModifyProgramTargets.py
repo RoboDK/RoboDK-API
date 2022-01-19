@@ -1,8 +1,8 @@
 # Example to rotate each point of a program with respect to the tool Z axis
 
 # Start the RoboDK API
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
 
 RDK = Robolink()
 

@@ -5,7 +5,8 @@
 # https://robodk.com/doc/en/PythonAPI/robolink.html
 
 import sys  # allows getting the passed argument parameters
-from robodk import *
+from robodk.robomath import *    # Robot toolbox
+from robodk.robodialogs import *
 
 # Name or number of the IO
 IO_NAME = 'IO_3'
@@ -38,7 +39,7 @@ if not IO_VALUE.isdigit():
     else:
         IO_VALUE = 0
 
-from robolink import *  # API to communicate with RoboDK
+from robodk.robolink import *    # API to communicate with RoboDK
 
 print('Wait for %s to equal %s' % (IO_NAME, IO_VALUE))
 

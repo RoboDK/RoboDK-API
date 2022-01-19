@@ -2,8 +2,7 @@
 # See also:
 # https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.AddProgram
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 import json
 
 # Start the RoboDK API

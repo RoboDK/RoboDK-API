@@ -1,8 +1,7 @@
 # This script generates a chart of the simulated joints calculating joint speeds and accelerations
 # Tip: Use the script JointsPlayback.py to move along the recorded joints
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 from time import gmtime, strftime, time
 
 # Simulation ratio: lower is more accurate

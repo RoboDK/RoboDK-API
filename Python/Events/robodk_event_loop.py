@@ -1,6 +1,7 @@
 # This example shows how to implement RoboDK's event loop
 
-from robolink import *
+from robodk.robolink import *
+from robodk.robomath import *
 
 EVENT_SELECTION_TREE_CHANGED = 1
 EVENT_ITEM_MOVED = 2 # obsolete after RoboDK 4.2.0. Use EVENT_ITEM_MOVED_POSE instead
@@ -47,7 +48,7 @@ class RobolinkEvents(Robolink):
         ver_evt = self._rec_int()#_COM_EVT);
         status = self._rec_int()#_COM_EVT);
         if (response != "RDK_EVT" or status != 0):
-            return false
+            return False
         
         self.COM.settimeout(3600)            
         print("Events loop started")

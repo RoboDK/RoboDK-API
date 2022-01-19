@@ -8,8 +8,8 @@ sys.path.insert(0, "..")
 robolink_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
 sys.path.insert(0, robolink_path)
 
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *    # Robot toolbox
 
 import_install("parameterized")
 
@@ -330,5 +330,5 @@ class Program():
 
 # ---------------- Convert Frame (x,y,z,rx,ry,rz) to a RoboDK Matrix ----------------------
 def xyzrp2ToPose(pose):
-    #from robodk import Pose
+    #from robodk.robomath import Pose
     return Pose(pose[0], pose[1], pose[2], pose[3], pose[4], pose[5])

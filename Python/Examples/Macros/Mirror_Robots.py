@@ -1,7 +1,7 @@
 # This script will copy the motion from one robot to other robots
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
 
 # Ask the user to select the leader robot
 RDK = Robolink()

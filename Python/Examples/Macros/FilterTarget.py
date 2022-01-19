@@ -2,8 +2,8 @@
 # This is useful for a robot that has been calibrated and we need to get the filtered pose
 # Important: It is assumed that the robot will reach the pose with the calculated configuration
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
 
 
 def XYZWPR_2_Pose(xyzwpr):

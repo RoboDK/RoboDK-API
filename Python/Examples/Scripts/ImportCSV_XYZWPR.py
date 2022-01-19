@@ -5,13 +5,15 @@
 #  3-Target data: P_Var.csv
 # This macro can also filter a given targets file
 
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 # Visit: http://www.robodk.com/doc/PythonAPI/
 # For RoboDK API documentation
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # Robot toolbox
+from robodk.robodialogs import *
+from robodk.robofileio import *
 
 # Start communication with RoboDK
 RDK = Robolink()

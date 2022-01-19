@@ -12,8 +12,8 @@ NOM_TCP_MOBILE = 'TCP Mecanisme'
 MISE_A_JOUR_PERMANENTE = True
 
 #--------------------------------------------------
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *    # RoboDK API
+from robodk.robomath import *    # Robot toolbox
 
 RDK = Robolink()
 

@@ -5,7 +5,7 @@
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 #-------------------------------------------------------
-from robolink import *
+from robodk.robolink import *
 
 # Start the RoboDK API
 RDK = Robolink()

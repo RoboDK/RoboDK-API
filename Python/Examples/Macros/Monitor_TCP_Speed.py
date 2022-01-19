@@ -4,8 +4,8 @@
 # force monitoring the real robot
 FORCE_REAL_ROBOT = False
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
 from time import gmtime, strftime
 import time
 

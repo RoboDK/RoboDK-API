@@ -5,7 +5,7 @@
 # https://robodk.com/doc/en/General.html#CycleTime
 
 # Start the RoboDK API
-from robolink import *  # RoboDK API
+from robodk.robolink import *    # RoboDK API
 
 RDK = Robolink()
 

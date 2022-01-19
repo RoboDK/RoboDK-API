@@ -1,11 +1,10 @@
 # This macro shows how to convert any program to only linear movements.
 # Circular movements will be replaced by small linear movements given a step tolerance.
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 # Or visit: http://www.robodk.com/doc/PythonAPI/
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 
 RDK = Robolink()
 

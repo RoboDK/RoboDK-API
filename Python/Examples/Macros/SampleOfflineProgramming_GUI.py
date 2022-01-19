@@ -2,8 +2,8 @@
 # This example is an improvement of the weld Hexagon
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # robodk robotics toolbox
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # robodk robotics toolbox
 
 # Set up default parameters
 PROGRAM_NAME = "DoWeld"  # Name of the program

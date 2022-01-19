@@ -5,8 +5,8 @@
 IMAGE_WIDTH = 8000
 IMAGE_HEIGHT = 6000
 
-from robodk import *
-from robolink import *
+from robodk.robolink import *
+from robodk.robomath import *    # Robot toolbox
 import datetime
 
 from tkinter import *

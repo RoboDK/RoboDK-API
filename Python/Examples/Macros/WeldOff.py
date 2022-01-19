@@ -77,8 +77,8 @@ Object_Name = None  # Use the first object in the active reference frame
 
 # --------------------------------------------------
 # Program start:
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robodialogs import *
 
 RDK = Robolink()
 

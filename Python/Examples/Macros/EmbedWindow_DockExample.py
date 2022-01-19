@@ -1,5 +1,6 @@
 from tkinter import *
-from robolink import *
+from robodk.robolink import *
+import tkinter
 import threading
 
 # Create a new window

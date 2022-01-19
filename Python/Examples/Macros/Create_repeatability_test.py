@@ -10,8 +10,8 @@
 # Set to False for multi directional repeatability (random order)
 UNIDIRECTIONAL_REPEATABILITY = True
 
-from robolink import *  # API to communicate with robodk
-from robodk import *  # basic matrix operations
+from robodk.robolink import *    # API to communicate with robodk
+from robodk.robomath import *    # basic matrix operations
 
 # Initialise the RoboDK API
 RDK = Robolink()

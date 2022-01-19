@@ -1,7 +1,6 @@
 # This macro shows how you can add a new camera from a simulation event
 #
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # library for basic matrix operations
+from robodk.robolink import *    # API to communicate with RoboDK
 
 RDK = Robolink()
 

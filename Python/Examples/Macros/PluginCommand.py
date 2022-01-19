@@ -1,7 +1,7 @@
 # This script allows you to create a program instruction called PluginCommand(command, value)
 # And trigger a specific plugin command from a program
 #
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
@@ -11,14 +11,14 @@
 plugin_name = ""
 
 import sys
-from robolink import *
+from robodk.robolink import *
 
 # Start the RoboDK API:
 RDK = Robolink()
 
 # Check that we have 2 arguments (0th index is the name of the file)
 if len(sys.argv) >= 3:
-    from robolink import *  # RoboDK API
+    from robodk.robolink import *    # RoboDK API
     plugin_command = sys.argv[1]
     plugin_value = sys.argv[2]
     RDK.ShowMessage("Running plugin command: " + plugin_command + "=" + plugin_value, True)

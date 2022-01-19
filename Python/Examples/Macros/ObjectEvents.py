@@ -18,8 +18,8 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 
 import sys  # allows getting the argument parameters
-from robodk import *  # required by mbox()
-from robolink import *  # API to communicate with RoboDK
+from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robomath import *    # basic matrix operations
 
 print('Number of arguments: ' + str(len(sys.argv)) + ' arguments.')
 
