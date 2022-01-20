@@ -5565,21 +5565,26 @@ class Item():
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
             return collision
-        
-    def MoveJ_Test_Blend(self, j1, j2, j3, blend_deg = 5, minstep_deg=-1):
-        """
-        :param j1: Start joints
+
+    def MoveJ_Test_Blend(self, j1, j2, j3, blend_deg=5, minstep_deg=-1):
+        """Checks if a joint movement with blending is feasible and free of collisions (if collision checking is activated). The robot will move to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.
+
+        :param j1: start joints
         :type j1: list of float
-        :param j2: End joints
+        :param j2: joints via
         :type j2: list of float
-        :param j3: Next point joints
+        :param j3: joints final destination
         :type j3: list of float
-        :param float minstep_deg: joint step in degrees
+        :param blend_deg: blend in degrees
+        :type blend_deg: float
+        :param minstep_deg: maximum joint step in degrees
+        :type minstep_deg: float
         :return: returns 0 if the movement is free of collision or any other issues. Otherwise it returns the number of pairs of objects that collided if there was a collision.
         :rtype: int
-        .. seealso:: :func:`~robolink.Item.MoveL_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
-        """    
-        with self.link._lock: 
+        
+        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
+        """
+        with self.link._lock:
             self.link._require_build(7206)
             self.link._check_connection()
             self.link._send_line("CollisionMoveBlend")
@@ -5593,9 +5598,8 @@ class Item():
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
-            return collision   
+            return collision
 
-    
     def MoveL_Test(self, j1, pose, minstep_mm=-1):
         """Checks if a linear movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination pose if a collision is not detected.
 
