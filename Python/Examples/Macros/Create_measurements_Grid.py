@@ -1,7 +1,7 @@
 # This script allows you to schedule taking measurements in a cube
 # The script makes sure that points are reachable
-from robodk.robolink import *    # API to communicate with robodk
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with robodk
+from robodk.robomath import *  # basic matrix operations
 from robodk.robodialogs import *
 from random import uniform
 import sys  # to exit the script without errors (sys.exit(0))

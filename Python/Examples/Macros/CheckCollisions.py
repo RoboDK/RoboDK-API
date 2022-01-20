@@ -4,8 +4,9 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 # Or visit: https://robodk.com/doc/en/PythonAPI/index.html
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+
 RENDER_ALWAYS = True  # Set to False
 STEP_MM = 2  # Step in MM for linear moves
 STEP_DEG = 1  # Step in DEG for joint moves (approach/retract)

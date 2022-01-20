@@ -3,9 +3,9 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 # Start RoboDK API
 RDK = Robolink()

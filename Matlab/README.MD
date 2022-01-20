@@ -19,8 +19,8 @@ RoboDK API Help:
 
 More information:
  * RoboDK documentation: https://robodk.com/doc/en/RoboDK-API.html
- * Robolink class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink
- * Item class: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Item
+ * Robolink class: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink
+ * Item class: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Item
  
 Requirements
 ------------

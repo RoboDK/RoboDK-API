@@ -14,7 +14,7 @@
 #    geometry (optional): Matrix of vertices defining the triangles.
 #
 # More information here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Spray_Add
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Spray_Add
 # https://robodk.com/doc/en/RoboDK-API.html
 #
 # The scripts ArcStart, ArcEnd and WeldOn and SpindleOn behave in a similar way, the only difference is the default behavior
@@ -41,9 +41,10 @@ Object_Name = None
 # Setting it to None will display a message
 ACTION = None
 
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from robodk.robodialogs import *
+
 RDK = Robolink()
 
 # quit if we are not in simulation mode

@@ -18,7 +18,7 @@ RDK = Robolink()
 
 # Check that we have 2 arguments (0th index is the name of the file)
 if len(sys.argv) >= 3:
-    from robodk.robolink import *    # RoboDK API
+    from robodk.robolink import *  # RoboDK API
     plugin_command = sys.argv[1]
     plugin_value = sys.argv[2]
     RDK.ShowMessage("Running plugin command: " + plugin_command + "=" + plugin_value, True)

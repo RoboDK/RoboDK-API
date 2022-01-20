@@ -1,7 +1,7 @@
 # This macro stops all running programs
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

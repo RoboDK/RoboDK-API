@@ -4,11 +4,11 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 
 import sys  # allows getting the argument parameters
 from robodk.robolink import *
-from robodk.robomath import *    # basic matrix operations
+from robodk.robomath import *  # basic matrix operations
 
 #---------------------------------------------
 # Synchronization program for a specific robot

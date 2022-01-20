@@ -5,8 +5,7 @@
 #
 # This example shows how to retrieve and display the 32-bit depth map of a simulated camera.
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
 
 from tempfile import TemporaryDirectory
 import numpy as np

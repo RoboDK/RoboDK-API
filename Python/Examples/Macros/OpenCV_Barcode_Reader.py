@@ -6,8 +6,8 @@
 # This script process a camera frame to extract QR and bar codes.
 # It currently uses a RoboDK camera, but it can be easily adapted to use a physical device.
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 import_install("cv2", "opencv-contrib-python")  # The contrib version adds the barcode support
 import cv2 as cv

@@ -4,8 +4,8 @@
 # Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 
 RDK = Robolink()
 

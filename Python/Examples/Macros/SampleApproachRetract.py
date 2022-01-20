@@ -1,6 +1,6 @@
 # This macro shows how to change the approach/retract settings for a robot machining project
 from robodk.robolink import *
-from robodk.robomath import *    # basic matrix operations
+from robodk.robomath import *  # basic matrix operations
 
 # Ask the user to select a robot machining project
 RDK = Robolink()

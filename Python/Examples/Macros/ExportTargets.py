@@ -5,8 +5,8 @@
 # Visit: http://www.robodk.com/doc/PythonAPI/
 # For RoboDK API documentation
 
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from robodk.robodialogs import *
 
 

@@ -1,7 +1,7 @@
 # Draw a hexagon around the current robot position
 
-from robodk.robolink import *    # RoboDK's API
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # RoboDK's API
+from robodk.robomath import *  # Robot toolbox
 
 # Start the RoboDK API:
 RDK = Robolink()

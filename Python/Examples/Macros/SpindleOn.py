@@ -21,7 +21,7 @@
 #    geometry (optional): Matrix of vertices defining the triangles.
 #
 # More information here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Spray_Add
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Spray_Add
 # https://robodk.com/doc/en/RoboDK-API.html
 #
 # The scripts ArcStart, ArcEnd and WeldOn and SpindleOn behave in a similar way, the only difference is the default behavior
@@ -59,7 +59,7 @@ COLOR_LIST = [COLOR, "red", "green", "blue", "cyan", "magenta", "#ffff55bb"]
 
 #------------------------------------------------------------------
 import sys  # allows getting the passed argument parameters
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 # If an arguments from the object events are provided, retrieve the argument
 # (index 0 is the file name)

@@ -19,8 +19,8 @@ F = [0.73451554, -0.55094017, 0.39617148]
 SHAPE = [E, B, A, E, D, B, E, C, D, E, A, C, F, A, B, F, B, D, F, D, C, F, C, A]
 
 ##### Add the shape as an object in RoboDK
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from robodk.robodialogs import *
 
 RDK = Robolink()  # Initialize the RoboDK API

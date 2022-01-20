@@ -4,8 +4,8 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 
 # Start RoboDK API
 RDK = Robolink()

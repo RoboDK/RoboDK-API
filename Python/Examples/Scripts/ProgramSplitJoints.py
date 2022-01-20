@@ -1,7 +1,7 @@
 # This macro provides an example to convert a program to another program with joint splitting
 # The joints extracted take into account the rounding effect.
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 from robodk.robodialogs import *
 from robodk.robofileio import *
 import sys

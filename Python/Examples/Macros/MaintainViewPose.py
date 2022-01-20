@@ -1,6 +1,6 @@
 # This script shows how to maintain the 3D view (position of the camera) relative to the robot position
-from robodk.robolink import *    # RoboDK API
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 RDK = Robolink()
 

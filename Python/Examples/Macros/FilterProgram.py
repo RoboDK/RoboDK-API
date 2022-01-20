@@ -1,4 +1,4 @@
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 import os  # Path operations
 
 # Get the current working directory

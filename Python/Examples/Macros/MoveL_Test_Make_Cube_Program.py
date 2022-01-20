@@ -1,7 +1,7 @@
 # This program shows how to use MoveL_Test to make sure that the robot can make a linear movement.
 # This macro creates a cube of targets to follow by the robot
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from random import uniform  # to randomly calculate rz (rotation around the Z axis)
 
 #Start the RoboDK API

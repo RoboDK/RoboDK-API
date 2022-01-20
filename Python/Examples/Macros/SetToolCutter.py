@@ -9,9 +9,10 @@
 FLANGE_NAME = "Flange"
 
 # ---------------------------------------------------------
-from robodk.robolink import *    # RoboDK API
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 from robodk.robodialogs import *
+
 RDK = Robolink()
 
 # Get the tool holder or create it if it does not exist

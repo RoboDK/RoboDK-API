@@ -1,7 +1,7 @@
 # This macro allows adding a program call after each movement instruction in a program
 # This macro shows an example to use prog.InstructionSelect()
 # This macro is useful if we want to synchronize motion between 2 robots for a calibration task
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 from robodk.robodialogs import *
 
 RDK = Robolink()

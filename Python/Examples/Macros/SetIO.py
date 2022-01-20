@@ -35,7 +35,7 @@ if not IO_VALUE.isdigit():
     else:
         IO_VALUE = 0
 
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 # Set the IO as a station parameter

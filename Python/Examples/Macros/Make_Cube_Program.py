@@ -1,8 +1,8 @@
 # This macro shows how you can create a program that moves the robot through a set of points
 # The points are automatically created as a cube grid around a reference target
 # If a linear movement can't be done from one point to the next one the robot will follow a joint movement
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from random import uniform  # to randomly calculate rz (rotation around the Z axis)
 
 # Name of the reference target

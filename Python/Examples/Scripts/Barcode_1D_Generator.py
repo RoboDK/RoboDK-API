@@ -5,8 +5,8 @@
 #
 # This script allows you to create a RoboDK object containing a EAN13 bar code (European).
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robodialogs import *
 
 import_install("barcode", "python-barcode")
 import barcode

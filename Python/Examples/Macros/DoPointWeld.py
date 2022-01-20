@@ -1,7 +1,7 @@
 # This macro allows simulating a spot weld gun
 # It is possible to call GunOn(1) to simulate turning the gun on or GunOff(0) to stop simulating the gun
 
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

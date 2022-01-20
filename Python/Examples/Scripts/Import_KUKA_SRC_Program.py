@@ -23,7 +23,7 @@
 #
 # END
 
-from robodk.robomath import *    # Robot toolbox
+from robodk.robomath import *  # Robot toolbox
 from robodk.robodialogs import *
 from robodk.robofileio import *
 from robodk.robolink import *

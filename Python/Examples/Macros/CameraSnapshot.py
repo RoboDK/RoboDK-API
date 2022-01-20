@@ -1,6 +1,6 @@
 # This macro provokes taking a snapshot from a simulated 2D camera
 #
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

@@ -8,7 +8,7 @@
 #PROJECTION_ALONG_NORMAL_RECALC = 3 # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
 #
 # More information about the RoboDK API here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 # https://robodk.com/doc/en/RoboDK-API.html
 #
 # This macro uses advanced Python programming. It uses the exec() and eval() statements to execute Python code from a string generated on the fly.
@@ -17,8 +17,8 @@
 # Press F5 to run the script
 # Type help("robodk.robolink") or help("robodk.robomath") for more information
 
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 import threading
 
 # Set default/global parameters. This is only useful for the first time we execute this macro on a new RDK file.

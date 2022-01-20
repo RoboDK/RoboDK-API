@@ -3,8 +3,8 @@
 #
 # Press F5 to run the script
 # Or visit: http://www.robodk.com/doc/en/PythonAPI/
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 import threading
 import socket
 import struct

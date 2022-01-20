@@ -1,21 +1,24 @@
 RoboDK API for Python
 =======================
 
-Introduction
---------------
 The `robodk` package implements the [RoboDK API for Python](https://robodk.com/doc/en/PythonAPI/index.html).
 
-This package allows you to interact with RoboDK software for simulation and programming industrial robots. With the RoboDK API for Python it is possible to simulate and program any industrial robot using Python programming language. The RoboDK API provides an alternative to using vendor-specific programming languages.
+The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
+With the RoboDK API for Python it is possible to simulate and program any industrial robot using Python programming language. 
+The RoboDK API provides an alternative to using vendor-specific programming languages.
 
 While RoboDK's graphical user interface can be used to create programs, it is possible to extend the robot controller limitations by using a universal programming language such as Python.
-The following page provides an overview of the RoboDK API for Python: <https://robodk.com/offline-programming>.
+The following page provides an overview of the RoboDK API using Python: <https://robodk.com/offline-programming>.
 
 The `robodk` package is available on [PyPi](https://pypi.python.org/pypi/robodk/).
 
 ![Python programming in RoboDK](./Python-Programming-RoboDK.png)
 
-RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place, and so on. The `robodk` package provides tools to ease the development of such applications.
+RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place, and so on.
+ * [Industrial Robot application examples](https://robodk.com/examples)
+ * [RoboDK Blog](https://robodk.com/blog)
 
+**Important:** The RoboDK API is not the same as the [RoboDK Plug-In interface](https://robodk.com/doc/en/PlugIns/index.html).
 
 Documentation
 ---------------
@@ -23,22 +26,21 @@ Documentation
 The `robodk` package includes the following modules:
 
 * The [`robolink` module](https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py) is the link between RoboDK and Python. Any item from the RoboDK item tree can be retrieved. Items are represented by the object Item. An item can be a robot, a reference frame, a tool, an object or a specific project.
-* The [`robomath` module](https://robodk.com/doc/en/PythonAPI/robodk.html#robomath-py) is a robotics toolbox, inspired from [Peter Corke’s Robotics Toolbox](https://petercorke.com/toolboxes/robotics-toolbox/). For instance, matrix operations, projection, timers, etc.
+* The [`robomath` module](https://robodk.com/doc/en/PythonAPI/robodk.html#robomath-py) is a robotics toolbox, inspired from [Peter Corke's Robotics Toolbox](https://petercorke.com/toolboxes/robotics-toolbox/). For instance, matrix operations, projection, timers, etc.
 * The [`robodialogs` module](https://robodk.com/doc/en/PythonAPI/robodk.html#robodialogs-py) is a dialogs toolbox. For instance, open and save file dialogs, message prompts, etc.
 * The [`robofileio` module](https://robodk.com/doc/en/PythonAPI/robodk.html#robofileio-py) is a file operation toolbox. File properties, CSV, FTP, etc.
 * The [`roboapps` module](https://robodk.com/doc/en/PythonAPI/robodk.html#roboapps-py) is a RoboDK Apps toolbox. More information can be found in our [App loader documentation](https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginAppLoader).
 
 
 You can find more information about RoboDK API in our documentation.
- * [RoboDK API documentation](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
- * [The `robodk` package for Python](https://robodk.com/doc/en/PythonAPI/index.html)
+ * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
  * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
-
+ * [The `robodk` package for Python](https://robodk.com/doc/en/PythonAPI/index.html)
 
 Requirements
 ------------
+* [RoboDK Simulation Software](https://robodk.com/download)
 * [Python](https://www.python.org/downloads/) (Python 2 and Python 3 supported)
-* [RoboDK](https://robodk.com/download)
 
 Mac and Linux usually have Python 2 installed by default. Although it is not required, Python 3 can be installed on Linux by typing:
 ```
@@ -46,6 +48,7 @@ sudo apt-get install pip3
 sudo apt-get install idle3
 ```
 
+The RoboDK API can be used with a free RoboDK license.
 
 How to install
 -------------------
@@ -62,7 +65,7 @@ pip install robodk[cv,apps,lint]
 ```
 
 The Python interpreter and editor used by RoboDK can be set in:
->RoboDK &rarr; Tools &rarr; Options &rarr; Python
+>RoboDK - Tools - Options - Python
 
 Example
 ------------
@@ -107,20 +110,20 @@ robot.RunCode('Program_Done')
 robot.MoveL(target)
 ```
 
-Posts-processors
+Post Processors
 ------------------
 
 The same script used for simulation can be used for robot programming offline. This means a program will be automatically generated for your robot controller to reproduce the movements on the robot.
 RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
 
-More information about robot post-processors here:
+More information about robot post processors here:
 
-* https://robodk.com/help#PostProcessor
-* https://robodk.com/doc/en/Post-Processors.html
-* https://robodk.com/doc/en/PythonAPI/postprocessor.html
+ * [Quick introduction to RoboDK post processors](https://robodk.com/help#PostProcessor)
+ * [How to use Post Processors](https://robodk.com/doc/en/Post-Processors.html)
+ * [Technical Reference](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
 
-You can find the most up to date list of supported robot controllers in our documentation for [Posts-processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
+You can find the most up to date list of supported robot controllers in our documentation for [Post processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
 
 <details>
 <summary>Preview of supported robot controllers</summary>
@@ -155,7 +158,7 @@ You can find the most up to date list of supported robot controllers in our docu
 * KUKA KRC4: for KUKA KRC4 robot controllers
 * KUKA KRC4_Config: for KUKA KRC4 robot controllers with configuration data in each line
 * KUKA KRC4_DAT: for KUKA KRC4 robot controllers including DAT data files
-* Mecademic: for Mecademic’s script code required by the Meca500 robot
+* Mecademic: for Mecademic's script code required by the Meca500 robot
 * Mecademic Python: it generates a Python script that can control the Mecademic Meca500 robot remotely.
 * Mitsubishi: for Mitsubishi robot controllers
 * Motoman/Yaskawa: for different Motoman robot controllers using Inform II and Inform III (JBI)
@@ -204,5 +207,5 @@ More about RoboDK
 ----------------
 
 * [Main website](https://robodk.com/)
-* [Blog](https://robodk.com/blog)
 * [RoboDK Documentation](https://robodk.com/doc/en/Basic-Guide.html)
+* [Blog](https://robodk.com/blog)

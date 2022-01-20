@@ -5,8 +5,8 @@
 #
 # This example shows an advanced pick and place application using a Fanuc M-710iC/50 robot (Example 2 from the RoboDK library)
 
-from robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
-from robodk import *  # Robotics toolbox for industrial robots
+from robodk.robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
+from robodk.robomath import *  # Robot toolbox
 
 # Setup global parameters
 BALL_DIAMETER = 100  # diameter of one ball

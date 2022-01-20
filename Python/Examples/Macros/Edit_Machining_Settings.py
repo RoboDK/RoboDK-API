@@ -5,7 +5,7 @@
 #
 # This example shows how to modify settings related to robot machining and program events using the RoboDK API
 
-from robolink import *  # RoboDK API
+from robodk.robolink import *  # RoboDK API
 
 # JSON tools
 import json

@@ -50,9 +50,9 @@ def CirclePoints(radius, xStart, xEnd, xStep, accuracy, ycoord, projection):
 
 #------------------------------------------------------------------
 #--------------- PROGRAM START ---------------------
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # basic matrix operations
-from robodk.robodialogs import *      
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 
 # Default parameters:
 RADIUS = 475  # Radius of the outer circle

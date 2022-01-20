@@ -1,14 +1,12 @@
 import unittest
 from path_simulation import *
 
-
 # Simulation Time for Time Based Simulation Tests
 step_time_S = 0.002
 step_time_M = 0.02
-step_time_RM = 0.05 #0.05  # Simuation Time used in RobotManager
+step_time_RM = 0.05  #0.05  # Simuation Time used in RobotManager
 #step_time_L = 0.2 # triggers the default 25 deg limit for kinematic error when we are close to a singularity
 step_time_L = 0.025
-
 
 # Simulation Step Size in mm and deg for Position Based Simulation Tests
 sim_step_mm_S = 1
@@ -27,8 +25,7 @@ max_frames_instruction = 1250
 # nose2 (out unit test html report tool) can not deal with unicode character \u2024:
 # UnicodeEncodeError: 'charmap' codec can't encode character '\u2024' in position 3871: character maps to <undefined>
 # for the time being we use "_"
-dot_repr = "_"   # "\u2024" does not work with nose 2 (see comment above)
-
+dot_repr = "_"  # "\u2024" does not work with nose 2 (see comment above)
 
 
 class TestRobotSimBase(unittest.TestCase):
@@ -43,7 +40,6 @@ class TestRobotSimBase(unittest.TestCase):
     sim_step_mm = None
     sim_step_deg = None
     sim_step_time = None
-    
 
     def load_robot_cell(self):
         raise NotImplementedError
@@ -80,14 +76,14 @@ class TestRobotSimBase(unittest.TestCase):
 
         if numberOfErrors == 0:
             msg = f"Found no simulation errors. Expected error message 'success' but got error message: {errorMessage}"
-            self.assertEqual( "success", errorMessage, msg)
+            self.assertEqual("success", errorMessage, msg)
 
         if numberOfErrors > 0:
             msg = f"{numberOfErrors} Simulation errors found. Expected error message != 'success'"
-            self.assertNotEqual( "success", errorMessage, msg)
+            self.assertNotEqual("success", errorMessage, msg)
 
         msg = f"Expected only 1 error code but got {numberOfErrors} errors"
-        self.assertLessEqual( numberOfErrors, 1, msg)
+        self.assertLessEqual(numberOfErrors, 1, msg)
 
     def _test_result_for_expected_path_error_flags(self):
         numberOfErrors = 0
@@ -95,7 +91,7 @@ class TestRobotSimBase(unittest.TestCase):
             expectedErrorFlags = step.expected_error_flags
             if numberOfErrors == 0:
                 msg = f"Unexpected empty playback frame list in Step {step.name}"
-                self.assertGreater( len(step.playback_frames), 0, msg)
+                self.assertGreater(len(step.playback_frames), 0, msg)
                 lastFrame = step.playback_frames[-1]
                 simulatedErrorFlags = ConvertErrorCodeToJointErrorType(lastFrame.error)
                 msg = f"Step {step.name} Invalid error result. expectedErrorFlags:{str(expectedErrorFlags)}, actual simulation error:{str(simulatedErrorFlags)}"
@@ -103,12 +99,12 @@ class TestRobotSimBase(unittest.TestCase):
             if expectedErrorFlags != PathErrorFlags.NoError:
                 numberOfErrors = numberOfErrors + 1
                 errorMessage = self.program.simulation_result.message.lower()
-                self.assertNotEqual( errorMessage, "success", "expected an error message but got 'success'")
+                self.assertNotEqual(errorMessage, "success", "expected an error message but got 'success'")
 
         if numberOfErrors == 0:
             errorMessage = self.program.simulation_result.message.lower()
             msg = f"expected error message 'success' but got error message {errorMessage}"
-            self.assertEqual( errorMessage, "success", msg)
+            self.assertEqual(errorMessage, "success", msg)
 
     def _test_for_missing_move_ids(self):
         """Asserts that there is at least one playback frame per step"""
@@ -117,7 +113,7 @@ class TestRobotSimBase(unittest.TestCase):
         for s in self.program.steps:
             expectedErrorFlags = s.expected_error_flags
             if expectedErrorFlags != PathErrorFlags.NoError:
-               numberOfErrors = numberOfErrors + 1
+                numberOfErrors = numberOfErrors + 1
             if numberOfErrors == 0:
                 move_id += 1
                 msg = f"Step {s.name} has no playbackFrames. Move Id {move_id} is missing"
@@ -138,13 +134,13 @@ class TestRobotSimBase(unittest.TestCase):
                     self.fail(msg)
                 if f.time_step == 0 and f.error != 0.0:
                     playbackFrameWithTimeStep0 = f
-            
+
     def _test_for_duplicate_frames_for_first_step(self):
         """Asserts there is only one playback frame for the first target"""
         firstStep = self.program.steps[0]
         msg = f"First Step {firstStep.name} has more then one playbackFrame. Move Id 1. number of PlaybackFrames: {len(firstStep.playback_frames)}"
         self.assertEqual(len(firstStep.playback_frames), 1, msg)
-            
+
     def _test_for_valid_move_ids(self):
         """Asserts that all playback frames have a valid move id"""
         playback_frames = self.program.simulation_result.playback_frames
@@ -200,7 +196,7 @@ class TestRobotSimBase(unittest.TestCase):
                     self.assertLessEqual(pb_frame.time_step, self.program.max_time_step + numerical_tolerance, msg)
                 else:
                     #move_type = step.move_type if index != 0 else previous_step.move_type
-                    move_type = step.move_type # Fix by Albert
+                    move_type = step.move_type  # Fix by Albert
                     # deg step applies to joint moves
                     if move_type == MoveType.Joint:
                         msg_deg = f"Step {step.name} (Joint) playback frame {index}, deg_step {pb_frame.deg_step} not within 'max_deg_step' bounds"
@@ -209,8 +205,7 @@ class TestRobotSimBase(unittest.TestCase):
                         self.assertLessEqual(pb_frame.deg_step, self.program.max_deg_step, msg_deg)
 
                         # Check if actual step is smaller than max for simulation
-                        actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b
-                                               in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
+                        actual_deg_step = max([abs(j_a[0] - j_b[0]) for j_a, j_b in zip(pb_frame.joints.rows, previous_pb_frame.joints.rows)])
                         self.assertLessEqual(actual_deg_step, self.program.max_deg_step + numerical_tolerance, msg_deg)
                     else:
                         msg_mm = f"Step {step.name} (Frame) playback frame {index}, mm_step {pb_frame.mm_step} not within 'max_mm_step' bounds"
@@ -219,8 +214,7 @@ class TestRobotSimBase(unittest.TestCase):
                         self.assertLessEqual(pb_frame.mm_step, self.program.max_mm_step, msg_mm)
 
                         # Check if actual step is smaller than max for simulation
-                        actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0])
-                                                   for c_a, c_b in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
+                        actual_mm_step = sqrt(sum([(c_a[0] - c_b[0]) * (c_a[0] - c_b[0]) for c_a, c_b in zip(pb_frame.coords.rows, previous_pb_frame.coords.rows)]))
                         self.assertLessEqual(actual_mm_step, self.program.max_mm_step + numerical_tolerance, msg_mm)
 
                 previous_pb_frame = pb_frame

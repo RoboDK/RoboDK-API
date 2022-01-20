@@ -1,6 +1,6 @@
 # This macro provides an example to extract the joints of a program.
 # The joints extracted take into account the rounding effect.
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 import sys
 import os
 

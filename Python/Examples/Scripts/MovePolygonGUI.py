@@ -1,7 +1,7 @@
 # This example shows how RoboDK and the Python GUI tkinter can display graphical user interface to customize program generation according to certain parameters
 # This example is an improvement of the weld Hexagon
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 import threading
 
 # Set up default parameters

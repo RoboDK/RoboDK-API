@@ -6,8 +6,8 @@
 # Set to True to invert the normals (flip the normals)
 FlipNormals = True
 
-from robodk.robolink import *    # RoboDK API
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # basic matrix operations
 
 RDK = Robolink()
 

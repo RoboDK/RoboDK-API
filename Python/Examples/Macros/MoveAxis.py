@@ -35,7 +35,7 @@ else:
     VALUE = float(sys.argv[1])
 
 # Use the RoboDK API:
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

@@ -26,7 +26,7 @@ def delete_item(name, type):
     """Function helper to easily delete an existing item"""
     item = RDK.Item(name, type)
     if item.Valid():
-        item.Delete()    
+        item.Delete()
 
 
 main_program_name = "MainProgram"

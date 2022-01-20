@@ -17,8 +17,8 @@ timeout_reachable = 60 * 60 * 1000
 timeout_unreachable = 1000
 
 # Start the RoboDK API
-from robodk.robolink import *    # RoboDK API
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 RDK = Robolink()
 

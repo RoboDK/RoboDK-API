@@ -1,5 +1,5 @@
 # This script allows you to display the robot in multiple locations along a program
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 import sys
 
 # Maximum number of robots to display

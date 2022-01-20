@@ -1,9 +1,10 @@
 # This macro allows a user to teach a reference frame using a laser tracker
 # The macro guides the used to take 3 measurements (X, X+ and Y+)
 # Important: The robot needs to be calibrated first to accurately measure the reference frame
-from robodk.robolink import *    # API to communicate with RoboDK
-from robodk.robomath import *    # Robot toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 from robodk.robodialogs import *
+
 RDK = Robolink()
 
 # Manually enter the target compensation

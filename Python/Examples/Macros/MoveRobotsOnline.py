@@ -3,7 +3,7 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 # Start RoboDK API
 RDK = Robolink()

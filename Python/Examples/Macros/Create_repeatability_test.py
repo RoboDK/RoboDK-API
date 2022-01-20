@@ -4,14 +4,14 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 
 # Set to True for unidirectional repeatability (ISO9283 norm)
 # Set to False for multi directional repeatability (random order)
 UNIDIRECTIONAL_REPEATABILITY = True
 
-from robodk.robolink import *    # API to communicate with robodk
-from robodk.robomath import *    # basic matrix operations
+from robodk.robolink import *  # API to communicate with robodk
+from robodk.robomath import *  # basic matrix operations
 
 # Initialise the RoboDK API
 RDK = Robolink()

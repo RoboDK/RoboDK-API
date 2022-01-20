@@ -1,6 +1,6 @@
 # This macro shows how you can add a new camera from a simulation event
 #
-from robodk.robolink import *    # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 
@@ -11,7 +11,7 @@ camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object
 #camref = RDK.Item('Frame 7',ITEM_TYPE_FRAME)
 
 # Set parameters in mm and degrees:
-# (more information here: https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Cam2D_Snapshot)
+# (more information here: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Cam2D_Snapshot)
 #
 #  FOV: Field of view in degrees (atan(0.5*height/distance) of the sensor
 #  FOCAL_LENGHT: focal lenght in mm
