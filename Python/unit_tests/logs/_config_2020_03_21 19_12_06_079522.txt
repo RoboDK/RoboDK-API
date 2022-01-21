@@ -1,4 +1,0 @@
-Gage stopped measuring and closed
-Waiting for the gage to stop/close...
-Gage stopped measuring and closed
-Gage stopped measuring and closed

@@ -3,14 +3,16 @@ import time
 from enum import Enum
 import os
 
+
 sys.path.insert(0, "..")
-robolink_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+robolink_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
 sys.path.insert(0, robolink_path)
 
 from robodk.robolink import *
-from robodk.robomath import *  # Robot toolbox
+from robodk.robomath import *
 
 import_install("parameterized")
+
 
 JOINT_SPEED = 225  # [deg/s]
 JOINT_ACCEL = 400  # [deg/s^2]
@@ -36,19 +38,17 @@ def init_robodk():
 
     set_robodk_option("ToleranceSingularityWrist", 2.0)  # Threshold angle to avoid singularity for joint 5 (deg)
     set_robodk_option("ToleranceSingularityElbow", 3.0)  # Threshold angle to avoid singularity for joint 3 (deg)
-    set_robodk_option("ToleranceSingularityBack", 20.0)  # Wrist is close to Axis 1  [mm]
+    set_robodk_option("ToleranceSingularityBack", 20.0) # Wrist is close to Axis 1  [mm]
     set_robodk_option("ToleranceSmoothKinematic", 25)  # 25 deg
     set_robodk_option("ToleranceTurn180", 0.5)  # 25 deg
 
     return rdk
 
-
 def set_robodk_option(option, value):
     valueAsString = str(value)
     result = rdk.Command(option, valueAsString)
-    if result.lower() != "ok":
+    if result.lower() != "ok" :
         sys.exit(f"failed to set roboDK option {option} value {valueAsString}. Got return value: {result} instead of 'ok'")
-
 
 def load_file(filename):
     """Load a RoboDK RDK file, get robot and return robot and tool item
@@ -64,7 +64,7 @@ def load_file(filename):
     global tools
 
     rdk.CloseStation()
-    rdk.AddFile(os.path.realpath(filename))
+    rdk.AddFile(os.path.realpath("./tests/"+filename))
     robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
     tools = rdk.ItemList(ITEM_TYPE_TOOL)
 
@@ -93,7 +93,6 @@ def print_info():
 
 
 class InstructionListJointsResult:
-
     def __init__(self, error, message, joints):
         self.error = error
         self.message = message
@@ -127,7 +126,6 @@ class InstructionListJointsResult:
 
 
 class PlaybackFrame():
-
     def __init__(self, joints, coords, move_id, error, mm_step, deg_step, time_step, speeds, accels):
         self.joints = joints
         self.coords = coords
@@ -158,13 +156,12 @@ MoveType = Enum('MoveType', 'Joint Frame Arc')
 
 
 class Step():
-
     def __init__(self, name, move_type, tcp, pose, blending, speed, accel, expected_error_flags=PathErrorFlags.NoError, pose2=None):
         self.name = name
         self.move_type = move_type
         self.tcp = tcp
         self.pose = pose
-        self.pose2 = pose2  # for arc moves
+        self.pose2 = pose2 # for arc moves
         self.speed = speed
         self.accel = accel
         self.blending = blending
@@ -174,7 +171,8 @@ class Step():
         self.expected_error_flags = expected_error_flags
 
     def print(self):
-        print(f"Step '{self.name}' ({self.move_type}) ::: ", f"tcp: {self.tcp_name}, blending: {self.blending}, speed: {self.speed:.3f}, accel: {self.accel:.3f}")
+        print(f"Step '{self.name}' ({self.move_type}) ::: ",
+              f"tcp: {self.tcp_name}, blending: {self.blending}, speed: {self.speed:.3f}, accel: {self.accel:.3f}")
         for f in self.playback_frames:
             f.print()
         print()
@@ -189,8 +187,8 @@ def get_frame_pose(step, playback_frame):
 
 
 class Program():
-
-    def __init__(self, name, steps, max_time_step=0.02, max_mm_step=1, max_deg_step=1, simulation_type=InstructionListJointsFlags.TimeBased):
+    def __init__(self, name, steps, max_time_step=0.02, max_mm_step=1, max_deg_step=1,
+                 simulation_type=InstructionListJointsFlags.TimeBased):
         self.name = name
         self.steps = steps
         self.max_time_step = max_time_step
@@ -231,22 +229,22 @@ class Program():
             accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
             self.robodk_program.setSpeed(speed, -1, accel, -1)
             self.robodk_program.MoveL(target)
-
+            
         if step.move_type == MoveType.Arc:
             target.setPose(xyzrp2ToPose(step.pose[:6]))
             if len(step.pose) == 7:
                 axis7 = step.pose[6]
                 target.setJoints([0, 0, 0, 0, 0, 0, axis7])
             target.setAsCartesianTarget()
-
+            
             target2 = rdk.AddTarget("Target_" + step.name + "_" + str(step.move_type) + "_2", 0, robot)
             target2.setVisible(False)
             target2.setPose(xyzrp2ToPose(step.pose2[:6]))
             if len(step.pose2) == 7:
                 axis7 = step.pose2[6]
                 target2.setJoints([0, 0, 0, 0, 0, 0, axis7])
-            target2.setAsCartesianTarget()
-
+            target2.setAsCartesianTarget()           
+            
             speed = step.speed if step.speed > 0.0 else FRAME_SPEED
             accel = step.accel if step.accel > 0.0 else FRAME_ACCEL
             self.robodk_program.setSpeed(speed, -1, accel, -1)
