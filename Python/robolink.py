@@ -4142,6 +4142,8 @@ class Item():
         :param bool visible: Set the object as visible (1/True) or invisible (0/False)
         :param bool visible_frame: Set the object reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items). When the item is a robot, this variable can specify robot visibility using suitable flags (as shown in the example).
 
+        Note: Use setVisible on a programs to set the \"Display path\" setting.
+
         Example:
 
         .. code-block:: python
@@ -5172,10 +5174,10 @@ class Item():
         :type pose: :class:`robodk.Mat`
         :param joints_approx: Preferred joint solution or robot configuration. Leave blank to return the closest match to the current robot position.
         :type joints_approx: list of float
-        :param joints_approx: Tool pose with respect to the robot flange (TCP)
-        :type joints_approx: :class:`robodk.Mat`
-        :param joints_approx: Reference pose (reference frame with respect to the robot base)
-        :type joints_approx: :class:`robodk.Mat`
+        :param tool: Tool pose with respect to the robot flange (TCP)
+        :type tool: :class:`robodk.Mat`
+        :param reference: Reference pose (reference frame with respect to the robot base)
+        :type reference: :class:`robodk.Mat`
 
         .. seealso:: :func:`~robolink.Item.SolveFK`, :func:`~robolink.Item.SolveIK_All`, :func:`~robolink.Item.JointsConfig`
         """
