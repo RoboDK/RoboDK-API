@@ -1,25 +1,19 @@
-
 #RoboDK API for Python module
 #https://robodk.com/doc/en/PythonAPI/index.html
 #https://robodk.com/doc/en/RoboDK-API.html#PythonAPI
 #https://robodk.com/offline-programming
 #https://robodk.com/doc/en/Post-Processors.html
 
-from __future__ import print_function # (Must be always at the top)
+from __future__ import print_function  # (Must be always at the top)
 
-VERSION = '5.3.4'
+VERSION = '5.4.0'
 
 # Always prefer setuptools over distutils
-from setuptools import setup, find_packages
-# To use a consistent encoding
-from codecs import open
-from os import path
+from setuptools import setup
 
-here = path.abspath(path.dirname(__file__))
-
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    LONG_DESCRIPTION = f.read()
+from pathlib import Path
+this_directory = Path(__file__).parent
+LONG_DESCRIPTION = (this_directory / "README.md").read_text()
 
 setup(
     name='robodk',
@@ -30,6 +24,7 @@ setup(
     version=VERSION,
 
     description='RoboDK tools for simulating and programming industrial robots (implements the RoboDK API)',
+    long_description_content_type='text/markdown',
     long_description=LONG_DESCRIPTION,
 
     # The project's main homepage.
@@ -109,9 +104,9 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-       'apps': ['pyside2'],
-       'cv': ['opencv-contrib-python', 'numpy'],
-       'lint': ['astroid'],
+        'apps': ['pyside2'],
+        'cv': ['opencv-contrib-python', 'numpy'],
+        'lint': ['astroid'],
     },
 
     # If there are data files included in your packages that need to be
@@ -146,4 +141,3 @@ print(LONG_DESCRIPTION)
 print("-----------------------------")
 print("RoboDK package (v%s) for Python Installed successfully!" % VERSION)
 print("=============================")
-
