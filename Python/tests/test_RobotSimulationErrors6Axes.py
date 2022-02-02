@@ -3,7 +3,7 @@
 from parameterized import parameterized_class
 from path_simulation import *
 import test_RobotSimBase
-from robolink import *
+from robodk.robolink import *
 
 
 def get_program_wrist_singularity1():
@@ -253,4 +253,5 @@ class TestRobotSimulationError6Axes(test_RobotSimBase.TestRobotSimBase):
 
 
 if __name__ == '__main__':
+    import unittest
     unittest.main()

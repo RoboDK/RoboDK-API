@@ -1,7 +1,7 @@
 # This script retrieves the robot joints from a Fanuc controller and updates the robot in RoboDK
 # Make sure to enter the correct IP, FTP username and password in the robot connection menu.
 
-from robolink import *
+from robodk.robolink import *
 import os
 import sys
 import time

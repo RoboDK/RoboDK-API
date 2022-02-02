@@ -1,7 +1,8 @@
 # type help("robolink") or help("robodk") for more information
 # (note: you do not need to keep a copy of this file, your python script is saved with the station)
-from robolink import *  # API to communicate with robodk
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with robodk
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 from random import uniform
 import sys  # to exit the script without errors (sys.exit(0))
 import re  # to convert a string list into a list of values

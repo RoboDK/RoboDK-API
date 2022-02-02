@@ -1,7 +1,7 @@
 # This example shows how to calculate all the possible joints configurations to attain the current robot position
 # This example also provides information about the configuration status (Front/Back, ElbowUp/ElbowDown, Flip/NonFlip)
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 
 RDK = Robolink()
 

@@ -17,7 +17,7 @@ The NuGet package follows the C# naming conventions and interfaces (including it
 Documentation
 -------------
 Depending on what version of the API you use:
-- Python-based naming in C# (single file RoboDK.cs API): https://robodk.com/doc/en/PythonAPI/robolink.html
+- Python-based naming in C# (single file RoboDK.cs API): https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 - NuGet C# Package: https://robodk.com/doc/en/CsAPI/index.html
 
 The single file RoboDK.cs API is available as a template on [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=RoboDK.RoboDK-Template)

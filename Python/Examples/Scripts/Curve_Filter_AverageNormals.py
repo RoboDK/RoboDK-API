@@ -18,8 +18,9 @@ FilterPointDistance = -1  # in mm
 
 # ------------------------------------------------------
 # Start the RoboDK API
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
+from robodk.robodialogs import *
 
 RDK = Robolink()
 

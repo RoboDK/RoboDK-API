@@ -5,8 +5,8 @@
 #
 # This example shows to synchronize multiple robots at the same time
 
-from robolink import *  # API to communicate with RoboDK for offline/online programming
-from robodk import *  # Robotics toolbox for industrial robots
+from robodk.robolink import *  # API to communicate with RoboDK for offline/online programming
+from robodk.robomath import *  # Robot toolbox
 
 import threading
 import queue

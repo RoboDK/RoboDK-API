@@ -78,4 +78,5 @@ class TestRobotSim6AxesTcpChange(test_RobotSimBase.TestRobotSimBase):
 
 
 if __name__ == '__main__':
+    import unittest
     unittest.main()

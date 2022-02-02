@@ -1,8 +1,8 @@
 # This macro will record the robot joints (in degrees) in a CSV file (including a time stamp in seconds). This file avoids recording the same joints twice.
 # Tip: Use the script JointsPlayback.py to move along the recorded joints
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 from time import gmtime, strftime
 
 RDK = Robolink()

@@ -1,6 +1,5 @@
 # Display available commands in RoboDK. Commands can be executed by passing arguments (example: RoboDK.exe -COMMAND=Value) or through the API by calling RDK.Command()
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
 
 # Start the RoboDK API
 RDK = Robolink()

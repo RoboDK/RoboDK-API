@@ -1,7 +1,8 @@
 RoboDK API
-=========
+===========
 
-This repository is the implementation of the RoboDK API in different programming languages for simulation and offline programming. The RoboDK API allows you to program any industrial robot arm using your preferred programming language.
+This repository is the implementation of the RoboDK API in different programming languages for simulation and offline programming.
+The RoboDK API allows you to program any industrial robot arm using your preferred programming language.
 
 The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
@@ -9,52 +10,52 @@ The RoboDK API is available in the following programming languages:
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
 * [C++](https://robodk.com/doc/en/CppAPI/index.html)
 * [Visual Basic](./Visual%20Basic)
-   
+
 The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
+With the RoboDK API it is possible to simulate and program any industrial robot using your preferred programming language.
+The RoboDK API provides an alternative to using vendor-specific programming languages.
+
 While RoboDK's graphical user interface can be used to create programs, it is possible to extend the robot controller limitations by using a universal programming language such as Python.
+The following page provides an overview of the RoboDK API using Python: <https://robodk.com/offline-programming>.
 
-With the RoboDK API it is possible to simulate and program any industrial robot using your preferred programming language. 
-This avoids using vendor-specific programming languages.
-
-Each package implements the following modules/classes:
- * The [robolink](https://robodk.com/doc/en/PythonAPI/robolink.html) module is the link to RoboDK. 
- * The [Item](https://robodk.com/doc/en/PythonAPI/robolink.html#robolink-item) module: any item from the RoboDK item tree can be retrieved. Items are represented by the object Item (RoboDK.Item). An item can be a robot, a reference frame, a tool, an object or a specific project.
- * The [robodk](https://robodk.com/doc/en/PythonAPI/robodk.html) module includes a robotics toolbox for pose operations. This toolbox is inspired from [Peter Corke's Robotics Toolbox](http://petercorke.com/Robotics_Toolbox.html).
-
-The following website provides an overview of the RoboDK API:
-https://robodk.com/offline-programming
-
-RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place...
+RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place, and so on.
  * [Industrial Robot application examples](https://robodk.com/examples)
  * [RoboDK Blog](https://robodk.com/blog)
- 
+
 **Important:** The RoboDK API is not the same as the [RoboDK Plug-In interface](https://robodk.com/doc/en/PlugIns/index.html).
 
-Requirements
--------------
-
-RoboDK must be installed:
- * RoboDK Simulation Software: https://robodk.com/download
-
-The RoboDK API can be used with a free RoboDK license.
-
 Documentation
--------------
+---------------
 
+Each package implements the following modules/classes:
+
+ * The [robolink](https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py) module is the link to RoboDK.
+ * The [Item](https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Item) module: any item from the RoboDK item tree can be retrieved. Items are represented by the object Item. An item can be a robot, a reference frame, a tool, an object or a specific project.
+ * The [robodk](https://robodk.com/doc/en/PythonAPI/robodk.html) module includes a robotics toolbox for pose operations. This toolbox is inspired from [Peter Corke's Robotics Toolbox](https://petercorke.com/toolboxes/robotics-toolbox/).
+
+
+You can find more information about RoboDK API in our documentation.
  * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
- * [RoboDK API reference (based on Python)](https://robodk.com/doc/en/PythonAPI/index.html)
  * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
+ * [The `robodk` package for Python](https://robodk.com/doc/en/PythonAPI/index.html)
  * [C++ version of the API](https://robodk.com/doc/en/CppAPI/index.html)
  * [C# version of the API (NuGet)](https://robodk.com/doc/en/CsAPI/index.html)
  * [PlugIn interface (C++)](https://robodk.com/doc/en/PlugIns/index.html)
 
-Example
--------------
+Requirements
+------------
+* [RoboDK Simulation Software](https://robodk.com/download)
 
-The following script (Python) shows an example that uses the RoboDK API for robot simulation and offline programming::
+The RoboDK API can be used with a free RoboDK license.
+
+Example
+------------
+
+The following script shows an example that uses the `robodk` package for robot simulation and offline programming. For more examples using the API, see our [documented examples](https://robodk.com/doc/en/PythonAPI/examples.html).
+
 ```python
-from robolink import *    # RoboDK's API
-from robodk import *      # Math toolbox for robots
+from robodk.robolink import *      # RoboDK's API
+from robodk.robomath import *      # Math toolbox for robots
 
 # Start the RoboDK API:
 RDK = Robolink()
@@ -77,7 +78,7 @@ for i in range(7):
     # Calculate the new position around the reference:
     x = xyz_ref[0] + R*cos(ang) # new X coordinate
     y = xyz_ref[1] + R*sin(ang) # new Y coordinate
-    z = xyz_ref[2]              # new Z coordinate    
+    z = xyz_ref[2]              # new Z coordinate
     target_pos.setPos([x,y,z])
 
     # Move to the new target:
@@ -90,56 +91,81 @@ robot.RunCode('Program_Done')
 robot.MoveL(target)
 ```
 
-The same script used for simulation can be used for offline programming, this means that the corresponding program can be generated for the robot controller. RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
+Post Processors
+------------------
 
-For more Examples:
- * https://robodk.com/doc/en/PythonAPI/examples.html
+The same script used for simulation can be used for robot programming offline. This means a program will be automatically generated for your robot controller to reproduce the movements on the robot.
+RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
 
-For more information about robot post processors:
+More information about robot post processors here:
+
  * [Quick introduction to RoboDK post processors](https://robodk.com/help#PostProcessor)
  * [How to use Post Processors](https://robodk.com/doc/en/Post-Processors.html)
  * [Technical Reference](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
-Supported robots
--------------
 
-The following list includes the robot controllers supported by RoboDK:
- * ABB RAPID IRC5: for ABB IRC5 robot controllers
- * ABB RAPID S4C: for ABB S4C robot controllers
- * Adept Vplus: for Adept V+ programming language
- * Allen Bradley Logix5000: for Allen Bradley Logix5000 PCL
- * CLOOS: for cloos robot controllers
- * Comau C5G: for Comau C5G robot controllers
- * Denso PAC: for Denso RC7 (and older) robot controllers (PAC programming language)
- * Denso RC8: for Denso RC8 (and newer) robot controllers (PacScript programming language)
- * Dobot: for educational Dobot robots
- * Fanuc R30iA: for Fanuc R30iA and R30iB robot controllers
- * Fanuc R30iA Arc: for Fanuc Arc welding
- * Fanuc RJ3: for Fanuc RJ3 robot controllers
- * GCode BnR: for B&R robot controllers
- * GSK: for GSK robots
- * HIWIN HRSS: for HIWIN robots
- * KAIRO: for Keba Kairo robot controllers
- * KUKA IIWA: for KUKA IIWA sunrise programming in Java
- * KUKA KRC2: for KUKA KRC2 robot controllers
- * KUKA KRC2 CamRob: for KUKA CamRob milling option
- * KUKA KRC2 DAT: for KUKA KRC2 robot controllers including DAT data files
- * KUKA KRC4: for KUKA KRC4 robot controllers
- * KUKA KRC4 Config: for KUKA KRC4 robot controllers with configuration data in each line
- * KUKA KRC4 DAT: for KUKA KRC4 robot controllers including DAT data files
- * Kawasaki: for Kawasaki AS robot controllers
- * Mecademic: for Mecademic Meca500 robot
- * Motoman/Yaskawa: For Motoman robot controllers (JBI II and JBI III programming)
- * Mitsubishi: for Mitsubishi robot controllers
- * Nachi AX FD: for Nachi AX and FD robot controllers
- * Daihen OTC: for Daihen OTC robot controllers
- * Precise: for Precise Scara robots
- * Siemens Sinumerik: for Siemens Sinumerik ROBX robot controller
- * Staubli VAL3: for Staubli VAL3 robot programs (CS8 controllers and later)
- * Staubli VAL3 InlineMove: to generate Staubli VAL3 programs with inline movement data
- * Staubli S6: for Staubli S6 robot controllers
- * Toshiba: for Toshiba robots
- * Universal Robots: for UR robots, generates linear movements as pose targets
- * Universal Robots RobotiQ: for UR robots including support for RobotiQ gripper
- * Universal Robots joints: for UR robots, generates linear movements as joint targets
- * Yamaha: for Yamaha robots
+You can find the most up to date list of supported robot controllers in our documentation for [Post processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
+
+<details>
+<summary>Preview of supported robot controllers</summary>
+
+* ABB RAPID IRC5: for ABB IRC5 robot controllers
+* ABB RAPID S4C: for ABB S4C robot controllers
+* Adept Vplus: for Adept V+ programming language
+* Allen Bradley Logix5000: for Allen Bradley Logix5000 PLC
+* Aubo: for AUBO robot controllers
+* CLOOS: for CLOOS robot controllers
+* Comau C5G: for Comau C5G robot controllers
+* Denso PAC: for Denso RC7 (and older) robot controllers (PAC programming language)
+* Denso RC8: for Denso RC8 (and newer) robot controllers (PacScript programming language)
+* Dobot: for educational Dobot robots
+* Doosan: for Doosan collaborative robots
+* Epson: for Epson robot controllers
+* Fanuc R30iA: for Fanuc R30iA and R30iB robot controllers
+* Fanuc R30iA_Arc: for Fanuc Arc welding
+* Fanuc RJ3: for Fanuc RJ3 robot controllers
+* GCode BnR: for B&R robot controllers
+* GSK: for GSK robots
+* HCR: for Hanwha robot controllers
+* HIWIN HRSS: for HIWIN robots
+* Hyundai: for Hyundai robot controllers
+* KAIRO: for Keba Kairo robot controllers
+* Kinova: for Kinova robots
+* Kawasaki: for Kawasaki AS robot controllers
+* KUKA IIWA: for KUKA IIWA sunrise programming in Java
+* KUKA KRC2: for KUKA KRC2 robot controllers
+* KUKA KRC2_CamRob: for KUKA CamRob milling option
+* KUKA KRC2_DAT: for KUKA KRC2 robot controllers including DAT data files
+* KUKA KRC4: for KUKA KRC4 robot controllers
+* KUKA KRC4_Config: for KUKA KRC4 robot controllers with configuration data in each line
+* KUKA KRC4_DAT: for KUKA KRC4 robot controllers including DAT data files
+* Mecademic: for Mecademic's script code required by the Meca500 robot
+* Mecademic Python: it generates a Python script that can control the Mecademic Meca500 robot remotely.
+* Mitsubishi: for Mitsubishi robot controllers
+* Motoman/Yaskawa: for different Motoman robot controllers using Inform II and Inform III (JBI)
+* Nachi AX FD: for Nachi AX and FD robot controllers
+* Omron: for Omron/Techman robot controllers
+* OTC: for Daihen OTC robot controllers
+* Panasonic: For Panasonic PRG programs (requires Panasonic G2PC tools to compile ASCII files to binary files)
+* Precise: for Precise Scara robots
+* Robostar: for Robostar robot controllers
+* Siasun: for Siasun robot controllers
+* Siemens_Sinumerik: for Siemens Sinumerik ROBX robot controller
+* Staubli VAL3: to generate Staubli VAL3 robot programs (CS8 controllers and later). It inlines the robot movements.
+* Staubli VAL3_Machining: for Staubli VAL3 controllers that have the Machining HSM option.
+* Staubli S6: for Staubli S6 robot controllers
+* Toshiba: for Toshiba robots
+* Techman: for Omron/Techman robot controllers
+* Universal Robots: for UR robots, it generates linear movements as pose targets
+* Universal Robots URP: for UR robots, it generates a URP that can be loaded and modified in Polyscope (the UR robot controller)
+* Universal Robots_RobotiQ: for UR robots including support for RobotiQ gripper
+* Universal Robots_MoveP: for UR robots, it generates linear movements as MoveP commands
+* Yamaha: for Yamaha robots
+</details>
+
+More about RoboDK
+----------------
+
+* [Main website](https://robodk.com/)
+* [RoboDK Documentation](https://robodk.com/doc/en/Basic-Guide.html)
+* [Blog](https://robodk.com/blog)

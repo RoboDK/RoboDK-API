@@ -1,7 +1,7 @@
 # This script allows you to attach an object to a robot link
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robodialogs import *
 
 RDK = Robolink()  # Initialize the RoboDK API
 

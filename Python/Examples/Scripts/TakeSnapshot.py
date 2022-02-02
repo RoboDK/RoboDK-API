@@ -1,7 +1,6 @@
 # This script allows you to take snapshots
 
-from robodk import *
-from robolink import *
+from robodk.robolink import *
 import datetime
 
 from tkinter import *

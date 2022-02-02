@@ -3,8 +3,7 @@
 # 2 - Object with surface (additional features are ignored)
 # This example projects the features (points/curves) to the reference surface and calculates the normals to the surface
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
 
 RDK = Robolink()
 

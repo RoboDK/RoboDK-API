@@ -3,8 +3,8 @@
 # The additional joint values will be used to move the external axes in synchronization with the robot
 # This example creates a sample program with the project: "C:/RoboDK/Library/Example 14.rdk" (machining with a linear track and a turntable):
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 RDK = Robolink()
 

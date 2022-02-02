@@ -1,7 +1,8 @@
 # This macro shows how to load a list of XYZ points including speed
 # The list must be provided as X,Y,Z,Speed. Units must be mm and mm/s respectively
-from robodk import *
-from robolink import *
+from robodk.robolink import *
+from robodk.robodialogs import *
+from robodk.robofileio import *
 
 #----------------------------
 # Global variables:

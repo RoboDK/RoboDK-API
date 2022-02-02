@@ -10,7 +10,7 @@ OBJECT_PICK = 'Part'
 
 #---------------------------------------------------
 # Start the RoboDK API
-from robolink import *
+from robodk.robolink import *
 
 RDK = Robolink()
 

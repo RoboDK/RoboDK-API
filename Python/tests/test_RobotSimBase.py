@@ -262,3 +262,7 @@ class TestRobotSimBase(unittest.TestCase):
         self._test_if_stop_points_reached()
         self._test_for_duplicate_frames_for_first_step()
         self._test_for_playback_frames_with_time_step0()
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

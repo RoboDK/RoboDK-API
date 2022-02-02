@@ -5,7 +5,7 @@
 # https://robodk.com/doc/en/General.html#CycleTime
 
 # Start the RoboDK API
-from robolink import *  # RoboDK API
+from robodk.robolink import *  # RoboDK API
 
 RDK = Robolink()
 
@@ -27,7 +27,7 @@ for speed_lin in [1, 5, 10, 20, 50, 100, 200, 500]:
         robot.setSpeed(speed_lin, speed_joints)
 
         # Update the program and retrieve updated information:
-        # https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Item.Update
+        # https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Item.Update
         result = program.Update()
         instructions, time, travel, ok, error = result
 

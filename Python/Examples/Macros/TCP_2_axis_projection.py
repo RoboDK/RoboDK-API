@@ -4,7 +4,7 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 
 # Enter the calibrated reference tools (Z+ defined as Point1 to Point2)
 AXIS_POINT_1 = 'CalibTool 1'
@@ -20,8 +20,9 @@ PROJECT_POINT = True
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 
 RDK = Robolink()
 

@@ -8,11 +8,11 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # For more information visit:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 # Press F5 to run the script
 # Note: you do not need to keep a copy of this file, your python script is saved with the station
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 
 RDK = Robolink()
 

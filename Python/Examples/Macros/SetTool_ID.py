@@ -4,8 +4,8 @@
 # Double click your robot machining project, select Program Events, and enter SetTool(%1) on change tool event
 # https://robodk.com/doc/en/RoboDK-API.html
 import sys  # allows getting the passed argument parameters
-from robodk import *
-from robolink import *
+from robodk.robolink import *
+from robodk.robodialogs import *
 
 RDK = Robolink()
 

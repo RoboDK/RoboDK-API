@@ -1,7 +1,7 @@
 # Draw a hexagon around the current robot position
 
-from robolink import *  # RoboDK's API
-from robodk import *  # Math toolbox for robots
+from robodk.robolink import *  # RoboDK's API
+from robodk.robomath import *  # Robot toolbox
 
 # Start the RoboDK API:
 RDK = Robolink()
@@ -38,4 +38,4 @@ for i in range(7):
 robot.RunInstruction('Program_Done')
 
 # Move back to the reference target:
-robot.MoveL(target)
+robot.MoveL(target_pose)

@@ -1,7 +1,6 @@
 # This macro will override the first joint move in each program and set it as a linear move
 # WARNING! The configuration might not be set as desired and the robot may move in an undesired way (different from the simulated movements)
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

@@ -5,8 +5,8 @@
 #
 # This example models the forward and inverse kinematics of an ABB IRB 120 robot using the RoboDK API for Python
 
-from robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
-from robodk import *  # Robotics toolbox for industrial robots
+from robodk.robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
+from robodk.robomath import *  # Robot toolbox
 
 #----------------------------------------------
 # Function definitions

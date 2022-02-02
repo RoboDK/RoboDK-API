@@ -9,8 +9,7 @@
 # You can find more information in the OpenCV Contours tutorials:
 # https://docs.opencv.org/master/d3/d05/tutorial_py_table_of_contents_contours.html
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
 
 import_install('cv2', 'opencv-python')
 import cv2 as cv

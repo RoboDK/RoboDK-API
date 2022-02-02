@@ -5,8 +5,8 @@
 # https://robodk.com/doc/en/RoboDK-API.html
 # Press F5 to run the script
 # Or visit: https://robodk.com/doc/en/PythonAPI/index.html
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 import threading
 import socket
 import struct

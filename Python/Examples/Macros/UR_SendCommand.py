@@ -1,7 +1,7 @@
 # This macro shows how to send UR code (URscript) to the robot. The robot will execute it on the fly.
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 import threading
 import time
 import serial

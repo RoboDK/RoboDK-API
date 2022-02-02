@@ -6,7 +6,7 @@
 EXTRUDER_IP = '10.10.10.12'  # The IP of the extruder
 EXTRUDER_PORT = 100  # The same port as used by the Extruder server
 
-from robodk import *  # required for mbox
+from robodk.robodialogs import mbox
 
 E_Value = None
 # Check if we are running this program inside another program and passing arguments
@@ -24,7 +24,7 @@ if E_Value is None:
     E_Value = int(entry)
 
 ## Optionally, ignore sending the command if we are running in simulation mode
-#from robolink import *    # API to communicate with RoboDK
+#from robodk.robolink import *    # API to communicate with RoboDK
 #RDK = Robolink()
 
 # stop if we in simulation mode

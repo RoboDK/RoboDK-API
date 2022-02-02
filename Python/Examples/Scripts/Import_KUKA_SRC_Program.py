@@ -23,8 +23,10 @@
 #
 # END
 
-from robodk import *
-from robolink import *
+from robodk.robomath import *  # Robot toolbox
+from robodk.robodialogs import *
+from robodk.robofileio import *
+from robodk.robolink import *
 
 #---------------------------
 # Start the RoboDK API

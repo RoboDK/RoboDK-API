@@ -6,8 +6,8 @@
 # Python needs to be installed only on the device running the script
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 import threading
 import queue
 

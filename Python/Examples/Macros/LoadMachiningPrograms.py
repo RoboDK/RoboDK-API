@@ -1,4 +1,6 @@
-from robolink import *
+from robodk.robolink import *
+from robodk.robodialogs import *
+from robodk.robofileio import *
 import os
 import glob
 
@@ -24,7 +26,7 @@ def delete_item(name, type):
     """Function helper to easily delete an existing item"""
     item = RDK.Item(name, type)
     if item.Valid():
-        program.Delete()
+        item.Delete()
 
 
 main_program_name = "MainProgram"
@@ -43,7 +45,7 @@ for file in toolpath_files:
         continue
 
     # Delete previously generated items:
-    delete_item(milling_options_name, ITEM_TYPE_MILLING)
+    delete_item(milling_options_name, ITEM_TYPE_MACHINING)
     delete_item(program_name, ITEM_TYPE_PROGRAM)
 
     # Create a new robot machining project
@@ -72,7 +74,7 @@ main_program.ShowTargets(False)
 check_collisions = COLLISION_OFF
 
 # Update the program and check the "health" status of the program
-update_result = program.Update(check_collisions)
+update_result = main_program.Update(check_collisions)
 n_insok = update_result[0]
 time = update_result[1]
 distance = update_result[2]

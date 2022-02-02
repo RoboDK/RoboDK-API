@@ -7,8 +7,8 @@
 # More details on camera calibration: https://docs.opencv.org/master/dc/dbb/tutorial_py_calibration.html
 # You can print this board in letter format: https://github.com/opencv/opencv/blob/master/doc/pattern.png
 
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robodialogs import *
 import cv2 as cv
 import numpy as np
 import glob

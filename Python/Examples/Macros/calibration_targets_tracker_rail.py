@@ -1,6 +1,7 @@
 # This scripts allows creating points to calibrate a rail (1 to 3 axis rail, with a robot mounted on it or not)
-from robolink import *  # API to communicate with robodk
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with robodk
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 from random import uniform
 import sys  # to exit the script without errors (sys.exit(0))
 import re  # to convert a string list into a list of values

@@ -1,6 +1,7 @@
 # This macro fixes encoding issues from DXF files. It should be used with DXF2Gcode project
-from robodk import *
-from robolink import *
+from robodk.robolink import *
+from robodk.robodialogs import *
+from robodk.robofileio import *
 
 RDK = Robolink()
 

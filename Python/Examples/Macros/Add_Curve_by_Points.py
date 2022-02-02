@@ -1,10 +1,10 @@
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 
 # This script shows an example of how a path curve can be added to a RoboDK station.
 # The curve can be optionally projected to an existing object (either along the curve normals or to the closes distance)
 #
-# projection types (for AddCurve, as defined in robolink.py):
+# projection types (for AddCurve, as defined in robodk.robolink):
 #PROJECTION_NONE                = 0 # No curve projection
 #PROJECTION_CLOSEST             = 1 # The projection will the closest point on the surface
 #PROJECTION_ALONG_NORMAL        = 2 # The projection will be done along the normal.
@@ -50,8 +50,9 @@ def CirclePoints(radius, xStart, xEnd, xStep, accuracy, ycoord, projection):
 
 #------------------------------------------------------------------
 #--------------- PROGRAM START ---------------------
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 
 # Default parameters:
 RADIUS = 475  # Radius of the outer circle

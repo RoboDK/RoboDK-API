@@ -8,8 +8,9 @@
 # You can print this board in letter format: https://docs.opencv.org/master/charucoboard.jpg
 # Camera calibration is required for pose estimation, see https://robodk.com/doc/en/PythonAPI/examples.html#camera-calibration
 
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
+from robodk.robodialogs import *
 import cv2 as cv
 import numpy as np
 

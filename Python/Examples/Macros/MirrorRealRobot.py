@@ -7,8 +7,8 @@
 
 TOLERANCE_MOVE_DEG = 1  # Tolerance to move the robot in degrees
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 RDK = Robolink()
 

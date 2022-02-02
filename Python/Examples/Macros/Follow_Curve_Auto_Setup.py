@@ -3,8 +3,7 @@
 # 2 - Curve follow project or point follow project
 # Then, it creates a curve follow project if the object has curves, or a point follow project if it has points but no curves
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
 
 RDK = Robolink()
 

@@ -1,6 +1,6 @@
 # This script allows adding a trace or a spray deposition
 # More information here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Spray_Add
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Spray_Add
 #
 # Example scripts that use Spray_Add:
 #     SpindleOn / SpindleOff    -> Turn trace On/Off
@@ -21,8 +21,7 @@
 # ---------------------------------------------------------------
 #
 import sys  # allows getting the passed argument parameters
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

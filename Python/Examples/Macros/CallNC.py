@@ -2,8 +2,8 @@
 # You can generate program calls using APT or Gcode command "CALL"
 # An example APT file is available here:
 # C:/RoboDK/Library/ExampleAPT.apt
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
 
 RDK = Robolink()
 

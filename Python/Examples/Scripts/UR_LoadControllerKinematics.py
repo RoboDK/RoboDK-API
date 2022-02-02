@@ -3,8 +3,8 @@
 # This script will load the unique UR robot kinematics in RoboDK and you'll be able to switch between nominal and controller kinematics in the Parameters menu from the robot panel
 
 import os
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
 import tkinter as tk
 from tkinter import filedialog
 import xml.etree.ElementTree as ET

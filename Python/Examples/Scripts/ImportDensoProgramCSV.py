@@ -5,15 +5,17 @@
 #  3-Target data: P_Var.csv (will look for Tool.csv and Work.csv in the same folder)
 # This macro can also filter the P_Var.csv file for improved accuracy
 #
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 # Press F5 to run the script
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 # Visit: https://robodk.com/doc/en/PythonAPI/index.html
 # For RoboDK API documentation
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
+from robodk.robodialogs import *
+from robodk.robofileio import *
 
 
 # Euler angles to pose coming from CSV files

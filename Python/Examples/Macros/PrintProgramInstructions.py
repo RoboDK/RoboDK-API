@@ -1,9 +1,8 @@
 # This example shows how to modify program instructions
 # See also:
-# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.AddProgram
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.AddProgram
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
 import json
 
 # Start the RoboDK API

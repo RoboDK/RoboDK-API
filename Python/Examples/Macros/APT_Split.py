@@ -1,5 +1,6 @@
 # This Python macro shows how to split long GOTO movements from an APT file
-from robolink import *
+from robodk.robolink import *
+from robodk.robomath import *
 import os
 import re
 

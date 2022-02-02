@@ -8,7 +8,7 @@
 
 #-----------------------------------------------------------------
 # More information here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html#robolink.Robolink.Spray_Add
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Spray_Add
 # https://robodk.com/doc/en/RoboDK-API.html
 #
 # The scripts ArcStart, ArcEnd and WeldOn and SpindleOn behave in a similar way, the only difference is the default behavior
@@ -22,8 +22,7 @@
 #     WeldOn / WeldOff          -> Support for multiple weld guns
 #------------------------------------------------------------------
 import sys  # allows getting the passed argument parameters
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

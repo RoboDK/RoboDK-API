@@ -4,7 +4,7 @@
 #    MoveAxis(100)
 # https://robodk.com/doc/en/RoboDK-API.html
 import sys  # allows getting the passed argument parameters
-from robodk import *
+from robodk.robodialogs import *
 
 # Enter the name of the axis (leave empty to select the first mechanism/robot available
 MECHANISM_NAME = ''
@@ -35,7 +35,7 @@ else:
     VALUE = float(sys.argv[1])
 
 # Use the RoboDK API:
-from robolink import *  # API to communicate with RoboDK
+from robodk.robolink import *  # API to communicate with RoboDK
 
 RDK = Robolink()
 

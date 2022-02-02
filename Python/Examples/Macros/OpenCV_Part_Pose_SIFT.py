@@ -11,8 +11,9 @@
 # https://docs.opencv.org/master/d7/dff/tutorial_feature_homography.html
 # https://docs.opencv.org/master/d9/dab/tutorial_homography.html
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robomath import *  # Robot toolbox
+from robodk.robodialogs import *
 
 import_install('cv2', 'opencv-contrib-python')
 import cv2 as cv

@@ -8,8 +8,8 @@ sys.path.insert(0, "..")
 robolink_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
 sys.path.insert(0, robolink_path)
 
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
 
 import_install("parameterized")
 
@@ -64,7 +64,7 @@ def load_file(filename):
     global tools
 
     rdk.CloseStation()
-    rdk.AddFile(os.path.realpath(filename))
+    rdk.AddFile(os.path.realpath("./tests/"+filename))
     robot = rdk.Item("", ITEM_TYPE_ROBOT_ARM)
     tools = rdk.ItemList(ITEM_TYPE_TOOL)
 
@@ -330,5 +330,5 @@ class Program():
 
 # ---------------- Convert Frame (x,y,z,rx,ry,rz) to a RoboDK Matrix ----------------------
 def xyzrp2ToPose(pose):
-    #from robodk import Pose
+    #from robodk.robomath import Pose
     return Pose(pose[0], pose[1], pose[2], pose[3], pose[4], pose[5])

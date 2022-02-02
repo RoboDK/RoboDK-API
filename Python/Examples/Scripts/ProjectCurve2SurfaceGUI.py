@@ -1,24 +1,24 @@
 # This script shows an example to create a raster curve that can be added programmatically to a RoboDK station
 # The curve can be optionally projected to an existing object (either along the curve normals or a projection the closest surface)
 
-# projection types (for AddCurve, as defined in robolink.py):
+# projection types (for AddCurve, as defined in robodk.robolink):
 #PROJECTION_NONE                = 0 # No curve projection
 #PROJECTION_CLOSEST             = 1 # The projection will the closest point on the surface
 #PROJECTION_ALONG_NORMAL        = 2 # The projection will be done along the normal.
 #PROJECTION_ALONG_NORMAL_RECALC = 3 # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
 #
 # More information about the RoboDK API here:
-# https://robodk.com/doc/en/PythonAPI/robolink.html
+# https://robodk.com/doc/en/PythonAPI/robodk.html#robolink-py
 # https://robodk.com/doc/en/RoboDK-API.html
 #
 # This macro uses advanced Python programming. It uses the exec() and eval() statements to execute Python code from a string generated on the fly.
 # The GUI is created automatically based on the variables defined in PARAM_VARS (global variables) and PARAM_LABELS (description to show on the menu)
 
 # Press F5 to run the script
-# Type help("robolink") or help("robodk") for more information
+# Type help("robodk.robolink") or help("robodk.robomath") for more information
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # Robot toolbox
 import threading
 
 # Set default/global parameters. This is only useful for the first time we execute this macro on a new RDK file.

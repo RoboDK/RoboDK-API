@@ -14,8 +14,8 @@
 # More information about the RoboDK API here:
 # https://robodk.com/doc/en/RoboDK-API.html
 
-from robolink import *  # API to communicate with RoboDK
-from robodk import *  # robodk robotics toolbox
+from robodk.robolink import *  # API to communicate with RoboDK
+from robodk.robomath import *  # basic matrix operations
 
 # Any interaction with RoboDK must be done through RDK:
 RDK = Robolink()

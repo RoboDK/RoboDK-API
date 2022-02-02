@@ -5,8 +5,8 @@
 #
 # A robot is programmed given an SVG image to simulate a drawing application. An ABB IRB 4600-20/2.50 is used in this example.
 
-from robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
-from robodk import *  # Robotics toolbox for industrial robots
+from robodk.robolink import *  # API to communicate with RoboDK for simulation and offline/online programming
+from robodk.robomath import *  # Robotics toolbox for industrial robots
 
 import sys
 import os

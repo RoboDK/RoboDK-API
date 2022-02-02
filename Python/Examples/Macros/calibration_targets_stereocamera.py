@@ -1,7 +1,8 @@
 # type help("robolink") or help("robodk") for more information
 # (note: you do not need to keep a copy of this file, your python script is saved with the station)
-from robolink import *  # API to communicate with robodk
-from robodk import *  # basic matrix operations
+from robodk.robolink import *  # API to communicate with robodk
+from robodk.robomath import *  # basic matrix operations
+from robodk.robodialogs import *
 from random import uniform
 import sys  # to exit the script without errors (sys.exit(0))
 import re  # to convert a string list into a list of values
@@ -288,7 +289,7 @@ def CreateMeasurementsPose(calib_targets=None):
     #    rz = uniform(ROTZ_MIN, ROTZ_MAX)*pi/180
     #    hrandorient = hrandorient*rotx(rx)*roty(ry)*rotz(rz)
     #    return hrandorient
-    def randpose(rob, htool, point):
+    def randpose(rob, htool, href):
         """Returns a random pose where the Z axis points to the measurement system within the accepted rotation limits.
         The point must be given with respect to the robot reference frame."""
         while True:

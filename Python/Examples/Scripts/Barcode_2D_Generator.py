@@ -5,8 +5,8 @@
 #
 # This script allows you to create a RoboDK object containing a QR code.
 
-from robolink import *  # RoboDK API
-from robodk import *  # Robot toolbox
+from robodk.robolink import *  # RoboDK API
+from robodk.robodialogs import *
 
 import_install("qrcode")
 import qrcode

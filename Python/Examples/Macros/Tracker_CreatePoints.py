@@ -12,8 +12,8 @@ MEASUREMENT_RATE_S = 50
 MEASUREMENT_PAUSE_S = 1 / MEASUREMENT_RATE_S
 
 # Start the RoboDK API
-from robolink import *
-from robodk import *
+from robodk.robolink import *
+from robodk.robomath import *
 
 RDK = Robolink()
 
