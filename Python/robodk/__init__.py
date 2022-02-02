@@ -31,7 +31,7 @@ from .robofileio import *
 
 # Inform our users of the changes
 # Note: "from robodk import robomath" will trigger a warning while being perfectly valid.
-#       For that reason, we use PendingDeprecationWarning over UserWarning as it is ignored by the default (add the -Wd argument to Python to show all warnings).
+#       PendingDeprecationWarning is ignored by the default filter (add the -Wd argument to Python to show all warnings).
 s = '"from robodk import *" behavior has changed. You can instead use: "from robodk.robomath import *" or "from robodk import robomath, robodialogs, robofileio"'
 
 from warnings import warn, simplefilter

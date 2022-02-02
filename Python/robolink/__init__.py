@@ -30,10 +30,10 @@ sys.modules['robolink'] = robolink
 
 # Inform our users of the changes
 # Note: All calls using robolink are deprecated.
-#       For that reason, we use UserWarning over PendingDeprecationWarning so that it always prints (add the -Wd argument to Python to show all warnings).
+#       PendingDeprecationWarning is ignored by the default filter (add the -Wd argument to Python to show all warnings).
 s = '"from robolink import *" is deprecated. You can instead use: "from robodk.robolink import *" or "from robodk import robolink"'
 
 from warnings import warn, simplefilter
 #simplefilter('default') # Uncommenting this will force the warning to stderr.
-warn(s, UserWarning)
+warn(s, PendingDeprecationWarning)
 #==================================
