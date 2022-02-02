@@ -125,9 +125,6 @@ More information about robot post processors here:
 
 You can find the most up to date list of supported robot controllers in our documentation for [Post processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
 
-<details>
-<summary>Preview of supported robot controllers</summary>
-
 * ABB RAPID IRC5: for ABB IRC5 robot controllers
 * ABB RAPID S4C: for ABB S4C robot controllers
 * Adept Vplus: for Adept V+ programming language
@@ -180,7 +177,6 @@ You can find the most up to date list of supported robot controllers in our docu
 * Universal Robots_RobotiQ: for UR robots including support for RobotiQ gripper
 * Universal Robots_MoveP: for UR robots, it generates linear movements as MoveP commands
 * Yamaha: for Yamaha robots
-</details>
 
 
 App loader Plug-In
