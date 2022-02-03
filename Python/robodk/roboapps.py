@@ -907,7 +907,7 @@ def runmain():
 
     #------------------------------------------------------------------------
     S = SettingsExample()
-    #S.Load()
+    S.Load()
     print('S._HiddenUnsavedBool: ' + str(S._HiddenUnsavedBool))
     print('S.HiddenSavedBool: ' + str(S.HiddenSavedBool))
     S.ShowUI(embed=False)
@@ -948,7 +948,7 @@ def runmain():
     A._HiddenUnsavedBool = True
     A.HiddenSavedBool = True
 
-    #A.Load()
+    A.Load()
     print('A._HiddenUnsavedBool: ' + str(A._HiddenUnsavedBool))
     print('A.HiddenSavedBool: ' + str(A.HiddenSavedBool))
     A.ShowUI(embed=False)
