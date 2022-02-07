@@ -68,6 +68,9 @@ classdef Robolink < handle
         EULER_RZ_RY_RX    = 5; % CRS
         EULER_QUEATERNION = 6; % ABB Rapid
         
+        % Other public variables
+        TIMEOUT = 5;     % timeout for communication, in seconds
+        
     end
     properties
         APPLICATION_DIR = 'C:\RoboDK\bin\RoboDK.exe'; % file path to the Robodk program (executable)
@@ -76,7 +79,6 @@ classdef Robolink < handle
     properties(GetAccess = 'private', SetAccess = 'private')
         SAFE_MODE = 1;   % checks that provided items exist in memory
         AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
-        TIMEOUT = 5;     % timeout for communication, in seconds
         PORT_START = 20500; % port to start looking for app connection
         PORT_END   = 20510; % port to stop looking for app connection
         PORT = -1;
