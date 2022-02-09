@@ -199,6 +199,14 @@ if ENABLE_QT:
         # Can't install Qt, fallback to tkinter
         ENABLE_QT = False
 
+import sys
+if sys.version_info[0] < 3:
+    # Python 2.X only:
+    import Tkinter as tkinter
+else:
+    # Python 3.x only
+    import tkinter
+
 
 class AppSettings:
     """Generic settings class to save and load settings from a RoboDK station and show methods in RoboDK."""
@@ -208,12 +216,14 @@ class AppSettings:
         self._FIELDS_UI = True
         self._SETTINGS_PARAM = settings_param
 
+        self._UI_READ_FIELDS = None
+
     def CopyFrom(self, other):
         """Copy settings from another instance"""
         attr = self.getAttribs()
         for a in attr:
             if hasattr(other, a):
-                setattr(self, a, getattr(self, a))
+                setattr(self, a, getattr(other, a))
 
     def getAttribs(self):
         """Get the list of attributes"""
@@ -342,10 +352,35 @@ class AppSettings:
         else:
             self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame)
 
-    # Define PyQt functions only if it's installed
-    if ENABLE_QT:
+    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, dark_mode=True):
+        """Open settings window"""
 
-        def value_to_widget(self, value):
+        from PySide2 import QtCore, QtGui, QtWidgets
+
+        fields_list = self._getFieldsUI()
+        values_list = {key: getattr(self, key) for key in fields_list}
+
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])  # No need to create a new one
+
+        windowQt = QtWidgets.QWidget()
+
+        layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
+        layoutQtWidgetGrid.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMaximumSize)
+        layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)
+
+        big_form = QtWidgets.QFormLayout()
+        big_form.setVerticalSpacing(1)
+        big_form.setHorizontalSpacing(15)
+        layoutQtWidgetGrid.addLayout(big_form)
+
+        windowQt.setLayout(layoutQtWidgetGrid)
+
+        obj = self
+        TEMP_ENTRIES = {}
+
+        def value_to_widget(value):
             widget = None
             func = []
             value_type = type(value)
@@ -375,31 +410,19 @@ class AppSettings:
                 widget.setChecked(value)
                 func = [widget.isChecked]
 
-            # List of PODs
-            elif value_type is list and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
+            # List or tuple of PODs
+            elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
                 h_layout = QtWidgets.QHBoxLayout()
                 h_layout.setSpacing(0)
                 h_layout.setContentsMargins(0, 0, 0, 0)
                 for v in value:
-                    f_widget, f_func = self.value_to_widget(v)
+                    f_widget, f_func = value_to_widget(v)
                     func.append(f_func[0])
                     h_layout.addWidget(f_widget)
                 widget = QtWidgets.QWidget()
                 widget.setLayout(h_layout)
 
-            # Tuple of PODs
-            elif value_type is tuple and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
-                h_layout = QtWidgets.QHBoxLayout()
-                h_layout.setSpacing(0)
-                h_layout.setContentsMargins(0, 0, 0, 0)
-                for v in value:
-                    f_widget, f_func = self.value_to_widget(v)
-                    func.append(f_func[0])
-                    h_layout.addWidget(f_widget)
-                widget = QtWidgets.QWidget()
-                widget.setLayout(h_layout)
-
-            # ComboBox with specified index as int
+            # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
             elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and all(isinstance(n, str) for n in value[1]):
                 index = value[0]
                 options = value[1]
@@ -408,7 +431,7 @@ class AppSettings:
                 widget.setCurrentIndex(index)
                 func = [widget.currentIndex]
 
-            # ComboBox with specified index as str
+            # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
             elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and all(isinstance(n, str) for n in value[1]) and value[0] in value[1]:
                 index = value[1].index(value[0])
                 options = value[1]
@@ -420,192 +443,9 @@ class AppSettings:
 
             return widget, func
 
-        def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, dark_mode=True):
-            """Open settings window"""
-            fields_list = self._getFieldsUI()
-            values_list = {key: getattr(self, key) for key in fields_list}
-
-            app = QtWidgets.QApplication.instance()
-            if app is None:
-                app = QtWidgets.QApplication([])  # No need to create a new one
-
-            windowQt = QtWidgets.QWidget()
-
-            layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
-            layoutQtWidgetGrid.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMaximumSize)
-            layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)
-
-            big_form = QtWidgets.QFormLayout()
-            big_form.setVerticalSpacing(1)
-            big_form.setHorizontalSpacing(15)
-            layoutQtWidgetGrid.addLayout(big_form)
-
-            windowQt.setLayout(layoutQtWidgetGrid)
-
-            obj = self
-            TEMP_ENTRIES = {}
-
-            def add_fields():
-                """Creates the UI from the field stored in the variable"""
-                # Loop through every field in FIELD to retrieve its information
-                for fkey in fields_list:
-                    # Iterate for each key and add the variable to the UI
-                    field = fields_list[fkey]
-                    if not field is list:
-                        field = [field]
-
-                    fname = field[0]
-                    fvalue = values_list[fkey]
-                    ftype = type(fvalue)
-
-                    # Convert None to double
-                    if ftype is None:
-                        ftype = float
-                        fvalue = -1.0
-
-                    print(fkey + ' = ' + str(fvalue))
-
-                    widget, func = self.value_to_widget(fvalue)
-                    if widget is not None:
-                        big_form.addRow(QtWidgets.QLabel(fname), widget)
-                        TEMP_ENTRIES[fkey] = (field, func)
-                    else:
-                        big_form.addRow(QtWidgets.QLabel(fname), QtWidgets.QLabel('Unsupported'))
-
-            def read_fields(e=None):
-                print("Values entered:")
-                for fkey in TEMP_ENTRIES:
-                    entry = TEMP_ENTRIES[fkey]
-                    funcs = entry[1]
-                    values = [value() for value in funcs]  # tuple needs to be casted below
-
-                    for value in values:
-                        if type(value) == str:
-                            value = value.strip()
-
-                    if len(values) == 1:
-                        values = values[0]
-
-                    # Comboboxes
-                    last_value = getattr(obj, fkey)
-                    if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
-                        newvalue = last_value
-                        newvalue[0] = value
-                        values = newvalue
-
-                    # Tuples
-                    if type(last_value) is tuple:
-                        values = tuple(values)
-
-                    if type(last_value) != type(values):
-                        print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
-                        new_type = type(last_value)
-                        values = new_type(values)
-                    print(fkey + " = " + str(values))
-                    setattr(obj, fkey, values)
-
-                # we are done, we need to close the window here
-                self.Save()
-                windowQt.window().close()
-
-            add_fields()
-
-            if callback_frame is not None:
-                callback_frame(windowQt)
-
-            # Creating the Cancel button
-            buttonCancel = QtWidgets.QPushButton(windowQt)
-            buttonCancel.setText("Cancel")
-            buttonCancel.clicked.connect(windowQt.window().close)
-
-            # Creating the OK button
-            buttonOk = QtWidgets.QPushButton(windowQt)
-            buttonOk.setText('OK')
-            buttonOk.clicked.connect(read_fields)
-
-            OkCancelLayout = QtWidgets.QHBoxLayout()
-            OkCancelLayout.addWidget(buttonOk)
-            OkCancelLayout.addWidget(buttonCancel)
-            layoutQtWidgetGrid.addLayout(OkCancelLayout)
-
-            # Add a spacer to keep the text packed
-            qtSpacer = QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
-            layoutQtWidgetGrid.addItem(qtSpacer)
-
-            import os
-            from robodk.robolink import getPathIcon
-            iconpath = getPathIcon()
-            if os.path.exists(iconpath):
-                windowQt.setWindowIcon(QtGui.QIcon(iconpath))
-
-            # Set the window style
-            keys = QtWidgets.QStyleFactory.keys()
-            if 'Fusion' in keys:
-                app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
-                if dark_mode:
-                    # https://forum.qt.io/topic/101391/windows-10-dark-theme/4
-                    darkPalette = QtGui.QPalette()
-                    darkColor = QtGui.QColor(45, 45, 45)
-                    disabledColor = QtGui.QColor(127, 127, 127)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Window, darkColor)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor("white"))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(18, 18, 18))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.AlternateBase, darkColor)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("white"))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor("white"))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor("white"))
-                    darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Button, darkColor)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor("white"))
-                    darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("red"))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(42, 130, 218))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
-                    darkPalette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor("black"))
-                    darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.HighlightedText, disabledColor)
-                    app.setPalette(darkPalette)
-
-                windowQt.update()
-
-            if embed:
-                # Embed the window in RoboDK
-                mainWindow = QtWidgets.QMainWindow()
-                mainWindow.setCentralWidget(windowQt)
-                mainWindow.setWindowTitle(windowtitle)
-                mainWindow.update()
-                mainWindow.show()
-
-                from robodk.robolink import EmbedWindow
-                EmbedWindow(windowtitle)
-            else:
-                windowQt.setWindowTitle(windowtitle)
-                windowQt.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-
-            if wparent is None:
-                # Important for unchecking the action in RoboDK
-                windowQt.show()
-                app.exec_()
-
-    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
-        import tkinter as tk
-        """Open settings window"""
-        fields_list = self._getFieldsUI()
-        w = None
-        if wparent is not None:
-            w = tk.Toplevel(wparent)
-        else:
-            w = tk.Tk()
-
-        obj = self
-        TEMP_ENTRIES = {}
-        POD_ARRAY_ATTRIBS = {}
-
         def add_fields():
             """Creates the UI from the field stored in the variable"""
-            # Loop through every field in FIELD to retrieve its information
-            sticky = tk.NSEW
-            frame = tk.Frame(w)
-            idrow = -1
+
             for fkey in fields_list:
                 # Iterate for each key and add the variable to the UI
                 field = fields_list[fkey]
@@ -613,7 +453,7 @@ class AppSettings:
                     field = [field]
 
                 fname = field[0]
-                fvalue = getattr(obj, fkey)
+                fvalue = values_list[fkey]
                 ftype = type(fvalue)
 
                 # Convert None to double
@@ -621,175 +461,333 @@ class AppSettings:
                     ftype = float
                     fvalue = -1.0
 
-                tkvar = None
-
-                # Create a row for each field
-                idrow = idrow + 1
-
                 print(fkey + ' = ' + str(fvalue))
 
-                # If the field is a POD
-                if ftype is float or ftype is int or ftype is str:
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')
+                widget, func = value_to_widget(fvalue)
+                if widget is not None:
+                    big_form.addRow(QtWidgets.QLabel(fname), widget)
+                    TEMP_ENTRIES[fkey] = (field, func)
+                else:
+                    big_form.addRow(QtWidgets.QLabel(fname), QtWidgets.QLabel('Unsupported'))
 
-                    if ftype is float:
-                        tkvar = tk.DoubleVar()
-                        ent = tk.Spinbox(frame, textvariable=tkvar)
-
-                    elif ftype is int:
-                        tkvar = tk.IntVar()
-                        ent = tk.Spinbox(frame, textvariable=tkvar)
-
-                    elif ftype is str:
-                        tkvar = tk.StringVar()
-                        ent = tk.Entry(frame, textvariable=tkvar)
-
-                    else:
-                        raise Exception("Uknown variable type: " + str(ftype))
-
-                    tkvar.set(fvalue)
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-                    ent.grid(row=idrow, column=1, sticky=sticky)
-
-                elif ftype is bool:
-                    tkvar = tk.BooleanVar()
-                    tkvar.set(fvalue)
-
-                    ent = tk.Checkbutton(frame, text="Activate", variable=tkvar)
-                    ent.grid(row=idrow, column=1, sticky=tk.W)
-
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')  # Set the field label (name)
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-
-                # List of PODs
-                elif ftype is list and len(fvalue) > 0 and all(isinstance(n, (float, int, str)) for n in fvalue):
-                    POD_ARRAY_ATTRIBS[fkey] = len(fvalue)
-
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')  # Set the field label (name)
-                    tkvar = tk.StringVar()
-                    import json
-                    tkvar.set(json.dumps(fvalue))
-                    ent = tk.Entry(frame, textvariable=tkvar)
-
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-                    ent.grid(row=idrow, column=1, sticky=sticky)
-
-                # Tuple of PODs
-                elif ftype is tuple and len(fvalue) > 0 and all(isinstance(n, (float, int, str, bool)) for n in fvalue):
-                    POD_ARRAY_ATTRIBS[fkey] = len(fvalue)
-
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')  # Set the field label (name)
-                    tkvar = tk.StringVar()
-                    import json
-                    tkvar.set(json.dumps(fvalue))
-                    ent = tk.Entry(frame, textvariable=tkvar)
-
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-                    ent.grid(row=idrow, column=1, sticky=sticky)
-
-                # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-                elif ftype is list and (len(fvalue) == 2) and isinstance(fvalue[0], int) and all(isinstance(n, str) for n in fvalue[1]) and fvalue[0] < len(fvalue[1]):
-                    current_choice = fvalue[1][fvalue[0]]  # int index will be replaced with str index once saved
-                    fchoices = fvalue[1]  # Retrieve list of options
-
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')  # Set the field label (name)
-                    tkvar = tk.StringVar()
-                    tkvar.set(current_choice)
-
-                    # Create the combo box
-                    cmb = tk.OptionMenu(frame, tkvar, *fchoices)  #, command=read_inputs)
-
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-                    cmb.grid(row=idrow, column=1, sticky=sticky)
-
-                # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-                elif ftype is list and (len(fvalue) == 2) and isinstance(fvalue[0], str) and all(isinstance(n, str) for n in fvalue[1]) and fvalue[0] in fvalue[1]:
-                    current_choice = fvalue[0]
-                    fchoices = fvalue[1]  # Retrieve list of options
-
-                    lab = tk.Label(frame, width=15, text=fname, anchor='w')  # Set the field label (name)
-                    tkvar = tk.StringVar()
-                    tkvar.set(current_choice)
-
-                    # Create the combo box
-                    cmb = tk.OptionMenu(frame, tkvar, *fchoices)  #, command=read_inputs)
-
-                    lab.grid(row=idrow, column=0, sticky=sticky)
-                    cmb.grid(row=idrow, column=1, sticky=sticky)
-
-                # Apply row weight
-                frame.grid_rowconfigure(idrow, weight=1)
-                TEMP_ENTRIES[fkey] = (field, tkvar)
-
-                frame.grid_columnconfigure(0, weight=2)
-                frame.grid_columnconfigure(1, weight=1)
-
-            frame.pack(side=tk.TOP, fill=tk.X, padx=1, pady=1)
-
-        def read_fields(e=None):
+        def read_fields():
             print("Values entered:")
             for fkey in TEMP_ENTRIES:
                 entry = TEMP_ENTRIES[fkey]
-                value = entry[1].get()
-                last_value = getattr(obj, fkey)
+                funcs = entry[1]
+                values = [value() for value in funcs]  # tuple needs to be casted below
 
-                if fkey in POD_ARRAY_ATTRIBS.keys():
-                    value_input = value
-                    import json
-                    value = json.loads(value_input)
-                    if len(value) != POD_ARRAY_ATTRIBS[fkey]:
-                        print("Invalid input: " + value_input)
-                        return
-
-                    if type(last_value) is tuple:
-                        value = tuple(value)
-
-                else:
+                for value in values:
                     if type(value) == str:
                         value = value.strip()
 
-                    # Comboboxes
-                    if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
-                        newvalue = last_value
-                        newvalue[0] = value
-                        value = newvalue
+                if len(values) == 1:
+                    values = values[0]
 
-                if type(last_value) != type(value):
-                    print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(value)))
+                # Comboboxes
+                last_value = getattr(obj, fkey)
+                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
+                    newvalue = last_value
+                    newvalue[0] = value
+                    values = newvalue
+
+                # Tuples
+                if type(last_value) is tuple:
+                    values = tuple(values)
+
+                if type(last_value) != type(values):
+                    print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
                     new_type = type(last_value)
-                    value = new_type(value)
+                    values = new_type(values)
+                print(fkey + " = " + str(values))
+                setattr(obj, fkey, values)
 
-                print(fkey + " = " + str(value))
-                setattr(obj, fkey, value)
-
-            # we are done, we need to close the window here
+        def command_ok():
+            read_fields()
             self.Save()
-            w.destroy()
+            command_quit()
+
+        def command_cancel():
+            command_quit()
+
+        def command_quit():
+            self._UI_READ_FIELDS = None
+            windowQt.window().close()
 
         add_fields()
 
+        self._UI_READ_FIELDS = read_fields
+
+        if callback_frame is not None:
+            callback_frame(windowQt)
+
+        # Creating the Cancel button
+        buttonCancel = QtWidgets.QPushButton(windowQt)
+        buttonCancel.setText("Cancel")
+        buttonCancel.clicked.connect(command_cancel)
+
+        # Creating the OK button
+        buttonOk = QtWidgets.QPushButton(windowQt)
+        buttonOk.setText('Save')
+        buttonOk.clicked.connect(command_ok)
+
+        OkCancelLayout = QtWidgets.QHBoxLayout()
+        OkCancelLayout.addWidget(buttonOk)
+        OkCancelLayout.addWidget(buttonCancel)
+        layoutQtWidgetGrid.addLayout(OkCancelLayout)
+
+        # Add a spacer to keep the text packed
+        qtSpacer = QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+        layoutQtWidgetGrid.addItem(qtSpacer)
+
+        import os
+        from robodk.robolink import getPathIcon
+        iconpath = getPathIcon()
+        if os.path.exists(iconpath):
+            windowQt.setWindowIcon(QtGui.QIcon(iconpath))
+
+        # Set the window style
+        keys = QtWidgets.QStyleFactory.keys()
+        if 'Fusion' in keys:
+            app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+            if dark_mode:
+                # https://forum.qt.io/topic/101391/windows-10-dark-theme/4
+                darkPalette = QtGui.QPalette()
+                darkColor = QtGui.QColor(45, 45, 45)
+                disabledColor = QtGui.QColor(127, 127, 127)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Window, darkColor)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor("white"))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(18, 18, 18))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.AlternateBase, darkColor)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("white"))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor("white"))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor("white"))
+                darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Button, darkColor)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor("white"))
+                darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
+                darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("red"))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(42, 130, 218))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
+                darkPalette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor("black"))
+                darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.HighlightedText, disabledColor)
+                app.setPalette(darkPalette)
+
+            windowQt.update()
+
+        if embed:
+            # Embed the window in RoboDK
+            mainWindow = QtWidgets.QMainWindow()
+            mainWindow.setCentralWidget(windowQt)
+            mainWindow.setWindowTitle(windowtitle)
+            mainWindow.update()
+            mainWindow.show()
+
+            from robodk.robolink import EmbedWindow
+            EmbedWindow(windowtitle)
+        else:
+            windowQt.setWindowTitle(windowtitle)
+            windowQt.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+        if wparent is None:
+            # Important for unchecking the action in RoboDK
+            app.lastWindowClosed.connect(command_quit)
+            windowQt.show()
+            app.exec_()
+
+    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
+        """Open settings window using tkinter"""
+
+        import sys
+        if sys.version_info[0] < 3:
+            # Python 2.X only:
+            import Tkinter as tkinter
+        else:
+            # Python 3.x only
+            import tkinter
+
+        fields_list = self._getFieldsUI()
+        values_list = {key: getattr(self, key) for key in fields_list}
+
+        windowTk = None
+        if wparent is not None:
+            windowTk = tkinter.Toplevel(wparent)
+        else:
+            windowTk = tkinter.Tk()
+
+        obj = self
+        TEMP_ENTRIES = {}
+
+        def value_to_widget(value, frame):
+            widget = None
+            func = []
+            value_type = type(value)
+
+            if value_type is float:
+                tkvar = tkinter.DoubleVar(value=value)
+                func = [tkvar.get]
+                widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format="%.2f")
+
+            elif value_type is int:
+                tkvar = tkinter.IntVar(value=value)
+                func = [tkvar.get]
+                widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar)
+
+            elif value_type is str:
+                tkvar = tkinter.StringVar(value=value)
+                func = [tkvar.get]
+                widget = tkinter.Entry(frame, textvariable=tkvar)
+
+            elif value_type is bool:
+                tkvar = tkinter.BooleanVar(value=value)
+                func = [tkvar.get]
+                widget = tkinter.Checkbutton(frame, text="Activate", variable=tkvar)
+
+            # List or tuple of PODs
+            elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
+                widget = tkinter.Frame(frame)  # simple sub-container
+                idcol = -1
+                for v in value:
+                    idcol += 1
+                    f_widget, f_func = value_to_widget(v, widget)
+                    f_widget.grid(row=0, column=idcol, sticky=tkinter.NSEW)
+                    func.append(f_func[0])
+                    widget.grid_columnconfigure(idcol, weight=1)
+
+            # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
+            elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and all(isinstance(n, str) for n in value[1]):
+                index = value[0]
+                options = value[1]
+                tkvar = tkinter.StringVar(value=options[index])
+                widget = tkinter.OptionMenu(frame, tkvar, *options)
+                func = [tkvar.get]
+
+            # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
+            elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and all(isinstance(n, str) for n in value[1]) and value[0] in value[1]:
+                index = value[0].index(value[0])
+                options = value[1]
+                tkvar = tkinter.StringVar(value=options[index])
+                widget = tkinter.OptionMenu(frame, tkvar, *options)
+                func = [tkvar.get]
+
+            return widget, func
+
+        def add_fields():
+            """Creates the UI from the field stored in the variable"""
+            sticky = tkinter.NSEW
+            frame = tkinter.Frame(windowTk)
+            idrow = -1
+
+            for fkey in fields_list:
+                idrow += 1
+
+                # Iterate for each key and add the variable to the UI
+                field = fields_list[fkey]
+                if not field is list:
+                    field = [field]
+
+                fname = field[0]
+                fvalue = values_list[fkey]
+                ftype = type(fvalue)
+
+                # Convert None to double
+                if ftype is None:
+                    ftype = float
+                    fvalue = -1.0
+
+                print(fkey + ' = ' + str(fvalue))
+
+                widget, func = value_to_widget(fvalue, frame)
+                label_name = tkinter.Label(frame, text=fname, anchor='w')
+                label_name.grid(row=idrow, column=0, sticky=sticky)
+
+                if widget is not None:
+                    _sticky = sticky
+                    if type(widget) is tkinter.Checkbutton:
+                        _sticky = tkinter.W
+                    widget.grid(row=idrow, column=1, sticky=_sticky)
+
+                    TEMP_ENTRIES[fkey] = (field, func)
+                else:
+                    label_unsupported = tkinter.Label(frame, text='Unsupported')
+                    label_unsupported.grid(row=idrow, column=1, sticky=sticky)
+
+                frame.grid_rowconfigure(idrow, weight=1)
+                frame.grid_columnconfigure(0, weight=1)
+                frame.grid_columnconfigure(1, weight=1)
+
+            frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
+
+        def read_fields():
+            print("Values entered:")
+            for fkey in TEMP_ENTRIES:
+                entry = TEMP_ENTRIES[fkey]
+                funcs = entry[1]
+                values = [value() for value in funcs]  # tuple needs to be casted below
+
+                for value in values:
+                    if type(value) == str:
+                        value = value.strip()
+
+                if len(values) == 1:
+                    values = values[0]
+
+                # Comboboxes
+                last_value = getattr(obj, fkey)
+                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
+                    newvalue = last_value
+                    newvalue[0] = value
+                    values = newvalue
+
+                # Tuples
+                if type(last_value) is tuple:
+                    values = tuple(values)
+
+                if type(last_value) != type(values):
+                    print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
+                    new_type = type(last_value)
+                    values = new_type(values)
+                print(fkey + " = " + str(values))
+                setattr(obj, fkey, values)
+
+        def command_ok():
+            read_fields()
+            self.Save()
+            command_quit()
+
+        def command_cancel():
+            command_quit()
+
+        def command_quit():
+            self._UI_READ_FIELDS = None
+            windowTk.destroy()
+
+        add_fields()
+
+        self._UI_READ_FIELDS = read_fields
+
         # Everything after the callframe will be added after whatever is added to the frame
         if callback_frame is not None:
-            callback_frame(w)
+            callback_frame(windowTk)
 
-        row = tk.Frame(w)
+        row = tkinter.Frame(windowTk)
 
         #Creating the Cancel button
-        b1 = tk.Button(row, text='Cancel', command=w.destroy, width=8)
-        b1.pack(side=tk.LEFT, padx=5, pady=5)
+        b_cancel = tkinter.Button(row, text='Cancel', command=command_cancel, width=8)
+        b_cancel.pack(side=tkinter.LEFT, padx=5, pady=5)
 
         #Creating the OK button
-        bhelper = tk.Button(row, text='OK', command=read_fields, width=8)
-        bhelper.pack(side=tk.RIGHT, padx=5, pady=5)
+        b_ok = tkinter.Button(row, text='Save', command=command_ok, width=8)
+        b_ok.pack(side=tkinter.RIGHT, padx=5, pady=5)
 
-        row.pack(side=tk.TOP, fill=tk.X, padx=1, pady=1)
+        row.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
 
-        w.title(windowtitle)
+        windowTk.title(windowtitle)
 
         from robodk.robolink import getPathIcon
         iconpath = getPathIcon()
         if os.path.exists(iconpath):
-            w.iconbitmap(iconpath)
+            windowTk.iconbitmap(iconpath)
 
         # Embed the window in RoboDK
         if embed:
@@ -797,21 +795,19 @@ class AppSettings:
             EmbedWindow(windowtitle)
         else:
             # If not, make sure to make the window stay on top
-            w.attributes("-topmost", True)
+            windowTk.attributes("-topmost", True)
 
         #def _on_mousewheel(event):
-        #    w.yview_scroll(-1*(event.delta/120), "units")
-        #w.bind_all("<MouseWheel>", _on_mousewheel)
+        #    windowTk.yview_scroll(-1*(event.delta/120), "units")
+        #windowTk.bind_all("<MouseWheel>", _on_mousewheel)
 
         if wparent is None:
             # Important for unchecking the action in RoboDK
-            w.protocol("WM_DELETE_WINDOW", w.destroy)
-            w.mainloop()
+            windowTk.protocol("WM_DELETE_WINDOW", command_quit)
+            windowTk.mainloop()
 
         else:
             print("Settings window: using parent loop")
-
-        #self.Save()
 
 
 def runmain():
@@ -832,9 +828,11 @@ def runmain():
         __FIELDS_UI['Int_List'] = 'This is an int list'
         __FIELDS_UI['Float_List'] = 'This is a float list'
         __FIELDS_UI['String_List'] = 'This is a string list'
+        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
         __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
         __FIELDS_UI['Dropdown'] = 'This is a dropdown'
         __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
+        __FIELDS_UI['Unsupported'] = 'This is unsupported'
 
         # List the variable names you would like to save and their default values
         # Important: Try to avoid default None type!!
@@ -847,9 +845,11 @@ def runmain():
         Int_List = [1, 2, 3]  # 3 numbers minimum!
         Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
         String_List = ['First line', 'Second line', 'Third line']
+        Mixed_List = [False, 1, '2']
         Int_Tuple = (1, 2, 3)
         Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
         Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
+        Unsupported = {}
         _HiddenUnsavedBool = True
         HiddenSavedBool = True
 
@@ -857,13 +857,6 @@ def runmain():
             # customize the initialization section if needed
             super(SettingsExample, self).__init__()
             self._FIELDS_UI = self.__FIELDS_UI
-
-        def CopyFrom(self, other):
-            """Copy settings from another instance"""
-            attr = self.getAttribs()
-            for a in attr:
-                if hasattr(other, a):
-                    setattr(self, a, getattr(other, a))
 
         def SetDefaults(self):
             # List untouched variables for default settings
@@ -891,11 +884,10 @@ def runmain():
                         self.SetDefaults()
                         self.ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
 
-                    import tkinter as tk
-                    row = tk.Frame(w)
-                    b1 = tk.Button(row, text='Set defaults', command=set_defaults, width=8)
-                    b1.pack(side=tk.LEFT, padx=5, pady=5)
-                    row.pack(side=tk.TOP, fill=tk.X, padx=1, pady=1)
+                    row = tkinter.Frame(w)
+                    b_defaults = tkinter.Button(row, text='Set defaults', command=set_defaults, width=8)
+                    b_defaults.pack(side=tkinter.LEFT, padx=5, pady=5)
+                    row.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
             else:
 
                 def custom_frame(w: QtWidgets.QWidget):
@@ -907,12 +899,8 @@ def runmain():
                         self.ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
 
                     layout = w.layout()
-
-                    # Creating the OK button
-                    b_default = QtWidgets.QPushButton(w)
-                    b_default.setText('Set defaults')
+                    b_default = QtWidgets.QPushButton('Set defaults')
                     b_default.clicked.connect(set_defaults)
-
                     layout.addWidget(b_default)
 
             super(SettingsExample, self).ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
@@ -939,9 +927,11 @@ def runmain():
     A._FIELDS_UI['Float_List'] = 'This is a float list'
     A._FIELDS_UI['Int_List'] = 'This is an int list'
     A._FIELDS_UI['String_List'] = 'This is a string list'
+    A._FIELDS_UI['Mixed_List'] = 'This is a mixed list'
     A._FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
     A._FIELDS_UI['Dropdown'] = 'This is a dropdown'
     A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
+    A._FIELDS_UI['Unsupported'] = 'This is unsupported'
 
     A.Boolean = True
     A.Int_Value = 123456
@@ -950,9 +940,11 @@ def runmain():
     A.Int_List = [1, 2, 3]  # 3 numbers minimum!
     A.Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
     A.String_List = ['First line', 'Second line', 'Third line']
+    A.Mixed_List = [False, 1, '2']
     A.Int_Tuple = (1, 2, 3)
     A.Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
     A.Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
+    A.Unsupported = {}
     A._HiddenUnsavedBool = True
     A.HiddenSavedBool = True
 
