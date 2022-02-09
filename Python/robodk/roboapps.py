@@ -342,6 +342,16 @@ class AppSettings:
 
         return True
 
+    def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
+        if ENABLE_QT:
+            # Get RoboDK theme
+            from robodk.robolink import Robolink
+            rdk = Robolink()
+            theme = rdk.Command("Theme", "")
+            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, dark_mode=theme in ['0', '2'])
+        else:
+            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame)
+
     def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, dark_mode=True):
         """Open settings window"""
 
@@ -798,16 +808,6 @@ class AppSettings:
 
         else:
             print("Settings window: using parent loop")
-
-    def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
-        if ENABLE_QT:
-            # Get RoboDK theme
-            from robodk.robolink import Robolink
-            rdk = Robolink()
-            theme = rdk.Command("Theme", "")
-            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, dark_mode=theme in ['0', '2'])
-        else:
-            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame)
 
 
 def runmain():
