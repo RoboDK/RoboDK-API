@@ -683,23 +683,30 @@ def pose_2_quaternion(Ti):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
-    a = (Ti[0, 0])
-    b = (Ti[1, 1])
-    c = (Ti[2, 2])
-    sign2 = 1
-    sign3 = 1
-    sign4 = 1
-    if (Ti[2, 1] - Ti[1, 2]) < 0:
-        sign2 = -1
-    if (Ti[0, 2] - Ti[2, 0]) < 0:
-        sign3 = -1
-    if (Ti[1, 0] - Ti[0, 1]) < 0:
-        sign4 = -1
-    q1 = sqrt(max(a + b + c + 1, 0)) / 2
-    q2 = sign2 * sqrt(max(a - b - c + 1, 0)) / 2
-    q3 = sign3 * sqrt(max(-a + b - c + 1, 0)) / 2
-    q4 = sign4 * sqrt(max(-a - b + c + 1, 0)) / 2
-    return [q1, q2, q3, q4]
+    tr1 = 1.0 + Ti[0, 0] - Ti[1, 1] - Ti[2, 2]
+    tr2 = 1.0 - Ti[0, 0] + Ti[1, 1] - Ti[2, 2]
+    tr3 = 1.0 - Ti[0, 0] - Ti[1, 1] + Ti[2, 2]
+
+    if (tr1 > tr2) and (tr1 > tr3):
+        S = sqrt(tr1) * 2
+        qw = (Ti[2, 1] - Ti[1, 2]) / S
+        qx = 0.25 * S
+        qy = (Ti[0, 1] + Ti[1, 0]) / S
+        qz = (Ti[0, 2] + Ti[2, 0]) / S
+    elif (tr2 > tr1) and (tr2 > tr3):
+        S = sqrt(tr2) * 2
+        qw = (Ti[0, 2] - Ti[2, 0]) / S
+        qx = (Ti[0, 1] + Ti[1, 0]) / S
+        qy = 0.25 * S
+        qz = (Ti[1, 2] + Ti[2, 1]) / S
+    else:
+        S = sqrt(tr3) * 2
+        qw = (Ti[1, 0] - Ti[0, 1]) / S
+        qx = (Ti[0, 2] + Ti[2, 0]) / S
+        qy = (Ti[1, 2] + Ti[2, 1]) / S
+        qz = 0.25 * S
+
+    return [qw, qx, qy, qz]
 
 
 def Pose_Split(pose1, pose2, delta_mm=1.0):

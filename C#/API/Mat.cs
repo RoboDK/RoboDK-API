@@ -1126,23 +1126,35 @@ namespace RoboDk.API
         /// <returns></returns>
         private static double[] ToQuaternion(Mat Ti)
         {
-            var q = new double[4];
-            var a = Ti[0, 0];
-            var b = Ti[1, 1];
-            var c = Ti[2, 2];
-            var sign2 = 1.0;
-            var sign3 = 1.0;
-            var sign4 = 1.0;
-            if (Ti[2, 1] - Ti[1, 2] < 0)
-                sign2 = -1;
-            if (Ti[0, 2] - Ti[2, 0] < 0)
-                sign3 = -1;
-            if (Ti[1, 0] - Ti[0, 1] < 0)
-                sign4 = -1;
-            q[0] = 0.5 * Math.Sqrt(Math.Max(a + b + c + 1, 0));
-            q[1] = 0.5 * sign2 * Math.Sqrt(Math.Max(a - b - c + 1, 0));
-            q[2] = 0.5 * sign3 * Math.Sqrt(Math.Max(-a + b - c + 1, 0));
-            q[3] = 0.5 * sign4 * Math.Sqrt(Math.Max(-a - b + c + 1, 0));
+            double[] q = new double[4];
+            double tr1 = 1.0 + Ti[0, 0] - Ti[1, 1] - Ti[2, 2];
+            double tr2 = 1.0 - Ti[0, 0] + Ti[1, 1] - Ti[2, 2];
+            double tr3 = 1.0 - Ti[0, 0] - Ti[1, 1] + Ti[2, 2];
+
+            if ((tr1 > tr2) && (tr1 > tr3))
+            {
+                double S = Math.Sqrt(tr1) * 2.0;
+                q[0] = (Ti[2, 1] - Ti[1, 2]) / S;
+                q[1] = 0.25 * S;
+                q[2] = (Ti[0, 1] + Ti[1, 0]) / S;
+                q[3] = (Ti[0, 2] + Ti[2, 0]) / S;
+            }
+            else if ((tr2 > tr1) && (tr2 > tr3))
+            {
+                double S = Math.Sqrt(tr2) * 2;
+                q[0] = (Ti[0, 2] - Ti[2, 0]) / S;
+                q[1] = (Ti[0, 1] + Ti[1, 0]) / S;
+                q[2] = 0.25 * S;
+                q[3] = (Ti[1, 2] + Ti[2, 1]) / S;
+            }
+            else
+            {
+                double S = Math.Sqrt(tr3) * 2;
+                q[0] = (Ti[1, 0] - Ti[0, 1]) / S;
+                q[1] = (Ti[0, 2] + Ti[2, 0]) / S;
+                q[2] = (Ti[1, 2] + Ti[2, 1]) / S;
+                q[3] = 0.25 * S;
+            }
             return q;
         }
 
