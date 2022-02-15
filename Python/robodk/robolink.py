@@ -6311,7 +6311,7 @@ class Item():
         :param ins_id: instruction id to return
         :type ins_id: int
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Robolink.setInstruction`, :func:`~robodk.robolink.Robolink.InstructionDelete`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.setInstruction`, :func:`~robodk.robolink.Item.InstructionDelete`
         """
         with self.link._lock:
             self.link._check_connection()
