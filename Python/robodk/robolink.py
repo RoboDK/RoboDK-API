@@ -4301,15 +4301,16 @@ class Item():
             self.link._check_status()
             return pose
 
-    def setGeometryPose(self, pose):
+    def setGeometryPose(self, pose, apply=False):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`robomath.Mat`"""
         with self.link._lock:
             self.link._check_connection()
-            command = 'S_Hgeom'
+            command = 'S_Hgeo2'
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_pose(pose)
+            self.link._send_int(1 if apply else 0)            
             self.link._check_status()
 
     def GeometryPose(self):
