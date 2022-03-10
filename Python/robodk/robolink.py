@@ -5693,8 +5693,7 @@ class Item():
 
     def setZoneData(self, zonedata):
         """Obsolete. Use :func:`~robodk.robolink.Item.setRounding` instead."""
-        with self.link._lock:
-            self.setRounding(zonedata)
+        return self.setRounding(zonedata)
 
     def ShowSequence(self, matrix, display_type=-1, timeout=-1):
         """Displays a sequence of joints or poses in RoboDK.
