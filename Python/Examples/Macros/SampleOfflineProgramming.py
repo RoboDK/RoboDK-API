@@ -25,7 +25,7 @@ robot.MoveJ(target_ref)
 # It is important to provide the reference frame and the tool frames when generating programs offline
 robot.setPoseFrame(robot.PoseFrame())
 robot.setPoseTool(robot.PoseTool())
-robot.setZoneData(10)  # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
+robot.setRounding(10)  # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
 robot.setSpeed(200)  # Set linear speed in mm/s
 
 # Set the number of sides of the polygon:
