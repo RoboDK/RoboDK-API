@@ -1,4 +1,4 @@
-% Copyright 2015-2020 - RoboDK Inc. - https://robodk.com/
+% Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
@@ -537,9 +537,12 @@ classdef RobolinkItem < handle
             this.link.check_status();
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function status = Connect(this, robot_ip, blocking)
+        function status = Connect(this, robot_ip, blocking, timeout)
             % Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
-            % In  1 : Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
+            % In 1 : Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
+            % In 2 : blocking: set to 1 to block until the robot is
+            % connected
+            % In 3 : Timeout for the connection
             % Out 1 : Status (1 if success)
             if nargin < 2
                 robot_ip = '';
@@ -547,14 +550,19 @@ classdef RobolinkItem < handle
             if nargin < 3
                 blocking = 1;
             end
+            if nargin < 4
+                timeout = this.link.TIMEOUT;
+            end
             this.link.check_connection();
             command = 'Connect2';
             this.link.send_line(command);
             this.link.send_item(this);
             this.link.send_line(robot_ip);
             this.link.send_int(blocking);
-            status = this.link.rec_int();
+            set(this.link.COM,'Timeout', timeout);
+            status = this.link.rec_int();            
             this.link.check_status();
+            set(this.link.COM,'Timeout', this.link.TIMEOUT);
         end
         function [robot_ip, port, remote_path, ftp_user, ftp_pass] = ConnectionParams(this)
             % Retrieve robot connection parameters
@@ -763,6 +771,52 @@ classdef RobolinkItem < handle
 %                 busy = Is_Busy(this, itemrobot);
 %             end
         end
+        function WaitFinished(this)
+            % Wait until a program finishes or a robot completes its movement
+            busy = Busy(this, this.link.TIMEOUT);
+            while busy
+                busy = Busy(this.link.TIMEOUT);
+                pause(0.05);
+            end
+        end
+        function setAccuracyActive(this, accurate)
+            % Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+            % In 1: int set to 1 to use the accurate model or 0 to use the nominal model
+            this.link.check_connection();
+            command = 'S_AbsAccOn';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_int(accurate);   
+            this.link.check_status();
+        end
+        function accurate = AccuracyActive(this)
+            % Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
+            this.link.check_connection();
+            command = 'G_AbsAccOn';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            accurate = this.link.rec_int();
+            this.link.check_status();            
+        end
+        function setRunType(this, accurate)
+            % Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+            % In 1: int set to 1 to use the accurate model or 0 to use the nominal model
+            this.link.check_connection();
+            command = 'S_ProgRunType';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            this.link.send_int(accurate);   
+            this.link.check_status();
+        end
+        function accurate = RunType(this)
+            % Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
+            this.link.check_connection();
+            command = 'G_ProgRunType';
+            this.link.send_line(command);
+            this.link.send_item(this);   
+            accurate = this.link.rec_int();
+            this.link.check_status();            
+        end
         function prog_status = RunProgram(this)
             % Obsolete. Use RunCode Instead.     
             this.link.check_connection();
@@ -790,7 +844,7 @@ classdef RobolinkItem < handle
             % code is a program call or just a raw code insert.
             % Out 1 : int -> number of instructions that can be executed        
             if nargin < 3
-                run_type = INSTRUCTION_CALL_PROGRAM;
+                run_type = this.INSTRUCTION_CALL_PROGRAM;
             end
             this.link.check_connection();
             command = 'RunCode2';
