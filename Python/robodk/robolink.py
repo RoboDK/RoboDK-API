@@ -1,4 +1,4 @@
-# Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -4284,7 +4284,7 @@ class Item():
             return self
 
     def Pose(self):
-        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this provide the pose of the end efector with respect to the robot base (same as PoseTool()). It returns the pose as :class:`robomath.Mat`.
+        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this function returns the pose of the active tool with respect to the active reference. It returns the pose as :class:`robomath.Mat`.
 
         Tip: Use a Pose_2_* function from the robodk module (such as :class:`robomath.Pose_2_KUKA`) to convert the pose to XYZABC (XYZ position in mm and ABC orientation in degrees), specific to a robot brand.
 
