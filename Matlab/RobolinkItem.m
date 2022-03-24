@@ -799,8 +799,8 @@ classdef RobolinkItem < handle
             this.link.check_status();            
         end
         function setRunType(this, accurate)
-            % Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
-            % In 1: int set to 1 to use the accurate model or 0 to use the nominal model
+            % Set the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+            % In 1: int Use "PROGRAM_RUN_ON_SIMULATOR" to set the program to run on the simulator only or "PROGRAM_RUN_ON_ROBOT" to force the program to run on the robot
             this.link.check_connection();
             command = 'S_ProgRunType';
             this.link.send_line(command);
@@ -808,13 +808,13 @@ classdef RobolinkItem < handle
             this.link.send_int(accurate);   
             this.link.check_status();
         end
-        function accurate = RunType(this)
-            % Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
+        function runtype = RunType(this)
+            % Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
             this.link.check_connection();
             command = 'G_ProgRunType';
             this.link.send_line(command);
             this.link.send_item(this);   
-            accurate = this.link.rec_int();
+            runtype = this.link.rec_int();
             this.link.check_status();            
         end
         function prog_status = RunProgram(this)
