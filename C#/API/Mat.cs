@@ -42,6 +42,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RoboDk.API.Exceptions;
 
 #endregion
@@ -1126,34 +1127,67 @@ namespace RoboDk.API
         /// <returns></returns>
         private static double[] ToQuaternion(Mat Ti)
         {
+            const double Tolerance_0 = 1e-9;
+            const double Tolerance_180 = 1e-7;
             double[] q = new double[4];
-            double tr1 = 1.0 + Ti[0, 0] - Ti[1, 1] - Ti[2, 2];
-            double tr2 = 1.0 - Ti[0, 0] + Ti[1, 1] - Ti[2, 2];
-            double tr3 = 1.0 - Ti[0, 0] - Ti[1, 1] + Ti[2, 2];
 
-            if ((tr1 > tr2) && (tr1 > tr3))
+            double cosangle = Math.Min(Math.Max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0);  // Calculate the rotation angle
+            if (cosangle > 1.0 - Tolerance_0)
             {
-                double S = Math.Sqrt(tr1) * 2.0;
-                q[0] = (Ti[2, 1] - Ti[1, 2]) / S;
-                q[1] = 0.25 * S;
-                q[2] = (Ti[0, 1] + Ti[1, 0]) / S;
-                q[3] = (Ti[0, 2] + Ti[2, 0]) / S;
+                // Identity matrix
+                q[0] = 1.0;
+                q[1] = 0.0;
+                q[2] = 0.0;
+                q[3] = 0.0;
             }
-            else if ((tr2 > tr1) && (tr2 > tr3))
+            else if (cosangle < -1.0 + Tolerance_180)
             {
-                double S = Math.Sqrt(tr2) * 2;
-                q[0] = (Ti[0, 2] - Ti[2, 0]) / S;
-                q[1] = (Ti[0, 1] + Ti[1, 0]) / S;
-                q[2] = 0.25 * S;
-                q[3] = (Ti[1, 2] + Ti[2, 1]) / S;
+                // 180 rotation around an axis
+                double[] diag = new[] { Ti[0, 0], Ti[1, 1], Ti[2, 2] };
+                int k = Array.IndexOf(diag, diag.Max());
+                double[] col = new[] { Ti[0, k], Ti[1, k], Ti[2, k] };
+                col[k] = col[k] + 1.0;
+                double[] rotvector = col.Select(n => n / SqrtA(2.0 * (1.0 + diag[k]))).ToArray();
+
+                double SqrtA(double d)
+                {
+                    if (d <= 0.0)
+                    {
+                        return 0.0;
+                    }
+                    return Math.Sqrt(d);
+                }
+
+                q[0] = 0.0;
+                q[1] = rotvector[0];
+                q[2] = rotvector[1];
+                q[3] = rotvector[2];
             }
             else
             {
-                double S = Math.Sqrt(tr3) * 2;
-                q[0] = (Ti[1, 0] - Ti[0, 1]) / S;
-                q[1] = (Ti[0, 2] + Ti[2, 0]) / S;
-                q[2] = (Ti[1, 2] + Ti[2, 1]) / S;
-                q[3] = 0.25 * S;
+                // No edge case, normal calculation
+                double a = Ti[0, 0];
+                double b = Ti[1, 1];
+                double c = Ti[2, 2];
+                double sign2 = 1.0;
+                double sign3 = 1.0;
+                double sign4 = 1.0;
+                if (Ti[2, 1] - Ti[1, 2] < 0)
+                {
+                    sign2 = -1.0;
+                }
+                if (Ti[0, 2] - Ti[2, 0] < 0)
+                {
+                    sign3 = -1.0;
+                }
+                if (Ti[1, 0] - Ti[0, 1] < 0)
+                {
+                    sign4 = -1.0;
+                }
+                q[0] =         Math.Sqrt(Math.Max( a + b + c + 1.0, 0.0)) / 2.0;
+                q[1] = sign2 * Math.Sqrt(Math.Max( a - b - c + 1.0, 0.0)) / 2.0;
+                q[2] = sign3 * Math.Sqrt(Math.Max(-a + b - c + 1.0, 0.0)) / 2.0;
+                q[3] = sign4 * Math.Sqrt(Math.Max(-a - b + c + 1.0, 0.0)) / 2.0;
             }
             return q;
         }

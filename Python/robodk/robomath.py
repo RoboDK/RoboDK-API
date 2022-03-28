@@ -54,6 +54,13 @@ def sqrt(value):
     return math.sqrt(value)
 
 
+def sqrtA(value):
+    """Returns the square root of a value if it's greater than 0, else 0 (differs from IEEE-754)."""
+    if value <= 0:
+        return 0
+    return sqrt(value)
+
+
 def sin(value):
     """Returns the sine of an angle in radians"""
     return math.sin(value)
@@ -683,30 +690,50 @@ def pose_2_quaternion(Ti):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
-    tr1 = 1.0 + Ti[0, 0] - Ti[1, 1] - Ti[2, 2]
-    tr2 = 1.0 - Ti[0, 0] + Ti[1, 1] - Ti[2, 2]
-    tr3 = 1.0 - Ti[0, 0] - Ti[1, 1] + Ti[2, 2]
+    TOLERANCE_0 = 1e-9
+    TOLERANCE_180 = 1e-7
 
-    if (tr1 > tr2) and (tr1 > tr3):
-        S = sqrt(tr1) * 2
-        qw = (Ti[2, 1] - Ti[1, 2]) / S
-        qx = 0.25 * S
-        qy = (Ti[0, 1] + Ti[1, 0]) / S
-        qz = (Ti[0, 2] + Ti[2, 0]) / S
-    elif (tr2 > tr1) and (tr2 > tr3):
-        S = sqrt(tr2) * 2
-        qw = (Ti[0, 2] - Ti[2, 0]) / S
-        qx = (Ti[0, 1] + Ti[1, 0]) / S
-        qy = 0.25 * S
-        qz = (Ti[1, 2] + Ti[2, 1]) / S
+    cosangle = min(max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0)  # Calculate the rotation angle
+    if cosangle > 1.0 - TOLERANCE_0:
+        # Identity matrix
+        q1 = 1.0
+        q2 = 0.0
+        q3 = 0.0
+        q4 = 0.0
+
+    elif cosangle < -1.0 + TOLERANCE_180:
+        # 180 rotation around an axis
+        diag = [Ti[0, 0], Ti[1, 1], Ti[2, 2]]
+        k = diag.index(max(diag))
+        col = [Ti[0, k], Ti[1, k], Ti[2, k]]
+        col[k] = col[k] + 1.0
+        rotvector = [n / sqrtA(2.0 * (1.0 + diag[k])) for n in col]
+
+        q1 = 0.0
+        q2 = rotvector[0]
+        q3 = rotvector[1]
+        q4 = rotvector[2]
+
     else:
-        S = sqrt(tr3) * 2
-        qw = (Ti[1, 0] - Ti[0, 1]) / S
-        qx = (Ti[0, 2] + Ti[2, 0]) / S
-        qy = (Ti[1, 2] + Ti[2, 1]) / S
-        qz = 0.25 * S
+        # No edge case, normal calculation
+        a = Ti[0, 0]
+        b = Ti[1, 1]
+        c = Ti[2, 2]
+        sign2 = 1.0
+        sign3 = 1.0
+        sign4 = 1.0
+        if Ti[2, 1] - Ti[1, 2] < 0.0:
+            sign2 = -1.0
+        if Ti[0, 2] - Ti[2, 0] < 0.0:
+            sign3 = -1.0
+        if Ti[1, 0] - Ti[0, 1] < 0.0:
+            sign4 = -1.0
+        q1 =         sqrt(max( a + b + c + 1.0, 0.0)) / 2.0
+        q2 = sign2 * sqrt(max( a - b - c + 1.0, 0.0)) / 2.0
+        q3 = sign3 * sqrt(max(-a + b - c + 1.0, 0.0)) / 2.0
+        q4 = sign4 * sqrt(max(-a - b + c + 1.0, 0.0)) / 2.0
 
-    return [qw, qx, qy, qz]
+    return [q1, q2, q3, q4]
 
 
 def Pose_Split(pose1, pose2, delta_mm=1.0):
