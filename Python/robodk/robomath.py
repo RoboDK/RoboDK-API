@@ -54,6 +54,13 @@ def sqrt(value):
     return math.sqrt(value)
 
 
+def sqrtA(value):
+    """Returns the square root of a value if it's greater than 0, else 0 (differs from IEEE-754)."""
+    if value <= 0:
+        return 0
+    return sqrt(value)
+
+
 def sin(value):
     """Returns the sine of an angle in radians"""
     return math.sin(value)
@@ -683,22 +690,49 @@ def pose_2_quaternion(Ti):
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
-    a = (Ti[0, 0])
-    b = (Ti[1, 1])
-    c = (Ti[2, 2])
-    sign2 = 1
-    sign3 = 1
-    sign4 = 1
-    if (Ti[2, 1] - Ti[1, 2]) < 0:
-        sign2 = -1
-    if (Ti[0, 2] - Ti[2, 0]) < 0:
-        sign3 = -1
-    if (Ti[1, 0] - Ti[0, 1]) < 0:
-        sign4 = -1
-    q1 = sqrt(max(a + b + c + 1, 0)) / 2
-    q2 = sign2 * sqrt(max(a - b - c + 1, 0)) / 2
-    q3 = sign3 * sqrt(max(-a + b - c + 1, 0)) / 2
-    q4 = sign4 * sqrt(max(-a - b + c + 1, 0)) / 2
+    TOLERANCE_0 = 1e-9
+    TOLERANCE_180 = 1e-7
+
+    cosangle = min(max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0)  # Calculate the rotation angle
+    if cosangle > 1.0 - TOLERANCE_0:
+        # Identity matrix
+        q1 = 1.0
+        q2 = 0.0
+        q3 = 0.0
+        q4 = 0.0
+
+    elif cosangle < -1.0 + TOLERANCE_180:
+        # 180 rotation around an axis
+        diag = [Ti[0, 0], Ti[1, 1], Ti[2, 2]]
+        k = diag.index(max(diag))
+        col = [Ti[0, k], Ti[1, k], Ti[2, k]]
+        col[k] = col[k] + 1.0
+        rotvector = [n / sqrtA(2.0 * (1.0 + diag[k])) for n in col]
+
+        q1 = 0.0
+        q2 = rotvector[0]
+        q3 = rotvector[1]
+        q4 = rotvector[2]
+
+    else:
+        # No edge case, normal calculation
+        a = Ti[0, 0]
+        b = Ti[1, 1]
+        c = Ti[2, 2]
+        sign2 = 1.0
+        sign3 = 1.0
+        sign4 = 1.0
+        if Ti[2, 1] - Ti[1, 2] < 0.0:
+            sign2 = -1.0
+        if Ti[0, 2] - Ti[2, 0] < 0.0:
+            sign3 = -1.0
+        if Ti[1, 0] - Ti[0, 1] < 0.0:
+            sign4 = -1.0
+        q1 =         sqrt(max( a + b + c + 1.0, 0.0)) / 2.0
+        q2 = sign2 * sqrt(max( a - b - c + 1.0, 0.0)) / 2.0
+        q3 = sign3 * sqrt(max(-a + b - c + 1.0, 0.0)) / 2.0
+        q4 = sign4 * sqrt(max(-a - b + c + 1.0, 0.0)) / 2.0
+
     return [q1, q2, q3, q4]
 
 

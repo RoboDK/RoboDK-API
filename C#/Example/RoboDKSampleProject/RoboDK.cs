@@ -31,6 +31,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Drawing;
+using System.Linq;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -651,29 +652,68 @@ public class Mat // simple matrix class for homogeneous operations
     /// <returns></returns>
     static double[] ToQuaternion(Mat Ti)
     {
+        const double Tolerance_0 = 1e-9;
+        const double Tolerance_180 = 1e-7;
         double[] q = new double[4];
-        double a = (Ti[0, 0]);
-        double b = (Ti[1, 1]);
-        double c = (Ti[2, 2]);
-        double sign2 = 1.0;
-        double sign3 = 1.0;
-        double sign4 = 1.0;
-        if ((Ti[2, 1] - Ti[1, 2]) < 0)
+
+        double cosangle = Math.Min(Math.Max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0);  // Calculate the rotation angle
+        if (cosangle > 1.0 - Tolerance_0)
         {
-            sign2 = -1;
+            // Identity matrix
+            q[0] = 1.0;
+            q[1] = 0.0;
+            q[2] = 0.0;
+            q[3] = 0.0;
         }
-        if ((Ti[0, 2] - Ti[2, 0]) < 0)
+        else if (cosangle < -1.0 + Tolerance_180)
         {
-            sign3 = -1;
+            // 180 rotation around an axis
+            double[] diag = new[] { Ti[0, 0], Ti[1, 1], Ti[2, 2] };
+            int k = Array.IndexOf(diag, diag.Max());
+            double[] col = new[] { Ti[0, k], Ti[1, k], Ti[2, k] };
+            col[k] = col[k] + 1.0;
+            double[] rotvector = col.Select(n => n / SqrtA(2.0 * (1.0 + diag[k]))).ToArray();
+
+            double SqrtA(double d)
+            {
+                if (d <= 0.0)
+                {
+                    return 0.0;
+                }
+                return Math.Sqrt(d);
+            }
+
+            q[0] = 0.0;
+            q[1] = rotvector[0];
+            q[2] = rotvector[1];
+            q[3] = rotvector[2];
         }
-        if ((Ti[1, 0] - Ti[0, 1]) < 0)
+        else
         {
-            sign4 = -1;
+            // No edge case, normal calculation
+            double a = Ti[0, 0];
+            double b = Ti[1, 1];
+            double c = Ti[2, 2];
+            double sign2 = 1.0;
+            double sign3 = 1.0;
+            double sign4 = 1.0;
+            if (Ti[2, 1] - Ti[1, 2] < 0)
+            {
+                sign2 = -1.0;
+            }
+            if (Ti[0, 2] - Ti[2, 0] < 0)
+            {
+                sign3 = -1.0;
+            }
+            if (Ti[1, 0] - Ti[0, 1] < 0)
+            {
+                sign4 = -1.0;
+            }
+            q[0] = Math.Sqrt(Math.Max(a + b + c + 1.0, 0.0)) / 2.0;
+            q[1] = sign2 * Math.Sqrt(Math.Max(a - b - c + 1.0, 0.0)) / 2.0;
+            q[2] = sign3 * Math.Sqrt(Math.Max(-a + b - c + 1.0, 0.0)) / 2.0;
+            q[3] = sign4 * Math.Sqrt(Math.Max(-a - b + c + 1.0, 0.0)) / 2.0;
         }
-        q[0] = 0.5 * Math.Sqrt(Math.Max(a + b + c + 1, 0));
-        q[1] = 0.5 * sign2 * Math.Sqrt(Math.Max(a - b - c + 1, 0));
-        q[2] = 0.5 * sign3 * Math.Sqrt(Math.Max(-a + b - c + 1, 0));
-        q[3] = 0.5 * sign4 * Math.Sqrt(Math.Max(-a - b + c + 1, 0));
         return q;
     }
 
