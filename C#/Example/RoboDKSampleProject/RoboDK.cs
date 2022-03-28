@@ -650,7 +650,7 @@ public class Mat // simple matrix class for homogeneous operations
     /// </summary>
     /// <param name="Ti"></param>
     /// <returns></returns>
-    private static double[] ToQuaternion(Mat Ti)
+    static double[] ToQuaternion(Mat Ti)
     {
         const double Tolerance_0 = 1e-9;
         const double Tolerance_180 = 1e-7;
