@@ -4301,6 +4301,9 @@ class Item():
             self.link._check_status()
             return pose
 
+    def PoseWrt(self, item):
+        return poseWRT(self, item)
+
     def setGeometryPose(self, pose, apply=False):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`robomath.Mat`"""
@@ -6600,6 +6603,115 @@ class Item():
                 line = json.loads(line)
 
             return line
+
+
+def parentsOf(item, parent_types=None):
+    """
+    Get the list of parents of an Item up to the Station, with type filtering (i.e. [ITEM_TYPE_FRAME, ITEM_TYPE_ROBOT, ..]).
+    By default, it will return all parents of an Item with no regard to their type, ordered from the Item's parent to the Station.
+
+    :param item: The source Item
+    :type item: :class:`.Item`
+    :param parent_types: The parent allowed types, such as ITEM_TYPE_FRAME, defaults to None
+    :type parent_types: list of ITEM_TYPE_*, optional
+    :return: A list of parents, ordered from the Item's parent to the Station.
+    :rtype: list of :class:`.Item`
+    """
+
+    parent = item
+    parents = []
+    while (parent is not None and parent.Type() not in [ITEM_TYPE_STATION, -1]):
+        parent = parent.Parent()
+
+        if parent_types is None:
+            parents.append(parent)
+            continue
+
+        for parent_type in parent_types:
+            if parent.Type() == parent_type:
+                parents.append(parent)
+                break
+
+    return parents
+
+
+def findLCA(item1, item2):
+    """
+    Finds the lowest common ancestor (LCA) between two Items in the Station's tree.
+
+    :param item1: The first Item
+    :type item1: :class:`.Item`
+    :param item2: The second Item
+    :type item2: :class:`.Item`
+    :return: The lowest common ancestor (LCA)
+    :rtype: :class:`.Item`
+    """
+
+    # Make an ordered list of parents. Iter on it until the parent differs.. and you get the lowest common ancestor (LCA)
+    parents1 = parentsOf(item1)
+    parents2 = parentsOf(item2)
+
+    lca = None
+    size = min(len(parents1), len(parents2))
+    for i in range(size):
+        if parents1[-1] != parents2[-1]:
+            break
+
+        lca = parents1[-1]
+        parents1.pop()
+        parents2.pop()
+
+    return lca
+
+
+def poseFromTo(item_child, item_parent):
+    """
+    Gets the pose between two Items that have a hierarchical relationship in the Station's tree.
+    There can be N Items between the two.
+
+    :param item_child: The child Item
+    :type item_child: :class:`.Item`
+    :param item_parent: The parent Item
+    :type item_parent: :class:`.Item`
+    :return: The pose from the child to the parent
+    :rtype: :class:`robomath.Mat`
+    """
+
+    parents = parentsOf(item_child)
+    if item_parent not in parents:
+        return None
+
+    pose = item_parent.Pose()
+    for parent in reversed(parents):
+        pose *= parent.Pose()
+    pose *= item_child.Pose()
+
+    return pose
+
+
+def poseWRT(item1, item2):
+    """Gets the pose of an Item (item1) with regard to an another Item (item2).
+
+    :param item1: The source Item
+    :type item1: :class:`.Item`
+    :param item2: The second Item
+    :type item2: :class:`.Item`
+    :return: The pose from the source Item to the second Item
+    :rtype: :class:`robomath.Mat`
+    """
+
+    parents1 = parentsOf(item1)
+    if item2 in parents1:
+        return poseFromTo(item1, item2)
+
+    parents2 = parentsOf(item2)
+    if item1 in parents2:
+        return poseFromTo(item2, item1)
+
+    lca = findLCA(item1, item2)
+    pose1 = poseFromTo(item1, lca)
+    pose2 = poseFromTo(item2, lca)
+    return pose2.inv() * pose1
 
 
 if __name__ == "__main__":
