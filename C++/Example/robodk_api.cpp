@@ -2403,7 +2403,9 @@ Item RoboDK::AddFile(const QString &filename, const Item *parent){
     _send_Line("Add");
     _send_Line(filename);
     _send_Item(parent);
+    _TIMEOUT = 3600 * 1000;
     Item newitem = _recv_Item();
+    _TIMEOUT = ROBODK_API_TIMEOUT;
     _check_status();
     return newitem;
 }

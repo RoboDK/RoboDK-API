@@ -1,4 +1,4 @@
-# Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -4284,7 +4284,7 @@ class Item():
             return self
 
     def Pose(self):
-        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this provide the pose of the end efector with respect to the robot base (same as PoseTool()). It returns the pose as :class:`robomath.Mat`.
+        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this function returns the pose of the active tool with respect to the active reference. It returns the pose as :class:`robomath.Mat`.
 
         Tip: Use a Pose_2_* function from the robodk module (such as :class:`robomath.Pose_2_KUKA`) to convert the pose to XYZABC (XYZ position in mm and ABC orientation in degrees), specific to a robot brand.
 
@@ -4301,15 +4301,16 @@ class Item():
             self.link._check_status()
             return pose
 
-    def setGeometryPose(self, pose):
+    def setGeometryPose(self, pose, apply=False):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`robomath.Mat`"""
         with self.link._lock:
             self.link._check_connection()
-            command = 'S_Hgeom'
+            command = 'S_Hgeo2'
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_pose(pose)
+            self.link._send_int(1 if apply else 0)            
             self.link._check_status()
 
     def GeometryPose(self):
@@ -5692,8 +5693,7 @@ class Item():
 
     def setZoneData(self, zonedata):
         """Obsolete. Use :func:`~robodk.robolink.Item.setRounding` instead."""
-        with self.link._lock:
-            self.setRounding(zonedata)
+        return self.setRounding(zonedata)
 
     def ShowSequence(self, matrix, display_type=-1, timeout=-1):
         """Displays a sequence of joints or poses in RoboDK.
@@ -6311,7 +6311,7 @@ class Item():
         :param ins_id: instruction id to return
         :type ins_id: int
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Robolink.setInstruction`, :func:`~robodk.robolink.Robolink.InstructionDelete`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.setInstruction`, :func:`~robodk.robolink.Item.InstructionDelete`
         """
         with self.link._lock:
             self.link._check_connection()

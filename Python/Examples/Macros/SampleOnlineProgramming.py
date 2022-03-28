@@ -74,7 +74,7 @@ robot.MoveJ(target_ref)
 # It is important to update the TCP on the robot mostly when using the driver
 robot.setPoseFrame(robot.PoseFrame())
 robot.setPoseTool(robot.PoseTool())
-robot.setZoneData(10)  # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
+robot.setRounding(10)  # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
 robot.setSpeed(200)  # Set linear speed in mm/s
 
 # Set the number of sides of the polygon:
