@@ -5159,8 +5159,9 @@ class Item():
 
     def SolveIK(self, pose, joints_approx=None, tool=None, reference=None):
         """Calculates the inverse kinematics for a given specified pose. The pose must be robot flange with respect to the robot base unless you provide the tool and/or reference.
-        It returns the joints solution as a Mat object (size 1xnDOFs). Use list() on a Mat to convert to a list. If there is no solution it returns an array of size 0.
+        SolveIK returns the joints solution as a Mat object (size 1xnDOFs). Use list() on a Mat to convert to a list. If there is no solution it returns an array of size 0.
         If there is no solution it returns an empty matrix.
+        For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`robomath.Mat`
@@ -5198,7 +5199,7 @@ class Item():
 
     def SolveIK_All(self, pose, tool=None, reference=None):
         """Calculates the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
-        Returns a list of joints as a 2D matrix (float x n x m)
+        Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedor (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`robomath.Mat`
