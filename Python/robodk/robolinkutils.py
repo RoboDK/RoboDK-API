@@ -109,7 +109,7 @@ def getAncestorPose(item_child, item_parent):
     return pose
 
 
-def poseWRT(item1, item2):
+def getPoseWrt(item1, item2):
     """Gets the pose of an Item (item1) with respect to an another Item (item2).
 
     :param item1: The source Item
@@ -132,5 +132,5 @@ def poseWRT(item1, item2):
     lca = getLowestCommonAncestor(item1, item2)
     pose1 = getAncestorPose(item1, lca)
     pose2 = getAncestorPose(item2, lca)
-    
+
     return pose2.inv() * pose1
