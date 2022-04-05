@@ -1251,14 +1251,14 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public int MoveL_Test(double[] j1, double[] j2, double minstepDeg = -1)
+        public int MoveL_Test(double[] j1, Mat t2, double minstepDeg = -1)
         {
             Link.check_connection();
             var command = "CollisionMoveL";
             Link.send_line(command);
             Link.send_item(this);
             Link.send_array(j1);
-            Link.send_array(j2);
+            Link.send_pose(t2);
             Link.send_int((int) (minstepDeg * 1000.0));
             Link.ReceiveTimeout = 3600 * 1000;
             var collision = Link.rec_int();

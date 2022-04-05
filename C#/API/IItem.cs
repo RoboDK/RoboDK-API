@@ -802,13 +802,13 @@ namespace RoboDk.API
         ///     Checks if a linear movement is free of collision.
         /// </summary>
         /// <param name="j1">joints -> start joints</param>
-        /// <param name="j2">joints -> destination joints</param>
+        /// <param name="t2">Pose -> destination pose with respect to the active tool and coordinate system</param>
         /// <param name="minstepDeg">(optional): maximum joint step in degrees</param>
         /// <returns>
         ///     collision : returns 0 if the movement is free of collision. Otherwise it returns the number of pairs of
         ///     objects that collided if there was a collision.
         /// </returns>
-        int MoveL_Test(double[] j1, double[] j2, double minstepDeg = -1);
+        int MoveL_Test(double[] j1, Mat t2, double minstepDeg = -1);
 
         /// <summary>
         /// Sets the speed and/or the acceleration of a robot.
