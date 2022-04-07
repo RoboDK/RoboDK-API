@@ -367,7 +367,6 @@ class AppSettings:
         windowQt = QtWidgets.QWidget()
 
         layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
-        layoutQtWidgetGrid.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMaximumSize)
         layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)
 
         big_form = QtWidgets.QFormLayout()
@@ -486,7 +485,7 @@ class AppSettings:
 
                 # Comboboxes
                 last_value = getattr(obj, fkey)
-                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
+                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
                     newvalue = last_value
                     newvalue[0] = value
                     values = newvalue
@@ -535,10 +534,6 @@ class AppSettings:
         OkCancelLayout.addWidget(buttonOk)
         OkCancelLayout.addWidget(buttonCancel)
         layoutQtWidgetGrid.addLayout(OkCancelLayout)
-
-        # Add a spacer to keep the text packed
-        qtSpacer = QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
-        layoutQtWidgetGrid.addItem(qtSpacer)
 
         import os
         from robodk.robolink import getPathIcon
