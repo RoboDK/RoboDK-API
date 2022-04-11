@@ -2176,8 +2176,7 @@ class Robolink:
 
     def AddMillingProject(self, name='Milling settings', itemrobot=0):
         """Obsolete, use :func:`~robodk.robolink.Robolink.AddMachiningProject` instead"""
-        with self._lock:
-            return self.AddMachiningProject(name, itemrobot)
+        return self.AddMachiningProject(name, itemrobot)
 
     def AddMachiningProject(self, name='Milling settings', itemrobot=0):
         """Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points.
