@@ -30,6 +30,7 @@ Use these to control your App's actions: run on click, run while checked, do not
 import sys
 import time
 
+
 class RunApplication:
     """Class to detect when the terminate signal is emitted to stop an action.
 
@@ -594,16 +595,20 @@ class AppSettings:
         if app is None:
             app = QtWidgets.QApplication([])  # No need to create a new one
 
-        windowQt = QtWidgets.QWidget()
-
         layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
         layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)
 
-        big_form = QtWidgets.QFormLayout()
+        content = QtWidgets.QWidget()
+        big_form = QtWidgets.QFormLayout(content)
         big_form.setVerticalSpacing(1)
         big_form.setHorizontalSpacing(15)
-        layoutQtWidgetGrid.addLayout(big_form)
 
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
+        layoutQtWidgetGrid.addWidget(scroll)
+
+        windowQt = QtWidgets.QWidget()
         windowQt.setLayout(layoutQtWidgetGrid)
 
         obj = self
@@ -635,7 +640,8 @@ class AppSettings:
                     widget.setText(f'[  {fname[1:-1]}  ]'.upper())
                     widget.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
                     widget.adjustSize()
-                    widget.setMinimumHeight(widget.height() * 1.75)
+                    if big_form.rowCount() > 0:
+                        widget.setMinimumHeight(widget.height() * 1.75)
                     big_form.addRow(widget)
                     continue
 
@@ -720,6 +726,8 @@ class AppSettings:
 
         # Set the window style
         set_qt_theme(app)
+        windowQt.update()
+        windowQt.adjustSize()
 
         if embed:
             # Embed the window in RoboDK
