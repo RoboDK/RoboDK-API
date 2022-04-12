@@ -575,15 +575,11 @@ class AppSettings:
     def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
         """Show the Apps Settings in a GUI, using tkinter or Qt depending on availability."""
         if ENABLE_QT:
-            # Get RoboDK theme
-            from robodk.robolink import Robolink
-            rdk = Robolink()
-            theme = rdk.Command("Theme", "")
-            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, dark_mode=theme in ['0', '2'])
+            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame)
         else:
             self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame)
 
-    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, dark_mode=True):
+    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
         """Open settings window"""
 
         from PySide2 import QtCore, QtGui, QtWidgets
@@ -602,6 +598,7 @@ class AppSettings:
         big_form = QtWidgets.QFormLayout(content)
         big_form.setVerticalSpacing(1)
         big_form.setHorizontalSpacing(15)
+        big_form.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinimumSize)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -726,7 +723,11 @@ class AppSettings:
 
         # Set the window style
         set_qt_theme(app)
+
+        # Important! Ensures we apply the theme and resize the window correctly
         windowQt.update()
+        content.adjustSize()
+        scroll.setMinimumWidth(min(900, content.minimumWidth() + 20))
         windowQt.adjustSize()
 
         if embed:
