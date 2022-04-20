@@ -4300,6 +4300,20 @@ class Item():
             self.link._check_status()
             return pose
 
+    def PoseWrt(self, item):
+        """Returns the relative pose of this Item with respect to an another Item.
+
+        :param item: The other Item
+        :type item: :class:`.Item`
+
+        :return: The pose from the source Item to the second Item
+        :rtype: :class:`robomath.Mat`
+
+        .. seealso:: :func:`~robodk.robolink.Item.Pose`, :func:`~robodk.robolink.Item.PoseAbs`
+        """
+        from robodk import robolinkutils
+        return robolinkutils.getPoseWrt(self, item)
+
     def setGeometryPose(self, pose, apply=False):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`robomath.Mat`"""
