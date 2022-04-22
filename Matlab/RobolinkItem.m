@@ -509,15 +509,24 @@ classdef RobolinkItem < handle
             pose = this.link.rec_pose();
             this.link.check_status();
         end
-        function joints = SolveIK(this, pose)
+        function joints = SolveIK(this, pose, joints_approx)
             % Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see Solve_IK_All()).
             % In  1 : 4x4 matrix -> pose of the robot flange with respect to the base frame
+            % In  2 : double x n -> approximated joint values to return the closest solution
             % Out 1 : double x n -> joints
             this.link.check_connection();
-            command = 'G_IK';
-            this.link.send_line(command);
-            this.link.send_pose(pose);
-            this.link.send_item(this);
+            if nargin < 3
+                command = 'G_IK';
+                this.link.send_line(command);
+                this.link.send_pose(pose);
+                this.link.send_item(this);
+            else
+                command = 'G_IK_jnts';
+                this.link.send_line(command);
+                this.link.send_pose(pose);
+                this.link.send_array(joints_approx);
+                this.link.send_item(this);
+            end
             joints = this.link.rec_array();
             this.link.check_status();
         end
