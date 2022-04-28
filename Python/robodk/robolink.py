@@ -1572,6 +1572,7 @@ class Robolink:
             FLAG_ROBODK_WINDOWKEYS_ACTIVE = 4096        # Enable the keyboard
             FLAG_ROBODK_TREE_VISIBLE = 8192             # Make the station tree visible
             FLAG_ROBODK_REFERENCES_VISIBLE = 16384      # Make the reference frames visible
+            FLAG_ROBODK_STATUSBAR_VISIBLE = 32768       # Make the status bar visible
             FLAG_ROBODK_NONE = 0                        # Disable everything
             FLAG_ROBODK_ALL = 0xFFFF                    # Enable everything
             FLAG_ROBODK_MENU_ACTIVE_ALL                 # Enable the menu only
