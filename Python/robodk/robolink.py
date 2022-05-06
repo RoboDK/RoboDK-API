@@ -3066,7 +3066,7 @@ class Robolink:
             return errors
 
     def setViewPose(self, pose):
-        """Set the pose of the wold reference frame with respect to the view (camera/screen)
+        """Set the pose of the world reference frame with respect to the view (camera/screen)
 
         :param pose: pose of the item with respect to its parent
         :type pose: :class:`~robodk.robomath.Mat`
@@ -3079,7 +3079,7 @@ class Robolink:
             self._check_status()
 
     def ViewPose(self):
-        """Get the pose of the wold reference frame with respect to the view (camera/screen)"""
+        """Get the pose of the world reference frame with respect to the view (camera/screen)"""
         with self._lock:
             self._check_connection()
             command = 'G_ViewPose'

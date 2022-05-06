@@ -97,20 +97,35 @@ def getAncestorPose(item_child, item_parent):
     :rtype: :class:`robomath.Mat`
     """
 
+    if item_child == item_parent:
+        return robomath.eye(4)
+
     parents = getAncestors(item_child)
     if item_parent not in parents:
         return None
 
-    pose = item_parent.Pose()
-    for parent in reversed(parents):
-        pose *= parent.Pose()
-    pose *= item_child.Pose()
-
+    items = [item_child] + parents
+    idx = items.index(item_parent)
+    pose = robomath.eye(4)
+    for i in range(idx - 1, -1, -1):
+        if items[i].Type() in [robolink.ITEM_TYPE_TOOL]:
+            pose *= items[i].PoseTool()
+        elif items[i].Type() in [robolink.ITEM_TYPE_ROBOT]:
+            pose *= items[i].SolveFK(items[i].Joints())
+        else:
+            pose *= items[i].Pose()
     return pose
 
 
 def getPoseWrt(item1, item2):
     """Gets the pose of an Item (item1) with respect to an another Item (item2).
+
+    .. code-block:: python
+
+        child.PoseWrt(child.Parent())  # will return a forward pose from the parent to the child
+        child.Parent().PoseWrt(child)  # will return an inverse pose from the child to the parent
+        tool.PoseWrt(tool.Parent())  # will return the PoseTool() of the tool
+        tool.PoseWrt(station)  # will return the absolute pose of the tool
 
     :param item1: The source Item
     :type item1: :class:`robolink.Item`
@@ -121,13 +136,16 @@ def getPoseWrt(item1, item2):
     :rtype: :class:`robomath.Mat`
     """
 
+    if item1 == item2:
+        return robomath.eye(4)
+
     parents1 = getAncestors(item1)
     if item2 in parents1:
         return getAncestorPose(item1, item2)
 
     parents2 = getAncestors(item2)
     if item1 in parents2:
-        return getAncestorPose(item2, item1)
+        return getAncestorPose(item2, item1).inv()
 
     lca = getLowestCommonAncestor(item1, item2)
     pose1 = getAncestorPose(item1, lca)
