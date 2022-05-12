@@ -14,8 +14,8 @@ camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object
 # (more information here: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink.Cam2D_Snapshot)
 #
 #  FOV: Field of view in degrees (atan(0.5*height/distance) of the sensor
-#  FOCAL_LENGHT: focal lenght in mm
-#  FAR_LENGHT: maximum working distance (in mm)
+#  FOCAL_LENGTH: focal length in mm
+#  FAR_LENGTH: maximum working distance (in mm)
 #  SIZE: size of the window in pixels (fixed) (width x height)
 #  SNAPSHOT: size of the snapshot image in pixels (width x height)
 #  BG_COLOR: background color (rgb color or named color: AARRGGBB)
@@ -32,33 +32,33 @@ camref = RDK.ItemUserPick('Select the Camera location (reference, tool or object
 # Examples to call Camd2D_Add:
 
 # Camera without a fixed window size and 1000 mm length
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000')
 
 # Stop script execution
 quit()
 
 # Camera with a fixed window size and 1000 mm length
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480')
 
 # Camera with a black background
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 BG_COLOR=black')
 
 # Camera without a fixed window size and high resolution snapshot
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480')
 
 # Depth view: 32 bit depth map (white=close, black=far)
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 DEPTH')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 DEPTH')
 
 # Minimized camera
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 MINIMIZED')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 MINIMIZED')
 
 # Do not show the camera window in the taskbar
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 NO_TASKBAR')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 NO_TASKBAR')
 
 # Customize the light
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=600 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 LIGHT_AMBIENT=red')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=600 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 LIGHT_AMBIENT=red')
 
 # Provoke a popup and allow the user to enter some parameters
 cam_id = RDK.Cam2D_Add(camref, 'POPUP')
@@ -79,4 +79,4 @@ print(str(win_id))
 path_library = RDK.getParam("PATH_LIBRARY")
 file_shader_fragment = path_library + '/Macros/Camera-Shaders/shader_fragment.glsl'
 file_shader_vertex = path_library + '/Macros/Camera-Shaders/shader_vertex.glsl'
-cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
+cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
