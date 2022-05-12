@@ -4,7 +4,7 @@ import tkinter
 import threading
 
 # Create a new window
-window = tkinter.Tk()
+window = Tk()
 
 
 # Close the window
