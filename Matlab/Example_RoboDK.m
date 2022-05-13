@@ -358,3 +358,33 @@ target2.setPose(pose2);
 % Add the circular move instruction:
 prog.MoveC(target1, target2)
 
+
+%% Rail tests:
+
+% Start the API
+RDK = Robolink();
+
+% Retrieve the robot
+robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
+
+% Make sure the robot is the robot arm, not the external axis (returns a
+% pointer to itself if it is the robot already)
+robot = robot.getLink(RDK.ITEM_TYPE_ROBOT);
+disp(robot.Name());
+
+robot.setJointLimits([-180; -180; -180; -180; -180; -180; 0],  [+180; +180; +180; +180; +180; +180; 5000]);
+[lower_limit, upper_limit] = robot.JointLimits();
+disp(lower_limit)
+disp(upper_limit)
+
+joints = robot.JointsHome();
+config = robot.JointsConfig(joints);
+disp(config)
+
+all_solutions = robot.SolveIK_All(robot.SolveFK(robot.Joints()));
+disp(all_solutions)
+
+
+
+
+

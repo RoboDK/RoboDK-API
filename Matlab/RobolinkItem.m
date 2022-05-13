@@ -427,6 +427,37 @@ classdef RobolinkItem < handle
             joints = this.link.rec_array();
             this.link.check_status();
         end
+        function joints = JointsHome(this)
+            % Return the home joints of a robot. The home joints can be manually set in the robot "Parameters" menu of the robot panel in RoboDK, then select "Set home position".
+            % Out 1 : double x n -> joints
+            this.link.check_connection();
+            command = 'G_Home';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            joints = this.link.rec_array();
+            this.link.check_status();
+        end
+        function setJointsHome(this, joints)
+            % Set the home position of the robot in the joint space.
+            % In  1 : double x n -> joints
+            this.link.check_connection();
+            command = 'S_Home';
+            this.link.send_line(command);
+            this.link.send_array(joints);
+            this.link.send_item(this);
+            this.link.check_status();
+        end
+        function item = getLink(this, item_type)
+            % Returns an item pointer (:class:`.Item`) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+            % In  1 : int item type (such as RDK.ITEM_TYPE_ROBOT)
+            this.link.check_connection();
+            command = 'G_LinkType';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_int(item_type);
+            item = this.link.rec_item();
+            this.link.check_status();
+        end
         function setJoints(this, joints)
             % Sets the current joints of a robot or a target. In case of a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
             % In  1 : double x n -> joints
@@ -439,7 +470,6 @@ classdef RobolinkItem < handle
         end
         function [lim_inf, lim_sup, joints_type] = JointLimits(this)
             % Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type)
-            % In  1 : double x n -> joints
             this.link.check_connection();
             command = 'G_RobLimits';
             this.link.send_line(command);
@@ -447,6 +477,18 @@ classdef RobolinkItem < handle
             lim_inf = this.link.rec_array()';
             lim_sup = this.link.rec_array()';
             joints_type = this.link.rec_int()/1000.0;
+            this.link.check_status();
+        end
+        function setJointLimits(this, lower_lim, upper_lim)
+            % Update the robot joint limits
+            % In  1 : double x n -> lower joint limits
+            % In  2 : double x n -> upper joint limits            
+            this.link.check_connection();
+            command = 'S_RobLimits';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_array(lower_lim);
+            this.link.send_array(upper_lim);
             this.link.check_status();
         end
         function setRobot(this, robot)
@@ -509,6 +551,18 @@ classdef RobolinkItem < handle
             pose = this.link.rec_pose();
             this.link.check_status();
         end
+        function config = JointsConfig(this, joints)
+            % Returns the robot configuration state for a set of robot joints.
+            % In  1 : double x n -> joints
+            % Out 1 : The configuration state is defined as: [REAR, LOWERARM, FLIP, turns].
+            this.link.check_connection();
+            command = 'G_Thetas_Config';
+            this.link.send_line(command);
+            this.link.send_array(joints);
+            this.link.send_item(this);            
+            config = this.link.rec_array()';
+            this.link.check_status();
+        end
         function joints = SolveIK(this, pose, joints_approx)
             % Computes the inverse kinematics for the specified robot and pose. The joints returned are the closest to the current robot configuration (see Solve_IK_All()).
             % In  1 : 4x4 matrix -> pose of the robot flange with respect to the base frame
@@ -540,7 +594,7 @@ classdef RobolinkItem < handle
             this.link.send_pose(pose);
             this.link.send_item(this);
             joints_list = this.link.rec_matrix();
-            if size(joints_list,1) > 6
+            if size(joints_list,1) == 6
                 joints_list = joints_list(1:end-2,:);
             end
             this.link.check_status();
