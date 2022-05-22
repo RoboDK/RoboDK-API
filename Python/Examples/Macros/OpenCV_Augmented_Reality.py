@@ -113,7 +113,7 @@ cam_name = 'Camera'
 cam_id = RDK.Item(cam_name, ITEM_TYPE_CAMERA)
 if cam_id.Valid():
     cam_id.Delete()  # Reusing the same camera doesn't apply the settings correctly
-camera_settings = 'FOCAL_LENGHT={0:0.0f} FOV={1:0.0f} BG_COLOR=black FAR_LENGTH=5000 SNAPSHOT={2:0.0f}x{3:0.0f} SIZE={2:0.0f}x{3:0.0f}'.format(focal_length, fovy, width, height)
+camera_settings = 'FOCAL_LENGTH={0:0.0f} FOV={1:0.0f} BG_COLOR=black FAR_LENGTH=5000 SNAPSHOT={2:0.0f}x{3:0.0f} SIZE={2:0.0f}x{3:0.0f}'.format(focal_length, fovy, width, height)
 cam_id = RDK.Cam2D_Add(cam_ref, camera_settings)
 cam_id.setName(cam_name)
 cam_id.setParent(cam_ref.Parent())

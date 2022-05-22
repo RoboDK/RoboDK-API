@@ -3220,8 +3220,8 @@ class Robolink:
 
             # Set parameters in mm and degrees:
             #  FOV: Field of view in degrees (2*atan(0.5*height/distance) of the sensor
-            #  FOCAL_LENGHT: focal lenght in mm
-            #  FAR_LENGHT: maximum working distance (in mm)
+            #  FOCAL_LENGTH: focal length in mm
+            #  FAR_LENGTH: maximum working distance (in mm)
             #  PIXELSIZE: Size of the pixel in micro meters (square size assumed)
             #  SIZE: size of the window in pixels (fixed) (width x height)
             #    WINDOWFIXED: If we specify the Size, make the size of the window exactly the same size
@@ -3243,30 +3243,30 @@ class Robolink:
             # Examples to call Camd2D_Add:
 
             # Camera without a fixed window size and 1000 mm length
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000')
 
             # Camera with a fixed window size and 1000 mm length
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480')
 
             # Camera with a black background
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 BG_COLOR=black')
 
             # Camera without a fixed window size and high resolution snapshot
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480')
 
             # Depth view: 32 bit depth map (white=close, black=far)
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 DEPTH')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 DEPTH')
 
             # Minimized camera
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 MINIMIZED')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 MINIMIZED')
 
             # Do not show the camera window in the taskbar
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 NO_TASKBAR')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 NO_TASKBAR')
 
             # Customize the light
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=600 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=1000 SIZE=640x480 LIGHT_AMBIENT=red')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=#FF00FF00 LIGHT_SPECULAR=black')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=600 SIZE=640x480 BG_COLOR=black LIGHT_AMBIENT=red LIGHT_DIFFUSE=black LIGHT_SPECULAR=white')
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=1000 SIZE=640x480 LIGHT_AMBIENT=red')
 
             # Provoke a popup and allow the user to enter some parameters
             cam_id = RDK.Cam2D_Add(camref, 'POPUP')
@@ -3287,7 +3287,7 @@ class Robolink:
             path_library = RDK.getParam("PATH_LIBRARY")
             file_shader_fragment = path_library + '/Macros/Camera-Shaders/shader_fragment.glsl'
             file_shader_vertex = path_library + '/Macros/Camera-Shaders/shader_vertex.glsl'
-            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGHT=6 FOV=32 FAR_LENGHT=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
+            cam_id = RDK.Cam2D_Add(camref, 'FOCAL_LENGTH=6 FOV=32 FAR_LENGTH=2500 SHADER_FRAGMENT=' + file_shader_fragment + ' SHADER_VERTEX=' + file_shader_vertex)
 
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Cam2D_Snapshot`, :func:`~robodk.robolink.Robolink.Cam2D_Close`, :func:`~robodk.robolink.Robolink.Cam2D_SetParams`
@@ -3629,7 +3629,7 @@ class Robolink:
 
         :param int mode_type: The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)
         :param int default_ref_flags: When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)
-        :param list custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the lenght of custom_ref_flags must match)
+        :param list custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the length of custom_ref_flags must match)
         :param list custom_ref_flags: Provide a matching list of flags to customize the movement behavior for specific items
         """
         with self._lock:
@@ -4330,7 +4330,7 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_pose(pose)
-            self.link._send_int(1 if apply else 0)            
+            self.link._send_int(1 if apply else 0)
             self.link._check_status()
 
     def GeometryPose(self):
@@ -5489,10 +5489,10 @@ class Item():
         :type target: :class:`~robodk.robomath.Mat`, list of joints or :class:`.Item`
         :param blocking: Set to True to wait until the robot finished the movement (default=True). Set to false to make it a non blocking call. Tip: If set to False, use robot.Busy() to check if the robot is still moving.
         :type blocking: bool
-        
+
         .. seealso:: :func:`~robodk.robolink.Item.MoveJ`, :func:`~robodk.robolink.Item.MoveL`, :func:`~robodk.robolink.Item.MoveC`, :func:`~robodk.robolink.Robolink.AddTarget`
-        
-        
+
+
         Example:
 
         .. code-block:: python
@@ -5509,8 +5509,8 @@ class Item():
 
             status = r.setParam("Driver", "Status")
             # Status is "1" a contact was found or "0" if not found (empty string means the driver does not support it)
-            
-            if len(status) > 0: 
+
+            if len(status) > 0:
                 # Important! Not all robot drivers support this "Driver Status" flag
                 # This works in simulation
                 if "1" in status:
@@ -5528,8 +5528,8 @@ class Item():
                     # The robot was not able to detect any interference
                     targetJoints = None
                     targetPose = None
-                    
-                    
+
+
         """
         self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, blocking)
         return self.SimulatorJoints()
@@ -5596,7 +5596,7 @@ class Item():
         :type minstep_deg: float
         :return: returns 0 if the movement is free of collision or any other issues. Otherwise it returns the number of pairs of objects that collided if there was a collision.
         :rtype: int
-        
+
         .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
         """
         with self.link._lock:
