@@ -36,6 +36,9 @@ def getAncestors(item, parent_types=None):
     :rtype: list of :class:`.Item`
     """
 
+    if parent_types and type(parent_types) is not list:
+        parent_types = [parent_types]
+
     parent = item
     parents = []
     while (parent is not None and parent.Type() not in [robolink.ITEM_TYPE_STATION, -1]):
@@ -118,7 +121,8 @@ def getAncestorPose(item_child, item_parent):
 
 
 def getPoseWrt(item1, item2):
-    """Gets the pose of an Item (item1) with respect to an another Item (item2).
+    """
+    Gets the pose of an Item (item1) with respect to an another Item (item2).
 
     .. code-block:: python
 
@@ -152,3 +156,36 @@ def getPoseWrt(item1, item2):
     pose2 = getAncestorPose(item2, lca)
 
     return pose2.inv() * pose1
+
+
+def setPoseAbsIK(item, pose_abs):
+    """
+    Set the pose of the item with respect to the absolute reference frame, accounting for inverse kinematics.
+    For instance, you can set the absolute pose of a ITEM_TYPE_TOOL directly without accounting for the robot kinematics.
+
+    .. code-block:: python
+
+        tool_item.setPoseAbs(eye(4))  # will set the tool TCP with regard to the flange to [0,0,0,0,0,0]
+        setPoseAbsIK(tool_item, eye(4))  # will set the tool TCP wityh regard to the station to [0,0,0,0,0,0]
+
+    :param item: The source Item
+    :type item: :class:`robolink.Item`
+    :param pose_abs: pose of the item with respect to the station reference
+    :type pose_abs: :class:`robomath.Mat`
+    """
+    if item.Type() == robolink.ITEM_TYPE_STATION:
+        return
+
+    parents = getAncestors(item)
+    if len(parents) == 1:
+        item.setPose(pose_abs)
+        return
+
+    if item.Type() in [robolink.ITEM_TYPE_TOOL]:
+        # Tool Item is not necessarily the active tool
+        pose_abs = pose_abs * item.PoseTool().inv() * item.Parent().PoseTool()
+        item = item.Parent()
+        parents.pop(0)
+
+    parent_pose_abs = getAncestorPose(parents[0], item.RDK().ActiveStation())
+    item.setPose(parent_pose_abs.inv() * pose_abs)
