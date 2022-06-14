@@ -219,13 +219,6 @@ def setPoseAbsIK(item, pose_abs):
         item.setPose(pose_abs)
         return
 
-    # Check if there is kinematics involved
-    if robolink.ITEM_TYPE_ROBOT not in [x.Type() for x in parents]:
-        parent_pose_abs = getAncestorPose(parents[0], item.RDK().ActiveStation())
-        pose = parent_pose_abs.inv() * pose_abs
-        item.setPose(pose)
-        return
-
     if item.Type() in [robolink.ITEM_TYPE_TOOL]:
         # Tool Item is not necessarily the active tool
         pose_abs = pose_abs * item.PoseTool().inv() * item.Parent().PoseTool()
@@ -241,4 +234,4 @@ def setPoseAbsIK(item, pose_abs):
             raise robolink.TargetReachError("No solution found for the desired pose.")
         item.setJoints(joints)
     else:
-        item.setPose(pose * item.PoseTool().inv())
+        item.setPose(pose)
