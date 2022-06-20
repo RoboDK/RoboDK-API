@@ -55,18 +55,28 @@ cam_mtx = o3d.camera.PinholeCameraIntrinsic(width=w, height=h, fx=fy, fy=fy, cx=
 cam_pose = cam_item.getLink(ITEM_TYPE_FRAME).Pose()
 
 #----------------------------------------------
-# Get the image from RoboDK
+# Get the depth map
+
+# Method 1: by socket (requires RoboDK v5.4.3-2022-06-20)
+depth32_socket = None
+bytes_img = RDK.Cam2D_Snapshot("", cam_item, 'DEPTH')
+if isinstance(bytes_img, bytes) and bytes_img != b'':
+    # By socket
+    depth32_socket = np.frombuffer(bytes_img, dtype='>u4')
+    w, h = depth32_socket[:2]
+    depth32_socket = np.flipud(np.reshape(depth32_socket[2:], (h, w))).astype(np.uint32)
+
+# Method 2: from disk
+depth32_disk = None
 with TemporaryDirectory(prefix='robodk_') as td:
     tf = td + '/temp.grey32'
     if RDK.Cam2D_Snapshot(tf, cam_item, 'DEPTH') == 1:
-        depth32 = np.fromfile(tf, dtype='>u4')
-        w, h = depth32[:2]
-        depth32 = np.flipud(np.reshape(depth32[2:], (h, w))).astype(np.uint32)
-    else:
-        raise
+        depth32_disk = np.fromfile(tf, dtype='>u4')
+        w, h = depth32_disk[:2]
+        depth32_disk = np.flipud(np.reshape(depth32_disk[2:], (h, w))).astype(np.uint32)
 
 # Scale it
-depth = (depth32 / np.iinfo(np.uint32).max) * cam_settings['FAR_LENGTH']
+depth = (depth32_socket / np.iinfo(np.uint32).max) * cam_settings['FAR_LENGTH']
 depth = depth.astype(np.uint16)
 
 #----------------------------------------------
