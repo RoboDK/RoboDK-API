@@ -22,6 +22,28 @@
 from robodk import robolink, robomath
 
 
+def getLinks(item, type_linked=robolink.ITEM_TYPE_ROBOT):
+    """Get all the items of a specific type for which getLink() returns the specified item.
+
+    :param item: The source Item
+    :type item: :class:`.Item`
+    :param int type_linked: type of items to check for a link
+
+    :return: A list of Items for which item.getLink return the specified item
+    :rtype: list of :class:`.Item`
+    """
+    item_type = item.Type()
+    links = []
+    for candidate in item.RDK().ItemList(type_linked):
+        if candidate == item:
+            continue
+
+        link = candidate.getLink(type_linked=item_type)
+        if link.Valid() and link == item:
+            links.append(candidate)
+    return links
+
+
 def getAncestors(item, parent_types=None):
     """
     Get the list of parents of an Item up to the Station, with type filtering (i.e. [ITEM_TYPE_FRAME, ITEM_TYPE_ROBOT, ..]).
@@ -35,6 +57,9 @@ def getAncestors(item, parent_types=None):
     :return: A list of parents, ordered from the Item's parent to the Station.
     :rtype: list of :class:`.Item`
     """
+
+    if parent_types and type(parent_types) is not list:
+        parent_types = [parent_types]
 
     parent = item
     parents = []
@@ -87,6 +112,7 @@ def getAncestorPose(item_child, item_parent):
     """
     Gets the pose between two Items that have a hierarchical relationship in the Station's tree.
     There can be N Items between the two.
+    This function will throw an error for synchronized axis.
 
     :param item_child: The child Item
     :type item_child: :class:`.Item`
@@ -106,19 +132,34 @@ def getAncestorPose(item_child, item_parent):
 
     items = [item_child] + parents
     idx = items.index(item_parent)
-    pose = robomath.eye(4)
+    poses = []
     for i in range(idx - 1, -1, -1):
         if items[i].Type() in [robolink.ITEM_TYPE_TOOL]:
-            pose *= items[i].PoseTool()
+            poses.append(items[i].PoseTool())
+
         elif items[i].Type() in [robolink.ITEM_TYPE_ROBOT]:
-            pose *= items[i].SolveFK(items[i].Joints())
+            if items[i].getLink(robolink.ITEM_TYPE_ROBOT) != items[i]:
+                continue
+
+            axes_links = getLinks(items[i], robolink.ITEM_TYPE_ROBOT_AXES)
+            if axes_links:
+                raise robolink.InputError("This function does not support synchronized axis")
+
+            joints = items[i].Joints().list()
+            poses.append(items[i].SolveFK(joints))
+
         else:
-            pose *= items[i].Pose()
-    return pose
+            poses.append(items[i].Pose())
+
+    pose_wrt = robomath.eye(4)
+    for pose in poses:  # this format is to ease debugging
+        pose_wrt *= pose
+    return pose_wrt
 
 
 def getPoseWrt(item1, item2):
-    """Gets the pose of an Item (item1) with respect to an another Item (item2).
+    """
+    Gets the pose of an Item (item1) with respect to an another Item (item2).
 
     .. code-block:: python
 
@@ -152,3 +193,45 @@ def getPoseWrt(item1, item2):
     pose2 = getAncestorPose(item2, lca)
 
     return pose2.inv() * pose1
+
+
+def setPoseAbsIK(item, pose_abs):
+    """
+    Set the pose of the item with respect to the absolute reference frame, accounting for inverse kinematics.
+    For instance, you can set the absolute pose of a ITEM_TYPE_TOOL directly without accounting for the robot kinematics.
+    This function will throw an error for synchronized axis.
+
+    .. code-block:: python
+
+        tool_item.setPoseAbs(eye(4))  # will SET the tool center point with respect to the station at [0,0,0,0,0,0]
+        setPoseAbsIK(tool_item, eye(4))  # will MOVE the robot so that the tool center point with regard to the station is [0,0,0,0,0,0]
+
+    :param item: The source Item
+    :type item: :class:`robolink.Item`
+    :param pose_abs: pose of the item with respect to the station reference
+    :type pose_abs: :class:`robomath.Mat`
+    """
+    if item.Type() == robolink.ITEM_TYPE_STATION:
+        return
+
+    parents = getAncestors(item)
+    if len(parents) == 1:
+        item.setPose(pose_abs)
+        return
+
+    if item.Type() in [robolink.ITEM_TYPE_TOOL]:
+        # Tool Item is not necessarily the active tool
+        pose_abs = pose_abs * item.PoseTool().inv() * item.Parent().PoseTool()
+        item = item.Parent()
+        parents.pop(0)
+
+    parent_pose_abs = getAncestorPose(parents[0], item.RDK().ActiveStation())
+    pose = parent_pose_abs.inv() * pose_abs
+
+    if item.Type() == robolink.ITEM_TYPE_ROBOT:
+        joints = item.SolveIK(pose, tool=item.PoseTool()).list()
+        if len(joints) != len(item.Joints().list()):
+            raise robolink.TargetReachError("No solution found for the desired pose.")
+        item.setJoints(joints)
+    else:
+        item.setPose(pose)

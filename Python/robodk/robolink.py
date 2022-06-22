@@ -3843,6 +3843,9 @@ class Item():
         else:
             return "RoboDK item (INVALID)"
 
+    def __hash__(self):
+        return int(self.item)
+
     def __eq__(self, other):
         if other is None:
             return False

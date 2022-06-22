@@ -44,11 +44,6 @@ def pause(seconds):
     time.sleep(seconds)
 
 
-def atan2(y, x):
-    """Returns angle of a 2D coordinate in the XY plane"""
-    return math.atan2(y, x)
-
-
 def sqrt(value):
     """Returns the square root of a value"""
     return math.sqrt(value)
@@ -71,6 +66,11 @@ def cos(value):
     return math.cos(value)
 
 
+def tan(value):
+    """Returns the tangent of an angle in radians"""
+    return math.tan(value)
+
+
 def asin(value):
     """Returns the arc sine in radians"""
     return math.asin(value)
@@ -79,6 +79,11 @@ def asin(value):
 def acos(value):
     """Returns the arc cosinus in radians"""
     return math.acos(value)
+
+
+def atan2(y, x):
+    """Returns angle of a 2D coordinate in the XY plane"""
+    return math.atan2(y, x)
 
 
 def name_2_id(str_name_id):
@@ -326,7 +331,7 @@ def toc():
 #------ Pose to xyzrpw and xyzrpw to pose------------
 def PosePP(x, y, z, r, p, w):
     """Create a pose from XYZRPW coordinates. The pose format is the one used by KUKA (XYZABC coordinates). This is function is the same as KUKA_2_Pose (with the difference that the input values are not a list). This function is used as "p" by the intermediate file when generating a robot program.
-    
+
     .. seealso:: :func:`~robodk.robomath.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
     a = r * math.pi / 180.0
@@ -343,7 +348,7 @@ def PosePP(x, y, z, r, p, w):
 
 def pose_2_xyzrpw(H):
     """Calculates the equivalent position (mm) and Euler angles (deg) as an [x,y,z,r,p,w] array, given a pose.
-    It returns the values that correspond to the following operation: 
+    It returns the values that correspond to the following operation:
     transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
 
     :param H: pose
@@ -437,8 +442,8 @@ def TxyzRxyz_2_Pose(xyzrpw):
 
 
 def Pose_2_TxyzRxyz(H):
-    """Retrieve the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz] given a pose. 
-    It returns the values that correspond to the following operation: 
+    """Retrieve the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz] given a pose.
+    It returns the values that correspond to the following operation:
     H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz).
 
     :param H: pose
@@ -613,7 +618,7 @@ def Adept_2_Pose(xyzrpw):
 
 
 def Pose_2_Adept(H):
-    """Converts a pose to an Adept target    
+    """Converts a pose to an Adept target
 
     :param H: pose
     :type H: :class:`.Mat`
@@ -663,7 +668,7 @@ def Pose_2_Comau(H):
 
 
 def Pose_2_Nachi(pose):
-    """Converts a pose to a Nachi XYZRPW target    
+    """Converts a pose to a Nachi XYZRPW target
 
     :param pose: pose
     :type pose: :class:`.Mat`
