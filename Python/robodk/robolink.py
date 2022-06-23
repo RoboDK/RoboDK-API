@@ -32,247 +32,247 @@ import time
 import threading
 
 # Tree item types
-ITEM_TYPE_STATION = 1
-ITEM_TYPE_ROBOT = 2
-ITEM_TYPE_FRAME = 3
-ITEM_TYPE_TOOL = 4
-ITEM_TYPE_OBJECT = 5
-ITEM_TYPE_TARGET = 6
-ITEM_TYPE_CURVE = 7
-ITEM_TYPE_PROGRAM = 8
-ITEM_TYPE_INSTRUCTION = 9
-ITEM_TYPE_PROGRAM_PYTHON = 10
-ITEM_TYPE_MACHINING = 11
-ITEM_TYPE_BALLBARVALIDATION = 12
-ITEM_TYPE_CALIBPROJECT = 13
-ITEM_TYPE_VALID_ISO9283 = 14
-ITEM_TYPE_FOLDER = 17
-ITEM_TYPE_ROBOT_ARM = 18
-ITEM_TYPE_CAMERA = 19
-ITEM_TYPE_GENERIC = 20
-ITEM_TYPE_ROBOT_AXES = 21
-ITEM_TYPE_NOTES = 22
+ITEM_TYPE_STATION = 1  #: Station :class:`.Item` (.rdk files)
+ITEM_TYPE_ROBOT = 2  #: Robot :class:`.Item` (.robot files)
+ITEM_TYPE_FRAME = 3  #: Reference frame :class:`.Item`
+ITEM_TYPE_TOOL = 4  #: Tool :class:`.Item` (.tool files or tools without geometry)
+ITEM_TYPE_OBJECT = 5  #: Object :class:`.Item` (.stl, .step, .iges, ...)
+ITEM_TYPE_TARGET = 6  #: Target :class:`.Item`
+ITEM_TYPE_CURVE = 7  #: Curve :class:`.Item`
+ITEM_TYPE_PROGRAM = 8  #: Program :class:`.Item`
+ITEM_TYPE_INSTRUCTION = 9  #: Program instruction :class:`.Item`
+ITEM_TYPE_PROGRAM_PYTHON = 10  #: Python program or macro :class:`.Item` (.py files)
+ITEM_TYPE_MACHINING = 11  #: Machining project :class:`.Item`
+ITEM_TYPE_BALLBARVALIDATION = 12  #: Ballbar validation test :class:`.Item`
+ITEM_TYPE_CALIBPROJECT = 13  #: Calibration :class:`.Item`
+ITEM_TYPE_VALID_ISO9283 = 14  #: ISO9283 validation test :class:`.Item`
+ITEM_TYPE_FOLDER = 17  #: Folder :class:`.Item`
+ITEM_TYPE_ROBOT_ARM = 18  #: Robot arm :class:`.Item` (subtype of ITEM_TYPE_ROBOT for robot arms)
+ITEM_TYPE_CAMERA = 19  #: Camera :class:`.Item`
+ITEM_TYPE_GENERIC = 20  #: Generic :class:`.Item`
+ITEM_TYPE_ROBOT_AXES = 21  #: Robot axes :class:`.Item` (subtype of ITEM_TYPE_ROBOT for axes)
+ITEM_TYPE_NOTES = 22  #: Notes :class:`.Item`
 
 # Instruction types
-INS_TYPE_INVALID = -1
-INS_TYPE_MOVE = 0
-INS_TYPE_MOVEC = 1
-INS_TYPE_CHANGESPEED = 2
-INS_TYPE_CHANGEFRAME = 3
-INS_TYPE_CHANGETOOL = 4
-INS_TYPE_CHANGEROBOT = 5
-INS_TYPE_PAUSE = 6
-INS_TYPE_EVENT = 7
-INS_TYPE_CODE = 8
-INS_TYPE_PRINT = 9
-INS_TYPE_ROUNDING = 10
+INS_TYPE_INVALID = -1  #: Invalid instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_MOVE = 0  #: Move (except MoveC) instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_MOVEC = 1  #: MoveC instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CHANGESPEED = 2  #: Set Speed instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CHANGEFRAME = 3  #: Set Frame instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CHANGETOOL = 4  #: Set Tool instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CHANGEROBOT = 5  #: Set Robot instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_PAUSE = 6  #: Pause instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_EVENT = 7  #: Simulation Event instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CODE = 8  #: Code instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_PRINT = 9  #: Show Message instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_ROUNDING = 10  #: Rounding instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 
 # Move types
-MOVE_TYPE_INVALID = -1
-MOVE_TYPE_JOINT = 1
-MOVE_TYPE_LINEAR = 2
-MOVE_TYPE_CIRCULAR = 3
-MOVE_TYPE_LINEARSEARCH = 5  # Such as ABB's SearchL function
+MOVE_TYPE_INVALID = -1  #: Invalid move type of a :class:`.ITEM_TYPE_INSTRUCTION`
+MOVE_TYPE_JOINT = 1  #: Joint move (MoveJ) type of a :class:`.ITEM_TYPE_INSTRUCTION`
+MOVE_TYPE_LINEAR = 2  #: Linear move (MoveL) type of a :class:`.ITEM_TYPE_INSTRUCTION`
+MOVE_TYPE_CIRCULAR = 3  #: Circular move (MoveC) type of a :class:`.ITEM_TYPE_INSTRUCTION`
+MOVE_TYPE_LINEARSEARCH = 5  #: Linear search move (SearchL) type of a :class:`.ITEM_TYPE_INSTRUCTION`
 
 # Station parameters request
-PATH_OPENSTATION = 'PATH_OPENSTATION'
-FILE_OPENSTATION = 'FILE_OPENSTATION'
-PATH_DESKTOP = 'PATH_DESKTOP'
+PATH_OPENSTATION = 'PATH_OPENSTATION'  #: Full path of the current station (.rdk file) request flag
+FILE_OPENSTATION = 'FILE_OPENSTATION'  #: File name of the current station (name of the .rdk file) request flag
+PATH_DESKTOP = 'PATH_DESKTOP'  # Full path to the desktop folder request flag
 
 # Script execution types
-RUNMODE_SIMULATE = 1  # performs the simulation moving the robot (default)
-RUNMODE_QUICKVALIDATE = 2  # performs a quick check to validate the robot movements
-RUNMODE_MAKE_ROBOTPROG = 3  # makes the robot program
-RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD = 4  # makes the robot program and updates it to the robot
-RUNMODE_MAKE_ROBOTPROG_AND_START = 5  # makes the robot program and starts it on the robot (independently from the PC)
-RUNMODE_RUN_ROBOT = 6  # moves the real robot from the PC (PC is the client, the robot behaves like a server)
+RUNMODE_SIMULATE = 1  #: Performs the simulation moving the robot (default)
+RUNMODE_QUICKVALIDATE = 2  #: Performs a quick check to validate the robot movements
+RUNMODE_MAKE_ROBOTPROG = 3  #: Makes the robot program
+RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD = 4  #: Makes the robot program and updates it to the robot
+RUNMODE_MAKE_ROBOTPROG_AND_START = 5  #: Makes the robot program and starts it on the robot (independently from the PC)
+RUNMODE_RUN_ROBOT = 6  #: Moves the real robot from the PC (PC is the client, the robot behaves like a server)
 
 # Program execution type
-PROGRAM_RUN_ON_SIMULATOR = 1  # Set the program to run on the simulator
-PROGRAM_RUN_ON_ROBOT = 2  # Set the program to run on the robot
+PROGRAM_RUN_ON_SIMULATOR = 1  #: Run on the simulator program flag
+PROGRAM_RUN_ON_ROBOT = 2  #: Run on the robot program flag
 
 # Robot connection status
-ROBOTCOM_PROBLEMS = -3
-ROBOTCOM_DISCONNECTED = -2
-ROBOTCOM_NOT_CONNECTED = -1
-ROBOTCOM_READY = 0
-ROBOTCOM_WORKING = 1
-ROBOTCOM_WAITING = 2
-ROBOTCOM_UNKNOWN = -1000
+ROBOTCOM_PROBLEMS = -3  #: Problems connection status
+ROBOTCOM_DISCONNECTED = -2  #: Disconnected connection status
+ROBOTCOM_NOT_CONNECTED = -1  #: Not connected connection status
+ROBOTCOM_READY = 0  #: Ready connection status
+ROBOTCOM_WORKING = 1  #: Working connection status
+ROBOTCOM_WAITING = 2  #: Problems connection status
+ROBOTCOM_UNKNOWN = -1000  #: Problems connection status
 
 # TCP calibration methods
-CALIBRATE_TCP_BY_POINT = 0
-CALIBRATE_TCP_BY_PLANE = 1
-CALIBRATE_TCP_BY_PLANE_SCARA = 4
+CALIBRATE_TCP_BY_POINT = 0  #: Calibrate TCP by point flag
+CALIBRATE_TCP_BY_PLANE = 1  #: Calibrate TCP by plane flag
+CALIBRATE_TCP_BY_PLANE_SCARA = 4  #: Calibrate TCP by plane (SCARA) flag
 
 # Reference frame calibration methods
-CALIBRATE_FRAME_3P_P1_ON_X = 0  # Calibrate by 3 points: [X, X+, Y+] (p1 on X axis)
-CALIBRATE_FRAME_3P_P1_ORIGIN = 1  # Calibrate by 3 points: [Origin, X+, XY+] (p1 is origin)
-CALIBRATE_FRAME_6P = 2  # Calibrate by 6 points
-CALIBRATE_TURNTABLE = 3  # Calibrate turntable
-CALIBRATE_TURNTABLE_2X = 4  # Calibrate a 2 axis turntable
+CALIBRATE_FRAME_3P_P1_ON_X = 0  #: Calibrate frame by 3 points: [X, X+, Y+] (p1 on X axis) flag
+CALIBRATE_FRAME_3P_P1_ORIGIN = 1  #: Calibrate frame by 3 points: [Origin, X+, XY+] (p1 is origin) flag
+CALIBRATE_FRAME_6P = 2  #: Calibrate frame by 6 points flag
+CALIBRATE_TURNTABLE = 3  #: Calibrate turntable flag
+CALIBRATE_TURNTABLE_2X = 4  #: Calibrate a 2 axis turntable flag
 
-# projection types (for AddCurve)
-PROJECTION_NONE = 0  # No curve projection
-PROJECTION_CLOSEST = 1  # The projection will be the closest point on the surface
-PROJECTION_ALONG_NORMAL = 2  # The projection will be done along the normal.
-PROJECTION_ALONG_NORMAL_RECALC = 3  # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
-PROJECTION_CLOSEST_RECALC = 4  # The projection will be the closest point on the surface and the normals will be recalculated
-PROJECTION_RECALC = 5  # The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
+# Projection types (for AddCurve)
+PROJECTION_NONE = 0  #: No curve/point projection
+PROJECTION_CLOSEST = 1  #: The projection will be the closest point on the surface
+PROJECTION_ALONG_NORMAL = 2  #: The projection will be done along the normal
+PROJECTION_ALONG_NORMAL_RECALC = 3  #: The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal
+PROJECTION_CLOSEST_RECALC = 4  #: The projection will be the closest point on the surface and the normals will be recalculated
+PROJECTION_RECALC = 5  #: The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
 
 # Euler type
-JOINT_FORMAT = -1  # Using joints (not poses)
-EULER_RX_RYp_RZpp = 0  # generic
-EULER_RZ_RYp_RXpp = 1  # ABB RobotStudio
-EULER_RZ_RYp_RZpp = 2  # Kawasaki, Adept, Staubli
-EULER_RZ_RXp_RZpp = 3  # CATIA, SolidWorks
-EULER_RX_RY_RZ = 4  # Fanuc, Kuka, Motoman, Nachi
-EULER_RZ_RY_RX = 5  # CRS
-EULER_QUEATERNION = 6  # ABB Rapid
+JOINT_FORMAT = -1  #: Joints (not poses) Euler format flag
+EULER_RX_RYp_RZpp = 0  #: RX:RYp:RZpp (generic) Euler format flag
+EULER_RZ_RYp_RXpp = 1  #: RZ:RYp:RXpp (ABB RobotStudio) Euler format flag
+EULER_RZ_RYp_RZpp = 2  #: RZ:RYp:RZpp (Kawasaki, Adept, Staubli) Euler format flag
+EULER_RZ_RXp_RZpp = 3  #: RZ:RXp:RZpp (CATIA, SolidWorks) Euler format flag
+EULER_RX_RY_RZ = 4  #: RX:RY:RZ (Fanuc, Kuka, Motoman, Nachi) Euler format flag
+EULER_RZ_RY_RX = 5  #: RZ:RY:RX (CRS) Euler format flag
+EULER_QUEATERNION = 6  #: Quaternion (ABB Rapid) Euler format flag
 
 # State of the RoboDK window
-WINDOWSTATE_HIDDEN = -1
-WINDOWSTATE_SHOW = 0
-WINDOWSTATE_MINIMIZED = 1
-WINDOWSTATE_NORMAL = 2
-WINDOWSTATE_MAXIMIZED = 3
-WINDOWSTATE_FULLSCREEN = 4
-WINDOWSTATE_CINEMA = 5
-WINDOWSTATE_FULLSCREEN_CINEMA = 6
-WINDOWSTATE_VIDEO = 7
+WINDOWSTATE_HIDDEN = -1  #: Hidden RoboDK window state
+WINDOWSTATE_SHOW = 0  #: Show RoboDK window state
+WINDOWSTATE_MINIMIZED = 1  #: Minimized RoboDK window state
+WINDOWSTATE_NORMAL = 2  #: Normal RoboDK window state
+WINDOWSTATE_MAXIMIZED = 3  #: Maximized RoboDK window state
+WINDOWSTATE_FULLSCREEN = 4  #: Fullscreen RoboDK window state
+WINDOWSTATE_CINEMA = 5  #: Cinema RoboDK window state
+WINDOWSTATE_FULLSCREEN_CINEMA = 6  #: Fullscreen and cinema RoboDK window state
+WINDOWSTATE_VIDEO = 7  #: Video RoboDK window state
 
 # Instruction program call type:
-INSTRUCTION_CALL_PROGRAM = 0
-INSTRUCTION_INSERT_CODE = 1
-INSTRUCTION_START_THREAD = 2
-INSTRUCTION_COMMENT = 3
-INSTRUCTION_SHOW_MESSAGE = 4
+INSTRUCTION_CALL_PROGRAM = 0  #: Program call instruction type of a Program call
+INSTRUCTION_INSERT_CODE = 1  #: Insert code instruction type of a Program call
+INSTRUCTION_START_THREAD = 2  #: Start a new process instruction type of a Program call
+INSTRUCTION_COMMENT = 3  #: Insert comment instruction type of a Program call
+INSTRUCTION_SHOW_MESSAGE = 4  #: Show message instruction type of a Program call
 
 # Object selection features
-FEATURE_NONE = 0
-FEATURE_SURFACE = 1  # Gets the surface point under the mouse cursor
-FEATURE_CURVE = 2
-FEATURE_POINT = 3
-FEATURE_OBJECT_MESH = 7  # Gets the mesh of the id provided
-FEATURE_SURFACE_PREVIEW = 8  #
-FEATURE_MESH = 9  # Gets the mesh under the mouse cursor for the provided object
+FEATURE_NONE = 0  #: None feature type flag
+FEATURE_SURFACE = 1  #: Surface (under the mouse cursor) feature type flag
+FEATURE_CURVE = 2  #: Curve feature type flag
+FEATURE_POINT = 3  #: Point feature type flag
+FEATURE_OBJECT_MESH = 7  #: Object mesh (using ID) feature type flag
+FEATURE_SURFACE_PREVIEW = 8  #: Surface preview feature type flag
+FEATURE_MESH = 9  #: Mesh (under the mouse cursor) feature flag
 # The following do not require providing an object
-FEATURE_HOVER_OBJECT_MESH = 10  # Gets the object and mesh under the mouse cursor
-FEATURE_HOVER_OBJECT = 11  # Gets the object under the mouse cursor and the selected type and feature
+FEATURE_HOVER_OBJECT_MESH = 10  #: Object mesh (under the mouse cursor) feature type flag
+FEATURE_HOVER_OBJECT = 11  #: Object feature (under the mouse cursor) feature type flag
 
 # Spray gun simulation:
-SPRAY_OFF = 0
-SPRAY_ON = 1
+SPRAY_OFF = 0  #: Spray OFF flag
+SPRAY_ON = 1  #: Spray ON flag
 
 # Collision checking state
-COLLISION_OFF = 0
-COLLISION_ON = 1
+COLLISION_OFF = 0  #: Collision OFF flag
+COLLISION_ON = 1  #: Collision ON flag
 
 # RoboDK Window Flags
-FLAG_ROBODK_TREE_ACTIVE = 1
-FLAG_ROBODK_3DVIEW_ACTIVE = 2
-FLAG_ROBODK_LEFT_CLICK = 4
-FLAG_ROBODK_RIGHT_CLICK = 8
-FLAG_ROBODK_DOUBLE_CLICK = 16
-FLAG_ROBODK_MENU_ACTIVE = 32
-FLAG_ROBODK_MENUFILE_ACTIVE = 64
-FLAG_ROBODK_MENUEDIT_ACTIVE = 128
-FLAG_ROBODK_MENUPROGRAM_ACTIVE = 256
-FLAG_ROBODK_MENUTOOLS_ACTIVE = 512
-FLAG_ROBODK_MENUUTILITIES_ACTIVE = 1024
-FLAG_ROBODK_MENUCONNECT_ACTIVE = 2048
-FLAG_ROBODK_WINDOWKEYS_ACTIVE = 4096
-FLAG_ROBODK_TREE_VISIBLE = 8192
-FLAG_ROBODK_REFERENCES_VISIBLE = 16384
-FLAG_ROBODK_STATUSBAR_VISIBLE = 32768
-FLAG_ROBODK_NONE = 0x00
-FLAG_ROBODK_ALL = 0xFFFF
-FLAG_ROBODK_MENU_ACTIVE_ALL = FLAG_ROBODK_MENU_ACTIVE | FLAG_ROBODK_MENUFILE_ACTIVE | FLAG_ROBODK_MENUEDIT_ACTIVE | FLAG_ROBODK_MENUPROGRAM_ACTIVE | FLAG_ROBODK_MENUTOOLS_ACTIVE | FLAG_ROBODK_MENUUTILITIES_ACTIVE | FLAG_ROBODK_MENUCONNECT_ACTIVE
+FLAG_ROBODK_TREE_ACTIVE = 1  #: RoboDK tree active flag
+FLAG_ROBODK_3DVIEW_ACTIVE = 2  #: RoboDK 3D view (3D mouse navigation) active flag
+FLAG_ROBODK_LEFT_CLICK = 4  #: RoboDK left click active flag
+FLAG_ROBODK_RIGHT_CLICK = 8  #: RoboDK right click active flag
+FLAG_ROBODK_DOUBLE_CLICK = 16  #: RoboDK double clicks active flag
+FLAG_ROBODK_MENU_ACTIVE = 32  #: RoboDK main menu (complete menu) active flag
+FLAG_ROBODK_MENUFILE_ACTIVE = 64  #: RoboDK File menu active flag
+FLAG_ROBODK_MENUEDIT_ACTIVE = 128  #: RoboDK Edit menu active flag
+FLAG_ROBODK_MENUPROGRAM_ACTIVE = 256  #: RoboDK Program menu active flag
+FLAG_ROBODK_MENUTOOLS_ACTIVE = 512  #: RoboDK Tools menu active flag
+FLAG_ROBODK_MENUUTILITIES_ACTIVE = 1024  #: RoboDK Utilities menu active flag
+FLAG_ROBODK_MENUCONNECT_ACTIVE = 2048  #: RoboDK Connect menu active flag
+FLAG_ROBODK_WINDOWKEYS_ACTIVE = 4096  #: RoboDK keystrokes active flag
+FLAG_ROBODK_TREE_VISIBLE = 8192  #: RoboDK tree visible flag
+FLAG_ROBODK_REFERENCES_VISIBLE = 16384  #: RoboDK reference frames visible flag
+FLAG_ROBODK_STATUSBAR_VISIBLE = 32768  #: RoboDK status bar visible flag
+FLAG_ROBODK_NONE = 0x00  #: RoboDK disable all flag
+FLAG_ROBODK_ALL = 0xFFFF  #: RoboDK enable all flag
+FLAG_ROBODK_MENU_ACTIVE_ALL = FLAG_ROBODK_MENU_ACTIVE | FLAG_ROBODK_MENUFILE_ACTIVE | FLAG_ROBODK_MENUEDIT_ACTIVE | FLAG_ROBODK_MENUPROGRAM_ACTIVE | FLAG_ROBODK_MENUTOOLS_ACTIVE | FLAG_ROBODK_MENUUTILITIES_ACTIVE | FLAG_ROBODK_MENUCONNECT_ACTIVE  #: RoboDK enable menu only flag
 
 # RoboDK Item Flags
-FLAG_ITEM_SELECTABLE = 1
-FLAG_ITEM_EDITABLE = 2
-FLAG_ITEM_DRAGALLOWED = 4
-FLAG_ITEM_DROPALLOWED = 8
-FLAG_ITEM_ENABLED = 32
+FLAG_ITEM_SELECTABLE = 1  #: Allow selecting the item flag
+FLAG_ITEM_EDITABLE = 2  #: Allow editing the item flag
+FLAG_ITEM_DRAGALLOWED = 4  #: Allow dragging the item flag
+FLAG_ITEM_DROPALLOWED = 8  #: Allow dropping nested items flag
+FLAG_ITEM_ENABLED = 32  #: Enable this item in the tree flag
 FLAG_ITEM_AUTOTRISTATE = 64
 FLAG_ITEM_NOCHILDREN = 128
 FLAG_ITEM_USERTRISTATE = 256
-FLAG_ITEM_NONE = 0
-FLAG_ITEM_ALL = 64 + 32 + 8 + 4 + 2 + 1
+FLAG_ITEM_NONE = 0  #: Disable everything item flag
+FLAG_ITEM_ALL = 64 + 32 + 8 + 4 + 2 + 1  #: Enable everything item flag
 
 # Robot/mechanism types
-MAKE_ROBOT_1R = 1
-MAKE_ROBOT_2R = 2
-MAKE_ROBOT_3R = 3
-MAKE_ROBOT_1T = 4
-MAKE_ROBOT_2T = 5
-MAKE_ROBOT_3T = 6
-MAKE_ROBOT_6DOF = 7
-MAKE_ROBOT_7DOF = 8
-MAKE_ROBOT_SCARA = 9
-MAKE_ROBOT_GRIPPER = 10
-MAKE_ROBOT_6COBOT = 11
-MAKE_ROBOT_1T1R = 12
-MAKE_ROBOT_5XCNC = 13
-MAKE_ROBOT_3T1R = 15
-MAKE_ROBOT_GENERIC = 16
+MAKE_ROBOT_1R = 1  #: 1R model type flag
+MAKE_ROBOT_2R = 2  #: 2R model type flag
+MAKE_ROBOT_3R = 3  #: 3R model type flag
+MAKE_ROBOT_1T = 4  #: 1T model type flag
+MAKE_ROBOT_2T = 5  #: 2T model type flag
+MAKE_ROBOT_3T = 6  #: 3T model type flag
+MAKE_ROBOT_6DOF = 7  #: 6 DOF robot model type flag
+MAKE_ROBOT_7DOF = 8  #: 7 DOF robot model type flag
+MAKE_ROBOT_SCARA = 9  #: SCARA robot model type flag
+MAKE_ROBOT_GRIPPER = 10  #: Gripper model type flag
+MAKE_ROBOT_6COBOT = 11  #: 6 DOF cobot model type flag
+MAKE_ROBOT_1T1R = 12  #: 1T1R model type flag
+MAKE_ROBOT_5XCNC = 13  #: 5 axis CNC model type flag
+MAKE_ROBOT_3T1R = 15  #: 3T1R model type flag
+MAKE_ROBOT_GENERIC = 16  #: Generic model type flag
 
 # Path Error bit mask
-ERROR_KINEMATIC = 0b001  # One or more points is not reachable
-ERROR_PATH_LIMIT = 0b010  # The path reaches the limit of joint axes
-ERROR_PATH_SINGULARITY = 0b100  # The robot reached a singularity point
-ERROR_PATH_NEARSINGULARITY = 0b1000  # The robot is too close to a singularity. Lower the singularity tolerance to allow the robot to continue.
-ERROR_COLLISION = 0b100000  # Collision detected
+ERROR_KINEMATIC = 0b001  #: One or more points is not reachable path error flag
+ERROR_PATH_LIMIT = 0b010  #: The path reaches the limit of joint axes path error flag
+ERROR_PATH_SINGULARITY = 0b100  #: The robot reached a singularity point path error flag
+ERROR_PATH_NEARSINGULARITY = 0b1000  #: The robot is too close to a singularity path error flag
+ERROR_COLLISION = 0b100000  #: Collision detected path error flag
 
 # Interactive selection option (for 3D mouse behavior and setInteractiveMode)
-SELECT_RESET = -1
-SELECT_NONE = 0
-SELECT_RECTANGLE = 1
-SELECT_ROTATE = 2
-SELECT_ZOOM = 3
-SELECT_PAN = 4
-SELECT_MOVE = 5
-SELECT_MOVE_SHIFT = 6
-SELECT_MOVE_CLEAR = 7
+SELECT_RESET = -1  #: Reset selection flag
+SELECT_NONE = 0  #: Reset selection flag
+SELECT_RECTANGLE = 1  #: Rectangle selection flag
+SELECT_ROTATE = 2  #: Rotate selection flag
+SELECT_ZOOM = 3  #: Zoom selection flag
+SELECT_PAN = 4  #: Pan selection flag
+SELECT_MOVE = 5  #: Move selection flag
+SELECT_MOVE_SHIFT = 6  #: Move Shift selection flag
+SELECT_MOVE_CLEAR = 7  #: Move Clear selection flag
 
 # Bit masks to show specific reference frames and customize the display of references (for picking references with the 3D mouse and setInteractiveMode)
-DISPLAY_REF_DEFAULT = -1
-DISPLAY_REF_NONE = 0
-DISPLAY_REF_TX = 0b001
-DISPLAY_REF_TY = 0b010
-DISPLAY_REF_TZ = 0b100
-DISPLAY_REF_RX = 0b001000
-DISPLAY_REF_RY = 0b010000
-DISPLAY_REF_RZ = 0b100000
-DISPLAY_REF_PXY = 0b001000000
-DISPLAY_REF_PXZ = 0b010000000
-DISPLAY_REF_PYZ = 0b100000000
+DISPLAY_REF_DEFAULT = -1  #: Default reference frame visibility flag
+DISPLAY_REF_NONE = 0  #: None reference frame visibility flag
+DISPLAY_REF_TX = 0b001  #: TX reference frame visibility flag
+DISPLAY_REF_TY = 0b010  #: TY reference frame visibility flag
+DISPLAY_REF_TZ = 0b100  #: TZ reference frame visibility flag
+DISPLAY_REF_RX = 0b001000  #: RX reference frame visibility flag
+DISPLAY_REF_RY = 0b010000  #: RY reference frame visibility flag
+DISPLAY_REF_RZ = 0b100000  #: RZ reference frame visibility flag
+DISPLAY_REF_PXY = 0b001000000  #: Plane XY reference frame visibility flag
+DISPLAY_REF_PXZ = 0b010000000  #: Plane XZ reference frame visibility flag
+DISPLAY_REF_PYZ = 0b100000000  #: Plane YZ reference frame visibility flag
 
-VISIBLE_REFERENCE_DEFAULT = -1
-VISIBLE_REFERENCE_ON = 1
-VISIBLE_REFERENCE_OFF = 0
-VISIBLE_ROBOT_NONE = 0
-VISIBLE_ROBOT_FLANGE = 0x01
-VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1
-VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2
-VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3
-VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4
-VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5
-VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6
-VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7
-VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8
-VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9
-VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10
-VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11
-VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12
-VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13
-VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14
-VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15
-VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16
-VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB
-VISIBLE_ROBOT_ALL = 0x7FFFFFFF
-VISIBLE_ROBOT_ALL_REFS = 0x15555555
+VISIBLE_REFERENCE_DEFAULT = -1  #: Default Item visibility flag
+VISIBLE_REFERENCE_ON = 1  #: Visible (ON) Item visibility flag
+VISIBLE_REFERENCE_OFF = 0  #: Hidden (OFF) Item visibility flag
+VISIBLE_ROBOT_NONE = 0  #: None Robot visibility flag
+VISIBLE_ROBOT_FLANGE = 0x01  #: Flange robot visibility flag
+VISIBLE_ROBOT_AXIS_Base_3D = 0x01 << 1  #: Axis base 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_Base_REF = 0x01 << 2  #: Axis base reference robot visibility flag
+VISIBLE_ROBOT_AXIS_1_3D = 0x01 << 3  #: Axis 1 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_1_REF = 0x01 << 4  #: Axis 1 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_2_3D = 0x01 << 5  #: Axis 2 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_2_REF = 0x01 << 6  #: Axis 2 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_3_3D = 0x01 << 7  #: Axis 3 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_3_REF = 0x01 << 8  #: Axis 3 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_4_3D = 0x01 << 9  #: Axis 4 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_4_REF = 0x01 << 10  #: Axis 4 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_5_3D = 0x01 << 11  #: Axis 5 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_5_REF = 0x01 << 12  #: Axis 5 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_6_3D = 0x01 << 13  #: Axis 6 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_6_REF = 0x01 << 14  #: Axis 6 reference robot visibility flag
+VISIBLE_ROBOT_AXIS_7_3D = 0x01 << 15  #: Axis 7 3D robot visibility flag
+VISIBLE_ROBOT_AXIS_7_REF = 0x02 << 16  #: Axis 7 reference robot visibility flag
+VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB  #: Default robot visibility flag
+VISIBLE_ROBOT_ALL = 0x7FFFFFFF  #: All robot visibility flag
+VISIBLE_ROBOT_ALL_REFS = 0x15555555  #: All references robot visibility flag
 
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     # To be added in the future. Requires Python 3.6 or later
@@ -280,7 +280,7 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     from enum import IntEnum
 
     class InstructionListJointsFlags(IntEnum):
-        """InstructionListJoints output flag"""
+        """InstructionListJoints output flags"""
         Position = 1
         Speed = 2
         SpeedAndAcceleration = 3
@@ -1810,7 +1810,7 @@ class Robolink:
         .. code-block:: python
             :caption: Available projection types
 
-            PROJECTION_NONE                = 0      # No projection
+            PROJECTION_NONE                = 0 # No projection
             PROJECTION_CLOSEST             = 1 # The projection will be the closest point on the surface
             PROJECTION_ALONG_NORMAL        = 2 # The projection will be done along the normal.
             PROJECTION_ALONG_NORMAL_RECALC = 3 # The projection will be done along the normal. Furthermore, the normal will be recalculated according to the surface normal.
@@ -3045,14 +3045,14 @@ class Robolink:
 
         .. code-block:: python
 
-            from robodk.robolink import *           # import the robolink library
-            RDK = Robolink()                        # connect to the RoboDK API (RoboDK starts if it has not started
-            robot = RDK.Item('', ITEM_TYPE_ROBOT)   # use the first available robot
+            from robodk.robolink import *            # import the robolink library
+            RDK = Robolink()                         # connect to the RoboDK API (RoboDK starts if it has not started
+            robot = RDK.Item('', ITEM_TYPE_ROBOT)    # use the first available robot
             RDK.ProgramStart('Prog1','C:/MyProgramFolder/', "ABB_RAPID_IRC5", robot)  # specify the program name for program generation
             # RDK.setRunMode(RUNMODE_MAKE_ROBOTPROG) # redundant
-            robot.MoveJ(target)                     # make a simulation
+            robot.MoveJ(target)                      # make a simulation
             ...
-            RDK.Finish()                            # Provokes the program generation (disconnects the API)
+            RDK.Finish()                             # Provokes the program generation (disconnects the API)
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setRunMode`, :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Robolink.Finish`
         """
@@ -3814,12 +3814,12 @@ class Item():
 
     .. code-block:: python
 
-            from robodk.robolink import *                  # import the robolink library
-            RDK = Robolink()                        # connect to the RoboDK API (RoboDK starts if it has not started
-            tool  = RDK.Item('Tool')                # Get an item named Tool (name in the RoboDK station tree)
-            robot = RDK.Item('', ITEM_TYPE_ROBOT)   # Get the first available robot
-            target = RDK.Item('Target 1', ITEM_TYPE_TARGET)   # Get a target called "Target 1"
-            frame = RDK.ItemUserPick('Select a reference frame', ITEM_TYPE_FRAME)   # Promt the user to select a reference frame
+            from robodk.robolink import *   # Import the robolink library
+            RDK = Robolink()                # Connect to the RoboDK API (RoboDK starts if it has not started
+            tool  = RDK.Item('Tool')                         # Get an item named Tool (name in the RoboDK station tree)
+            robot = RDK.Item('', ITEM_TYPE_ROBOT)            # Get the first available robot
+            target = RDK.Item('Target 1', ITEM_TYPE_TARGET)  # Get a target called "Target 1"
+            frame = RDK.ItemUserPick('Select a reference frame', ITEM_TYPE_FRAME)  # Prompt the user to select a reference frame
 
             robot.setPoseFrame(frame)
             robot.setPoseTool(tool)
@@ -3982,7 +3982,7 @@ class Item():
 
         .. code-block:: python
 
-            from robodk.robolink import *                  # import the robolink library
+            from robodk.robolink import *           # import the robolink library
             RDK = Robolink()                        # connect to the RoboDK API (RoboDK starts if it has not started
             tool  = RDK.Item('Tool')                # Retrieve an item named tool
             if not tool.Valid():
@@ -5765,7 +5765,7 @@ class Item():
 
             from robodk.robolink import *      # import the robolink library
             from robodk.robomath import *
-            RDK = Robolink()            # Connect to the RoboDK API
+            RDK = Robolink()                   # Connect to the RoboDK API
             prog = RDK.Item('MainProgram', ITEM_TYPE_PROGRAM)
             prog.RunProgram()
             while prog.Busy():

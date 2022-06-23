@@ -33,7 +33,7 @@ import time
 #----------------------------------------------------
 #--------      Generic math usage     ---------------
 
-pi = math.pi
+pi = math.pi  #: PI
 
 
 def pause(seconds):
