@@ -3,8 +3,8 @@
 # Documentation: https://robodk.com/doc/en/RoboDK-API.html
 # Reference:     https://robodk.com/doc/en/PythonAPI/index.html
 #
-# This example shows how to retrieve and display the point cloud from the 32-bit depth map of a simulated camera.
-# It uses Open3D for converting the depth map to a 3D mesh and for vizualisation.
+# This example shows how to reconstruct a mesh from the 32-bit depth map of a simulated camera.
+# It uses Open3D for converting the depth map to a point cloud, to reconstruct the mesh and for vizualisation.
 # Left-click the view to move the mesh in the viewer.
 
 from robodk.robolink import *
@@ -13,13 +13,23 @@ import numpy as np
 import open3d as o3d
 
 #----------------------------------
+# You might need to play arround these settings depending on the object/setup
+CAMERA_NAME = 'RGB-D Camera'
+
+O3D_NORMALS_K_SIZE = 100
+O3D_MESH_POISSON_DEPTH = 9
+O3D_MESH_DENSITIES_QUANTILE = 0.05
+O3D_DISPLAY_POINTS = False
+O3D_DISPLAY_WIREFRAME = True
+
+#----------------------------------
 # Get the simulated camera from RoboDK
 RDK = Robolink()
 
-cam_item = RDK.Item('Depth Camera', ITEM_TYPE_CAMERA)
+cam_item = RDK.Item(CAMERA_NAME, ITEM_TYPE_CAMERA)
 if not cam_item.Valid():
-    cam_item = RDK.Cam2D_Add(RDK.ActiveStation(), 'DEPTH')
-    cam_item.setName('Depth Camera')
+    cam_item = RDK.Cam2D_Add(RDK.ActiveStation())
+    cam_item.setName(CAMERA_NAME)
 cam_item.setParam('Open', 1)
 
 
@@ -77,21 +87,23 @@ with TemporaryDirectory(prefix='robodk_') as td:
 
 # Scale it
 depth = (depth32_socket / np.iinfo(np.uint32).max) * cam_settings['FAR_LENGTH']
-depth = depth.astype(np.uint16)
+depth = depth.astype(np.float32)
 
 #----------------------------------------------
 # Convert to point cloud, approximate mesh
 pcd = o3d.geometry.PointCloud.create_from_depth_image(o3d.geometry.Image(depth), cam_mtx)
+pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])  # Align with camera view
 pcd.estimate_normals()
-pcd.orient_normals_consistent_tangent_plane(100)
+pcd.orient_normals_consistent_tangent_plane(O3D_NORMALS_K_SIZE)
 
-mesh_poisson, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=9)
-vertices_to_remove = densities < np.quantile(densities, 0.05)
+mesh_poisson, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=O3D_MESH_POISSON_DEPTH)
+vertices_to_remove = densities < np.quantile(densities, O3D_MESH_DENSITIES_QUANTILE)
 mesh_poisson.remove_vertices_by_mask(vertices_to_remove)
+mesh_poisson.paint_uniform_color([0.5, 0.5, 0.5])
 
 #----------------------------------------------
 # Show it to the world!
-o3d.visualization.draw_geometries([pcd, mesh_poisson], mesh_show_back_face=True, mesh_show_wireframe=True)
+o3d.visualization.draw_geometries([pcd, mesh_poisson] if O3D_DISPLAY_POINTS else [mesh_poisson], mesh_show_back_face=True, mesh_show_wireframe=O3D_DISPLAY_WIREFRAME)
 
 #----------------------------------------------
 # Import the mesh into RoboDK
@@ -100,5 +112,6 @@ with TemporaryDirectory(prefix='robodk_') as td:
     o3d.io.write_triangle_mesh(tf, mesh_poisson, write_ascii=True)
     mesh_item = RDK.AddFile(tf)
 
-mesh_item.setPose(cam_pose)
-mesh_item.setColor([0, 0, 1, 0.75])
+mesh_item.setPose(cam_pose * robomath.rotx(robomath.pi))
+mesh_item.setColor([0.5, 0.5, 0.5, 1])
+mesh_item.setName("Reconstructed Mesh")
