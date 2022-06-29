@@ -1,25 +1,14 @@
-/.vs
-/C#/API/.vs/RoboDkApi/v15
-/C#/API/bin/Debug
-/C#/API/obj
-/C#/Example/.vs/RoboDKSampleSolution/v15
-/C#/Example/RoboDKSampleProject/obj
-/Visual Basic/Example/obj/x86
 doxygen_output
 _site
 packages
 /C#/API/log.txt
-C#/API/TesterProject/bin/
-Python/__pycache__/
 *.bak
-Python/unit_tests/__pycache__/TestInstructionListJoints.cpython-37.pyc
 Python/unit_tests/report.html
-Python/unit_tests/__pycache__/
-C#/APIExamples/SimpleApplication/bin/
-C#/APIExamples/SimpleNetcoreApplication/bin/
-C#/APIExamples/UIExample/bin/
-C#/APIUnitTest/bin/
-C/RoboDK C API/.vs/*
-C/RoboDK C API/RoboDK_C_API/x64/*
-C/RoboDK C API/x64/*
-C/RoboDK C API/RoboDK_C_API/RoboDK_C_API.vcxproj.user
+
+**/__pycache__/**
+**/bin/**
+**/obj/**
+*.user
+**/.vs/**
+**/x64/**
+**/x86/**
