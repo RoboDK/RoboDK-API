@@ -4628,10 +4628,12 @@ class Item():
         :param int feature_id:  used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
 
         :return: List of points
+        
+        
+        Example 1 - Display the XYZ position of a selected object
 
         .. code-block:: python
 
-            # Example to display the XYZ position of a selected object
             from robodk.robolink import *    # Import the RoboDK API
             RDK = Robolink()          # Start RoboDK API
 
@@ -4649,6 +4651,45 @@ class Item():
                     print("Object Not Selected. Select a point in the object surface...")
 
                 robomath.pause(0.1)
+        
+        
+        Example 2 - Display the mesh of a selected object surface
+        
+        .. code-block:: python
+        
+            from robolink import *    # Import the RoboDK API
+            import time
+            RDK = Robolink()          # Start RoboDK API
+
+            while True:
+                # Check if we have an object under the mouse cursor
+                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
+                if object.Valid() and (object.type == ITEM_TYPE_OBJECT or object.type == ITEM_TYPE_TOOL):
+                
+                    # Retrieve the selected feature on the object
+                    is_selected, feature_type, feature_id = object.SelectedFeature()
+
+                    if is_selected and feature_type == FEATURE_SURFACE:
+                        # Retrieve the mesh related to the surface ID
+                        point_mesh, name_feature = object.GetPoints(FEATURE_OBJECT_MESH, feature_id)  
+                        print("Selected %i (%i):  %s" % (feature_id, feature_type, name_feature))
+                        print("Mesh points:")
+                        for xyzijk in point_mesh:
+                            print(xyzijk)
+                        
+                        # Clear selection or manipulate as necessary
+                        RDK.setSelection([])
+                        
+                    else:
+                        print("Click the surface to see the mesh")
+                        time.sleep(0.1)
+                        continue
+
+                else:
+                    print("Object Not Selected. The surface of an object or a tool")
+
+                time.sleep(0.1)
+        
 
         .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`
         """
