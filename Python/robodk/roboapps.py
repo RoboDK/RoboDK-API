@@ -564,7 +564,7 @@ class AppSettings:
         bytes_data = rdk.getParam(param_backup, False)
         if len(bytes_data) > 0:
             from robodk.robodialogs import ShowMessageYesNoCancel
-            result = ShowMessageYesNoCancel("Something went wrong with the last test.\nRecover lost data?", "Auto recover")
+            result = ShowMessageYesNoCancel("Something went wrong with the last settings.\nRecover lost data?", "Auto recover")
             if result is None:
                 return False
 
@@ -624,7 +624,7 @@ class AppSettings:
         scroll.setWidget(content)
         layoutQtWidgetGrid.addWidget(scroll)
 
-        windowQt = QtWidgets.QWidget()
+        windowQt = QtWidgets.QWidget(wparent)
         windowQt.setLayout(layoutQtWidgetGrid)
 
         obj = self
@@ -705,13 +705,19 @@ class AppSettings:
             command_quit()
 
         def command_cancel():
+            r = QtWidgets.QMessageBox.warning(windowQt, "Save settings?", "Do you want to save the current settings before closing?", QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+            if r == QtWidgets.QMessageBox.StandardButton.Yes:
+                read_fields()
+                self.Save()
             command_quit()
 
         def command_defaults():
-            while big_form.rowCount():
-                big_form.removeRow(0)
-            self.SetDefaults()
-            add_fields()
+            r = QtWidgets.QMessageBox.warning(windowQt, "Apply default settings?", "Do you want to discard the current settings and load the default settings?", QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+            if r == QtWidgets.QMessageBox.StandardButton.Yes:
+                while big_form.rowCount():
+                    big_form.removeRow(0)
+                self.SetDefaults()
+                add_fields()
 
         def command_reload():
             while big_form.rowCount():
@@ -738,7 +744,7 @@ class AppSettings:
 
         # Creating the Cancel button
         buttonCancel = QtWidgets.QPushButton(windowQt)
-        buttonCancel.setText("Cancel")
+        buttonCancel.setText("Discard")
         buttonCancel.clicked.connect(command_cancel)
 
         # Creating the OK button
@@ -896,13 +902,19 @@ class AppSettings:
             command_quit()
 
         def command_cancel():
+            r = tkinter.messagebox.askyesno("Save settings?", "Do you want to save the current settings before closing?")
+            if r:
+                read_fields()
+                self.Save()
             command_quit()
 
         def command_defaults():
-            for widget in frame.winfo_children():
-                widget.destroy()
-            self.SetDefaults()
-            add_fields()
+            r = tkinter.messagebox.askyesno("Apply default settings?", "Do you want to discard the current settings and load the default settings?")
+            if r:
+                for widget in frame.winfo_children():
+                    widget.destroy()
+                self.SetDefaults()
+                add_fields()
 
         def command_reload():
             for widget in frame.winfo_children():
@@ -924,20 +936,23 @@ class AppSettings:
             callback_frame(windowTk)
 
         row = tkinter.Frame(windowTk)
-
+        id_row = 0
         if show_default_button:
-            b_defaults = tkinter.Button(row, text='Set defaults', command=command_defaults, width=8)
-            b_defaults.pack(side=tkinter.LEFT, padx=5, pady=5)
+            b_defaults = tkinter.Button(row, text='Set defaults', command=command_defaults)
+            b_defaults.grid(row=id_row, column=0, columnspan=2, sticky=tkinter.NSEW)
+            id_row += 1
 
         # Creating the Cancel button
-        b_cancel = tkinter.Button(row, text='Cancel', command=command_cancel, width=8)
-        b_cancel.pack(side=tkinter.LEFT, padx=5, pady=5)
+        b_cancel = tkinter.Button(row, text='Discard', command=command_cancel)
+        b_cancel.grid(row=id_row, column=1, sticky=tkinter.NSEW)
 
         # Creating the OK button
-        b_ok = tkinter.Button(row, text='Save', command=command_ok, width=8)
-        b_ok.pack(side=tkinter.RIGHT, padx=5, pady=5)
+        b_ok = tkinter.Button(row, text='Save', command=command_ok)
+        b_ok.grid(row=id_row, column=0, sticky=tkinter.NSEW)
 
-        row.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
+        row.grid_columnconfigure(0, weight=1)
+        row.grid_columnconfigure(1, weight=1)
+        row.pack(side=tkinter.BOTTOM, fill=tkinter.X, padx=5, pady=5)
 
         windowTk.title(windowtitle)
 
