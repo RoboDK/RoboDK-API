@@ -699,7 +699,7 @@ class Robolink:
 
     DEBUG = False  # Debug output through console
     COM = None  # tcpip com
-    _lock = threading.Lock()
+    _lock = None
     ARGUMENTS = []  # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     CLOSE_STD_OUT = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
     PORT = -1  # current port
@@ -1081,6 +1081,7 @@ class Robolink:
         In  6 (optional) : quit_on_close -> Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
 
         """
+        self._lock = threading.Lock()
         with self._lock:
             if type(args) is str:
                 if args != "":
