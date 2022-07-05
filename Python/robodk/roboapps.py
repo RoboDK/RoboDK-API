@@ -19,8 +19,6 @@
 #     https://robodk.com/doc/en/RoboDK-API.html
 #     https://robodk.com/doc/en/PythonAPI/index.html
 # --------------------------------------------
-
-
 """
 App/actions control utilities.
 
@@ -122,7 +120,15 @@ General utilities
 
 
 def Str2FloatList(str_values, expected_nvalues=3):
-    """Convert a string into a list of values. It returns None if the array is smaller than the expected size."""
+    """Convert a string into a list of floats. It returns None if the array is smaller than the expected size.
+
+    :param str_values: The string containing a list of floats
+    :type str_values: list of str
+    :param expected_nvalues: Expected number of values in the string list, defaults to 3
+    :type expected_nvalues: int, optional
+    :return: The list of floats
+    :rtype: list of float
+    """
     import re
     if str_values is None:
         return None
@@ -442,11 +448,12 @@ class AppSettings:
     """Generic application settings class to save and load settings to a RoboDK station with a built-in UI."""
 
     def __init__(self, settings_param='App-Settings'):
-        self._ATTRIBS_SAVE = True
-        self._FIELDS_UI = True
+        self._ATTRIBS_SAVE = None
+        self._FIELDS_UI = None
         self._SETTINGS_PARAM = settings_param
 
         self._UI_READ_FIELDS = None
+        self._UI_RELOAD_FIELDS = None
 
     def CopyFrom(self, other):
         """Copy settings from another instance"""
@@ -454,6 +461,21 @@ class AppSettings:
         for a in attr:
             if hasattr(other, a):
                 setattr(self, a, getattr(other, a))
+
+    def SetDefaults(self):
+        # List untouched variables for default settings
+        list_untouched = []
+
+        # save in local variables
+        for var in list_untouched:
+            exec('%s=self.%s' % (var, var))
+
+        defaults = type(self)()
+        self.CopyFrom(defaults)
+
+        # restore from local vars
+        for var in list_untouched:
+            exec('self.%s=%s' % (var, var))
 
     def getAttribs(self):
         """Get the list of attributes"""
@@ -572,20 +594,17 @@ class AppSettings:
 
         return True
 
-    def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
+    def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
         """Show the Apps Settings in a GUI, using tkinter or Qt depending on availability."""
         if ENABLE_QT:
-            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame)
+            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, show_default_button)
         else:
-            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame)
+            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame, show_default_button)
 
-    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
+    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
         """Open settings window"""
 
         from PySide2 import QtCore, QtGui, QtWidgets
-
-        fields_list = self._getFieldsUI()
-        values_list = {key: getattr(self, key) for key in fields_list}
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -614,14 +633,13 @@ class AppSettings:
         def add_fields():
             """Creates the UI from the field stored in the variable"""
 
-            for fkey in fields_list:
+            for fkey, field in self._getFieldsUI().items():
                 # Iterate for each key and add the variable to the UI
-                field = fields_list[fkey]
                 if not field is list:
                     field = [field]
 
                 fname = field[0]
-                fvalue = values_list[fkey]
+                fvalue = getattr(self, fkey)
                 ftype = type(fvalue)
 
                 # Convert None to double
@@ -689,16 +707,34 @@ class AppSettings:
         def command_cancel():
             command_quit()
 
+        def command_defaults():
+            while big_form.rowCount():
+                big_form.removeRow(0)
+            self.SetDefaults()
+            add_fields()
+
+        def command_reload():
+            while big_form.rowCount():
+                big_form.removeRow(0)
+            add_fields()
+
         def command_quit():
             self._UI_READ_FIELDS = None
+            self._UI_RELOAD_FIELDS = None
             windowQt.window().close()
 
         add_fields()
 
         self._UI_READ_FIELDS = read_fields
+        self._UI_RELOAD_FIELDS = command_reload
 
         if callback_frame is not None:
             callback_frame(windowQt)
+
+        if show_default_button:
+            buttonDefaults = QtWidgets.QPushButton('Set defaults')
+            buttonDefaults.clicked.connect(command_defaults)
+            layoutQtWidgetGrid.addWidget(buttonDefaults)
 
         # Creating the Cancel button
         buttonCancel = QtWidgets.QPushButton(windowQt)
@@ -750,7 +786,7 @@ class AppSettings:
             windowQt.show()
             app.exec_()
 
-    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
+    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
         """Open settings window using tkinter"""
 
         import sys
@@ -761,14 +797,13 @@ class AppSettings:
             # Python 3.x only
             import tkinter
 
-        fields_list = self._getFieldsUI()
-        values_list = {key: getattr(self, key) for key in fields_list}
-
         windowTk = None
         if wparent is not None:
             windowTk = tkinter.Toplevel(wparent)
         else:
             windowTk = tkinter.Tk()
+
+        frame = tkinter.Frame(windowTk)
 
         obj = self
         TEMP_ENTRIES = {}
@@ -776,19 +811,17 @@ class AppSettings:
         def add_fields():
             """Creates the UI from the field stored in the variable"""
             sticky = tkinter.NSEW
-            frame = tkinter.Frame(windowTk)
             idrow = -1
 
-            for fkey in fields_list:
+            for fkey, field in self._getFieldsUI().items():
                 idrow += 1
 
                 # Iterate for each key and add the variable to the UI
-                field = fields_list[fkey]
                 if not field is list:
                     field = [field]
 
                 fname = field[0]
-                fvalue = values_list[fkey]
+                fvalue = getattr(self, fkey)
                 ftype = type(fvalue)
 
                 # Convert None to double
@@ -865,13 +898,26 @@ class AppSettings:
         def command_cancel():
             command_quit()
 
+        def command_defaults():
+            for widget in frame.winfo_children():
+                widget.destroy()
+            self.SetDefaults()
+            add_fields()
+
+        def command_reload():
+            for widget in frame.winfo_children():
+                widget.destroy()
+            add_fields()
+
         def command_quit():
             self._UI_READ_FIELDS = None
+            self._UI_RELOAD_FIELDS = None
             windowTk.destroy()
 
         add_fields()
 
         self._UI_READ_FIELDS = read_fields
+        self._UI_RELOAD_FIELDS = command_reload
 
         # Everything after the callframe will be added after whatever is added to the frame
         if callback_frame is not None:
@@ -879,11 +925,15 @@ class AppSettings:
 
         row = tkinter.Frame(windowTk)
 
-        #Creating the Cancel button
+        if show_default_button:
+            b_defaults = tkinter.Button(row, text='Set defaults', command=command_defaults, width=8)
+            b_defaults.pack(side=tkinter.LEFT, padx=5, pady=5)
+
+        # Creating the Cancel button
         b_cancel = tkinter.Button(row, text='Cancel', command=command_cancel, width=8)
         b_cancel.pack(side=tkinter.LEFT, padx=5, pady=5)
 
-        #Creating the OK button
+        # Creating the OK button
         b_ok = tkinter.Button(row, text='Save', command=command_ok, width=8)
         b_ok.pack(side=tkinter.RIGHT, padx=5, pady=5)
 
@@ -905,10 +955,6 @@ class AppSettings:
         else:
             # If not, make sure to make the window stay on top
             windowTk.attributes("-topmost", True)
-
-        #def _on_mousewheel(event):
-        #    windowTk.yview_scroll(-1*(event.delta/120), "units")
-        #windowTk.bind_all("<MouseWheel>", _on_mousewheel)
 
         if wparent is None:
             # Important for unchecking the action in RoboDK
@@ -969,59 +1015,82 @@ def runmain():
             super(SettingsExample, self).__init__(settings_param=settings_param)
             self._FIELDS_UI = self.__FIELDS_UI
 
-        def SetDefaults(self):
-            # List untouched variables for default settings
-            list_untouched = []
+        def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
+            # Show the UI for these settings including a custom frame with utility functions
 
-            # save in local variables
-            for var in list_untouched:
-                exec('%s=self.%s' % (var, var))
+            def showMessage():
+                from robodk import robodialogs
+                if robodialogs.ShowMessageYesNo('Toggle "This is a bool"?'):
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.Boolean = not self.Boolean
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
 
-            defaults = SettingsExample()
-            self.CopyFrom(defaults)
+            def openFolder():
+                from robodk import robodialogs
+                r = robodialogs.getOpenFolder(strtitle='Open a folder and store its path to "This is a string"')
+                if r:
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.String_Value = r
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
 
-            # restore from local vars
-            for var in list_untouched:
-                exec('self.%s=%s' % (var, var))
+            def itemPick():
+                from robodk.robolink import Robolink
+                item = Robolink().ItemUserPick('Select an Item and store it to "This is a string"')
+                if item.Valid():
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.String_Value = item.Name()
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
 
-        def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None):
-            # Show the UI for these settings including a custom frame to set the default settings. TODO: Compatibility with PyQT
             if not ENABLE_QT:
 
                 def custom_frame(w):
 
-                    def set_defaults():
-                        w.destroy()
-                        self.SetDefaults()
-                        self.ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
+                    sticky = tkinter.NSEW
+                    frame = tkinter.LabelFrame(w)
 
-                    row = tkinter.Frame(w)
-                    b_defaults = tkinter.Button(row, text='Set defaults', command=set_defaults, width=8)
-                    b_defaults.pack(side=tkinter.LEFT, padx=5, pady=5)
-                    row.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
+                    label = tkinter.Label(frame, text=f"This a custom callback frame for {self._SETTINGS_PARAM}.", anchor='w')
+                    label.grid(row=0, column=0, sticky=sticky)
+
+                    customButton0 = tkinter.Button(frame, text="Show a Yes/No Message", command=showMessage)
+                    customButton1 = tkinter.Button(frame, text="Open a folder", command=openFolder)
+                    customButton2 = tkinter.Button(frame, text="Pick an Item", command=itemPick)
+                    customButton0.grid(row=1, column=0, sticky=sticky)
+                    customButton1.grid(row=2, column=0, sticky=sticky)
+                    customButton2.grid(row=3, column=0, sticky=sticky)
+
+                    frame.grid_columnconfigure(0, weight=1)
+                    frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=5, pady=5)
+
             else:
 
                 def custom_frame(w: QtWidgets.QWidget):
 
-                    def set_defaults():
-                        w.window().close()
-                        w.deleteLater()
-                        self.SetDefaults()
-                        self.ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
+                    grpBox = QtWidgets.QGroupBox()
+                    vLayout = QtWidgets.QVBoxLayout(grpBox)
+                    vLayout.addWidget(QtWidgets.QLabel(f"This a custom callback frame for {self._SETTINGS_PARAM}."))
+
+                    customButton0 = QtWidgets.QPushButton("Show a Yes/No Message")
+                    customButton0.clicked.connect(showMessage)
+                    customButton1 = QtWidgets.QPushButton("Open a folder")
+                    customButton1.clicked.connect(openFolder)
+                    customButton2 = QtWidgets.QPushButton("Pick an Item")
+                    customButton2.clicked.connect(itemPick)
+
+                    vLayout.addWidget(customButton0)
+                    vLayout.addWidget(customButton1)
+                    vLayout.addWidget(customButton2)
 
                     layout = w.layout()
-                    b_default = QtWidgets.QPushButton('Set defaults')
-                    b_default.clicked.connect(set_defaults)
-                    layout.addWidget(b_default)
+                    layout.addWidget(grpBox)
 
-            super(SettingsExample, self).ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame)
+            super(SettingsExample, self).ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame, show_default_button=show_default_button)
 
     #------------------------------------------------------------------------
     S = SettingsExample(settings_param='S Settings')
     S.Load()
     print('S._HiddenUnsavedBool: ' + str(S._HiddenUnsavedBool))
     print('S.HiddenSavedBool: ' + str(S.HiddenSavedBool))
-    S.ShowUI(embed=False)
+    S.ShowUI(show_default_button=True)
     S._HiddenUnsavedBool = not S._HiddenUnsavedBool
     S.HiddenSavedBool = not S.HiddenSavedBool
     S.Save()
@@ -1064,7 +1133,7 @@ def runmain():
     A.Load()
     print('A._HiddenUnsavedBool: ' + str(A._HiddenUnsavedBool))
     print('A.HiddenSavedBool: ' + str(A.HiddenSavedBool))
-    A.ShowUI(embed=False)
+    A.ShowUI(show_default_button=True)
     A._HiddenUnsavedBool = not A._HiddenUnsavedBool
     A.HiddenSavedBool = not A.HiddenSavedBool
     A.Save()
