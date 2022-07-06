@@ -926,14 +926,14 @@ namespace RoboDk.API
         void SetInteractiveMode(InteractiveType modeType = InteractiveType.MoveReferences, DisplayRefType defaultRefFlags = DisplayRefType.DEFAULT, List<IItem> customItems = null, List<DisplayRefType> customRefFlags = null);
 
         /// <summary>
-        /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
+        /// Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x and y coordinates in pixels from the top left corner)
         /// The XYZ coordinates returned are given with respect to the RoboDK station(absolute reference).
         /// If no coordinates are provided, the current position of the cursor is retrieved.
         /// </summary>
         /// <param name="xCoord">X coordinate in pixels</param>
         /// <param name="yCoord">Y coordinate in pixels</param>
         /// <param name="xyzStation">XYZ coordinates in mm (absolute coordinates)</param>
-        /// <returns></returns>
+        /// <returns>Item under the mouse cursor.</returns>
         IItem GetCursorXYZ(int xCoord = -1, int yCoord = -1, List<double> xyzStation = null);
 
         /// <summary>
