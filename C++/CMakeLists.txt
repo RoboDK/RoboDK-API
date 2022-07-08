@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # TODO: Project version
-project(robodk_api)
+project(robodk_api VERSION 1.0.0)
 
 # Set the install location
 set(CMAKE_INSTALL_PREFIX "../install")
@@ -37,5 +37,25 @@ install(TARGETS robodk_api
 install(EXPORT robodk_apiTargets
   FILE "robodk_apiTargets.cmake"
   NAMESPACE "robodk_api::"
+  DESTINATION cmake
+  )
+
+# Create the Config and Version files
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/robodk_apiConfig.cmake"
+  INSTALL_DESTINATION cmake
+  )
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/robodk_apiConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY AnyNewerVersion
+  )
+
+# Install the Config and Version Files
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/robodk_apiConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/robodk_apiConfigVersion.cmake
   DESTINATION cmake
   )
