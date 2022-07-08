@@ -10,10 +10,10 @@ set(CMAKE_INSTALL_PREFIX "../install")
 find_package(Qt5 NAMES Qt5 COMPONENTS Widgets GUI Concurrent Core Network REQUIRED)
 
 # TODO: Option for static vs shared
-add_library(robodk_api_cxx STATIC robodk_api_cxx.cpp)
+add_library(robodk_api_cxx STATIC robodk_api.cpp)
 
 # Set the public header for the library so it can be installed
-set_target_properties(robodk_api_cxx PROPERTIES PUBLIC_HEADER robodk_api_cxx.h)
+set_target_properties(robodk_api_cxx PROPERTIES PUBLIC_HEADER robodk_api.h)
 # Set the include directories
 target_include_directories(robodk_api_cxx PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
