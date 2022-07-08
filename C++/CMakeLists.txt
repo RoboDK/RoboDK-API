@@ -59,3 +59,8 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/robodk_apiConfigVersion.cmake
   DESTINATION cmake
   )
+
+# Generate the export targets for the build tree
+export(EXPORT robodk_apiTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/robodk_apiTargets.cmake"
+  )
