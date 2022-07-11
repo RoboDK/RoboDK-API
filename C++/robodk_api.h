@@ -260,7 +260,7 @@
 
 #include <QtCore/QString>
 #include <QtGui/QMatrix4x4> // this should not be part of the QtGui! it is just a matrix
-#include <QtCore/QDebug>
+#include <QDebug>
 
 
 class QTcpSocket;
