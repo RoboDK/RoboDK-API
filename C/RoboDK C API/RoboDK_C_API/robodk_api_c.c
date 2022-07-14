@@ -55,11 +55,12 @@ int socketBytesAvailable(SOCKET sock) {
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
 #if defined(_WIN32)
-	wchar_t ProcessName[MAX_STR_LENGTH];
+	char commandLineStr[MAX_STR_LENGTH] = {0};
+	strcat(commandLineStr, applicationPath);
+	strcat(commandLineStr, " ");
+	strcat(commandLineStr, arguments);
 	STARTUPINFOA si;
 	PROCESS_INFORMATION pi;
-	mbstowcs(ProcessName, applicationPath, MAX_STR_LENGTH);
-	//wcscpy(ProcessName, applicationPath);
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
@@ -72,7 +73,7 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
 	*/
 	// Start the child process. 
 	if (!CreateProcessA(NULL,   // No module name (use command line)
-		(LPSTR)applicationPath,        // Command line
+		commandLineStr,        // Command line
 		NULL,           // Process handle not inheritable
 		NULL,           // Thread handle not inheritable
 		FALSE,          // Set handle inheritance to FALSE

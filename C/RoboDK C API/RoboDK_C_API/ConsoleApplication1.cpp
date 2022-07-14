@@ -15,7 +15,7 @@ int main()
 	//This structure's pointer must remain valid as long as you are using the api,
 	//all the api items  it's used to create keep a copy of it's location.
 	struct RoboDK_t rdk;
-	RoboDK_Connect_default(&rdk);
+	RoboDK_Connect(&rdk, "", -1, "-SKIPMAINT", "");
 
 	if (!_RoboDK_connected(&rdk)) {
 		fprintf(stderr, "Failed to start RoboDK API!!");
