@@ -432,7 +432,7 @@ namespace RoboDk.API
         /// <param name="p"></param>
         /// <param name="r"></param>
         /// <returns>Homogeneous matrix (4x4)</returns>
-        public static Mat FromXYZRPW(double x, double y, double z, double w, double p, double r)
+        public static Mat FromXYZRPW(double x, double y, double z, double r, double p, double w)
         {
             var a = r * Math.PI / 180.0;
             var b = p * Math.PI / 180.0;
