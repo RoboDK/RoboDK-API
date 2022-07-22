@@ -12,6 +12,20 @@ How to install
 ------------
 Just include the robodk_api.h and robodk_api.cpp files to your project.
 
+Alternative CMake Instructions
+------------
+A static lib for the RoboDK API for C++ can be built using CMake.  
+To build the library, run the following from the root C++ directory:
+```
+mkdir build
+cd build
+cmake ..
+cmake --build 
+```
+A CMake Project Configuration file is generated so this project can be easily added
+to another CMake project. Additionally, a basic top level CMakeLists file is included 
+so that the C++ portion of the api is compatible with CMake's FetchContent system.
+
 C++ Example
 ------------
 

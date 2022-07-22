@@ -12,3 +12,6 @@ Python/unit_tests/report.html
 **/.vs/**
 **/x64/**
 **/x86/**
+**/build/**
+**/install/**
+**/.cache/**
