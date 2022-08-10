@@ -1,7 +1,7 @@
 @PACKAGE_INIT@
 
-include("${CMAKE_CURRENT_LIST_DIR}/@LIB_NAME@Targets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/robodk_apiTargets.cmake")
 
 find_package(Qt5 NAMES Qt5 COMPONENTS Widgets GUI Concurrent Core Network REQUIRED)
 
-check_required_components(@LIB_NAME@)
+check_required_components(robodk_api)
