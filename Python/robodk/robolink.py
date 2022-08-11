@@ -4276,8 +4276,9 @@ class Item():
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def setPose(self, pose):
-        """Set the position (pose) of the item with respect to its parent (item it is attached to).
-        For example, the position of an object, frame or target with respect to its parent reference frame.
+        """Set the position (pose) of the item with respect to its parent (item it is attached to), for example, the position of an object, frame or target with respect to its parent reference frame. 
+        
+        For robot items, setPose will move the robot joints to reach the pose target using the active tool with respect to the active reference. setPose has no effect on tool items, however, it will modify the pose of the related object with respect to its parent (this is only visible when the tool is converted to an object).
 
         :param pose: pose of the item with respect to its parent
         :type pose: :class:`~robodk.robomath.Mat`
@@ -4349,7 +4350,7 @@ class Item():
         return pose
 
     def setPoseAbs(self, pose):
-        """Set the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
+        """Set the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station. If the item is a tool, the joints of the associated robot will be updated to match the absolute pose with the tool (the TCP is not changed). setPoseAbs has no effect on robots.
 
         :param pose: pose of the item with respect to the station reference
         :type pose: :class:`~robodk.robomath.Mat`
