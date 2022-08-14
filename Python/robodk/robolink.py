@@ -5893,7 +5893,7 @@ class Item():
             self.link._send_int(accurate)
             self.link._check_status()
 
-    def AccuracyActive(self, accurate=1):
+    def AccuracyActive(self):
         """Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
 
         .. seealso:: :func:`~robodk.robolink.Item.setAccuracyActive`

@@ -524,7 +524,6 @@ class AppSettings:
         dict_data = {}
 
         # Important! We must save this but not show it in the UI
-        dict_data['_FIELDS_UI'] = self._FIELDS_UI
         for key in attribs_list:
             dict_data[key] = getattr(self, key)
 
@@ -584,6 +583,9 @@ class AppSettings:
         import pickle
         saved_dict = pickle.loads(bytes_data)
         for key in saved_dict.keys():
+            if key == '_FIELDS_UI':
+                continue
+
             # if we have a list of attributes that we want, load it only if it is in the list
             if len(attribs_list) == 0 or (key not in attribs_list and key != '_FIELDS_UI'):
                 print("Obsolete variable saved (will be deleted): " + key)
@@ -639,7 +641,8 @@ class AppSettings:
                     field = [field]
 
                 fname = field[0]
-                fvalue = getattr(self, fkey)
+                is_section = fname.endswith('$') and fname.startswith('$')
+                fvalue = fname if is_section else getattr(self, fkey)
                 ftype = type(fvalue)
 
                 # Convert None to double
@@ -649,7 +652,7 @@ class AppSettings:
 
                 print(fkey + ' = ' + str(fvalue))
 
-                if fname.endswith('$') and fname.startswith('$'):
+                if is_section:
                     # Section seperator
                     widget = QtWidgets.QLabel()
                     widget.setText(f'[  {fname[1:-1]}  ]'.upper())
@@ -986,30 +989,10 @@ def runmain():
     class SettingsExample(AppSettings):
         """Example of AppSettings using custom call backs"""
 
-        # Variable names when displayed on the user interface.
-        # Create this dictionary in the same order that you want to display it.
-        # If not provided, all variables of this class will be used.
-        from collections import OrderedDict
-        __FIELDS_UI = OrderedDict()
-        __FIELDS_UI['_Section'] = '$This is a section$'
-        __FIELDS_UI['Boolean'] = 'This is a bool'
-        __FIELDS_UI['Int_Value'] = 'This is an int'
-        __FIELDS_UI['Float_Value'] = 'This is a float'
-        __FIELDS_UI['String_Value'] = 'This is a string'
-        __FIELDS_UI['Int_List'] = 'This is an int list'
-        __FIELDS_UI['Float_List'] = 'This is a float list'
-        __FIELDS_UI['String_List'] = 'This is a string list'
-        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
-        __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
-        __FIELDS_UI['Dropdown'] = 'This is a dropdown'
-        __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
-        __FIELDS_UI['Unsupported'] = 'This is unsupported'
-
-        # List the variable names you would like to save and their default values
+        # List the variable names you would like to save and their default values.
+        # Variables that start with underscore (_) will not be saved.
         # Important: Try to avoid default None type!!
         # If None is used as default value it will attempt to treat it as a float and None = -1
-        # Variables that start with underscore (_) will not be saved
-        _Section = 'This is a section, but this is not used'
         Boolean = True
         Int_Value = 123456
         Float_Value = 0.123456789
@@ -1024,6 +1007,26 @@ def runmain():
         Unsupported = {}
         _HiddenUnsavedBool = True
         HiddenSavedBool = True
+
+        # Variable names when displayed on the user interface (detailed descriptions).
+        # Create this dictionary in the same order that you want to display it.
+        # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
+        # Fields within dollar signs (i.e. $abc$) are used as section headers.
+        from collections import OrderedDict
+        __FIELDS_UI = OrderedDict()
+        __FIELDS_UI['Section'] = '$This is a section$'
+        __FIELDS_UI['Boolean'] = 'This is a bool'
+        __FIELDS_UI['Int_Value'] = 'This is an int'
+        __FIELDS_UI['Float_Value'] = 'This is a float'
+        __FIELDS_UI['String_Value'] = 'This is a string'
+        __FIELDS_UI['Int_List'] = 'This is an int list'
+        __FIELDS_UI['Float_List'] = 'This is a float list'
+        __FIELDS_UI['String_List'] = 'This is a string list'
+        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
+        __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
+        __FIELDS_UI['Dropdown'] = 'This is a dropdown'
+        __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
+        __FIELDS_UI['Unsupported'] = 'This is unsupported'
 
         def __init__(self, settings_param='App-Settings'):
             # customize the initialization section if needed
@@ -1113,23 +1116,11 @@ def runmain():
     #------------------------------------------------------------------------
     # Using the AppSettings as is
     A = AppSettings(settings_param='A Settings')
-    from collections import OrderedDict
-    A._FIELDS_UI = OrderedDict()
-    A._FIELDS_UI['_Section'] = '$This is a section$'
-    A._FIELDS_UI['Boolean'] = 'This is a bool'
-    A._FIELDS_UI['Int_Value'] = 'This is an int'
-    A._FIELDS_UI['Float_Value'] = 'This is a float'
-    A._FIELDS_UI['String_Value'] = 'This is a string'
-    A._FIELDS_UI['Float_List'] = 'This is a float list'
-    A._FIELDS_UI['Int_List'] = 'This is an int list'
-    A._FIELDS_UI['String_List'] = 'This is a string list'
-    A._FIELDS_UI['Mixed_List'] = 'This is a mixed list'
-    A._FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
-    A._FIELDS_UI['Dropdown'] = 'This is a dropdown'
-    A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
-    A._FIELDS_UI['Unsupported'] = 'This is unsupported'
 
-    A._Section = 'This is a section, but this is unused'
+    # List the variable names you would like to save and their default values.
+    # Variables that start with underscore (_) will not be saved.
+    # Important: Try to avoid default None type!!
+    # If None is used as default value it will attempt to treat it as a float and None = -1
     A.Boolean = True
     A.Int_Value = 123456
     A.Float_Value = 0.123456789
@@ -1144,6 +1135,26 @@ def runmain():
     A.Unsupported = {}
     A._HiddenUnsavedBool = True
     A.HiddenSavedBool = True
+
+    # Variable names when displayed on the user interface (detailed descriptions).
+    # Create this dictionary in the same order that you want to display it.
+    # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
+    # Fields within dollar signs (i.e. $abc$) are used as section headers.
+    from collections import OrderedDict
+    A._FIELDS_UI = OrderedDict()
+    A._FIELDS_UI['Section'] = '$This is a section$'
+    A._FIELDS_UI['Boolean'] = 'This is a bool'
+    A._FIELDS_UI['Int_Value'] = 'This is an int'
+    A._FIELDS_UI['Float_Value'] = 'This is a float'
+    A._FIELDS_UI['String_Value'] = 'This is a string'
+    A._FIELDS_UI['Float_List'] = 'This is a float list'
+    A._FIELDS_UI['Int_List'] = 'This is an int list'
+    A._FIELDS_UI['String_List'] = 'This is a string list'
+    A._FIELDS_UI['Mixed_List'] = 'This is a mixed list'
+    A._FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
+    A._FIELDS_UI['Dropdown'] = 'This is a dropdown'
+    A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
+    A._FIELDS_UI['Unsupported'] = 'This is unsupported'
 
     A.Load()
     print('A._HiddenUnsavedBool: ' + str(A._HiddenUnsavedBool))
