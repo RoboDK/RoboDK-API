@@ -1,4 +1,7 @@
 classdef Robolink < handle
+% WARNING: This file is obsolete, use the one that does not depend on the
+% ICT Toolbox instead (one folder above)
+%
 % This class allows to create macros for RoboDK.
 % Any interaction is made through "items". An item is an object in the
 % Robodk tree (it can be either a robot, an object, a tool, a frame, a 
@@ -780,9 +783,9 @@ classdef Robolink < handle
             % Out 1: camera handle pointer
             if nargin < 3
                 cam_params = '';
-                camera_as_item = false;
+                camera_as_item = true;
             elseif nargin < 4
-                camera_as_item = false;
+                camera_as_item = true;
             end
 
             if camera_as_item

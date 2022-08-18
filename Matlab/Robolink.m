@@ -1022,21 +1022,34 @@ classdef Robolink < handle
             collision = itempicked.Valid();
             check_status(this);
         end
-        
-        function cam_h = Cam2D_Add(this, item_object, cam_params)
+        function cam_h = Cam2D_Add(this, item_object, cam_params, camera_as_item)
             % Adds a 2D camera view
             % In  1: Parameters of the camera
             % Out 1: camera handle pointer
             if nargin < 3
                 cam_params = '';
+                camera_as_item = true;
+            elseif nargin < 4
+                camera_as_item = true;
             end
-            check_connection(this);
-            command = 'Cam2D_Add';
-            send_line(this, command);
-            send_item(this, item_object);
-            send_line(this, cam_params);
-            cam_h = rec_ptr(this);
-            check_status(this);
+
+            if camera_as_item
+                check_connection(this);
+                command = 'Cam2D_PtrAdd';
+                send_line(this, command);
+                send_item(this, item_object);
+                send_line(this, cam_params);
+                cam_h = rec_item(this);
+                check_status(this);
+            else
+                check_connection(this);
+                command = 'Cam2D_Add';
+                send_line(this, command);
+                send_item(this, item_object);
+                send_line(this, cam_params);
+                cam_h = rec_ptr(this);
+                check_status(this);
+            end
         end
         
         function success = Cam2D_Snapshot(this, file_save_img, cam_h)
@@ -1046,13 +1059,31 @@ classdef Robolink < handle
             if nargin < 3
                 cam_h = 0;
             end
-            check_connection(this);
-            command = 'Cam2D_Snapshot';
-            send_line(this, command);
-            send_ptr(this, cam_h);
-            send_line(this, file_save_img);     
-            success = rec_int(this);
-            check_status(this);
+            
+            if isa(cam_h,'numeric')
+                check_connection(this);
+                command = 'Cam2D_Snapshot';
+                send_line(this, command);
+                send_ptr(this, cam_h);
+                send_line(this, file_save_img);     
+                success = rec_int(this);
+                check_status(this);
+            else
+                check_connection(this);
+                command = 'Cam2D_PtrSnapshot';
+                send_line(this, command);
+                send_item(this, cam_h);
+                send_line(this, file_save_img);     
+                this.COM.Timeout = 3600;
+                if isempty(file_save_img)
+                    % If the file name is empty we are expecting a byte array as PNG file
+                    success = rec_double(this);
+                else
+                    success = rec_int(this);
+                end
+                this.COM.Timeout = this.TIMEOUT;
+                check_status(this);
+            end
         end
         function success = Cam2D_Close(this, cam_h)
             % Returns the current joints of a list of robots.
@@ -1062,15 +1093,23 @@ classdef Robolink < handle
                 cam_h = 0;
             end
             check_connection(this);
-            if cam_h == 0
-                command = 'Cam2D_CloseAll';
-                send_line(this, command);
+
+            if isa(cam_h,'numeric')
+                if cam_h == 0
+                    command = 'Cam2D_CloseAll';
+                    send_line(this, command);
+                else
+                    command = 'Cam2D_Close';
+                    send_line(this, command);
+                    send_ptr(this, cam_handle);
+                end
             else
-                command = 'Cam2D_Close';
+                command = 'Cam2D_PtrClose';
                 send_line(this, command);
-                send_ptr(this, cam_handle);
+                send_item(this, cam_handle);
             end
-            success = self.rec_int(this);
+
+            success = rec_int(this);
             check_status(this);
         end        
    end
