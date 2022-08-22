@@ -4247,7 +4247,7 @@ class Item():
             self.link._check_status()
             return self
 
-    def setValue(self, varname, value):
+    def setValue(self, varname, value=None):
         """Set a specific property name to a given value. This is reserved for internal purposes and future compatibility.
 
         :param str varname: property name
@@ -4258,12 +4258,27 @@ class Item():
         """
         with self.link._lock:
             self.link._check_connection()
+            if value is None:
+                value = robomath.Mat(0, 0)
+                
             if isinstance(value, robomath.Mat):
-                command = 'S_Gen_Mat'
+                self.link._require_build(22340)
+                command = 'S_ValueMat'
                 self.link._send_line(command)
                 self.link._send_item(self)
                 self.link._send_line(varname)
                 self.link._send_matrix(value)
+                mat2d = self.link._rec_matrix()
+                self.link._check_status()
+                return mat2d
+                
+            # elif isinstance(value, robomath.Mat):
+            #     command = 'S_Gen_Mat'
+            #     self.link._send_line(command)
+            #     self.link._send_item(self)
+            #     self.link._send_line(varname)
+            #     self.link._send_matrix(value)
+                
             elif isinstance(value, str):
                 command = 'S_Gen_Str'
                 self.link._send_line(command)
@@ -6632,10 +6647,10 @@ class Item():
         with self.link._lock:
             import json
 
-            if type(value) == dict:
+            if isinstance(value, dict):
                 # return dict if we provided a dict
                 value = json.dumps(value)
-            elif type(value) == bytes and sys.version_info[0] >= 3:
+            elif isinstance(value, bytes) and sys.version_info[0] >= 3:
                 # Setting custom binary data
                 self.link._check_connection()
                 command = 'S_ItmDataParam'
@@ -6647,6 +6662,8 @@ class Item():
                 return True
             elif isinstance(value, Item):
                 value = str(value.item)
+            elif isinstance(value, bool):
+                value = '1' if value else '0'
             else:
                 value = str(value)
             value = value.replace('\n', '<br>')
@@ -6695,4 +6712,5 @@ if __name__ == "__main__":
 
         print(cost)
 
+    
     #TestCamera()
