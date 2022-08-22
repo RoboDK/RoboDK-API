@@ -1,4 +1,21 @@
-﻿// This file (RoboDK.cs) implements the RoboDK API for C#
+// ----------------------------------------------------------------------------------------------------------
+// Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ----------------------------------------------------------------------------------------------------------
+//
+// Note: This is the one-file API implementation of the C# API. You can also install the NuGet package.
+// More information here:
+// https://github.com/RoboDK/RoboDK-API/tree/master/C%23
+// 
+// This file (RoboDK.cs) implements the RoboDK API for C#
 // This file defines the following classes:
 //     Mat: Matrix class, useful pose operations
 //     RoboDK: API to interact with RoboDK
@@ -449,11 +466,11 @@ public class Mat // simple matrix class for homogeneous operations
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <param name="z"></param>
-    /// <param name="w"></param>
-    /// <param name="p"></param>
     /// <param name="r"></param>
+    /// <param name="p"></param>
+    /// <param name="w"></param>
     /// <returns>Homogeneous matrix (4x4)</returns>
-    static public Mat FromXYZRPW(double x, double y, double z, double w, double p, double r)
+    static public Mat FromXYZRPW(double x, double y, double z, double r, double p, double w)
     {
         double a = r * Math.PI / 180.0;
         double b = p * Math.PI / 180.0;
