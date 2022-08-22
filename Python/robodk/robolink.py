@@ -5246,7 +5246,7 @@ class Item():
 
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`~robodk.robomath.Mat`
-        :param joints_approx: Preferred joint solution or robot configuration. Leave blank to return the closest match to the current robot position.
+        :param joints_approx: Preferred joint solution. Leave blank to return the closest match to the current robot position.
         :type joints_approx: list of float
         :param tool: Tool pose with respect to the robot flange (TCP)
         :type tool: :class:`~robodk.robomath.Mat`
