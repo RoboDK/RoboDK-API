@@ -1,5 +1,5 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
-// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -428,9 +428,9 @@ namespace RoboDk.API
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="z"></param>
-        /// <param name="w"></param>
-        /// <param name="p"></param>
         /// <param name="r"></param>
+        /// <param name="p"></param>
+        /// <param name="w"></param>
         /// <returns>Homogeneous matrix (4x4)</returns>
         public static Mat FromXYZRPW(double x, double y, double z, double r, double p, double w)
         {
