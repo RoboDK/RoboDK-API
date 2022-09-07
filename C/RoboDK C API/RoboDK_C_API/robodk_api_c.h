@@ -50,7 +50,7 @@ enum { RDK_SIZE_MAX_CONFIG = 4 };
 // IMPORTANT!! Do not change this value
 
 //Maximum string lenth for string based parameters like IP and names
-enum { MAX_STR_LENGTH = 1024 };
+enum { MAX_STR_LENGTH = 2048 };
 
 //Enums
 /// Tree item types

@@ -15,3 +15,4 @@ Python/unit_tests/report.html
 **/build/**
 **/install/**
 **/.cache/**
+**/build-**

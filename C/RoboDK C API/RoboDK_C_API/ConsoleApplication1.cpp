@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream>
 
 #include "robodk_api_c.h"
 
@@ -15,18 +16,34 @@ int main()
 	//This structure's pointer must remain valid as long as you are using the api,
 	//all the api items  it's used to create keep a copy of it's location.
 	struct RoboDK_t rdk;
-	RoboDK_Connect(&rdk, "", -1, "-SKIPMAINT", "");
+	//RoboDK_Connect(&rdk, "", 0, "-SKIPMAINT", "");
+	RoboDK_Connect_default(&rdk);
 
 	if (!_RoboDK_connected(&rdk)) {
 		fprintf(stderr, "Failed to start RoboDK API!!");
 		return -1;
 	}
-	char bufferOut[1024];
-	struct Item_t robotItem = RoboDK_getItem(&rdk, "", (enum eITEM_TYPE)ITEM_TYPE_ROBOT);
+    // To prevent memory allocation issues, keep your string MAX_STR_LENGTH long
+    char robotName[MAX_STR_LENGTH];
+    char bufferOut[MAX_STR_LENGTH];
+    struct Item_t robotItem = RoboDK_getItem(&rdk, "", (enum eITEM_TYPE)ITEM_TYPE_ROBOT);
 	if (!Item_Valid(&robotItem)) {
-		printf("Currently open station has no robots\n");
+        printf("Currently open station has no robots\n");
 		return -1;
-	}
+    }
+
+    // Retrieve the item/robot name and print current joints
+    Item_Name(&robotItem, robotName);
+    printf("Selected robot: \n%s\n\n", robotName);
+
+    printf("Current robot joints: \n");
+    Joints_t joints = Item_Joints(&robotItem);
+    for (int i=0;i<joints._nDOFs; i++){
+        printf("J%i = %.3f deg\n", i+1, joints._Values[i]);
+    }
+
+
+    return 0;
 
 	//Demo for target filtering
 	struct Mat_t pose_tcp;
@@ -42,7 +59,7 @@ int main()
 
 	//Define a nominal target in the joint space:
 	const double jointsDouble[] = { 0, 0, 90, 0, 90, 0 };
-	struct Joints_t joints;
+    //struct Joints_t joints;
 	Joints_SetValues(&joints, jointsDouble, sizeof(jointsDouble) / sizeof(double));
 
 	struct Mat_t pose_robot = Item_SolveFK(&robotItem, &joints, NULL, NULL);

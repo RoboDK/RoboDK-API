@@ -102,7 +102,7 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
 
 
 void RoboDK_Connect_default(struct RoboDK_t *inst) {
-	RoboDK_Connect(inst, "", -1, "", "");
+    RoboDK_Connect(inst, "", ROBODK_DEFAULT_PORT, "", "");
 }
 
 void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_port, const char *args, const char *path) {
@@ -116,9 +116,6 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_p
 
 	inst->_PORT = com_port;
 	strcpy(inst->_ROBODK_BIN, path);
-	if (inst->_PORT < 0) {
-		inst->_PORT = ROBODK_DEFAULT_PORT;
-	}
 	if (strlen(inst->_ROBODK_BIN) == 0) {
 		strcpy(inst->_ROBODK_BIN, ROBODK_DEFAULT_PATH_BIN);
 	}
@@ -126,7 +123,7 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_p
 	if (com_port > 0) {
 		char portStr[8];
 		sprintf(portStr, "%d", com_port);
-		strcat(inst->_ARGUMENTS, " /PORT=");
+		strcat(inst->_ARGUMENTS, " -PORT=");
 		strcat(inst->_ARGUMENTS, portStr);
 	}
 	_RoboDK_connect_smart(inst);
@@ -2061,12 +2058,15 @@ bool _RoboDK_recv_Line(struct RoboDK_t *inst, char *output) {
 		char curByte;
 		socketRead(inst->_COM, &curByte, 1);
 		if (curByte == '\n') {
-			output[i] = '\0';
+            curByte = '\0';
 			isDone = true;
 		}
-		else {
-			output[i] = curByte;
-		}
+        if (i < MAX_STR_LENGTH - 1){
+            output[i] = curByte;
+            if (i == MAX_STR_LENGTH - 2){
+                output[i+1] = '\0';
+            }
+        }
 		i++;
 	}
 	return true;
