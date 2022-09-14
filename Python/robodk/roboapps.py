@@ -830,6 +830,8 @@ class AppSettings:
                     field = [field]
 
                 fname = field[0]
+                if not hasattr(self, fkey):
+                    continue
                 fvalue = getattr(self, fkey)
                 ftype = type(fvalue)
 
@@ -1105,7 +1107,7 @@ def runmain():
 
     #------------------------------------------------------------------------
     S = SettingsExample(settings_param='S Settings')
-    S.Load()
+    #S.Load()
     print('S._HiddenUnsavedBool: ' + str(S._HiddenUnsavedBool))
     print('S.HiddenSavedBool: ' + str(S.HiddenSavedBool))
     S.ShowUI(show_default_button=True)
@@ -1156,7 +1158,7 @@ def runmain():
     A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
     A._FIELDS_UI['Unsupported'] = 'This is unsupported'
 
-    A.Load()
+    #A.Load()
     print('A._HiddenUnsavedBool: ' + str(A._HiddenUnsavedBool))
     print('A.HiddenSavedBool: ' + str(A.HiddenSavedBool))
     A.ShowUI(show_default_button=True)

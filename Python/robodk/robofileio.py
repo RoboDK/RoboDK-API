@@ -119,23 +119,23 @@ def FilterName(namefilter, safechar='P', reserved_names=None):
 #-------------------------------------------------------
 # CSV tools
 def LoadList(strfile, separator=',', codec='utf-8'):
-    """Load data from a CSV file or a TXT file to a Python list (list of list of numbers) 
-    
+    """Load data from a CSV file or a TXT file to a Python list (list of list of numbers)
+
     .. seealso:: :func:`~robodk.robofileio.SaveList`, :func:`~robodk.robofileio.LoadMat`
-        
+
     Example:
-        
+
         .. code-block:: python
-            
+
             csvdata = LoadList(strfile, ',')
             values = []
             for i in range(len(csvdata)):
                 print(csvdata[i])
                 values.append(csvdata[i])
-              
+
             # We can also save the list back to a CSV file
             # SaveList(csvdata, strfile, ',')
-        
+
     """
 
     def todecimal(value):
@@ -159,7 +159,7 @@ def LoadList(strfile, separator=',', codec='utf-8'):
 
 def SaveList(list_variable, strfile, separator=','):
     """Save a list or a list of lists as a CSV or TXT file.
-    
+
     .. seealso:: :func:`~robodk.robofileio.LoadList`, :func:`~robodk.robofileio.LoadMat`"""
 
     robomath.Mat(list_variable).tr().SaveMat(strfile, separator)
@@ -167,9 +167,9 @@ def SaveList(list_variable, strfile, separator=','):
 
 def LoadMat(strfile, separator=','):
     """Load data from a CSV file or a TXT file to a :class:`.Mat` Matrix
-    
+
     .. seealso:: :func:`~robodk.robofileio.LoadList`
-    
+
     """
     return robomath.Mat(LoadList(strfile, separator))
 

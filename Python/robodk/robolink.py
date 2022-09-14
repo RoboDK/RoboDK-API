@@ -297,7 +297,7 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
         # The robot reaches the limit of joint axes trying to make a linear movement between 2 valid points
         PathLimit = 0x2  # 0b0000_0000_0010
 
-        # Error code reporting is innacurate due to large axis move. Reduce the time step or the robot speed
+        # Error code reporting is inaccurate due to large axis move. Reduce the time step or the robot speed
         # This error flag is never combined with other error flags.
         # This flag will appear with time based simulations and it means the path is feasible but RoboDK is unable to calculate it with the current time step
         InnacurateDueToLargeAxisMove = 0x800  # error code 20
@@ -1448,14 +1448,18 @@ class Robolink:
             return retlist
 
     def ItemUserPick(self, message="Pick one item", itemtype_or_list=None):
-        """Shows a RoboDK popup to select one object from the open station.
-        An item type can be specified to filter desired items. If no type is specified, all items are selectable.
-        (check variables ITEM_TYPE_*)
+        """Shows a RoboDK popup to select one Item from the open station.
+        An item type (ITEM_TYPE_*) can be specified to filter desired items. If no type is specified, all items are selectable.
+
+        Note: If only one Item is available, the Item is selected and return without prompting the user.
+        Note: If a candidate Item is currently selected in the RoboDK tree, the Item is selected and return without prompting the user.
+
         Example:
 
-            .. code-block:: python
+        .. code-block:: python
 
             RDK.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
+            RDK.ItemUserPick("Pick a from a list", [item1, item2, item3])
 
         :param str message: message to display
         :param int itemtype_or_list: filter choices by a specific item type (ITEM_TYPE_*) or provide a list of items to choose from
@@ -4260,7 +4264,7 @@ class Item():
             self.link._check_connection()
             if value is None:
                 value = robomath.Mat(0, 0)
-                
+
             if isinstance(value, robomath.Mat):
                 self.link._require_build(22340)
                 command = 'S_ValueMat'
@@ -4271,14 +4275,14 @@ class Item():
                 mat2d = self.link._rec_matrix()
                 self.link._check_status()
                 return mat2d
-                
+
             # elif isinstance(value, robomath.Mat):
             #     command = 'S_Gen_Mat'
             #     self.link._send_line(command)
             #     self.link._send_item(self)
             #     self.link._send_line(varname)
             #     self.link._send_matrix(value)
-                
+
             elif isinstance(value, str):
                 command = 'S_Gen_Str'
                 self.link._send_line(command)
@@ -4291,8 +4295,8 @@ class Item():
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def setPose(self, pose):
-        """Set the position (pose) of the item with respect to its parent (item it is attached to), for example, the position of an object, frame or target with respect to its parent reference frame. 
-        
+        """Set the position (pose) of the item with respect to its parent (item it is attached to), for example, the position of an object, frame or target with respect to its parent reference frame.
+
         For robot items, setPose will move the robot joints to reach the pose target using the active tool with respect to the active reference. setPose has no effect on tool items, however, it will modify the pose of the related object with respect to its parent (this is only visible when the tool is converted to an object).
 
         :param pose: pose of the item with respect to its parent
@@ -4645,8 +4649,8 @@ class Item():
         :param int feature_id:  used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
 
         :return: List of points
-        
-        
+
+
         Example 1 - Display the XYZ position of a selected object
 
         .. code-block:: python
@@ -4668,12 +4672,12 @@ class Item():
                     print("Object Not Selected. Select a point in the object surface...")
 
                 robomath.pause(0.1)
-        
-        
+
+
         Example 2 - Display the mesh of a selected object surface
-        
+
         .. code-block:: python
-        
+
             from robolink import *    # Import the RoboDK API
             import time
             RDK = Robolink()          # Start RoboDK API
@@ -4682,21 +4686,21 @@ class Item():
                 # Check if we have an object under the mouse cursor
                 object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
                 if object.Valid() and (object.type == ITEM_TYPE_OBJECT or object.type == ITEM_TYPE_TOOL):
-                
+
                     # Retrieve the selected feature on the object
                     is_selected, feature_type, feature_id = object.SelectedFeature()
 
                     if is_selected and feature_type == FEATURE_SURFACE:
                         # Retrieve the mesh related to the surface ID
-                        point_mesh, name_feature = object.GetPoints(FEATURE_OBJECT_MESH, feature_id)  
+                        point_mesh, name_feature = object.GetPoints(FEATURE_OBJECT_MESH, feature_id)
                         print("Selected %i (%i):  %s" % (feature_id, feature_type, name_feature))
                         print("Mesh points:")
                         for xyzijk in point_mesh:
                             print(xyzijk)
-                        
+
                         # Clear selection or manipulate as necessary
                         RDK.setSelection([])
-                        
+
                     else:
                         print("Click the surface to see the mesh")
                         time.sleep(0.1)
@@ -4706,7 +4710,7 @@ class Item():
                     print("Object Not Selected. The surface of an object or a tool")
 
                 time.sleep(0.1)
-        
+
 
         .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`
         """
@@ -5242,7 +5246,8 @@ class Item():
         """Calculates the inverse kinematics for a given specified pose. The pose must be robot flange with respect to the robot base unless you provide the tool and/or reference.
         SolveIK returns the joints solution as a Mat object (size 1xnDOFs). Use list() on a Mat to convert to a list. If there is no solution it returns an array of size 0.
         If there is no solution it returns an empty matrix.
-        For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
+
+        Note: For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`~robodk.robomath.Mat`
@@ -5280,7 +5285,7 @@ class Item():
 
     def SolveIK_All(self, pose, tool=None, reference=None):
         """Calculates the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
-        Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedor (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
+        Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedom (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
         :param pose: pose of the robot flange with respect to the robot base frame
         :type pose: :class:`~robodk.robomath.Mat`
@@ -6712,5 +6717,4 @@ if __name__ == "__main__":
 
         print(cost)
 
-    
     #TestCamera()
