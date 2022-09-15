@@ -830,9 +830,8 @@ class AppSettings:
                     field = [field]
 
                 fname = field[0]
-                if not hasattr(self, fkey):
-                    continue
-                fvalue = getattr(self, fkey)
+                is_section = fname.endswith('$') and fname.startswith('$')
+                fvalue = fname if is_section else getattr(self, fkey)
                 ftype = type(fvalue)
 
                 # Convert None to double
@@ -842,7 +841,7 @@ class AppSettings:
 
                 print(fkey + ' = ' + str(fvalue))
 
-                if fname.endswith('$') and fname.startswith('$'):
+                if is_section:
                     # Section seperator
                     widget = tkinter.Label(frame, text=f'[  {fname[1:-1]}  ]'.upper(), anchor='w')
                     widget.grid(row=idrow, columnspan=2, sticky=sticky)
