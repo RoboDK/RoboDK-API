@@ -1,6 +1,11 @@
 RoboDK API for C++
 ======================
 
+Documentation
+-------------
+- The RoboDK API for C++ is based on the Python API: https://robodk.com/doc/en/PythonAPI/intro.html.
+- Refer to the C++ API documentation: https://robodk.com/doc/en/CppAPI/index.html.
+
 Read the [RoboDK API description](../README.md) for more information.
 
 Requirements
