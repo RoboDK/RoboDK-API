@@ -2,7 +2,7 @@
 #
 # from robolink import *
 # from robodk import *
-# 
+#
 # is now any of:
 #
 # Option #1

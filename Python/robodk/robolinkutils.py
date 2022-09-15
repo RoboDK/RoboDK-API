@@ -86,7 +86,7 @@ def getLowestCommonAncestor(item1, item2):
     :type item1: :class:`.Item`
     :param item2: The second Item
     :type item2: :class:`.Item`
-    
+
     :return: The lowest common ancestor (LCA)
     :rtype: :class:`.Item`
     """
@@ -235,3 +235,32 @@ def setPoseAbsIK(item, pose_abs):
         item.setJoints(joints)
     else:
         item.setPose(pose)
+
+
+def SolveIK_Conf(robot, pose, toolpose=None, framepose=None, joint_config=[0, 1, 0]):
+    """Calculates the inverse kinematics for the specified robot and pose. The function returns only the preferred solutions from the joint configuration as a 2D matrix.
+    Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedom (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
+
+    :param robot: The robot Item
+    :type robot: :class:`robolink.Item`
+    :param pose: pose of the robot flange with respect to the robot base frame
+    :type pose: :class:`~robodk.robomath.Mat`
+    :param toolpose: Tool pose with respect to the robot flange (TCP)
+    :type toolpose: :class:`~robodk.robomath.Mat`
+    :param framepose: Reference pose (reference frame with respect to the robot base)
+    :type framepose: :class:`~robodk.robomath.Mat`
+    :param joint_config: desired joint configuration, as [Front(0)/Rear(1)/Any(-1), Elbow Up(0)/Elbow Down(1)/Any(-1), Non-flip(0)/Flip(1)/Any(-1)]
+    :type joint_config: list of int
+    """
+
+    desired_rear, desired_lower, desired_flip = joint_config
+    joint_solutions = []
+
+    for joint_solution in robot.SolveIK_All(pose, toolpose, framepose):
+        rear, lower, flip = [int(x) for x in robot.JointsConfig(joint_solution).list()[:3]]
+        if desired_rear < 0 or rear == desired_rear:
+            if desired_lower < 0 or lower == desired_lower:
+                if desired_flip < 0 or flip == desired_flip:
+                    joint_solutions.append(joint_solution)
+
+    return joint_solutions
