@@ -265,6 +265,38 @@ PySide2 / Qt utilities
 """
 if ENABLE_QT:
 
+    def get_qt_app(robodk_icon=True, robodk_theme=True):
+        """Get the QApplication instance.
+
+        :param bool robodk_icon: Applies the RoboDK logo, defaults to True
+        :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
+
+        :return: The QApplication instance
+        :rtype: QtWidgets.QApplication
+        """
+
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
+            app = QtWidgets.QApplication([])
+
+        if robodk_icon:
+            from robodk import robolink
+            icon_path = robolink.getPathIcon()
+            from os import path
+            if path.exists(icon_path):
+                import sys
+                if sys.platform.startswith('win'):
+                    import ctypes
+                    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
+                app_icon = QtGui.QIcon(icon_path)
+                app.setWindowIcon(app_icon)
+
+        if robodk_theme:
+            set_qt_theme(app)
+
+        return app
+
     def set_qt_theme(app, RDK=None):
         """Set a Qt application theme to match RoboDK's theme."""
 
@@ -608,9 +640,7 @@ class AppSettings:
 
         from PySide2 import QtCore, QtGui, QtWidgets
 
-        app = QtWidgets.QApplication.instance()
-        if app is None:
-            app = QtWidgets.QApplication([])  # No need to create a new one
+        app = get_qt_app()
 
         layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
         layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)

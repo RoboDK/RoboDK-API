@@ -5597,6 +5597,10 @@ class Item():
 
 
         """
+        if self.type == ITEM_TYPE_PROGRAM:
+            self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, False)
+            return
+
         self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, blocking)
         return self.SimulatorJoints()
 
@@ -6289,6 +6293,21 @@ class Item():
             self.link._send_item(itemtarget)
             self.link._send_item(self)
             self.link._send_int(2)
+            self.link._check_status()
+
+    def addMoveSearch(self, itemtarget):
+        """Adds a new linear search move instruction to a program. This function is obsolete. Use SearchL instead.
+        :param itemtarget: target item to move to
+        :type itemtarget: :class:`.Item`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.SearchL`
+        """
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'Add_INSMOVE'
+            self.link._send_line(command)
+            self.link._send_item(itemtarget)
+            self.link._send_item(self)
+            self.link._send_int(5)
             self.link._check_status()
 
     def addMoveC(self, itemtarget1, itemtarget2):
