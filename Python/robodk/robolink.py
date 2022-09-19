@@ -1451,8 +1451,8 @@ class Robolink:
         """Shows a RoboDK popup to select one Item from the open station.
         An item type (ITEM_TYPE_*) can be specified to filter desired items. If no type is specified, all items are selectable.
 
-        Note: If only one Item is available, the Item is selected and return without prompting the user.
-        Note: If a candidate Item is currently selected in the RoboDK tree, the Item is selected and return without prompting the user.
+        Note: If only one Item is available, the Item is selected and return without prompting the user. 
+        If a candidate Item is currently selected in the RoboDK tree, the Item is selected and return without prompting the user.
 
         Example:
 
@@ -1671,7 +1671,7 @@ class Robolink:
         :param item: Item to copy to the clipboard
         :type item: :class:`.Item`
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.Paste`, Item. :func:`~robodk.robolink.Item.Copy`
+        .. seealso:: :func:`~robodk.robolink.Robolink.Paste`, :func:`Item.Copy() <~robodk.robolink.Item.Copy>`
 
         Example:
 
@@ -1756,7 +1756,7 @@ class Robolink:
             frame.setPose(transl(100,200,300))
             new_object = RDK.Addfile('path-to-object.stl', frame)
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.Save`, :func:`~robodk.robolink.Robolink.AddFrame`, :func:`~robodk.robolink.Robolink.AddTool`, :func:`~robodk.robolink.Robolink.Copy`, :func:`~robodk.robolink.Robolink.Paste`
+        .. seealso:: :func:`~robodk.robolink.Robolink.Save`, :func:`~robodk.robolink.Robolink.AddFrame`, :func:`~robodk.robolink.Item.AddTool`, :func:`~robodk.robolink.Robolink.Copy`, :func:`~robodk.robolink.Robolink.Paste`
 
         """
         with self._lock:
@@ -2187,7 +2187,10 @@ class Robolink:
             return newitem
 
     def AddMillingProject(self, name='Milling settings', itemrobot=0):
-        """Obsolete, use :func:`~robodk.robolink.Robolink.AddMachiningProject` instead"""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Robolink.AddMachiningProject` instead.
+        """
         return self.AddMachiningProject(name, itemrobot)
 
     def AddMachiningProject(self, name='Milling settings', itemrobot=0):
@@ -2364,7 +2367,7 @@ class Robolink:
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking.
         Specify the link id for robots or moving mechanisms (id 0 is the base).
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.setCollisionActivePair`
+        .. seealso:: :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Robolink.setCollisionActivePair`
         """
         with self._lock:
             npairs = min(len(list_check_state), min(len(list_item1), len(list_item2)))
@@ -2552,7 +2555,7 @@ class Robolink:
         :return: list of pairs of strings
         :rtype: list of str
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.getParam` (Robolink station parameter), :func:`~robodk.robolink.Robolink.setParam` (Robolink station parameter)
+        .. seealso:: :func:`Robolink.getParam() <robodk.robolink.Robolink.getParam>`, :func:`Robolink.setParam() <robodk.robolink.Robolink.setParam>`
         """
         with self._lock:
             self._check_connection()
@@ -2586,7 +2589,7 @@ class Robolink:
             FILE_OPENSTATION       # File name of the current station (name of the .rdk file)
             PATH_DESKTOP           # Full path to the desktop folder
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.setParam` (Robolink station parameter), :func:`~robodk.robolink.Robolink.getParams`
+        .. seealso:: :func:`Robolink.setParam() <robodk.robolink.Robolink.setParam>`, :func:`Robolink.getParams() <robodk.robolink.Robolink.getParams>`
         """
         with self._lock:
             self._check_connection()
@@ -2679,7 +2682,7 @@ class Robolink:
             RoboDK -Lang=zh -ColorBgBottom=white -ColorBgTop=white -Threads=6 "path-to-file.rdk"
 
 
-        .. seealso:: :func:`~robodk.robolink.Item.setParam` (Item parameter/command), :func:`~robodk.robolink.Robolink.setParam` (Robolink station parameter)
+        .. seealso:: :func:`Item.setParam() <robodk.robolink.Item.setParam>`, :func:`Robolink.setParam() <robodk.robolink.Robolink.setParam>`
         """
         with self._lock:
             if type(value) == dict:
@@ -2854,7 +2857,7 @@ class Robolink:
         """Sets the relative positions (poses) of a list of items with respect to their parent. For example, the position of an object/frame/target with respect to its parent.
         Use this function instead of setPose() for faster speed.
 
-        .. seealso:: :func:`~robodk.robolink.Item.setPose` (item), :func:`~robodk.robolink.Item.Pose` (item), :func:`~robodk.robolink.Robolink.setPosesAbs`
+        .. seealso:: :func:`Item.setPose() <robodk.robolink.Item.setPose>`, :func:`Item.Pose() <robodk.robolink.Item.Pose>`, :func:`~robodk.robolink.Robolink.setPosesAbs`
         """
         with self._lock:
             if len(items) != len(poses):
@@ -2876,7 +2879,7 @@ class Robolink:
         """Set the absolute positions (poses) of a list of items with respect to the station reference. For example, the position of an object/frame/target with respect to its parent.
         Use this function instead of setPose() for faster speed.
 
-        .. seealso:: :func:`~robodk.robolink.Item.setPoseAbs` (item), :func:`~robodk.robolink.Item.PoseAbs` (item), :func:`~robodk.robolink.Robolink.setPoses`
+        .. seealso:: :func:`Item.setPoseAbs() <robodk.robolink.Item.setPoseAbs>`, :func:`Item.PoseAbs() <robodk.robolink.Item.PoseAbs>`, :func:`~robodk.robolink.Robolink.setPoses`
         """
         with self._lock:
             if len(items) != len(poses):
@@ -2897,7 +2900,7 @@ class Robolink:
     def Joints(self, robot_item_list):
         """Return the current joints of a list of robots.
 
-        .. seealso:: :func:`~robodk.robolink.Item.setJoints` (item), :func:`~robodk.robolink.Item.Joints` (item), :func:`~robodk.robolink.Robolink.setJoints`
+        .. seealso:: :func:`Item.setJoints() <robodk.robolink.Item.setJoints>`, :func:`Item.Joints() ~robodk.robolink.Item.Joints`, :func:`~robodk.robolink.Robolink.setJoints`
         """
         with self._lock:
             self._check_connection()
@@ -2916,7 +2919,8 @@ class Robolink:
     def setJoints(self, robot_item_list, joints_list):
         """Sets the current robot joints for a list of robot items and a list joints.
 
-        .. seealso:: :func:`~robodk.robolink.Item.setJoints` (item), :func:`~robodk.robolink.Item.Joints` (item), :func:`~robodk.robolink.Robolink.Joints`"""
+        .. seealso:: :func:`Item.setJoints() <robodk.robolink.Item.setJoints>`, :func:`Item.Joints <robodk.robolink.Item.Joints>`, :func:`~robodk.robolink.Robolink.Joints`
+        """
         with self._lock:
             nrobs = len(robot_item_list)
             if nrobs != len(joints_list):
@@ -3779,6 +3783,8 @@ class Robolink:
     def EmbedWindow(self, window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
         """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
 
+        Note: This function should be called on a seperate thread. Use the static function: :func:`~robodk.robolink.EmbedWindow` instead.
+
         :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
         :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
         :param int pid: Process ID (optional)
@@ -3786,7 +3792,7 @@ class Robolink:
         :param int area_allowed: Areas allowed (default is 15:no constrain)
         :param int timeout: Timeout to abort attempting to embed the window
 
-        .. seealso:: Use the static function: :func:`~robodk.robolink.EmbedWindow` (this function should usually be called on a separate thread)
+        .. seealso:: :func:`~robodk.robolink.EmbedWindow`
 
         """
         with self._lock:
@@ -4730,7 +4736,10 @@ class Item():
             return list(points), feature_name
 
     def setMillingParameters(self, ncfile='', part=0, params=''):
-        """Obsolete, use :func:`~robodk.robolink.Item.setMachiningParameters` instead"""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.setMachiningParameters` instead.
+        """
         newprog, status = self.setMachiningParameters(ncfile, part, params)
         return newprog, status
 
@@ -4744,7 +4753,7 @@ class Item():
         :type part: :class:`.Item`
         :param params: Additional options
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddMachiningProject`, :func:`~robodk.robolink.Item.Joints`, :func:`~robodk.robolink.Item.getLink`, :func:`~robodk.robolink.Item.setJoints`, :func:`~robodk.robolink.Item.setToolPose`, :func:`~robodk.robolink.Item.setFramePose`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddMachiningProject`, :func:`~robodk.robolink.Item.Joints`, :func:`~robodk.robolink.Item.getLink`, :func:`~robodk.robolink.Item.setJoints`, :func:`~robodk.robolink.Item.setPoseTool`, :func:`~robodk.robolink.Item.setPoseFrame`
 
         Example:
 
@@ -4801,7 +4810,7 @@ class Item():
     def isJointTarget(self):
         """Returns True if a target is a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.setPose`, :func:`~robodk.robolink.Item.setAsCartesianTarget, :func:`~robodk.robolink.Item.setAsJointTarget`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.setPose`, :func:`~robodk.robolink.Item.setAsCartesianTarget`, :func:`~robodk.robolink.Item.setAsJointTarget`
         """
         with self.link._lock:
             self.link._check_connection()
@@ -5084,29 +5093,56 @@ class Item():
 
     # Obsolete methods -----------------------
     def Htool(self):
-        """Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead. Returns the pose (:class:`~robodk.robomath.Mat`) of the robot tool (TCP) with respect to the robot flange"""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead.
+
+        Returns the pose (:class:`~robodk.robomath.Mat`) of the robot tool (TCP) with respect to the robot flange
+        """
         return self.PoseTool()
 
     def Tool(self):
-        """Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead. Returns the pose (:class:`~robodk.robomath.Mat`) of the robot tool (TCP) with respect to the robot flange"""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead.
+
+        Returns the pose (:class:`~robodk.robomath.Mat`) of the robot tool (TCP) with respect to the robot flange
+        """
         return self.PoseTool()
 
     def Frame(self):
-        """Obsolete. Use :func:`~robodk.robolink.Item.PoseFrame` instead. Returns the pose (:class:`~robodk.robomath.Mat`) of the robot reference frame with respect to the robot base"""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.PoseFrame` instead.
+
+        Returns the pose (:class:`~robodk.robomath.Mat`) of the robot reference frame with respect to the robot base
+        """
         return self.PoseFrame()
 
     def setHtool(self, tool):
-        """Obsolete. :func:`~robodk.robolink.Item.setPoseTool` instead. Sets the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
+        """
+        .. deprecated:: 4.0
+            Obsolete. :func:`~robodk.robolink.Item.setPoseTool` instead.
+
+        Sets the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
         """
         self.setPoseTool(tool)
 
     def setTool(self, tool):
-        """Obsolete. Use :func:`~robodk.robolink.Item.setPoseTool` instead. Sets the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.setPoseTool` instead.
+
+        Sets the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
         """
         self.setPoseTool(tool)
 
     def setFrame(self, frame):
-        """Obsolete. Use :func:`~robodk.robolink.Item.setPoseFrame` instead. Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.setPoseFrame` instead.
+
+        Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
         """
         self.setPoseFrame(frame)
 
@@ -5667,7 +5703,7 @@ class Item():
         :return: returns 0 if the movement is free of collision or any other issues. Otherwise it returns the number of pairs of objects that collided if there was a collision.
         :rtype: int
 
-        .. seealso:: :func:`~robolink.Item.MoveJ_Test`, :func:`~robolink.Robolink.setCollisionActive`, :func:`~robolink.Item.MoveJ`, :func:`~robolink.Robolink.AddTarget`
+        .. seealso:: :func:`~robodk.robolink.Item.MoveJ_Test`, :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Item.MoveJ`, :func:`~robodk.robolink.Robolink.AddTarget`
         """
         with self.link._lock:
             self.link._require_build(7206)
@@ -5783,7 +5819,10 @@ class Item():
             return self
 
     def setZoneData(self, zonedata):
-        """Obsolete. Use :func:`~robodk.robolink.Item.setRounding` instead."""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.setRounding` instead.
+        """
         return self.setRounding(zonedata)
 
     def ShowSequence(self, matrix, display_type=-1, timeout=-1):
@@ -6036,7 +6075,10 @@ class Item():
             return program_run_type
 
     def RunProgram(self, prog_parameters=None):
-        """Obsolete. Use :func:`~robodk.robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility."""
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility.
+        """
         return self.RunCode(prog_parameters)
 
     def RunCode(self, prog_parameters=None):
@@ -6076,7 +6118,11 @@ class Item():
             return prog_status
 
     def RunCodeCustom(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
-        """Obsolete, use RunInstruction instead. Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
+        """
+        .. deprecated:: 4.0
+            Obsolete, use RunInstruction instead.
+
+        Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
 
         .. seealso:: :func:`~robodk.robolink.Item.RunInstruction`
         """
@@ -6262,7 +6308,11 @@ class Item():
             self.link._check_status()
 
     def addMoveJ(self, itemtarget):
-        """Adds a new robot joint move instruction to a program. This function is obsolete. Use MoveJ instead.
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.MoveJ` instead.
+
+        Adds a new robot joint move instruction to a program.
 
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
@@ -6279,7 +6329,11 @@ class Item():
             self.link._check_status()
 
     def addMoveL(self, itemtarget):
-        """Adds a new linear move instruction to a program. This function is obsolete. Use MoveL instead.
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.MoveL` instead.
+
+        Adds a new linear move instruction to a program.
 
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
@@ -6296,9 +6350,15 @@ class Item():
             self.link._check_status()
 
     def addMoveSearch(self, itemtarget):
-        """Adds a new linear search move instruction to a program. This function is obsolete. Use SearchL instead.
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.SearchL` instead.
+
+        Adds a new linear search move instruction to a program.
+
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
+
         .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.SearchL`
         """
         with self.link._lock:
@@ -6311,7 +6371,11 @@ class Item():
             self.link._check_status()
 
     def addMoveC(self, itemtarget1, itemtarget2):
-        """Adds a new circular move instruction to a program (This function is obsolete. Use MoveL instead.)
+        """
+        .. deprecated:: 4.0
+            Obsolete. Use :func:`~robodk.robolink.Item.MoveC` instead.
+
+        Adds a new circular move instruction to a program.
 
         :param itemtarget: target item to move to
         :type itemtarget: :class:`.Item`
@@ -6666,7 +6730,7 @@ class Item():
             https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginAppLoader/Apps/SetStyle
 
 
-        .. seealso:: :func:`~robodk.robolink.Item.getParam`, :func:`~robodk.robolink.Robolink.Command` (Robolink), :func:`~robodk.robolink.Robolink.setParam` (Robolink: station parameter)
+        .. seealso:: :func:`~robodk.robolink.Item.getParam`, :func:`robodk.robolink.Robolink.Command`, :func:`Robolink.setParam() <robodk.robolink.Robolink.setParam>`
         """
         with self.link._lock:
             import json
