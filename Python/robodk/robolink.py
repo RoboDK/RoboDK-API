@@ -2786,16 +2786,21 @@ class Robolink:
             self._send_item(stn)
             self._check_status()
 
-    def ShowSequence(self, matrix):
-        """Display a sequence of joints given a list of joints as a matrix.
-        This function can also display a sequence of instructions (RoKiSim format).
+    def ShowSequence(self, matrix, display_type=SEQUENCE_DISPLAY_DEFAULT, timeout=-1):
+        """Displays a sequence of joints or poses in RoboDK.
 
-        :param matrix: joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix
-        :type matrix: :class:`~robodk.robomath.Mat`
+        :param matrix: list of joints as a matrix or as a list of joint arrays, a list of poses, or a sequence of instructions (same sequence that was supported with RoKiSim).
+        :type matrix: list of list of float, a matrix of joints as a :class:`~robodk.robomath.Mat` or a list of poses as :class:`~robodk.robomath.Mat`
+        :param display_type: display options (SEQUENCE_DISPLAY_*). Use -1 to use default.
+        :type display_type: int, optional
+        :param timeout: display timeout, in milliseconds. Use -1 to use default.
+        :type timeout: int, optional
 
         Tip: use :func:`~robodk.robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
+
+        .. seealso:: :func:`Item.ShowSequence() <robodk.robolink.Item.ShowSequence>'
         """
-        Item(self, 0).ShowSequence(matrix)
+        Item(self, 0).ShowSequence(matrix, display_type, timeout)
 
     def LaserTracker_Measure(self, estimate=[0, 0, 0], search=False):
         """Takes a measurement using the laser tracker with respect to the tracker reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
@@ -5849,6 +5854,8 @@ class Item():
         :type display_type: int, optional
         :param timeout: display timeout, in milliseconds. Use -1 to use default.
         :type timeout: int, optional
+
+        Tip: use :func:`~robodk.robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
 
         Example:
 
