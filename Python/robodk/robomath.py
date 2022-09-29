@@ -189,8 +189,9 @@ def transl(tx, ty=None, tz=None):
 
 def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0):
     """Calculates a relative target with respect to the tool coordinates. This procedure has exactly the same behavior as ABB's RelTool instruction.
-    X,Y,Z are in mm, W,P,R are in degrees.
+    X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
+    :param :class:`.Mat` target_pose: Reference pose
     :param float x: translation along the Tool X axis (mm)
     :param float y: translation along the Tool Y axis (mm)
     :param float z: translation along the Tool Z axis (mm)
@@ -210,6 +211,7 @@ def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0):
     """Calculates a relative target with respect to the reference frame coordinates.
     X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
+    :param :class:`.Mat` target_pose: Reference pose
     :param float x: translation along the Reference X axis (mm)
     :param float y: translation along the Reference Y axis (mm)
     :param float z: translation along the Reference Z axis (mm)
@@ -353,7 +355,7 @@ def pose_2_xyzrpw(H):
 
     :param H: pose
     :type H: :class:`.Mat`
-    :return: [x,y,z,w,p,r] in mm and deg
+    :return: [x,y,z,r,p,w] in mm and deg
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
@@ -1492,13 +1494,33 @@ class Mat(object):
         return True
 
     def RelTool(self, x, y, z, rx=0, ry=0, rz=0):
-        """Calculates a target relative with respect to the tool coordinates.
-        X,Y,Z are in mm, W,P,R are in degrees. The behavior of this function is the same as ABB's RAPID RelTool command."""
+        """Calculates a relative target with respect to the tool coordinates. This procedure has exactly the same behavior as ABB's RelTool instruction.
+        X,Y,Z are in mm, RX,RY,RZ are in degrees.
+
+        :param float x: translation along the Tool X axis (mm)
+        :param float y: translation along the Tool Y axis (mm)
+        :param float z: translation along the Tool Z axis (mm)
+        :param float rx: rotation around the Tool X axis (deg) (optional)
+        :param float ry: rotation around the Tool Y axis (deg) (optional)
+        :param float rz: rotation around the Tool Z axis (deg) (optional)
+
+        .. seealso:: :func:`~Mat.Offset`
+        """
         return RelTool(self, x, y, z, rx, ry, rz)
 
     def Offset(self, x, y, z, rx=0, ry=0, rz=0):
-        """Calculates a relative target with respect to the reference frame coordinates.
-        X,Y,Z are in mm, W,P,R are in degrees."""
+        """Calculates a relative target with respect to this pose.
+        X,Y,Z are in mm, RX,RY,RZ are in degrees.
+
+        :param float x: translation along the Reference X axis (mm)
+        :param float y: translation along the Reference Y axis (mm)
+        :param float z: translation along the Reference Z axis (mm)
+        :param float rx: rotation around the Reference X axis (deg) (optional)
+        :param float ry: rotation around the Reference Y axis (deg) (optional)
+        :param float rz: rotation around the Reference Z axis (deg) (optional)
+
+        .. seealso:: :func:`~Mat.RelTool`
+        """
         return Offset(self, x, y, z, rx, ry, rz)
 
     def invH(self):
