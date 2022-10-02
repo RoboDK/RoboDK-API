@@ -274,6 +274,17 @@ VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB  #: Default robot visibility flag
 VISIBLE_ROBOT_ALL = 0x7FFFFFFF  #: All robot visibility flag
 VISIBLE_ROBOT_ALL_REFS = 0x15555555  #: All references robot visibility flag
 
+# ShowSequence() display type flags (use as mask)
+SEQUENCE_DISPLAY_DEFAULT = -1  #: Default sequence display flag
+SEQUENCE_DISPLAY_TOOL_POSES = 0  #: Using tool poses (argument type) sequence display flag
+SEQUENCE_DISPLAY_ROBOT_POSES = 256  #: Using robot poses (argument type) sequence display flag
+SEQUENCE_DISPLAY_ROBOT_JOINTS = 2048  #: Using robot joints (argument type) sequence display flag
+SEQUENCE_DISPLAY_COLOR_SELECTED = 1  #: Selected color sequence display flag
+SEQUENCE_DISPLAY_COLOR_TRANSPARENT = 2  #: Transparent color sequence display flag
+SEQUENCE_DISPLAY_COLOR_GOOD = 3  #: Good (green) color sequence display flag
+SEQUENCE_DISPLAY_COLOR_BAD = 4  #: Bad (red) color sequence display flag
+SEQUENCE_DISPLAY_OPTION_RESET = 1024  #: Reset previous sequences (force timeout) sequence display flag
+
 if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
     # To be added in the future. Requires Python 3.6 or later
     from enum import IntFlag
@@ -281,10 +292,11 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 6:
 
     class InstructionListJointsFlags(IntEnum):
         """InstructionListJoints output flags"""
-        Position = 1
-        Speed = 2
-        SpeedAndAcceleration = 3
-        TimeBased = 4
+        Position = 1  # Only provide the joint position and XYZ values
+        Speed = 2  # Calculate speed (added to position)
+        SpeedAndAcceleration = 3  # Calculate speed and acceleration (added to position)
+        TimeBased = 4  # Make the calculation time-based (adds a time stamp added to the previous options)
+        TimeBasedFast = 5  # Make the calculation time-based and avoids calculating speeds and accelerations (adds a time stamp added to the previous options)
 
     class PathErrorFlags(IntFlag):
         """Error flags returned by InstructionListJoints"""
@@ -477,7 +489,6 @@ def import_install(module_name, pip_name=None, rdk=None):
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
 
     .. code-block:: python
-        :caption: Example to embed a window as a docked RoboDK window
 
         # If you want to install opencv for Python and pyserial you should use:
         import_install("opencv", "opencv-python", RDK)
@@ -486,6 +497,10 @@ def import_install(module_name, pip_name=None, rdk=None):
         # If the name of the module matches the package you can just pass the name of the module.
         # Example:
         import_install("xlrd", rdk=RDK)
+
+        # You can also use version specifiers (https://peps.python.org/pep-0440/#version-specifiers):
+        import_install('numpy', 'numpy>=1.23')
+        import_install('pandas', 'pandas~=1.4')
 
     """
     try:
@@ -1451,7 +1466,7 @@ class Robolink:
         """Shows a RoboDK popup to select one Item from the open station.
         An item type (ITEM_TYPE_*) can be specified to filter desired items. If no type is specified, all items are selectable.
 
-        Note: If only one Item is available, the Item is selected and return without prompting the user. 
+        Note: If only one Item is available, the Item is selected and return without prompting the user.
         If a candidate Item is currently selected in the RoboDK tree, the Item is selected and return without prompting the user.
 
         Example:
@@ -2771,16 +2786,21 @@ class Robolink:
             self._send_item(stn)
             self._check_status()
 
-    def ShowSequence(self, matrix):
-        """Display a sequence of joints given a list of joints as a matrix.
-        This function can also display a sequence of instructions (RoKiSim format).
+    def ShowSequence(self, matrix, display_type=SEQUENCE_DISPLAY_DEFAULT, timeout=-1):
+        """Displays a sequence of joints or poses in RoboDK.
 
-        :param matrix: joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix
-        :type matrix: :class:`~robodk.robomath.Mat`
+        :param matrix: list of joints as a matrix or as a list of joint arrays, a list of poses, or a sequence of instructions (same sequence that was supported with RoKiSim).
+        :type matrix: list of list of float, a matrix of joints as a :class:`~robodk.robomath.Mat` or a list of poses as :class:`~robodk.robomath.Mat`
+        :param display_type: display options (SEQUENCE_DISPLAY_*). Use -1 to use default.
+        :type display_type: int, optional
+        :param timeout: display timeout, in milliseconds. Use -1 to use default.
+        :type timeout: int, optional
 
         Tip: use :func:`~robodk.robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
+
+        .. seealso:: :func:`Item.ShowSequence() <robodk.robolink.Item.ShowSequence>'
         """
-        Item(self, 0).ShowSequence(matrix)
+        Item(self, 0).ShowSequence(matrix, display_type, timeout)
 
     def LaserTracker_Measure(self, estimate=[0, 0, 0], search=False):
         """Takes a measurement using the laser tracker with respect to the tracker reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
@@ -5825,11 +5845,58 @@ class Item():
         """
         return self.setRounding(zonedata)
 
-    def ShowSequence(self, matrix, display_type=-1, timeout=-1):
+    def ShowSequence(self, matrix, display_type=SEQUENCE_DISPLAY_DEFAULT, timeout=-1):
         """Displays a sequence of joints or poses in RoboDK.
 
-        :param matrix: list of joints as a matrix or as a list of joint arrays. A sequence of instructions is also supported (same sequence that was supported with RoKiSim).
-        :type matrix: list of list of float or a matrix of joints as a :class:`~robodk.robomath.Mat`"""
+        :param matrix: list of joints as a matrix or as a list of joint arrays, a list of poses, or a sequence of instructions (same sequence that was supported with RoKiSim).
+        :type matrix: list of list of float, a matrix of joints as a :class:`~robodk.robomath.Mat` or a list of poses as :class:`~robodk.robomath.Mat`
+        :param display_type: display options (SEQUENCE_DISPLAY_*). Use -1 to use default.
+        :type display_type: int, optional
+        :param timeout: display timeout, in milliseconds. Use -1 to use default.
+        :type timeout: int, optional
+
+        Tip: use :func:`~robodk.robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
+
+        Example:
+
+        .. code-block:: python
+
+            from robolink import *
+            from robodk import *
+            RDK = Robolink()
+
+            prog = RDK.ItemUserPick('Select a Program', ITEM_TYPE_PROGRAM)
+            if not prog.Valid():
+                quit()
+
+            robot = prog.getLink(ITEM_TYPE_ROBOT)
+            if not robot.Valid():
+                quit()
+
+            # Calculate delta time to display robots
+            prog_stats = prog.Update()
+            time_estimate = prog_stats[1]
+            TIME_STEP = max(1, time_estimate / 100)
+
+            # Define the way we want to output the list of joints
+            status_msg, joint_list, status_code = prog.InstructionListJoints(1, 1, flags=5, time_step=TIME_STEP)
+
+            # Status code is negative if there are errors in the program
+            print("Status code:" + str(status_code))
+            print("Status message: " + status_msg)
+            print(joint_list.tr())
+            print("Size: " + str(len(joint_list)))
+
+            # Show as ghost robot
+            joints = []
+            for j in joint_list:
+                joints.append(j)
+
+            # Display "ghost" robots in RoboDK
+            robot.ShowSequence(joints, SEQUENCE_DISPLAY_OPTION_RESET | SEQUENCE_DISPLAY_ROBOT_JOINTS | SEQUENCE_DISPLAY_TRANSPARENT, 3600*1000)
+
+        """
+
         display_ghost_joints = display_type & 2048
         with self.link._lock:
             if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == robomath.Mat or display_ghost_joints):

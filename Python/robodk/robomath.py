@@ -230,6 +230,36 @@ def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0):
     return new_target
 
 
+def point_Xaxis_2_pose(point, xaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[0, -1, 0]):
+    """Returns a pose given the origin as a point, a X axis and a preferred orientation for the Z axis"""
+    pose = eye(4)
+    pose.setPos(point)
+    pose.setVX(xaxis)
+    zaprox = zaxis_hint1
+    if angle3(xaxis, zaprox) < 2 * pi / 180:
+        zaprox = zaxis_hint2
+    yaxis = normalize3(cross(zaprox, xaxis))
+    zaxis = cross(xaxis, yaxis)
+    pose.setVY(yaxis)
+    pose.setVZ(zaxis)
+    return pose
+
+
+def point_Yaxis_2_pose(point, yaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[-1, 0, 0]):
+    """Returns a pose given the origin as a point, a Y axis and a preferred orientation for the Z axis"""
+    pose = eye(4)
+    pose.setPos(point)
+    pose.setVY(yaxis)
+    zaprox = zaxis_hint1
+    if angle3(yaxis, zaprox) < 2 * pi / 180:
+        zaprox = zaxis_hint2
+    xaxis = normalize3(cross(yaxis, zaprox))
+    zaxis = cross(xaxis, yaxis)
+    pose.setVX(xaxis)
+    pose.setVZ(zaxis)
+    return pose
+
+
 def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1]):
     """Returns a pose given the origin as a point, a Z axis and a preferred orientation for the Y axis"""
     pose = eye(4)
@@ -542,7 +572,7 @@ def Motoman_2_Pose(xyzwpr):
 
 
 def Fanuc_2_Pose(xyzwpr):
-    """Converts a Motoman target to a pose (4x4 matrix)
+    """Converts a Fanuc target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
