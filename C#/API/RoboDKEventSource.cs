@@ -62,6 +62,7 @@ namespace RoboDk.API
                     case EventType.ToolModified:
                     case EventType.IsoCubeCreated:
                     case EventType.Moved3DView:
+                    case EventType.Selection3DClick:
                     case EventType.RobotMoved:
                         return new EventResult(eventType, item);
 
@@ -104,6 +105,16 @@ namespace RoboDk.API
                     case EventType.CollisionMapChanged:
                         //Debug.WriteLine($"RoboDK Event: {eventType}");
                         return new EventResult(EventType.CollisionMapChanged, null);
+
+                    case EventType.CollisionMapTooLarge:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.CollisionMapTooLarge, null);
+
+                    case EventType.NewMeasurement:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        int ignored = _roboDkEventConnection.rec_int(); // 1 = key pressed, 0 = key released
+                        int measurementId = _roboDkEventConnection.rec_int(); // 1 = key pressed, 0 = key released
+                        return new EventResult(EventType.NewMeasurement, null);
 
                     default:
                         Debug.WriteLine($"unknown RoboDK Event: {eventType}");

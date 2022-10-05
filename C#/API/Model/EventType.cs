@@ -108,7 +108,22 @@ namespace RoboDk.API.Model
         /// <summary>
         /// The collision map changed: collision checking has changed for one or more pairs of objects.
         /// </summary>
-        CollisionMapChanged = 12
+        CollisionMapChanged = 12,
+
+        /// <summary>
+        /// The collision map is too large (there are too many objects) and it won't be remembered.
+        /// </summary>
+        CollisionMapTooLarge = 13,
+
+        /// <summary>
+        /// A new measurement was obtained using a measurement system when calibrating a robot (3D or 6D measurement system)
+        /// </summary>
+        NewMeasurement = 14,
+
+        /// <summary>
+        /// An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information)
+        /// </summary>
+        Selection3DClick = 15
     }
 }
 
