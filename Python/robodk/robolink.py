@@ -691,6 +691,10 @@ class Robolink:
     # if AUTO_UPDATE is 1, updating and rendering objects the 3D the scene will be delayed until 100 ms after the last call (this value can be changed in Tools-Options-Other-API Render delay, or also using the RoboDK.Command('AutoRenderDelay', value) and RoboDK.Command('AutoRenderDelayMax', value)
     AUTO_UPDATE = 0
 
+    # If _SkipStatus flag is True, we are skipping the status flag for operations that only wait for the status and do not return anything
+    # We assume the command always completes successfully
+    _SkipStatus = False
+
     # IP address of the simulator (localhost if it is the same computer), otherwise, use RL = Robolink('yourip') to set to a different IP
     IP = 'localhost'
 
@@ -1086,7 +1090,7 @@ class Robolink:
                 self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False, quit_on_close=False):
+    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False, quit_on_close=False, com_object=None, skipstatus=False):
         """A connection is attempted upon creation of the object
         In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
         In  2 (optional) : port -> Port of the RoboDK API server (default=None)
@@ -1094,8 +1098,10 @@ class Robolink:
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
         In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
         In  6 (optional) : quit_on_close -> Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
-
+        In  6 (optional) : custom_com -> Custom communication class (allows using WebSockets or other custom implementations).
         """
+        self._SkipStatus = skipstatus
+        self._customCOM = com_object
         self._lock = threading.Lock()
         with self._lock:
             if type(args) is str:
@@ -1163,19 +1169,39 @@ class Robolink:
         """Verify that we are connected to the RoboDK API server"""
         # Imortant! this should not thread locked
         use_new_version = True
+        if self._SkipStatus:
+            # Todo: Remove on future versions when RoboDK for Web supports it
+            use_new_version = False
+
         if use_new_version:
             self._send_line('RDK_API')
-            self._send_array([self.SAFE_MODE, self.AUTO_UPDATE])
+            self._send_array([self.SAFE_MODE, self.AUTO_UPDATE, 1.0 if self._SkipStatus else 0])
+            
+            # still used for new version, do not uncomment these next 3 lines
+            #if self._SkipStatus:
+            #    self.COM.flush()
+            #    return True
+
             response = self._rec_line()
             ver_api = self._rec_int()
             self.BUILD = self._rec_int()
+            
+
             self._check_status()
             return response == 'RDK_API'
 
         else:
             self._send_line('CMD_START')
-            self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
+            if not self._SkipStatus:
+                self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE))
+            else:
+                self._send_line(str(self.SAFE_MODE) + ' ' + str(self.AUTO_UPDATE) + " 1")
+
             #fprintf(self.COM, sprintf('%i %i'), self.SAFE_MODE, self.AUTO_UPDATE))# appends LF
+            if self._SkipStatus:
+                self.COM.flush()
+                return True
+                
             response = self._rec_line()
             if response == 'READY':
                 ok = 1
@@ -1218,7 +1244,11 @@ class Robolink:
             with self._lock:
                 import socket
                 #self.COM.close()
-                self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if self._customCOM:
+                    self.COM = self._customCOM()
+                else:
+                    self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    
                 if self.NODELAY:
                     self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -1324,8 +1354,12 @@ class Robolink:
                     # Prevent warning message by closing the previous socket
                     if self.COM:
                         self.COM.close()
-
-                    self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    
+                    if self._customCOM:
+                        self.COM = self._customCOM()
+                    else:
+                        self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        
                     if self.NODELAY:
                         self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -1707,6 +1741,10 @@ class Robolink:
             self._send_line(command)
             self._send_item(item)
             self._send_int(1 if copy_childs else 0)
+            if self._SkipStatus:
+                self.COM.flush()
+                return
+
             self._check_status()
 
     def Paste(self, paste_to=0, paste_times=1):
@@ -1932,9 +1970,13 @@ class Robolink:
     def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
         with self._lock:
-            self._require_build(12938)
+            self._require_build(12938)            
             self._check_connection()
             self._send_line('RemoveStn')
+            if self._SkipStatus:
+                self.COM.flush()
+                return
+                
             self._check_status()
 
     def Delete(self, item_list):
@@ -2655,7 +2697,7 @@ class Robolink:
 
             self._check_status()
 
-    def Command(self, cmd, value=''):
+    def Command(self, cmd, value='', skip_result=False):
         """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
 
         :param str command: Command Name, such as Trace, Threads or Window.
@@ -2732,15 +2774,25 @@ class Robolink:
             value = value.replace('\n', '<br>')
 
             self._check_connection()
-            command = 'SCMD'
-            self._send_line(command)
-            self._send_line(str(cmd))
-            self._send_line(value)
-            self.COM.settimeout(3600)
-            line = self._rec_line()
-            self.COM.settimeout(self.TIMEOUT)
-            self._check_status()
-            return line
+            # Skipstatus flag has no effect here
+            # skip_result = self._SkipStatus
+            if skip_result:
+                command = 'BlindSCMD'
+                self._send_line(command)
+                self._send_line(str(cmd))
+                self._send_line(value)
+                return None
+
+            else:
+                command = 'SCMD'
+                self._send_line(command)
+                self._send_line(str(cmd))
+                self._send_line(value)
+                self.COM.settimeout(3600)
+                line = self._rec_line()
+                self.COM.settimeout(self.TIMEOUT)
+                self._check_status()
+                return line
 
     def getOpenStations(self):
         """Returns the list of open stations in RoboDK
@@ -3613,9 +3665,14 @@ class Robolink:
             self._check_connection()
             command = 'S_Selection'
             self._send_line(command)
-            nitems = self._send_int(len(list_items))
+            self._send_int(len(list_items))
             for itm in list_items:
                 self._send_item(itm)
+            
+            if self._SkipStatus:
+                self.COM.flush()
+                return self
+            
             self._check_status()
 
     def MergeItems(self, list_items=[]):
@@ -3997,8 +4054,13 @@ class Item():
             command = 'Remove'
             self.link._send_line(command)
             self.link._send_item(self)
-            self.link._check_status()
             self.item = 0
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return
+
+            self.link._check_status()
+            
 
     def Valid(self, check_deleted=False):
         """Checks if the item is valid.
@@ -4041,8 +4103,12 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_item(parent)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
-            return parent
+            return self
 
     def setParentStatic(self, parent):
         """Attaches the item to another parent while maintaining the current absolute position in the station.
@@ -4059,7 +4125,12 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_item(parent)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
+            return self
 
     def AttachClosest(self, keyword='', tolerance_mm=-1, list_objects=[]):
         """Attach the closest object to the tool.
@@ -4240,6 +4311,10 @@ class Item():
             self.link._send_item(self)
             self.link._send_int(visible)
             self.link._send_int(visible_frame)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4274,6 +4349,10 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_line(name)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4336,6 +4415,10 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_pose(pose)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4408,6 +4491,10 @@ class Item():
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_pose(pose)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4811,6 +4898,10 @@ class Item():
             command = 'S_Target_As_RT'
             self.link._send_line(command)
             self.link._send_item(self)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4824,6 +4915,10 @@ class Item():
             command = 'S_Target_As_JT'
             self.link._send_line(command)
             self.link._send_item(self)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -4985,6 +5080,10 @@ class Item():
             self.link._send_line(command)
             self.link._send_array(joints)
             self.link._send_item(self)
+            if self.link._SkipStatus:
+                self.link.COM.flush()
+                return self
+
             self.link._check_status()
             return self
 
@@ -6740,7 +6839,7 @@ class Item():
             self.link._check_status()
             return data
 
-    def setParam(self, param, value=''):
+    def setParam(self, param, value='', skip_result=False):
         """Set a specific item parameter.
 
         Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.
@@ -6824,21 +6923,34 @@ class Item():
             value = value.replace('\n', '<br>')
 
             self.link._check_connection()
-            command = 'ICMD'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_line(str(param))
-            self.link._send_line(value)
 
-            self.link.COM.settimeout(3600)
-            line = self.link._rec_line()
-            self.link.COM.settimeout(self.link.TIMEOUT)
+            # Skipstatus flag has no effect here
+            #skip_result = self._SkipStatus
+            if skip_result:
+                command = 'BlindICMD'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(str(param))
+                self.link._send_line(value)
+                self.link.COM.flush()
+                return None
 
-            self.link._check_status()
-            if len(value) == 0 and line.startswith("{"):
-                line = json.loads(line)
+            else:
+                command = 'ICMD'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(str(param))
+                self.link._send_line(value)
 
-            return line
+                self.link.COM.settimeout(3600)
+                line = self.link._rec_line()
+                self.link.COM.settimeout(self.link.TIMEOUT)
+
+                self.link._check_status()
+                if len(value) == 0 and line.startswith("{"):
+                    line = json.loads(line)
+
+                return line
 
 
 if __name__ == "__main__":
