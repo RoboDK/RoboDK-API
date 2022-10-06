@@ -935,7 +935,7 @@ class AppSettings:
 
         if wparent is None:
             # Important for unchecking the action in RoboDK
-            app.lastWindowClosed.connect(command_quit)
+            windowQt.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowMaximizeButtonHint)
             windowQt.show()
             app.exec_()
 
@@ -1123,7 +1123,10 @@ class AppSettings:
 
         if wparent is None:
             # Important for unchecking the action in RoboDK
-            windowTk.protocol("WM_DELETE_WINDOW", command_quit)
+            def disable_close():
+                pass
+
+            windowTk.protocol("WM_DELETE_WINDOW", disable_close)
             windowTk.mainloop()
 
         else:
