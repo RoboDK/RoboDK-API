@@ -245,7 +245,7 @@ def get_robodk_theme(RDK=None):
 
     # These are indexes in the Theme dropdown of RoboDK (in case they change)
     themes = {
-        0: 'Dark',  # default is dark theme
+        0: 'Light',  # default is OS based
         1: 'Light',
         2: 'Dark',
         3: 'Windows',
@@ -272,7 +272,7 @@ if ENABLE_QT:
         :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
 
         :return: The QApplication instance
-        :rtype: QtWidgets.QApplication
+        :rtype: :class:`PySide2.QtWidgets.QApplication`
         """
 
         app = QtWidgets.QApplication.instance()
@@ -298,12 +298,15 @@ if ENABLE_QT:
         return app
 
     def set_qt_theme(app, RDK=None):
-        """Set a Qt application theme to match RoboDK's theme."""
+        """Set a Qt application theme to match RoboDK's theme.
 
+        :param app: The QApplication
+        :type app: :class:`PySide2.QtWidgets.QApplication`
+        """
         # RoboDK theme : Qt theme
         qt_theme_map = {
             #'Light': None,  # light is default Qt theme
-            'Dark': 'Fusion',  # fusion with dark mode
+            'Dark': 'Fusion',
             'Windows': 'Windows',
             'Windows XP': 'windowsxp',
             'Windows Vista': 'windowsvista',
@@ -330,19 +333,99 @@ if ENABLE_QT:
             darkPalette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor("white"))
             darkPalette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(18, 18, 18))
             darkPalette.setColor(QtGui.QPalette.ColorRole.AlternateBase, darkColor)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("white"))
+            darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("black"))
             darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor("white"))
             darkPalette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
+            darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("white"))
             darkPalette.setColor(QtGui.QPalette.ColorRole.Button, darkColor)
             darkPalette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("red"))
             darkPalette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(42, 130, 218))
             darkPalette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
             darkPalette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor("black"))
+
+            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
+            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
             darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.HighlightedText, disabledColor)
+            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.WindowText, disabledColor)
+
             app.setPalette(darkPalette)
+
+    def get_qt_robodk_icon(icon_name, RDK=None):
+        """
+        Retrieve a RoboDK icon by name, such as robot, tool and frame icons (requires Qt module).
+
+        :param str icon_name: The name of the icon
+        :return: a QImage of the icon if it succeeds, else None
+        :rtype: :class:`PySide2.QtGui.QImage`
+
+        .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icons`
+        """
+        if RDK is None:
+            from robodk.robolink import Robolink
+            RDK = Robolink()
+
+        #if 'OK' != RDK.Command('PluginLoad', 'App Loader'):  # Ensure the plugin is loaded
+        #    return None
+
+        img_hex = RDK.PluginCommand('App Loader', 'IconGet', icon_name)
+        if type(img_hex) is not str or img_hex == '':
+            return None
+
+        byte_array = QtCore.QByteArray.fromHex(img_hex.encode())
+        image = QtGui.QImage()  # QImage does not require a QApplication instance, as appose to QPixmap
+        if not image.loadFromData(byte_array):
+            return None
+        return image
+
+    def get_qt_robodk_icons(RDK=None):
+        """
+        Retrieve a dictionary of available RoboDK icons, such as robot, tool and frame icons (requires Qt module).
+
+        :return: a dictionary of QImage of available icons
+        :rtype: dict of :class:`PySide2.QtGui.QImage`
+
+        .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icon`
+        """
+        if RDK is None:
+            from robodk.robolink import Robolink
+            RDK = Robolink()
+
+        tree_icons = [
+            "station",
+            "frame",
+            "object",
+            "robot",
+            'mechanism',
+            "tcp",
+            "target",
+            "targetjoint",
+            "nodeprogram",
+            "nodemachining",
+            "nodemachining_printing",
+            "nodemachining_curves",
+            "nodemachining_milling",
+            "nodemachining_points",
+            "python",
+            "folder",
+        ]
+
+        other_icons = [
+            "newfile",
+            'save',
+            'saveas',
+            'export',
+            'package',
+            'config',
+            'connect',
+        ]
+
+        icons = {}
+        for name in tree_icons + other_icons:
+            icon = get_qt_robodk_icon(name, RDK)
+            if not icon:
+                continue
+            icons[name] = icon
+        return icons
 
     def value_to_qt_widget(value):
         """
@@ -480,21 +563,27 @@ class AppSettings:
     """Generic application settings class to save and load settings to a RoboDK station with a built-in UI."""
 
     def __init__(self, settings_param='App-Settings'):
-        self._ATTRIBS_SAVE = None
-        self._FIELDS_UI = None
-        self._SETTINGS_PARAM = settings_param
+        """Generic application settings class to save and load settings to a RoboDK station with a built-in UI.
 
-        self._UI_READ_FIELDS = None
-        self._UI_RELOAD_FIELDS = None
+        :param str settings_param: RoboDK parameter used to store this app settings, defaults to 'App-Settings'
+        """
+        self._ATTRIBS_SAVE = None  #: Optional, specific list of attributes names to save (default use all attributes that does not start with "_")
+        self._FIELDS_UI = None  #: Optional, specific list of attributes description for the UI (default use attribute names)
+        self._SETTINGS_PARAM = settings_param  #: Optional, settings name (any settings with the same name will override the other on save)
+
+        self._UI_READ_FIELDS = None  #: Function to force the UI to read the current fields and update the attributes (None when the UI is not active)
+        self._UI_RELOAD_FIELDS = None  #: Function to force the UI to reload the fields from the attributes (None when the UI is not active)
+        self._UI_WIDGETS = None  #: dictionary of attributes and their (field name, value getter(s), widget) for advanced configuration (None when the UI is not active). Important: The widget type can be either Qt or Tkinter.
 
     def CopyFrom(self, other):
-        """Copy settings from another instance"""
+        """Copy settings from another AppSettings instance"""
         attr = self.getAttribs()
         for a in attr:
             if hasattr(other, a):
                 setattr(self, a, getattr(other, a))
 
     def SetDefaults(self):
+        """Set defaults settings"""
         # List untouched variables for default settings
         list_untouched = []
 
@@ -576,7 +665,7 @@ class AppSettings:
             rdk.setParam(param_val, bytes_data)
             rdk.setParam(param_backup, b'')
 
-    def Load(self, rdk=None):  #, stream_data=b''):
+    def Load(self, rdk=None):
         """Load the class attributes from a RoboDK binary parameter"""
         # Use a dictionary and the str/eval buit-in conversion
         attribs_list = self._getAttribsSave()
@@ -628,15 +717,39 @@ class AppSettings:
 
         return True
 
-    def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
-        """Show the Apps Settings in a GUI, using tkinter or Qt depending on availability."""
-        if ENABLE_QT:
-            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, show_default_button)
-        else:
-            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame, show_default_button)
+    def Erase(self, rdk=None):
+        """Completely erase the stored settings and its backup from RoboDK."""
 
-    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
-        """Open settings window"""
+        print("Erasing data from RoboDK station...")
+        if rdk is None:
+            from robodk.robolink import Robolink
+            rdk = Robolink()
+
+        param_val = self._SETTINGS_PARAM
+        param_backup = param_val + "-Backup"
+        rdk.setParam(param_val, b'')
+        rdk.setParam(param_backup, b'')
+
+    def ShowUI(self, windowtitle=None, embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
+        """Show the Apps Settings in a GUI, using tkinter or Qt depending on availability.
+
+        :param str windowtitle: Window title, defaults to the Settings name
+        :param bool embed: Embed the settings window in RoboDK, defaults to False
+        :param wparent: If specified, make this window a child of wparent (as opposed to creating a new window), defaults to None
+        :param callback_frame: If specified, callback the specified function with this window as an argument, defaults to None
+        :param bool show_default_button: Set to true to add a Default button to reset the fields, defaults to True
+        """
+
+        if not windowtitle:
+            windowtitle = self._SETTINGS_PARAM
+
+        if ENABLE_QT:
+            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, show_default_button, *args, **kwargs)
+        else:
+            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame, show_default_button, *args, **kwargs)
+
+    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
+        """Open settings window using Qt"""
 
         from PySide2 import QtCore, QtGui, QtWidgets
 
@@ -660,10 +773,10 @@ class AppSettings:
         windowQt.setLayout(layoutQtWidgetGrid)
 
         obj = self
-        TEMP_ENTRIES = {}
 
         def add_fields():
             """Creates the UI from the field stored in the variable"""
+            self._UI_WIDGETS = {}
 
             for fkey, field in self._getFieldsUI().items():
                 # Iterate for each key and add the variable to the UI
@@ -696,14 +809,14 @@ class AppSettings:
                 widget, func = value_to_qt_widget(fvalue)
                 if widget is not None:
                     big_form.addRow(QtWidgets.QLabel(fname), widget)
-                    TEMP_ENTRIES[fkey] = (field, func)
+                    self._UI_WIDGETS[fkey] = (field, func, widget)
                 else:
                     big_form.addRow(QtWidgets.QLabel(fname), QtWidgets.QLabel('Unsupported'))
 
         def read_fields():
             print("Values entered:")
-            for fkey in TEMP_ENTRIES:
-                entry = TEMP_ENTRIES[fkey]
+            for fkey in self._UI_WIDGETS:
+                entry = self._UI_WIDGETS[fkey]
                 funcs = entry[1]
                 values = [value() for value in funcs]  # tuple needs to be casted below
 
@@ -760,6 +873,7 @@ class AppSettings:
         def command_quit():
             self._UI_READ_FIELDS = None
             self._UI_RELOAD_FIELDS = None
+            self._UI_WIDGETS = None
             windowQt.window().close()
 
         add_fields()
@@ -825,7 +939,7 @@ class AppSettings:
             windowQt.show()
             app.exec_()
 
-    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
+    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
         """Open settings window using tkinter"""
 
         import sys
@@ -845,10 +959,11 @@ class AppSettings:
         frame = tkinter.Frame(windowTk)
 
         obj = self
-        TEMP_ENTRIES = {}
 
         def add_fields():
             """Creates the UI from the field stored in the variable"""
+            self._UI_WIDGETS = {}
+
             sticky = tkinter.NSEW
             idrow = -1
 
@@ -887,7 +1002,7 @@ class AppSettings:
                         _sticky = tkinter.W
                     widget.grid(row=idrow, column=1, sticky=_sticky)
 
-                    TEMP_ENTRIES[fkey] = (field, func)
+                    self._UI_WIDGETS[fkey] = (field, func, widget)
                 else:
                     label_unsupported = tkinter.Label(frame, text='Unsupported')
                     label_unsupported.grid(row=idrow, column=1, sticky=sticky)
@@ -900,8 +1015,8 @@ class AppSettings:
 
         def read_fields():
             print("Values entered:")
-            for fkey in TEMP_ENTRIES:
-                entry = TEMP_ENTRIES[fkey]
+            for fkey in self._UI_WIDGETS:
+                entry = self._UI_WIDGETS[fkey]
                 funcs = entry[1]
                 values = [value() for value in funcs]  # tuple needs to be casted below
 
@@ -958,6 +1073,7 @@ class AppSettings:
         def command_quit():
             self._UI_READ_FIELDS = None
             self._UI_RELOAD_FIELDS = None
+            self._UI_WIDGETS = None
             windowTk.destroy()
 
         add_fields()
@@ -1014,144 +1130,15 @@ class AppSettings:
             print("Settings window: using parent loop")
 
 
-def runmain():
-    #------------------------------------------------------------------------
-    # Using custom call backs with SettingsExample
-    class SettingsExample(AppSettings):
-        """Example of AppSettings using custom call backs"""
-
-        # List the variable names you would like to save and their default values.
-        # Variables that start with underscore (_) will not be saved.
-        # Important: Try to avoid default None type!!
-        # If None is used as default value it will attempt to treat it as a float and None = -1
-        Boolean = True
-        Int_Value = 123456
-        Float_Value = 0.123456789
-        String_Value = 'String test'
-        Int_List = [1, 2, 3]  # 3 numbers minimum!
-        Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
-        String_List = ['First line', 'Second line', 'Third line']
-        Mixed_List = [False, 1, '2']
-        Int_Tuple = (1, 2, 3)
-        Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
-        Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
-        Unsupported = {}
-        _HiddenUnsavedBool = True
-        HiddenSavedBool = True
-
-        # Variable names when displayed on the user interface (detailed descriptions).
-        # Create this dictionary in the same order that you want to display it.
-        # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
-        # Fields within dollar signs (i.e. $abc$) are used as section headers.
-        from collections import OrderedDict
-        __FIELDS_UI = OrderedDict()
-        __FIELDS_UI['Section'] = '$This is a section$'
-        __FIELDS_UI['Boolean'] = 'This is a bool'
-        __FIELDS_UI['Int_Value'] = 'This is an int'
-        __FIELDS_UI['Float_Value'] = 'This is a float'
-        __FIELDS_UI['String_Value'] = 'This is a string'
-        __FIELDS_UI['Int_List'] = 'This is an int list'
-        __FIELDS_UI['Float_List'] = 'This is a float list'
-        __FIELDS_UI['String_List'] = 'This is a string list'
-        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
-        __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
-        __FIELDS_UI['Dropdown'] = 'This is a dropdown'
-        __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
-        __FIELDS_UI['Unsupported'] = 'This is unsupported'
-
-        def __init__(self, settings_param='App-Settings'):
-            # customize the initialization section if needed
-            super(SettingsExample, self).__init__(settings_param=settings_param)
-            self._FIELDS_UI = self.__FIELDS_UI
-
-        def ShowUI(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=False):
-            # Show the UI for these settings including a custom frame with utility functions
-
-            def showMessage():
-                from robodk import robodialogs
-                if robodialogs.ShowMessageYesNo('Toggle "This is a bool"?'):
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.Boolean = not self.Boolean
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
-
-            def openFolder():
-                from robodk import robodialogs
-                r = robodialogs.getOpenFolder(strtitle='Open a folder and store its path to "This is a string"')
-                if r:
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.String_Value = r
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
-
-            def itemPick():
-                from robodk.robolink import Robolink
-                item = Robolink().ItemUserPick('Select an Item and store it to "This is a string"')
-                if item.Valid():
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.String_Value = item.Name()
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
-
-            if not ENABLE_QT:
-
-                def custom_frame(w):
-
-                    sticky = tkinter.NSEW
-                    frame = tkinter.LabelFrame(w)
-
-                    label = tkinter.Label(frame, text=f"This a custom callback frame for {self._SETTINGS_PARAM}.", anchor='w')
-                    label.grid(row=0, column=0, sticky=sticky)
-
-                    customButton0 = tkinter.Button(frame, text="Show a Yes/No Message", command=showMessage)
-                    customButton1 = tkinter.Button(frame, text="Open a folder", command=openFolder)
-                    customButton2 = tkinter.Button(frame, text="Pick an Item", command=itemPick)
-                    customButton0.grid(row=1, column=0, sticky=sticky)
-                    customButton1.grid(row=2, column=0, sticky=sticky)
-                    customButton2.grid(row=3, column=0, sticky=sticky)
-
-                    frame.grid_columnconfigure(0, weight=1)
-                    frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=5, pady=5)
-
-            else:
-
-                def custom_frame(w: QtWidgets.QWidget):
-
-                    grpBox = QtWidgets.QGroupBox()
-                    vLayout = QtWidgets.QVBoxLayout(grpBox)
-                    vLayout.addWidget(QtWidgets.QLabel(f"This a custom callback frame for {self._SETTINGS_PARAM}."))
-
-                    customButton0 = QtWidgets.QPushButton("Show a Yes/No Message")
-                    customButton0.clicked.connect(showMessage)
-                    customButton1 = QtWidgets.QPushButton("Open a folder")
-                    customButton1.clicked.connect(openFolder)
-                    customButton2 = QtWidgets.QPushButton("Pick an Item")
-                    customButton2.clicked.connect(itemPick)
-
-                    vLayout.addWidget(customButton0)
-                    vLayout.addWidget(customButton1)
-                    vLayout.addWidget(customButton2)
-
-                    layout = w.layout()
-                    layout.addWidget(grpBox)
-
-            super(SettingsExample, self).ShowUI(windowtitle=windowtitle, embed=embed, wparent=wparent, callback_frame=custom_frame, show_default_button=show_default_button)
-
-    #------------------------------------------------------------------------
-    S = SettingsExample(settings_param='S Settings')
-    #S.Load()
-    print('S._HiddenUnsavedBool: ' + str(S._HiddenUnsavedBool))
-    print('S.HiddenSavedBool: ' + str(S.HiddenSavedBool))
-    S.ShowUI(show_default_button=True)
-    S._HiddenUnsavedBool = not S._HiddenUnsavedBool
-    S.HiddenSavedBool = not S.HiddenSavedBool
-    S.Save()
-
+def example_beginner():
     #------------------------------------------------------------------------
     # Using the AppSettings as is
-    A = AppSettings(settings_param='A Settings')
+    # This example is for beginner users that want to use the settings as-is
+    A = AppSettings('A Settings')
 
     # List the variable names you would like to save and their default values.
     # Variables that start with underscore (_) will not be saved.
-    # Important: Try to avoid default None type!!
-    # If None is used as default value it will attempt to treat it as a float and None = -1
+    # Important: Try to avoid default None type! If None is used as default value, it will attempt to treat it as a float wioth a value of -1.
     A.Boolean = True
     A.Int_Value = 123456
     A.Float_Value = 0.123456789
@@ -1187,13 +1174,174 @@ def runmain():
     A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
     A._FIELDS_UI['Unsupported'] = 'This is unsupported'
 
-    #A.Load()
-    print('A._HiddenUnsavedBool: ' + str(A._HiddenUnsavedBool))
-    print('A.HiddenSavedBool: ' + str(A.HiddenSavedBool))
-    A.ShowUI(show_default_button=True)
-    A._HiddenUnsavedBool = not A._HiddenUnsavedBool
-    A.HiddenSavedBool = not A.HiddenSavedBool
-    A.Save()
+    A.Load()  # Load previously stored settings in the station
+    A.ShowUI()  # Show the UI to the user. It would automatically save/discard on close
+    A.Int_Value = -123456  # Manually change a value
+    A.Save()  # Manually save it
+    A.Erase()  # Remove all data from the station
+
+
+def example_advanced():
+    #------------------------------------------------------------------------
+    # Using custom call backs with SettingsExample
+    # This example is for advanced users that whishes to customized settings with additional callbacks
+    class SettingsExample(AppSettings):
+        """Example of AppSettings using custom call backs"""
+
+        # List the variable names you would like to save and their default values.
+        # Variables that start with underscore (_) will not be saved.
+        # Important: Try to avoid default None type! If None is used as default value, it will attempt to treat it as a float wioth a value of -1.
+        Boolean = True
+        Int_Value = 123456
+        Float_Value = 0.123456789
+        String_Value = 'String test'
+        Int_List = [1, 2, 3]  # 3 numbers minimum!
+        Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
+        String_List = ['First line', 'Second line', 'Third line']
+        Mixed_List = [False, 1, '2']
+        Int_Tuple = (1, 2, 3)
+        Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
+        Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
+        Unsupported = {}
+        _HiddenUnsavedBool = True
+        HiddenSavedBool = True
+
+        # Variable names when displayed on the user interface (detailed descriptions).
+        # Create this dictionary in the same order that you want to display it.
+        # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
+        # Fields within dollar signs (i.e. $abc$) are used as section headers.
+        from collections import OrderedDict
+        __FIELDS_UI = OrderedDict()
+        __FIELDS_UI['Section'] = '$This is a section$'
+        __FIELDS_UI['Boolean'] = 'This is a bool'
+        __FIELDS_UI['Int_Value'] = 'This is an int'
+        __FIELDS_UI['Float_Value'] = 'This is a float'
+        __FIELDS_UI['String_Value'] = 'This is a string'
+        __FIELDS_UI['Int_List'] = 'This is an int list'
+        __FIELDS_UI['Float_List'] = 'This is a float list'
+        __FIELDS_UI['String_List'] = 'This is a string list'
+        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
+        __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
+        __FIELDS_UI['Dropdown'] = 'This is a dropdown'
+        __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
+        __FIELDS_UI['Unsupported'] = 'This is unsupported (dict)'
+
+        def __init__(self, settings_param='App-Settings'):
+            # Customize the initialization section if needed
+            super(SettingsExample, self).__init__(settings_param=settings_param)
+            self._FIELDS_UI = self.__FIELDS_UI
+
+        def ShowUI(self, *args, **kwargs):
+            # Show the UI for these settings including a custom frame with utility functions
+
+            def showMessage():
+                from robodk import robodialogs
+                if robodialogs.ShowMessageYesNo('Toggle "This is a bool"?'):
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.Boolean = not self.Boolean
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
+
+            def openFolder():
+                from robodk import robodialogs
+                r = robodialogs.getOpenFolder(strtitle='Open a folder and store its path to "This is a string"')
+                if r:
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.String_Value = r
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
+
+            def itemPick():
+                from robodk.robolink import Robolink
+                item = Robolink().ItemUserPick('Select an Item and store it to "This is a string"')
+                if item.Valid():
+                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
+                    self.String_Value = item.Name()
+                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
+
+            def showIcons():
+                icons = get_qt_robodk_icons()
+                if icons:
+                    icon_window = QtWidgets.QDialog()
+                    icon_window.setWindowTitle('RoboDK Icons')
+                    icon_layout = QtWidgets.QFormLayout(icon_window)
+                    for icon_name, icon_image in icons.items():
+                        icon_label = QtWidgets.QLabel(icon_name)
+                        icon_label.setPixmap(QtGui.QPixmap.fromImage(icon_image).scaledToHeight(32, QtCore.Qt.TransformationMode.SmoothTransformation))
+                        icon_layout.addRow(icon_name, icon_label)
+                    icon_window.exec_()
+
+            if not ENABLE_QT:
+
+                def custom_frame(w):
+
+                    # Edit an input field widget manually
+                    _, __, widget = self._UI_WIDGETS['Float_Value']
+                    widget.config(from_=0.0, to=9999.9)
+
+                    sticky = tkinter.NSEW
+                    frame = tkinter.LabelFrame(w)
+
+                    label = tkinter.Label(frame, text=f"This a custom callback frame for {self._SETTINGS_PARAM}.", anchor='w')
+                    label.grid(row=0, column=0, sticky=sticky)
+
+                    customButton0 = tkinter.Button(frame, text="Show a Yes/No Message", command=showMessage)
+                    customButton1 = tkinter.Button(frame, text="Open a folder", command=openFolder)
+                    customButton2 = tkinter.Button(frame, text="Pick an Item", command=itemPick)
+                    customButton0.grid(row=1, column=0, sticky=sticky)
+                    customButton1.grid(row=2, column=0, sticky=sticky)
+                    customButton2.grid(row=3, column=0, sticky=sticky)
+
+                    frame.grid_columnconfigure(0, weight=1)
+                    frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=5, pady=5)
+
+            else:
+
+                def custom_frame(w: QtWidgets.QWidget):
+
+                    # Edit an input field widget manually
+                    _, __, widget = self._UI_WIDGETS['Float_Value']
+                    widget.setRange(0.0, 9999.9)
+
+                    grpBox = QtWidgets.QGroupBox()
+                    vLayout = QtWidgets.QVBoxLayout(grpBox)
+                    vLayout.addWidget(QtWidgets.QLabel(f"This a custom callback frame for {self._SETTINGS_PARAM}."))
+
+                    customButton0 = QtWidgets.QPushButton("Show a Yes/No Message")
+                    customButton0.clicked.connect(showMessage)
+                    customButton1 = QtWidgets.QPushButton("Open a folder")
+                    customButton1.clicked.connect(openFolder)
+                    customButton2 = QtWidgets.QPushButton("Pick an Item")
+                    customButton2.clicked.connect(itemPick)
+                    customButton3 = QtWidgets.QPushButton("Show RoboDK Icons")
+                    customButton3.clicked.connect(showIcons)
+
+                    vLayout.addWidget(customButton0)
+                    vLayout.addWidget(customButton1)
+                    vLayout.addWidget(customButton2)
+                    vLayout.addWidget(customButton3)
+
+                    layout = w.layout()
+                    layout.addWidget(grpBox)
+
+            super(SettingsExample, self).ShowUI(callback_frame=custom_frame, *args, **kwargs)
+
+    S = SettingsExample('S Settings')
+    S.Load()  # Load previously stored settings in the station
+    S.ShowUI()  # Show the UI to the user. It would automatically save/discard on close
+    S.Int_Value = -123456  # Manually change a value
+    S.Save()  # Manually save it
+    S.Erase()  # Remove all data from the station
+
+
+def runmain():
+
+    example_beginner()
+    example_advanced()
+
+    global ENABLE_QT
+    if ENABLE_QT:
+        ENABLE_QT = False
+        example_beginner()
+        example_advanced()
 
 
 if __name__ == "__main__":
