@@ -484,7 +484,7 @@ def getPathIcon():
     return iconpath
 
 
-def import_install(module_name, pip_name=None, rdk=None):
+def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=True):
     """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
 
@@ -535,8 +535,10 @@ def import_install(module_name, pip_name=None, rdk=None):
             rdk.ShowMessage(msg, False)
 
         try:
+            if upgrade_pip:
+                cmd = sys.executable + ' -m pip install --upgrade pip'
+                execute(cmd)
             cmd = sys.executable + ' -m pip install ' + pip_name
-            #os.system(cmd)
             execute(cmd)
             exec('import ' + module_name, globals())
 
@@ -2850,7 +2852,7 @@ class Robolink:
 
         Tip: use :func:`~robodk.robolink.Item.InstructionList` to retrieve the instruction list in RoKiSim format.
 
-        .. seealso:: :func:`Item.ShowSequence() <robodk.robolink.Item.ShowSequence>'
+        .. seealso:: :func:`Item.ShowSequence() <robodk.robolink.Item.ShowSequence>`
         """
         Item(self, 0).ShowSequence(matrix, display_type, timeout)
 
