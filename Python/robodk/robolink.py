@@ -3828,14 +3828,35 @@ class Robolink:
 
             RDK = Robolink()
             RDK.PluginLoad("C:/RoboDK/bin/plugin/yourplugin.dll")
+            # or if the Add-in is located in the default folder you can simply do:
+            RDK.PluginLoad("yourplugin")
+            
+            # You can also load the library in RoboDK as you would open any other file:
+            RDK.AddFile("C:/RoboDK/bin/plugin/yourplugin.dll")
+            
         """
-        with self._lock:
-            self._check_connection()
-            command = 'PluginLoad'
-            self._send_line(command)
-            self._send_line(plugin_name)
-            self._send_int(load)
-            self._check_status()
+        result = ""
+        if load:
+            if load >= 2:
+                #result = self.Command("PluginReload", plugin_name) # crash?
+                result = self.Command("PluginUnload", plugin_name)
+                result = self.Command("PluginLoad", plugin_name)
+            else:
+                result = self.Command("PluginLoad", plugin_name)
+        else:
+            result = self.Command("PluginUnload", plugin_name)
+        
+        success = result == "OK"            
+        return success
+        
+        # Old version:
+        #with self._lock:
+        #    self._check_connection()
+        #    command = 'PluginLoad'
+        #    self._send_line(command)
+        #    self._send_line(plugin_name)
+        #    self._send_int(load)
+        #    self._check_status()
 
     def PluginCommand(self, plugin_name, plugin_command="", value=""):
         """Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
