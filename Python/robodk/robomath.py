@@ -1094,7 +1094,8 @@ def fitPlane(points):
     B = v[3, :]  # Solution is last column of v.
     nn = np.linalg.norm(B[0:3])
     B = B / nn
-    pplane = [0, 0, -(B[3] / B[2])]
+    #pplane = [0, 0, -(B[3] / B[2])]
+    pplane = np.average(XYZ, 0)
     vplane = B[0:3].tolist()
     return pplane, vplane
 
