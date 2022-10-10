@@ -2783,6 +2783,7 @@ class Robolink:
                 self._send_line(command)
                 self._send_line(str(cmd))
                 self._send_line(value)
+                self.COM.flush()
                 return None
 
             else:
