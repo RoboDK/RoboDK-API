@@ -264,3 +264,7 @@ def SolveIK_Conf(robot, pose, toolpose=None, framepose=None, joint_config=[0, 1,
                     joint_solutions.append(joint_solution)
 
     return joint_solutions
+
+
+if __name__ == "__main__":
+    pass

@@ -309,3 +309,7 @@ if _tkinter_available:
         # the function pauses here until the mainloop is quit
         msgbox.root.destroy()
         return msgbox.returning
+
+
+if __name__ == "__main__":
+    pass

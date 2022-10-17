@@ -1178,7 +1178,7 @@ class Robolink:
         if use_new_version:
             self._send_line('RDK_API')
             self._send_array([self.SAFE_MODE, self.AUTO_UPDATE, 1.0 if self._SkipStatus else 0])
-            
+
             # still used for new version, do not uncomment these next 3 lines
             #if self._SkipStatus:
             #    self.COM.flush()
@@ -1187,7 +1187,6 @@ class Robolink:
             response = self._rec_line()
             ver_api = self._rec_int()
             self.BUILD = self._rec_int()
-            
 
             self._check_status()
             return response == 'RDK_API'
@@ -1203,7 +1202,7 @@ class Robolink:
             if self._SkipStatus:
                 self.COM.flush()
                 return True
-                
+
             response = self._rec_line()
             if response == 'READY':
                 ok = 1
@@ -1250,7 +1249,7 @@ class Robolink:
                     self.COM = self._customCOM()
                 else:
                     self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    
+
                 if self.NODELAY:
                     self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -1356,12 +1355,12 @@ class Robolink:
                     # Prevent warning message by closing the previous socket
                     if self.COM:
                         self.COM.close()
-                    
+
                     if self._customCOM:
                         self.COM = self._customCOM()
                     else:
                         self.COM = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        
+
                     if self.NODELAY:
                         self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -1972,13 +1971,13 @@ class Robolink:
     def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
         with self._lock:
-            self._require_build(12938)            
+            self._require_build(12938)
             self._check_connection()
             self._send_line('RemoveStn')
             if self._SkipStatus:
                 self.COM.flush()
                 return
-                
+
             self._check_status()
 
     def Delete(self, item_list):
@@ -3671,11 +3670,11 @@ class Robolink:
             self._send_int(len(list_items))
             for itm in list_items:
                 self._send_item(itm)
-            
+
             if self._SkipStatus:
                 self.COM.flush()
                 return self
-            
+
             self._check_status()
 
     def MergeItems(self, list_items=[]):
@@ -3848,10 +3847,10 @@ class Robolink:
                 result = self.Command("PluginLoad", plugin_name)
         else:
             result = self.Command("PluginUnload", plugin_name)
-        
-        success = result == "OK"            
+
+        success = result == "OK"
         return success
-        
+
         # Old version:
         #with self._lock:
         #    self._check_connection()
@@ -4084,7 +4083,6 @@ class Item():
                 return
 
             self.link._check_status()
-            
 
     def Valid(self, check_deleted=False):
         """Checks if the item is valid.
@@ -6979,28 +6977,14 @@ class Item():
 
 if __name__ == "__main__":
 
-    def TestGenericITem():
-        RDK = Robolink()
-        ptr = RDK.Command("AddItem")
-        i = Item(RDK, ptr)
-        i.setName("My Name")
+    def RoboDKInfo():
+        print('=======================================')
+        print('|        RoboDK API for Python        |')
+        print('=======================================')
+        RDK = Robolink(quit_on_close=True)
+        print('')
+        print('RoboDK Version: ' + RDK.Command("Version"))
+        print('RoboDK License: ' + RDK.License()[0])
+        print('')
 
-    def TestCamera():
-        RDK = Robolink()
-        ref = RDK.AddFrame("Ref")
-        prm = ''
-        c = RDK.Cam2D_Add(ref, prm)
-        b = RDK.Cam2D_Snapshot("", c)
-        with open("./Test.png", 'wb') as fid:
-            fid.write(b)
-
-    def TestCollision():
-        RDK = Robolink()
-        home = RDK.Item('Home')
-        t = RDK.Item('T1')
-
-        cost = RDK.PluginCommand("CollisionFreePlanner", "CostPtr", str(home.item) + "|" + str(t.item))  #in the future
-
-        print(cost)
-
-    #TestCamera()
+    RoboDKInfo()

@@ -1661,3 +1661,7 @@ class Mat(object):
                 file.write(('%.6f' + separator) % self.rows[i][j])
             file.write('\n')
         file.close()
+
+
+if __name__ == "__main__":
+    pass

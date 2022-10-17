@@ -359,3 +359,7 @@ def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec=2):
     robomath.pause(pause_sec)
     print("POPUP: Done")
     sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    pass
