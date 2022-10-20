@@ -42,6 +42,18 @@ int main()
         printf("J%i = %.3f deg\n", i+1, joints._Values[i]);
     }
 
+    struct Item_t t1Item = RoboDK_getItem(&rdk, "T1", (enum eITEM_TYPE)ITEM_TYPE_TARGET);
+    struct Item_t t2Item = RoboDK_getItem(&rdk, "T2", (enum eITEM_TYPE)ITEM_TYPE_TARGET);
+
+    struct Mat_t t1_pose = Item_Pose(&t1Item);
+    struct Mat_t t2_pose = Item_Pose(&t2Item);
+
+
+    printf("Moving...\n");
+    Item_MoveL_mat(&robotItem, &t1_pose, true);
+    Item_MoveL_mat(&robotItem, &t2_pose, true);
+    printf("Done\n");
+
 
     return 0;
 

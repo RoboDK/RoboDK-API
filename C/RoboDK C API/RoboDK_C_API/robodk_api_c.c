@@ -1033,15 +1033,35 @@ void Item_ShowTargets(const struct Item_t* inst, bool visible) { // pass Item wi
 
 
 int32_t Item_InstructionCount(const struct Item_t* inst) {
-
-	_RoboDK_check_connection(inst->_RDK);
-	_RoboDK_send_Line(inst->_RDK, "Prog_Nins");
-	_RoboDK_send_Item(inst->_RDK, inst);
-	uint32_t nins = _RoboDK_recv_Int(inst->_RDK);
-	_RoboDK_check_status(inst->_RDK);
-	return nins;
-
+    _RoboDK_check_connection(inst->_RDK);
+    _RoboDK_send_Line(inst->_RDK, "Prog_Nins");
+    _RoboDK_send_Item(inst->_RDK, inst);
+    int32_t nins = _RoboDK_recv_Int(inst->_RDK);
+    _RoboDK_check_status(inst->_RDK);
+    return nins;
 }
+
+int32_t Item_InstructionSelect(const struct Item_t* inst, int32_t ins_id) {
+    _RoboDK_check_connection(inst->_RDK);
+    _RoboDK_send_Line(inst->_RDK, "Prog_SelIns");
+    _RoboDK_send_Item(inst->_RDK, inst);
+    _RoboDK_send_Int(inst->_RDK, ins_id);
+    int32_t ins_id2 = _RoboDK_recv_Int(inst->_RDK);
+    _RoboDK_check_status(inst->_RDK);
+    return ins_id2;
+}
+
+bool Item_InstructionDelete(const struct Item_t* inst, int32_t ins_id) {
+    _RoboDK_check_connection(inst->_RDK);
+    _RoboDK_send_Line(inst->_RDK, "Prog_DelIns");
+    _RoboDK_send_Item(inst->_RDK, inst);
+    _RoboDK_send_Int(inst->_RDK, ins_id);
+    int32_t success = _RoboDK_recv_Int(inst->_RDK);
+    _RoboDK_check_status(inst->_RDK);
+    return success > 0;
+}
+
+
 
 
 
@@ -2196,7 +2216,12 @@ bool _RoboDK_check_status(struct RoboDK_t *inst) {
 
 void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const struct Joints_t* joints, const struct Mat_t* mat_target, const struct Item_t* itemrobot, int movetype, bool blocking) {
 	Item_WaitMove(itemrobot, 300);
-	_RoboDK_send_Line(inst, "MoveX");
+	if (blocking) {
+		_RoboDK_send_Line(inst, "MoveXb");
+	}
+	else {
+		_RoboDK_send_Line(inst, "MoveX");
+	}
 	_RoboDK_send_Int(inst, movetype);
 	if (target != NULL) {
 		_RoboDK_send_Int(inst, 3);
@@ -2221,7 +2246,10 @@ void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const str
 	_RoboDK_send_Item(inst, itemrobot);
 	_RoboDK_check_status(inst);
 	if (blocking) {
-		Item_WaitMove(itemrobot, 300);
+		//Item_WaitMove(itemrobot, 300);
+		setSocketTimeout(inst->_COM, 3600 * 1000); // wait 1h at most
+		_RoboDK_check_status(inst);
+		setSocketTimeout(inst->_COM, inst->_TIMEOUT);
 	}
 }
 

@@ -357,11 +357,13 @@ int Item_RunProgram(const struct Item_t* inst);
 int32_t Item_RunCode(const struct Item_t* inst, char* parameters);
 int Item_RunInstruction(const struct Item_t* inst, const char* code, enum eProgInstructionType run_type);
 void Item_Pause(const struct Item_t* inst, double time_ms);
-void Item_SetSimulationSpeed(const struct Item_t* inst, double speed);//Done  
-double Item_SimulationSpeed(const struct Item_t* inst);//In Progress   
-void Item_ShowInstructions(const struct Item_t* inst, bool visible); //Done 
-int32_t Item_InstructionCount(const struct Item_t* inst);//Done 
-void Item_ShowTargets(const struct Item_t* inst, bool visible);//In Progress //pass program  item 
+void Item_SetSimulationSpeed(const struct Item_t* inst, double speed);
+double Item_SimulationSpeed(const struct Item_t* inst);
+void Item_ShowInstructions(const struct Item_t* inst, bool visible);
+int32_t Item_InstructionCount(const struct Item_t* inst);
+int32_t Item_InstructionSelect(const struct Item_t* inst, int32_t ins_id);
+bool Item_InstructionDelete(const struct Item_t* inst, int32_t ins_id);
+void Item_ShowTargets(const struct Item_t* inst, bool visible);
 void Item_SetSpeed(const struct Item_t* inst, double speed_linear, double speed_joints, double accel_linear, double accel_joints);//Done 
 bool Item_Busy(const struct Item_t* inst);//Done
 void Item_Stop(const struct Item_t* inst);//Done
