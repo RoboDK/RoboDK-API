@@ -84,7 +84,20 @@ class RunApplication:
 
 
 def Unchecked():
-    """Verify if the command "Unchecked" is present. In this case it means the action was just unchecked from RoboDK (applicable to checkable actions only)."""
+    """
+    Verify if the command "Unchecked" is present. In this case it means the action was just unchecked from RoboDK (applicable to checkable actions only).
+
+    Example for a 'Checkable Action':
+
+    .. code-block:: python
+
+        def runmain():
+            if roboapps.Unchecked():
+                ActionUnchecked()
+            else:
+                roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
+                ActionChecked()
+    """
     if len(sys.argv) >= 2:
         if "Unchecked" in sys.argv[1:]:
             return True
@@ -93,7 +106,20 @@ def Unchecked():
 
 
 def Checked():
-    """Verify if the command "Checked" is present. In this case it means the action was just checked from RoboDK (applicable to checkable actions only)."""
+    """
+    Verify if the command "Checked" is present. In this case it means the action was just checked from RoboDK (applicable to checkable actions only).
+    
+    Example for a 'Checkable Action':
+
+    .. code-block:: python
+
+        def runmain():
+            if roboapps.Unchecked():
+                ActionUnchecked()
+            else:
+                roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
+                ActionChecked()
+    """
     if len(sys.argv) >= 2:
         if "Checked" in sys.argv[1:]:
             return True
@@ -102,16 +128,46 @@ def Checked():
 
 
 def KeepChecked():
-    """Keep an action checked even if the execution of the script completed (this is applicable to Checkable actions only)"""
+    """
+    Keep an action checked even if the execution of the script completed (applicable to checkable actions only).
+
+    Example for a 'Checkable Option':
+
+    .. code-block:: python
+
+        def runmain():
+            if roboapps.Unchecked():
+                ActionUnchecked()
+            else:
+                roboapps.KeepChecked()  # Important, prevents RoboDK from unchecking the action after it has completed
+                ActionChecked()
+    """
     print("App Setting: Keep checked")
     sys.stdout.flush()
 
 
 def SkipKill():
     """For Checkable actions, this setting will tell RoboDK App loader to not kill the process a few seconds after the terminate function is called.
-    This is needed if we want the user input to save the file. For example: The Record action from the Record App."""
+    This is needed if we want the user input to save the file. For example: The Record action from the Record App.
+    
+    Example for a 'Momentary Action':
+
+    .. code-block:: python
+
+        def runmain():
+            if roboapps.Unchecked():
+                roboapps.Exit()  # or sys.exit()
+            else:
+                roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
+                ActionChecked()
+    """
     print("App Setting: Skip kill")
     sys.stdout.flush()
+
+
+def Exit(exit_code=0):
+    """Exit/close the action gracefully. If an error code is provided, RoboDK will display a trace to the user."""
+    sys.exit(exit_code)
 
 
 """
@@ -222,7 +278,7 @@ ENABLE_QT = True
 if ENABLE_QT:
     try:
         from robodk.robolink import import_install
-        import_install("PySide2")
+        import_install("PySide2", "PySide2==5.15.*")
         from PySide2 import QtCore, QtGui, QtWidgets
     except:
         # Can't install Qt, fallback to tkinter
@@ -916,8 +972,16 @@ class AppSettings:
         # Important! Ensures we apply the theme and resize the window correctly
         windowQt.update()
         content.adjustSize()
-        scroll.setMinimumWidth(min(900, content.minimumWidth() + 20))
-        windowQt.adjustSize()
+
+        # Since there can be a lot of settings, ensure we are bound to the available space
+        active_screen = app.screenAt(QtGui.QCursor.pos())
+        if active_screen is not None:
+            available_size = active_screen.availableSize()
+            scroll.setMinimumWidth(max(200, min(available_size.width() / 2, content.minimumWidth() + 5)))
+            scroll.setMinimumHeight(max(50, min(available_size.height(), content.minimumHeight() + 5)))
+        else:
+            scroll.setMinimumWidth(max(200, min(900, content.minimumWidth() + 5)))
+            scroll.setMinimumHeight(max(50, min(900, content.minimumHeight() + 5)))
 
         if embed:
             # Embed the window in RoboDK
@@ -931,11 +995,11 @@ class AppSettings:
             EmbedWindow(windowtitle)
         else:
             windowQt.setWindowTitle(windowtitle)
-            windowQt.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+            windowQt.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
         if wparent is None:
             # Important for unchecking the action in RoboDK
-            windowQt.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowMaximizeButtonHint)
+            windowQt.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint | QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowMaximizeButtonHint)
             windowQt.show()
             app.exec_()
 
