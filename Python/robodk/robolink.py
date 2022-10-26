@@ -889,9 +889,9 @@ class Robolink:
 
     def _send_pose(self, pose):
         """Sends a pose (4x4 matrix)"""
-        if not pose.isHomogeneous():
-            print("Warning: pose is not homogeneous!")
-            print(pose)
+        #if not pose.isHomogeneous(): # this check is expansive!
+        #    print("Warning: pose is not homogeneous!")
+        #    print(pose)
         posebytes = b''
         for j in range(4):
             for i in range(4):
@@ -3832,10 +3832,10 @@ class Robolink:
             RDK.PluginLoad("C:/RoboDK/bin/plugin/yourplugin.dll")
             # or if the Add-in is located in the default folder you can simply do:
             RDK.PluginLoad("yourplugin")
-            
+
             # You can also load the library in RoboDK as you would open any other file:
             RDK.AddFile("C:/RoboDK/bin/plugin/yourplugin.dll")
-            
+
         """
         result = ""
         if load:
@@ -6626,7 +6626,8 @@ class Item():
             return nins
 
     def InstructionSelect(self, ins_id=-1):
-        """Select an instruction in the program as a reference to add new instructions. New instructions will be added after the selected instruction. If no instruction ID is specified, the active instruction will be selected and returned.
+        """Select an instruction in the program as a reference to add new instructions. New instructions will be added after the selected instruction.
+        If no instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`
         """
