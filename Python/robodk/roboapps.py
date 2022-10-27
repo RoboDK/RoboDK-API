@@ -891,13 +891,18 @@ class AppSettings:
                     values = newvalue
 
                 # Tuples
-                if type(last_value) is tuple:
+                elif type(last_value) is tuple:
                     values = tuple(values)
+
+                # List of a single item
+                elif type(last_value) is list and len(last_value) == 1 and type(values) is not list:
+                    values = [values]
 
                 if type(last_value) != type(values):
                     print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
                     new_type = type(last_value)
                     values = new_type(values)
+
                 print(fkey + " = " + str(values))
                 setattr(obj, fkey, values)
 
@@ -1099,13 +1104,18 @@ class AppSettings:
                     values = newvalue
 
                 # Tuples
-                if type(last_value) is tuple:
+                elif type(last_value) is tuple:
                     values = tuple(values)
+
+                # List of a single item
+                elif type(last_value) is list and len(last_value) == 1 and type(values) is not list:
+                    values = [values]
 
                 if type(last_value) != type(values):
                     print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
                     new_type = type(last_value)
                     values = new_type(values)
+
                 print(fkey + " = " + str(values))
                 setattr(obj, fkey, values)
 

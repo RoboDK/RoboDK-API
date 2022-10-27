@@ -632,6 +632,10 @@ class Robolink:
     :param list args: Command line arguments to pass to RoboDK on startup (for example: '/NOSPLASH /NOSHOW' should be passed as args=['/NOSPLASH','/NOSHOW'] to not display RoboDK). Arguments have no effect if RoboDK is already running.\n
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
     :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
+    :param bool close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
+    :param bool quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
+    :param com_object: Custom communication class (allows using WebSockets or other custom implementations). It defaults to socket communication.
+    :param bool skipstatus: Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
 
 
     .. code-block:: python
@@ -1100,7 +1104,8 @@ class Robolink:
         In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
         In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
         In  6 (optional) : quit_on_close -> Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
-        In  6 (optional) : custom_com -> Custom communication class (allows using WebSockets or other custom implementations).
+        In  7 (optional) : com_object -> Custom communication class (allows using WebSockets or other custom implementations).
+        In  8 (optional) : skipstatus -> Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
         """
         self._SkipStatus = skipstatus
         self._customCOM = com_object
