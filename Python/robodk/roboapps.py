@@ -524,13 +524,13 @@ if ENABLE_QT:
             h_layout.setContentsMargins(0, 0, 0, 0)
             for v in value:
                 f_widget, f_func = value_to_qt_widget(v)
-                func.append(f_func[0])
+                func.extend(f_func)
                 h_layout.addWidget(f_widget)
             widget = QtWidgets.QWidget()
             widget.setLayout(h_layout)
 
         # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and all(isinstance(n, str) for n in value[1]):
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
             options = value[1]
             widget = QtWidgets.QComboBox()
@@ -539,13 +539,12 @@ if ENABLE_QT:
             func = [widget.currentIndex]
 
         # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and all(isinstance(n, str) for n in value[1]) and value[0] in value[1]:
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
             index = value[1].index(value[0])
             options = value[1]
             widget = QtWidgets.QComboBox()
             widget.addItems(options)
             widget.setCurrentIndex(index)
-            #widget.itemText(widget.currentIndex)
             func = [widget.currentIndex]  # str index will be replaced with int index once saved
 
         return widget, func
@@ -593,11 +592,11 @@ def value_to_tk_widget(value, frame):
             idcol += 1
             f_widget, f_func = value_to_tk_widget(v, widget)
             f_widget.grid(row=0, column=idcol, sticky=tkinter.NSEW)
-            func.append(f_func[0])
+            func.extend(f_func)
             widget.grid_columnconfigure(idcol, weight=1)
 
     # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-    elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and all(isinstance(n, str) for n in value[1]):
+    elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
         index = value[0]
         options = value[1]
         tkvar = tkinter.StringVar(value=options[index])
@@ -605,7 +604,7 @@ def value_to_tk_widget(value, frame):
         func = [tkvar.get]
 
     # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-    elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and all(isinstance(n, str) for n in value[1]) and value[0] in value[1]:
+    elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
         index = value[0].index(value[0])
         options = value[1]
         tkvar = tkinter.StringVar(value=options[index])
@@ -875,32 +874,31 @@ class AppSettings:
                 entry = self._UI_WIDGETS[fkey]
                 funcs = entry[1]
                 values = [value() for value in funcs]  # tuple needs to be casted below
-
-                for value in values:
-                    if type(value) == str:
-                        value = value.strip()
+                values = [value.strip() if isinstance(value, str) else value for value in values]
 
                 if len(values) == 1:
                     values = values[0]
 
-                # Comboboxes
                 last_value = getattr(obj, fkey)
-                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
+                last_value_type = type(last_value)
+
+                # Comboboxes
+                if (last_value_type is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
                     newvalue = last_value
-                    newvalue[0] = value
+                    newvalue[0] = values
                     values = newvalue
 
                 # Tuples
-                elif type(last_value) is tuple:
+                elif last_value_type is tuple:
                     values = tuple(values)
 
                 # List of a single item
-                elif type(last_value) is list and len(last_value) == 1 and type(values) is not list:
+                elif last_value_type is list and len(last_value) == 1 and type(values) is not list:
                     values = [values]
 
-                if type(last_value) != type(values):
+                if last_value_type != type(values):
                     print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
-                    new_type = type(last_value)
+                    new_type = last_value_type
                     values = new_type(values)
 
                 print(fkey + " = " + str(values))
@@ -982,11 +980,11 @@ class AppSettings:
         active_screen = app.screenAt(QtGui.QCursor.pos())
         if active_screen is not None:
             available_size = active_screen.availableSize()
-            scroll.setMinimumWidth(max(200, min(available_size.width() / 2, content.minimumWidth() + 5)))
-            scroll.setMinimumHeight(max(50, min(available_size.height(), content.minimumHeight() + 5)))
+            scroll.setMinimumWidth(max(200, min(available_size.width() / 3, content.minimumWidth() + 20)))
+            scroll.setMinimumHeight(max(50, min(available_size.height() * 2 / 3, content.minimumHeight() + 20)))
         else:
-            scroll.setMinimumWidth(max(200, min(900, content.minimumWidth() + 5)))
-            scroll.setMinimumHeight(max(50, min(900, content.minimumHeight() + 5)))
+            scroll.setMinimumWidth(max(200, min(900, content.minimumWidth() + 20)))
+            scroll.setMinimumHeight(max(50, min(900, content.minimumHeight() + 20)))
 
         if embed:
             # Embed the window in RoboDK
@@ -1088,32 +1086,31 @@ class AppSettings:
                 entry = self._UI_WIDGETS[fkey]
                 funcs = entry[1]
                 values = [value() for value in funcs]  # tuple needs to be casted below
-
-                for value in values:
-                    if type(value) == str:
-                        value = value.strip()
+                values = [value.strip() if isinstance(value, str) else value for value in values]
 
                 if len(values) == 1:
                     values = values[0]
 
-                # Comboboxes
                 last_value = getattr(obj, fkey)
-                if (type(last_value) is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and all(isinstance(n, str) for n in last_value[1]):
+                last_value_type = type(last_value)
+
+                # Comboboxes
+                if (last_value_type is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
                     newvalue = last_value
-                    newvalue[0] = value
+                    newvalue[0] = values
                     values = newvalue
 
                 # Tuples
-                elif type(last_value) is tuple:
+                elif last_value_type is tuple:
                     values = tuple(values)
 
                 # List of a single item
-                elif type(last_value) is list and len(last_value) == 1 and type(values) is not list:
+                elif last_value_type is list and len(last_value) == 1 and type(values) is not list:
                     values = [values]
 
-                if type(last_value) != type(values):
+                if last_value_type != type(values):
                     print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
-                    new_type = type(last_value)
+                    new_type = last_value_type
                     values = new_type(values)
 
                 print(fkey + " = " + str(values))

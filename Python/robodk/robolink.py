@@ -5078,10 +5078,24 @@ class Item():
             return item
 
     def getLink(self, type_linked=ITEM_TYPE_ROBOT):
-        """Returns an item pointer (:class:`.Item`) to a robot, object, tool or program. This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+        """
+        Returns an item pointer (:class:`.Item`) to a robot, object, tool or program that is linked to this item.
+        This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
+        This returns the first link found.
 
-        :param int type_linked: type of linked object to retrieve
+        :param int type_linked: type of the linked item to retrieve (ITEM_TYPE_*)
+        :return: An item that is invalid if no link is found, else the item
+        :rtype: :class:`.Item`
 
+        Example:
+
+        .. code-block:: python
+
+            prog = machining_proj.getLink(ITEM_TYPE_PROGRAM)  # Get the generated program of a machining project
+            robot = prog.getLink(ITEM_TYPE_ROBOT)  # Get the robot associated with the program
+            frame = robot.getLink(ITEM_TYPE_FRAME)  # Get the active reference frame
+
+        .. seealso:: :func:`~robodk.robolink.Item.setLink`, :func:`~robodk.robolink.Item.getLinks`
         """
         with self.link._lock:
             self.link._check_connection()
@@ -5092,6 +5106,38 @@ class Item():
             item = self.link._rec_item()
             self.link._check_status()
             return item
+
+    def getLinks(self, type_linked=ITEM_TYPE_ROBOT):
+        """
+        Get all the items of a specific type for which `~robodk.robolink.Item.getLink` returns this item.
+
+        :param int type_linked: type of the items to check for a link (ITEM_TYPE_*). None means any type.
+        :return: A list of items for which `~robodk.robolink.Item.getLink` return the specified item
+        :rtype: list of :class:`.Item`
+
+        .. seealso:: :func:`~robodk.robolink.Item.getLink`, :func:`~robodk.robolink.Item.setLink`
+        """
+        from robodk import robolinkutils
+        return robolinkutils.getLinks(self, type_linked)
+
+    def setLink(self, item):
+        """
+        Sets a link between this item and the specified item.
+        This is useful to set the relationship between programs, robots, tools and other specific projects.
+
+        :param item: item to link
+        :type item: :class:`.Item`
+
+        .. seealso:: :func:`~robodk.robolink.Item.getLink`, :func:`~robodk.robolink.Item.getLinks`, :func:`~robodk.robolink.Item.setRobot`
+        """
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'S_Frame_ptr'
+            self.link._send_line(command)
+            self.link._send_item(item)
+            self.link._send_item(self)
+            self.link._check_status()
+            return self
 
     def setJoints(self, joints):
         """Set the current joints of a robot or a target. If robot joints are set, the robot position will be updated on the screen.
@@ -5901,8 +5947,8 @@ class Item():
 
         :param float speed_linear: linear speed -> speed in mm/s (-1 = no change)
         :param float speed_joints: joint speed (optional) -> speed in deg/s (-1 = no change)
-        :param float accel_linear: linear acceleration (optional) -> acceleration in mm/s2 (-1 = no change)
-        :param float accel_joints: joint acceleration (optional) -> acceleration in deg/s2 (-1 = no change)
+        :param float accel_linear: linear acceleration (optional) -> acceleration in mm/s^2 (-1 = no change)
+        :param float accel_joints: joint acceleration (optional) -> acceleration in deg/s^2 (-1 = no change)
 
         .. seealso:: :func:`~robodk.robolink.Item.setAcceleration`, :func:`~robodk.robolink.Item.setSpeedJoints`, :func:`~robodk.robolink.Item.setAccelerationJoints`
         """
@@ -6772,9 +6818,9 @@ class Item():
             valid_instructions = values[0]
             program_time = values[1]
             program_distance = values[2]
-            valid_program = values[3]
+            valid_ratio = values[3]
             self.LAST_STATUS_MESSAGE = readable_msg
-            return valid_instructions, program_time, program_distance, valid_program, readable_msg
+            return valid_instructions, program_time, program_distance, valid_ratio, readable_msg
 
     def InstructionList(self):
         """Returns the list of program instructions as an MxN matrix, where N is the number of instructions and M equals to 1 plus the number of robot axes. This is the equivalent sequence that used to be supported by RoKiSim.

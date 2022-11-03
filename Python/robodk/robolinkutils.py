@@ -23,11 +23,12 @@ from robodk import robolink, robomath
 
 
 def getLinks(item, type_linked=robolink.ITEM_TYPE_ROBOT):
-    """Get all the items of a specific type for which getLink() returns the specified item.
+    """
+    Get all the items of a specific type for which getLink() returns the specified item.
 
     :param item: The source Item
     :type item: :class:`.Item`
-    :param int type_linked: type of items to check for a link
+    :param int type_linked: type of items to check for a link. None means any type.
 
     :return: A list of Items for which item.getLink return the specified item
     :rtype: list of :class:`.Item`
