@@ -5130,9 +5130,12 @@ class Item():
 
         .. seealso:: :func:`~robodk.robolink.Item.getLink`, :func:`~robodk.robolink.Item.getLinks`, :func:`~robodk.robolink.Item.setRobot`
         """
+        if item is None:
+            item = Item(self.link)
+            
         with self.link._lock:
             self.link._check_connection()
-            command = 'S_Frame_ptr'
+            command = 'S_Link_ptr'
             self.link._send_line(command)
             self.link._send_item(item)
             self.link._send_item(self)
@@ -5201,16 +5204,23 @@ class Item():
         :param robot: robot to link
         :type robot: :class:`.Item`
         """
-        with self.link._lock:
-            if robot is None:
-                robot = Item(self.link)
-            self.link._check_connection()
-            command = 'S_Robot'
-            self.link._send_line(command)
-            self.link._send_item(self)
-            self.link._send_item(robot)
-            self.link._check_status()
+        if self.link.BUILD > 22916:
+            self.setLink(robot)
             return self
+        
+        else:
+            # To be removed in 2024
+            with self.link._lock:
+                if robot is None:
+                    robot = Item(self.link)
+                    
+                self.link._check_connection()
+                command = 'S_Robot'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_item(robot)
+                self.link._check_status()
+                return self
 
     def setPoseFrame(self, frame):
         """Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
@@ -5223,7 +5233,7 @@ class Item():
         with self.link._lock:
             self.link._check_connection()
             if isinstance(frame, Item):
-                command = 'S_Frame_ptr'
+                command = 'S_Link_ptr'
                 self.link._send_line(command)
                 self.link._send_item(frame)
             else:
@@ -7027,9 +7037,10 @@ class Item():
                 return line
 
 
-if __name__ == "__main__":
-
-    def RoboDKInfo():
+if __name__ == "__main__":    
+    def RoboDKInfo():    
+        return
+        
         print('=======================================')
         print('|        RoboDK API for Python        |')
         print('=======================================')
