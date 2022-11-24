@@ -703,7 +703,7 @@ if ENABLE_TK:
                 self.widget, self.funcs = value_to_tk_widget(self.default_value, self.body)
                 self.widget.grid(row=1, padx=5, sticky=tkinter.W + tkinter.E)
 
-            def mainloop(self, n=0) -> None:
+            def mainloop(self, n=0):
                 super().mainloop(n)
                 return self.exit_code
 
@@ -895,7 +895,7 @@ if ENABLE_QT:
 
         class InputDialogQt(QtWidgets.QDialog):
 
-            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.Dialog) -> None:
+            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.Dialog):
                 super().__init__(parent, f)
 
                 # Set the window title
@@ -946,6 +946,7 @@ if ENABLE_QT:
                 self.has_scroll = type(value) is dict and len(value.keys()) > 10
                 if self.has_scroll:
                     self.scroll_widget = QtWidgets.QScrollArea()
+                    self.scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
                     self.scroll_widget.setWidgetResizable(True)
                     self.scroll_widget.setWidget(self.widget)
                     self.scroll_widget.setMinimumWidth(self.widget.minimumWidth() + 20)
@@ -961,8 +962,6 @@ if ENABLE_QT:
                     layout.addWidget(button_box_actions, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignBottom)
                 layout.addWidget(button_box)
 
-                self.resize(self.sizeHint())
-
             def reset(self):
                 widget, self.funcs = value_to_qt_widget(self.default_value)
                 if self.has_scroll:
@@ -972,6 +971,11 @@ if ENABLE_QT:
                     self.layout().replaceWidget(self.widget, widget, QtCore.Qt.FindChildOption.FindChildrenRecursively)
                 self.widget.deleteLater()
                 self.widget = widget
+
+            def showEvent(self, arg__1):
+                if self.has_scroll:
+                    self.resize(self.sizeHint().expandedTo(self.widget.sizeHint()).boundedTo(self.screen().availableSize() * 2 / 3))
+                super().showEvent(arg__1)
 
         @staticmethod
         def InputDialog(msg, value, title=None, default_button=False, default_value=None, embed=False, actions=None, *args, **kwargs):
