@@ -103,8 +103,8 @@ RDK.Finish()
 Other
 ------
    
-Read the full [RoboDK API description](../README.md) for more information
+Read the full [RoboDK API description](../README.md) for more information.
 
-More information in [Matlab Central](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
+More information in [Matlab Central](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab).
 
 

@@ -4,13 +4,13 @@
 %
 % This is a .m file (Matlab file).
 % The RoboDK API for Matlab requires the files in this folder.
-% This example requires RoboDK to be running 
+% This example requires RoboDK to be running
 % (otherwise, RoboDK will be started if it was installed in the default location)
 % This example automatically loads the Example 01 installed by default in the "Library" folder
 
 % Note: This program is not meant to accomplish a specific goal, only to
 % show how to use the Matlab API
-% 
+%
 % RoboDK api Help:
 % ->Type "doc Robolink"            for more help on the Robolink class
 % ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
@@ -24,19 +24,19 @@ close all
 RDK = Robolink;
 
 % Get the library path
+% path = "C:\RoboDK\Library"; % Since RoboDK 5.5, PATH_LIBRARY points to Documents
 path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 1
 % RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
-RDK.AddFile([path,'Example-06.b-Pick and place 2 tables.rdk']);
-
+RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
 
 % Display a list of all items
 fprintf('Available items in the station:\n');
-disp(RDK.ItemList());
+disp(RDK.ItemList(-1, 1));
 
 % Get one item by its name
-program = RDK.Item('Pick and place');
+program = RDK.Item('Pick and place', RDK.ITEM_TYPE_PROGRAM);
 
 % Start "Pick and place" program
 program.RunProgram();
@@ -54,7 +54,7 @@ program.RunProgram();
 % Get some items in the station by their name. Each item is visible in the
 % current project tree
 
-robot = RDK.Item('ABB IRB 1600-8/1.45');
+robot = RDK.Item('ABB IRB 1600-8/1.45', RDK.ITEM_TYPE_ROBOT);
 fprintf('Robot selected:\t%s\n', robot.Name());
 robot.setVisible(1);
 % We can validate the type of each item by calling:
@@ -65,24 +65,23 @@ robot.setVisible(1);
 frameref = robot.Parent();
 fprintf('Robot reference selected:\t%s\n', frameref.Name());
 
-object = RDK.Item('base');
+object = RDK.Item('base', RDK.ITEM_TYPE_OBJECT);
 fprintf('Object selected:\t%s\n', object.Name());
 
 ball = RDK.Item('ball');
 fprintf('Ball selected:\t%s\n', ball.Name());
 
-frametable = RDK.Item('Table 1');
+frametable = RDK.Item('Table 1', RDK.ITEM_TYPE_FRAME);
 fprintf('Table selected:\t%s\n', frametable.Name());
 
-tool = RDK.Item('Tool');
+tool = RDK.Item('Tool', RDK.ITEM_TYPE_TOOL);
 fprintf('Tool selected:\t%s\n', tool.Name());
 
-target1 = RDK.Item('Target b1');
+target1 = RDK.Item('Target b1', RDK.ITEM_TYPE_TARGET);
 fprintf('Target 1 selected:\t%s\n', target1.Name());
 
-target2 = RDK.Item('Target b3');
+target2 = RDK.Item('Target b3', RDK.ITEM_TYPE_TARGET);
 fprintf('Target 2 selected:\t%s\n', target2.Name());
-
 
 % return
 %% How to generate a robot program
@@ -91,19 +90,22 @@ fprintf('Target 2 selected:\t%s\n', target2.Name());
 % the keyword "macro" is used if we want to delete any items when the
 % script is executed again.
 tic()
+
 while 1
     item = RDK.Item('macro');
+
     if item.Valid() == 0
         % Iterate until there are no items with the "macro" name
         break
     end
+
     % if Valid() returns 1 it means that an item was found
     % if so, delete the item in the RoboDK station
     item.Delete();
 end
 
 % Set the home joints
-jhome = [ 0, 0, 0, 0, 30, 0];
+jhome = [0, 0, 0, 0, 30, 0];
 
 % Set the robot at the home position
 robot.setJoints(jhome);
@@ -117,7 +119,7 @@ Htcp = tool.PoseTool();
 % Create a reference frame with respect to the robot base reference
 ref = RDK.AddFrame('Frame macro', frameref);
 % Set the reference frame at coordinates XYZ, rotation of 90deg about Y plus rotation of 180 deg about Z
-Hframe = transl(750,250,500)*roty(pi/2)*rotz(pi);
+Hframe = transl(750, 250, 500) * roty(pi / 2) * rotz(pi);
 ref.setPose(Hframe);
 
 % Set the robot's reference frame as the reference we just cretaed
@@ -126,11 +128,10 @@ robot.setPoseFrame(ref);
 robot.setPoseTool(Htcp);
 
 % Get the position of the TCP wrt the robot base
-Hhome = inv(Hframe)*robot.SolveFK(jhome)*Htcp;
+Hhome = inv(Hframe) * robot.SolveFK(jhome) * Htcp;
 
 % Create a new program "prog"
 prog = RDK.AddProgram('Prog macro');
-
 
 % Create a joint target home
 target = RDK.AddTarget('Home', ref, robot);
@@ -141,14 +142,15 @@ prog.MoveJ(target);
 
 % Generate a sequence of targets and move along the targets (linear move)
 angleY = 0;
-for dy=600:-100:100
-    targetname = sprintf('Target TY=%i RY=%i',dy,angleY);
-    target = RDK.AddTarget(targetname,ref,robot);
+
+for dy = 600:-100:100
+    targetname = sprintf('Target TY=%i RY=%i', dy, angleY);
+    target = RDK.AddTarget(targetname, ref, robot);
     % Move along Z direction of the reference frame
-    pose = transl(0,dy,0);
+    pose = transl(0, dy, 0);
     % Keep the same orientation as home orientation
-    pose(1:3,1:3) = Hhome(1:3,1:3);
-    pose = pose*roty(angleY*pi/180);
+    pose(1:3, 1:3) = Hhome(1:3, 1:3);
+    pose = pose * roty(angleY * pi / 180);
     target.setPose(pose);
     prog.MoveL(target);
     angleY = angleY + 20;
@@ -170,7 +172,6 @@ end
 fprintf('Running the program again...\n');
 prog.RunProgram();
 
-
 %% How to change the parent that an item is attached to
 
 % Change the support of a target
@@ -183,12 +184,13 @@ target2.setParent(frameref);
 
 % We can list the items that depend on an item
 childs = frametable.Childs();
-for i=1:numel(childs)
+
+for i = 1:numel(childs)
     name = childs{i}.Name();
-    newname = [name,' modified'];
+    newname = [name, ' modified'];
     visible = childs{i}.Visible();
     childs{i}.setName(newname);
-    fprintf('%s %i\n',newname, visible);
+    fprintf('%s %i\n', newname, visible);
 end
 
 %% How to Attach/Detach an object to the robot tool
@@ -206,6 +208,7 @@ else
     % a robot tool (default is 1000 mm)
     fprintf('No object is close enough\n');
 end
+
 pause(2);
 tool.DetachAll();
 fprintf('Detached all objects\n');
@@ -213,7 +216,7 @@ fprintf('Detached all objects\n');
 %% How to scale an object and how to detect collisions
 
 % Replace objects (we call the program previously set in example 1)
-RDK.Item('Replace objects').RunProgram();
+RDK.Item('Replace objects', RDK.ITEM_TYPE_PROGRAM).RunProgram();
 
 % Verify if a joint movement from j1 to j2 is free of colllision
 j1 = [-100, -50, -50, -50, -50, -50];
@@ -232,24 +235,24 @@ object.Scale([10, 10, 0.5]);
 
 % Detect the intersection between a line and any object
 p1 = [1000; 0; 8000];
-p2 = [1000; 0;    0];
+p2 = [1000; 0; 0];
 [collision, itempicked, xyz] = RDK.Collision_Line(p1, p2);
-if itempicked.Valid()
+
+if collision % or itempicked.Valid()
     fprintf('Line from p1 to p2 collides with %s\n', itempicked.Name());
     % Create a point in the intersection to display collision
     ball.Copy();
     newball = RDK.Paste();
     % Set this ball at the collision point
-    newball.setPose(transl(xyz(1),xyz(2),xyz(3)));
-    newball.Scale(0.5); % Make this ball 50% of the original size
+    newball.setPose(transl(xyz(1), xyz(2), xyz(3)));
+    newball.Scale(0.5); % Make this ball 50 % of the original size
     newball.Recolor([1 0 0]); % Make it a red ball
 end
-
 
 %% How to move the robot programmaticall without creating a program
 
 % Replace objects (we call the program previously set in example 1)
-RDK.Item('Replace objects').RunProgram();
+RDK.Item('Replace objects', RDK.ITEM_TYPE_PROGRAM).RunProgram();
 
 % RDK.setRunMode(1); % this performs a quick validation without showing the dynamic movement
 % (1 = RUNMODE_QUICKVALIDATE)
@@ -257,18 +260,20 @@ RDK.Item('Replace objects').RunProgram();
 fprintf('Moving by target item...\n');
 robot.setPoseFrame(frametable);
 RDK.setSimulationSpeed(10);
-for i=1:2    
-    robot.setSpeed(10000,1000);  
-    robot.MoveJ(target1);  
-    robot.setSpeed(100,200);
+
+for i = 1:2
+    robot.setSpeed(10000, 1000);
+    robot.MoveJ(target1);
+    robot.setSpeed(100, 200);
     robot.MoveL(target2);
-    
+
 end
 
 fprintf('Moving by joints...\n');
-J1 = [0,0,0,0,50,0];
-J2 = [40,30,-30,0,50,0];
-for i=1:2
+J1 = [0, 0, 0, 0, 50, 0];
+J2 = [40, 30, -30, 0, 50, 0];
+
+for i = 1:2
     robot.MoveJ(J1);
     robot.MoveL(J2);
 end
@@ -278,17 +283,17 @@ fprintf('Moving by pose...\n');
 % 1-Double click a robot
 % 2-Copy the pose of the Tool frame with respect to the User Frame (as a Matrix)
 % 3-Paste it here
-H1 = [    -0.492404,    -0.642788,    -0.586824,  -101.791308 ;
-     -0.413176,     0.766044,    -0.492404,  1265.638417 ;
-      0.766044,     0.000000,    -0.642788,   117.851733 ;
-      0.000000,     0.000000,     0.000000,     1.000000 ];
+H1 = [-0.492404, -0.642788, -0.586824, -101.791308;
+    -0.413176, 0.766044, -0.492404, 1265.638417;
+    0.766044, 0.000000, -0.642788, 117.851733;
+    0.000000, 0.000000, 0.000000, 1.000000];
 
-H2 = [    -0.759717,    -0.280123,    -0.586823,  -323.957442 ;
-      0.060192,     0.868282,    -0.492405,   358.739694 ;
-      0.647462,    -0.409410,    -0.642787,   239.313006 ;
-      0.000000,     0.000000,     0.000000,     1.000000 ];
-  
-for i=1:2
+H2 = [-0.759717, -0.280123, -0.586823, -323.957442;
+    0.060192, 0.868282, -0.492405, 358.739694;
+    0.647462, -0.409410, -0.642787, 239.313006;
+    0.000000, 0.000000, 0.000000, 1.000000];
+
+for i = 1:2
     robot.MoveJ(H1);
     robot.MoveL(H2);
 end
@@ -320,13 +325,13 @@ RDK.ShowSequence(joints3_all);
 
 pause(1);
 % Make joints 4 the solution to reach the target off by 100 mm in Z
-joints4 = robot.SolveIK(H_tcp_wrt_frame*transl(0,0,-100));
+joints4 = robot.SolveIK(H_tcp_wrt_frame * transl(0, 0, -100));
 % Set the robot at the new position calculated
 robot.setJoints(joints4);
 
 %% Example to add targets to a program and use circular motion
 RDK = Robolink();
-robot = RDK.Item('',RDK.ITEM_TYPE_ROBOT);
+robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
 
 % Get the current robot pose:
 pose0 = robot.Pose();
@@ -342,8 +347,8 @@ target0.setPose(pose0);
 prog.MoveL(target0);
 
 % Calculate the circular move:
-pose1 = pose0*transl(50,0,0);
-pose2 = pose0*transl(50,50,0);
+pose1 = pose0 * transl(50, 0, 0);
+pose2 = pose0 * transl(50, 50, 0);
 
 % Add the first target for the circular move
 target1 = RDK.AddTarget('Second Point');
@@ -358,7 +363,6 @@ target2.setPose(pose2);
 % Add the circular move instruction:
 prog.MoveC(target1, target2)
 
-
 %% Rail tests:
 
 % Start the API
@@ -372,7 +376,7 @@ robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
 robot = robot.getLink(RDK.ITEM_TYPE_ROBOT);
 disp(robot.Name());
 
-robot.setJointLimits([-180; -180; -180; -180; -180; -180; 0],  [+180; +180; +180; +180; +180; +180; 5000]);
+robot.setJointLimits([-180; -180; -180; -180; -180; -180; 0], [+180; +180; +180; +180; +180; +180; 5000]);
 [lower_limit, upper_limit] = robot.JointLimits();
 disp(lower_limit)
 disp(upper_limit)
@@ -383,8 +387,3 @@ disp(config)
 
 all_solutions = robot.SolveIK_All(robot.SolveFK(robot.Joints()));
 disp(all_solutions)
-
-
-
-
-
