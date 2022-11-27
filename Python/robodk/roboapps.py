@@ -1,4 +1,4 @@
-# Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -19,23 +19,32 @@
 #     https://robodk.com/doc/en/RoboDK-API.html
 #     https://robodk.com/doc/en/PythonAPI/index.html
 # --------------------------------------------
+
+import sys
+import time
+
+if 'ENABLE_TK' not in globals():
+    global ENABLE_TK
+    ENABLE_TK = True
+
+if 'ENABLE_QT' not in globals():
+    global ENABLE_QT
+    ENABLE_QT = True
 """
 App/actions control utilities.
 
 Use these to control your App's actions: run on click, run while checked, do not kill, etc.
 """
 
-import sys
-import time
-
 
 class RunApplication:
-    """Class to detect when the terminate signal is emitted to stop an action.
+    """
+    Class to detect when the terminate signal is emitted to stop an action.
 
     .. code-block:: python
 
-        run = RunApplication()
-        while run.Run():
+        RUN = RunApplication()
+        while RUN.Run():
             # your main loop to run until the terminate signal is detected
             ...
 
@@ -66,7 +75,8 @@ class RunApplication:
             self.RDK.setParam(self.param_name, "1")  # makes sure we can run the file separately in debug mode
 
     def Run(self):
-        """Run callback.
+        """
+        Run callback.
 
         :return: True as long as the App is permitted to run.
         :rtype: bool
@@ -97,6 +107,8 @@ def Unchecked():
             else:
                 roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
                 ActionChecked()
+
+    .. seealso:: :func:`~robodk.roboapps.Checked`, :func:`~robodk.roboapps.SkipKill`, :func:`~robodk.roboapps.KeepChecked`
     """
     if len(sys.argv) >= 2:
         if "Unchecked" in sys.argv[1:]:
@@ -119,6 +131,8 @@ def Checked():
             else:
                 roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
                 ActionChecked()
+
+    .. seealso:: :func:`~robodk.roboapps.Unchecked`, :func:`~robodk.roboapps.SkipKill`, :func:`~robodk.roboapps.KeepChecked`
     """
     if len(sys.argv) >= 2:
         if "Checked" in sys.argv[1:]:
@@ -141,13 +155,16 @@ def KeepChecked():
             else:
                 roboapps.KeepChecked()  # Important, prevents RoboDK from unchecking the action after it has completed
                 ActionChecked()
+
+    .. seealso:: :func:`~robodk.roboapps.Unchecked`, :func:`~robodk.roboapps.SkipKill`, :func:`~robodk.roboapps.KeepChecked`
     """
     print("App Setting: Keep checked")
     sys.stdout.flush()
 
 
 def SkipKill():
-    """For Checkable actions, this setting will tell RoboDK App loader to not kill the process a few seconds after the terminate function is called.
+    """
+    For Checkable actions, this setting will tell RoboDK App loader to not kill the process a few seconds after the terminate function is called.
     This is needed if we want the user input to save the file. For example: The Record action from the Record App.
     
     Example for a 'Momentary Action':
@@ -160,13 +177,17 @@ def SkipKill():
             else:
                 roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
                 ActionChecked()
+
+    .. seealso:: :func:`~robodk.roboapps.Unchecked`, :func:`~robodk.roboapps.Checked`, :func:`~robodk.roboapps.KeepChecked`
     """
     print("App Setting: Skip kill")
     sys.stdout.flush()
 
 
 def Exit(exit_code=0):
-    """Exit/close the action gracefully. If an error code is provided, RoboDK will display a trace to the user."""
+    """
+    Exit/close the action gracefully. If an error code is provided, RoboDK will display a trace to the user.
+    """
     sys.exit(exit_code)
 
 
@@ -176,12 +197,14 @@ General utilities
 
 
 def Str2FloatList(str_values, expected_nvalues=3):
-    """Convert a string into a list of floats. It returns None if the array is smaller than the expected size.
+    """
+    Convert a string into a list of floats. It returns None if the array is smaller than the expected size.
 
     :param str_values: The string containing a list of floats
     :type str_values: list of str
     :param expected_nvalues: Expected number of values in the string list, defaults to 3
     :type expected_nvalues: int, optional
+
     :return: The list of floats
     :rtype: list of float
     """
@@ -205,7 +228,9 @@ def Str2FloatList(str_values, expected_nvalues=3):
 
 
 def Registry(varname, setvalue=None):
-    """Read value from the registry or set a value. It will do so at HKEY_CURRENT_USER so no admin rights required."""
+    """
+    Read value from the registry or set a value. It will do so at HKEY_CURRENT_USER so no admin rights required.
+    """
     from sys import platform as _platform
     if _platform == "linux" or _platform == "linux2":
         # Ubuntu, Linux or Debian
@@ -273,28 +298,125 @@ UI utilities (Qt and Tkinter utilities).
 Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt (PySide2).
 """
 
-# Default to Qt and revert to tkinter if it fails.
-ENABLE_QT = True
-if ENABLE_QT:
-    try:
-        from robodk.robolink import import_install
-        import_install("PySide2", "PySide2==5.15.*")
-        from PySide2 import QtCore, QtGui, QtWidgets
-    except:
-        # Can't install Qt, fallback to tkinter
-        ENABLE_QT = False
 
-import sys
-if sys.version_info[0] < 3:
-    # Python 2.X only:
-    import Tkinter as tkinter
-else:
-    # Python 3.x only
-    import tkinter
+def value_to_widget(value, parent):
+    """
+    Convert a value to a widget (Tkinter or Qt).
+
+    The widget is automatically created for supported types:
+    - Base types: bool, int, float, str
+    - list or tuple of base types
+    - dropdown formatted as [int, [str, str, ...]]. e.g. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
+    - dictionary of supported types, where the key is the field's label. e.g. {'This is a bool!' : True}.
+
+    :param value: The value to convert as a widget, and the initial value of the widget
+    :type value: see supported types
+    :param parent: Parent of the widget (Qt/Tkinter)
+
+    :return: (widget, funcs) the widget, and a list of 'get' functions to retrieve the value of the widget
+    :rtype: tuple of widget (Qt/Tkinter), callable
+
+    .. seealso:: :func:`~robodk.roboapps.widget_to_value`
+    """
+    if ENABLE_QT:
+        return value_to_qt_widget(value, parent)
+    else:
+        return value_to_tk_widget(value, parent)
+
+
+def widget_to_value(funcs, original_value):
+    """
+    Retrieve the value from a widget's list of get functions.
+    The original value is required to recreate the original format.
+
+    :param funcs: list of get functions, see :func:`~robodk.roboapps.value_to_widget`
+    :type funcs: list of callable
+    :param original_value: The original value, see :func:`~robodk.roboapps.value_to_widget`
+
+    :return: The value
+
+    .. seealso:: :func:`~robodk.roboapps.value_to_widget`
+    """
+    value_list = [func() if callable(func) else func for func in funcs]
+
+    def is_pod(value):
+        # Plain old data (POD)
+        return isinstance(value, (float, int, str, bool))
+
+    def is_pod_list(value):
+        # List or tuple of PODs
+        if isinstance(value, list) and len(value) > 0 and all(is_pod(n) for n in value):
+            return True
+        return False
+
+    def is_pod_tuple(value):
+        # List or tuple of PODs
+        if isinstance(value, tuple) and len(value) > 0 and all(is_pod(n) for n in value):
+            return True
+        return False
+
+    def is_dropdown(value):
+        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
+        if type(value) is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
+            return True
+
+        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
+        elif type(value) is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
+            return True
+
+        return False
+
+    def is_pod_dict(value):
+        # Dictionary of supported types, does not supported nested dictionaries
+        if isinstance(value, dict):
+            if len(value.keys()) > 0:
+                if all(is_pod(n) or is_pod_list(n) or is_pod_tuple(n) or is_dropdown(n) for n in value.values()):
+                    return True
+                return True
+        return False
+
+    if is_pod(original_value):
+        return value_list[0]
+
+    elif is_pod_list(original_value):
+        return list(value_list)
+
+    elif is_pod_tuple(original_value):
+        return tuple(value_list)
+
+    elif is_dropdown(original_value):
+        new_value = original_value
+        new_value[0] = value_list[0]
+        return new_value
+
+    elif is_pod_dict(original_value):
+        new_value = original_value
+        for key, old_value in original_value.items():
+            if is_pod(old_value):
+                new_value[key] = value_list[0]
+                value_list.pop(0)
+
+            elif is_pod_list(old_value):
+                new_value[key] = value_list[0:len(old_value)]
+                value_list = value_list[len(old_value):]
+
+            elif is_pod_tuple(old_value):
+                new_value[key] = tuple(value_list[0:len(old_value)])
+                value_list = value_list[len(old_value):]
+
+            elif is_dropdown(old_value):
+                new_value[key] = old_value
+                new_value[key][0] = value_list[0]
+                value_list.pop(0)
+        return new_value
+
+    return value_list
 
 
 def get_robodk_theme(RDK=None):
-    """Get RoboDK's active theme (Options->General->Theme)"""
+    """
+    Get RoboDK's active theme (Options->General->Theme)
+    """
     if RDK is None:
         from robodk.robolink import Robolink
         RDK = Robolink()
@@ -319,10 +441,20 @@ def get_robodk_theme(RDK=None):
 """
 PySide2 / Qt utilities
 """
+
+if ENABLE_QT:
+    try:
+        from robodk.robolink import import_install
+        import_install("PySide2", "PySide2==5.15.*")
+        from PySide2 import QtCore, QtGui, QtWidgets
+    except:
+        ENABLE_QT = False
+
 if ENABLE_QT:
 
     def get_qt_app(robodk_icon=True, robodk_theme=True):
-        """Get the QApplication instance.
+        """
+        Get the QApplication instance.
 
         :param bool robodk_icon: Applies the RoboDK logo, defaults to True
         :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
@@ -334,6 +466,7 @@ if ENABLE_QT:
         app = QtWidgets.QApplication.instance()
         if app is None:
             QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
+            QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DisableWindowContextHelpButton, True)
             app = QtWidgets.QApplication([])
 
         if robodk_icon:
@@ -483,17 +616,24 @@ if ENABLE_QT:
             icons[name] = icon
         return icons
 
-    def value_to_qt_widget(value):
+    def value_to_qt_widget(value, parent=None):
         """
-        Get a Qt Widget based on a value. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
-        Returns a widget and a function to retrieve the widget's value.
+        Convert a value to a widget. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
+
+        The widget is automatically created for supported types:
+        - bool, int, float, str (base types)
+        - list or tuple of base types
+        - dropdown formatted as [int, [str, str, ...]] i.e. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
+        - dictionary of supported values, formatted as {label:value}
+
+        :return: (widget, funcs) the widget, and a list of get functions to retrieve the value of the widget
         """
         widget = None
         func = []
         value_type = type(value)
 
         if value_type is float:
-            widget = QtWidgets.QDoubleSpinBox()
+            widget = QtWidgets.QDoubleSpinBox(parent)
             import decimal
             decimals = abs(decimal.Decimal(str(value)).as_tuple().exponent)
             widget.setDecimals(max(4, decimals))
@@ -502,18 +642,18 @@ if ENABLE_QT:
             func = [widget.value]
 
         elif value_type is int:
-            widget = QtWidgets.QSpinBox()
+            widget = QtWidgets.QSpinBox(parent)
             widget.setRange(-9999999, 9999999)
             widget.setValue(value)
             func = [widget.value]
 
         elif value_type is str:
-            widget = QtWidgets.QLineEdit()
+            widget = QtWidgets.QLineEdit(parent)
             widget.setText(value)
             func = [widget.text]
 
         elif value_type is bool:
-            widget = QtWidgets.QCheckBox("Activate")
+            widget = QtWidgets.QCheckBox("Activate", parent)
             widget.setChecked(value)
             func = [widget.isChecked]
 
@@ -522,18 +662,19 @@ if ENABLE_QT:
             h_layout = QtWidgets.QHBoxLayout()
             h_layout.setSpacing(0)
             h_layout.setContentsMargins(0, 0, 0, 0)
+            h_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
             for v in value:
-                f_widget, f_func = value_to_qt_widget(v)
+                f_widget, f_func = value_to_qt_widget(v, None)
                 func.extend(f_func)
                 h_layout.addWidget(f_widget)
-            widget = QtWidgets.QWidget()
+            widget = QtWidgets.QWidget(parent)
             widget.setLayout(h_layout)
 
         # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
         elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
             options = value[1]
-            widget = QtWidgets.QComboBox()
+            widget = QtWidgets.QComboBox(parent)
             widget.addItems(options)
             widget.setCurrentIndex(index)
             func = [widget.currentIndex]
@@ -542,10 +683,41 @@ if ENABLE_QT:
         elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
             index = value[1].index(value[0])
             options = value[1]
-            widget = QtWidgets.QComboBox()
+            widget = QtWidgets.QComboBox(parent)
             widget.addItems(options)
             widget.setCurrentIndex(index)
             func = [widget.currentIndex]  # str index will be replaced with int index once saved
+
+        # Dictionary of label:value
+        elif value_type is dict:
+            f_layout = QtWidgets.QFormLayout()
+            f_layout.setVerticalSpacing(1)
+            f_layout.setHorizontalSpacing(10)
+            f_layout.setContentsMargins(0, 0, 0, 0)
+            f_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+
+            for key, val in value.items():
+
+                if key.endswith('$') and key.startswith('$'):
+                    # Section separator
+                    label = QtWidgets.QLabel()
+                    label.setText(f'[  {key[1:-1]}  ]'.upper())
+                    label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
+                    spacing = 0
+                    if f_layout.rowCount() > 0:
+                        spacing += 15
+                    label.setContentsMargins(0, spacing, 0, 5)
+                    func.extend([key])
+                    f_layout.addRow(label)
+                    continue
+
+                label = QtWidgets.QLabel(key)
+                f_widget, f_func = value_to_qt_widget(val)
+                func.extend(f_func)
+                f_layout.addRow(label, f_widget)
+
+            widget = QtWidgets.QWidget(parent)
+            widget.setLayout(f_layout)
 
         return widget, func
 
@@ -554,117 +726,275 @@ if ENABLE_QT:
 Tkinter utilities
 """
 
+if ENABLE_TK:
+    import sys
+    if sys.version_info[0] < 3:
+        # Python 2.X only:
+        try:
+            import Tkinter as tkinter
+        except:
+            ENABLE_TK = False
+    else:
+        # Python 3.x only
+        try:
+            import tkinter
+        except:
+            ENABLE_TK = False
 
-def value_to_tk_widget(value, frame):
-    """
-    Get a Tkinter Widget based on a value. For instance, a float into a Spinbox, a bool into a Checkbutton.
-    Returns a widget and a function to retrieve the widget's value.
-    """
-    widget = None
-    func = []
-    value_type = type(value)
+if ENABLE_TK:
 
-    if value_type is float:
-        tkvar = tkinter.DoubleVar(value=value)
-        func = [tkvar.get]
-        widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format="%.2f")
+    def get_tk_app(robodk_icon=True, robodk_theme=True):
+        """
+        Get the QApplication instance.
 
-    elif value_type is int:
-        tkvar = tkinter.IntVar(value=value)
-        func = [tkvar.get]
-        widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar)
+        :param bool robodk_icon: Applies the RoboDK logo, defaults to True
+        :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
 
-    elif value_type is str:
-        tkvar = tkinter.StringVar(value=value)
-        func = [tkvar.get]
-        widget = tkinter.Entry(frame, textvariable=tkvar)
+        :return: The QApplication instance
+        :rtype: :class:`PySide2.QtWidgets.QApplication`
+        """
 
-    elif value_type is bool:
-        tkvar = tkinter.BooleanVar(value=value)
-        func = [tkvar.get]
-        widget = tkinter.Checkbutton(frame, text="Activate", variable=tkvar)
+        app = tkinter.Tk()
+        app.withdraw()  # Use app.deiconify() to show the app, if needed
 
-    # List or tuple of PODs
-    elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
-        widget = tkinter.Frame(frame)  # simple sub-container
-        idcol = -1
-        for v in value:
-            idcol += 1
-            f_widget, f_func = value_to_tk_widget(v, widget)
-            f_widget.grid(row=0, column=idcol, sticky=tkinter.NSEW)
-            func.extend(f_func)
-            widget.grid_columnconfigure(idcol, weight=1)
+        # Center the app in the screen
+        app.update_idletasks()
+        xp = (app.winfo_screenwidth() // 2) - (app.winfo_width() // 2)
+        yp = (app.winfo_screenheight() // 2) - (app.winfo_height() // 2)
+        app.geometry(f'+{xp}+{yp}')
+        app.update_idletasks()
 
-    # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-    elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
-        index = value[0]
-        options = value[1]
-        tkvar = tkinter.StringVar(value=options[index])
-        widget = tkinter.OptionMenu(frame, tkvar, *options)
-        func = [tkvar.get]
+        if robodk_icon:
+            from robodk import robolink
+            icon_path = robolink.getPathIcon()
+            from os import path
+            if path.exists(icon_path):
+                import sys
+                if sys.platform.startswith('win'):
+                    import ctypes
+                    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
+                app.iconbitmap(default=icon_path)
 
-    # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-    elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
-        index = value[0].index(value[0])
-        options = value[1]
-        tkvar = tkinter.StringVar(value=options[index])
-        widget = tkinter.OptionMenu(frame, tkvar, *options)
-        func = [tkvar.get]
+        if robodk_theme:
+            pass  # TODO: Use tkk to apply styling globally
 
-    return widget, func
+        return app
+
+    def value_to_tk_widget(value, frame):
+        """
+        Convert a value to a widget. For instance, a float into a Spinbox, a bool into a Checkbutton.
+
+        The widget is automatically created for supported types:
+        - bool, int, float, str (base types)
+        - list or tuple of base types
+        - dropdown formatted as [int, [str, str, ...]] i.e. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
+        - dictionary of supported values, formatted as {label:value}
+
+        :return: (widget, funcs) the widget, and a list of get functions to retrieve the value of the widget
+        """
+        widget = None
+        func = []
+        value_type = type(value)
+
+        if value_type is float:
+            tkvar = tkinter.DoubleVar(value=value)
+            func = [tkvar.get]
+            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format="%.2f")
+
+        elif value_type is int:
+            tkvar = tkinter.IntVar(value=value)
+            func = [tkvar.get]
+            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar)
+
+        elif value_type is str:
+            tkvar = tkinter.StringVar(value=value)
+            func = [tkvar.get]
+            widget = tkinter.Entry(frame, textvariable=tkvar)
+
+        elif value_type is bool:
+            tkvar = tkinter.BooleanVar(value=value)
+            func = [tkvar.get]
+            widget = tkinter.Checkbutton(frame, text="Activate", variable=tkvar)
+
+        # List or tuple of PODs
+        elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
+            widget = tkinter.Frame(frame)  # simple sub-container
+            idcol = -1
+            for v in value:
+                idcol += 1
+                f_widget, f_func = value_to_tk_widget(v, widget)
+                f_widget.grid(row=0, column=idcol, sticky=tkinter.NSEW)
+                func.extend(f_func)
+                widget.grid_columnconfigure(idcol, weight=1)
+
+        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
+            index = value[0]
+            options = value[1]
+            tkvar = tkinter.StringVar(value=options[index])
+            widget = tkinter.OptionMenu(frame, tkvar, *options)
+            func = [tkvar.get]
+
+        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
+            index = value[0].index(value[0])
+            options = value[1]
+            tkvar = tkinter.StringVar(value=options[index])
+            widget = tkinter.OptionMenu(frame, tkvar, *options)
+            func = [tkvar.get]
+
+        # Dictionary of label:value
+        elif value_type is dict:
+
+            widget = tkinter.Frame(frame)  # simple sub-container
+            for i, (key, val) in enumerate(value.items()):
+
+                if key.endswith('$') and key.startswith('$'):
+                    # Section separator
+                    label = tkinter.Label(widget, text=f'[  {key[1:-1]}  ]'.upper(), anchor='w')
+                    label.grid(row=i, columnspan=2, sticky=tkinter.W + tkinter.S)
+                    func.extend([key])
+                    continue
+
+                label_name = tkinter.Label(widget, text=key, anchor='w')
+                label_name.grid(row=i, column=0, sticky=tkinter.NSEW)
+                f_widget, f_func = value_to_tk_widget(val, widget)
+                f_widget.grid(row=i, column=1, sticky=tkinter.W if type(f_widget) is tkinter.Checkbutton else tkinter.NSEW)
+                func.extend(f_func)
+
+        return widget, func
 
 
 class AppSettings:
-    """Generic application settings class to save and load settings to a RoboDK station with a built-in UI."""
+    """
+    Generic application settings class to save and load settings to a RoboDK station with a built-in UI.
+
+    :param str settings_param: RoboDK parameter used to store this app settings. It should be unique if you have more than one App setting.
+
+    Example:
+
+        .. code-block:: python
+        
+            class Settings(AppSettings):
+
+                def __init__(self, settings_param='My-App-Settings'):
+                    super().__init__(settings_param=settings_param)
+
+                    # List the variable names you would like to save and their default values.
+                    # Variables that start with underscore (_) will not be saved.
+                    self.BOOL = True
+                    self.INT = 123456
+                    self.FLOAT = 0.123456789
+                    self.STRING = 'Text'
+                    self.INT_LIST = [1, 2, 3]  
+                    self.FLOAT_LIST = [1.0, 2.0, 3.0]  
+                    self.STRING_LIST = ['First line', 'Second line', 'Third line']
+                    self.MIXED_LIST = [False, 1, '2']
+                    self.INT_TUPLE = (1, 2, 3)
+                    self.DROPDOWN = [1, ['First line', 'Second line', 'Third line']]
+                    self.DICT = {'This is a string': 'Text', 'This is a float': 0.0}
+
+                    # Variable names when displayed on the user interface (detailed descriptions).
+                    # Create this dictionary in the same order that you want to display it.
+                    # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used displayed with their attribute name.
+                    # Fields within dollar signs (i.e. $abc$) are used as section headers.
+                    from collections import OrderedDict
+                    self._FIELDS_UI = OrderedDict()
+                    self._FIELDS_UI['SECTION_1'] = '$This is a section$'
+                    self._FIELDS_UI['BOOL'] = 'This is a bool'
+                    self._FIELDS_UI['INT'] = 'This is an int'
+                    self._FIELDS_UI['FLOAT'] = 'This is a float'
+                    self._FIELDS_UI['STRING'] = 'This is a string'
+                    self._FIELDS_UI['INT_LIST'] = 'This is an int list'
+                    self._FIELDS_UI['FLOAT_LIST'] = 'This is a float list'
+                    self._FIELDS_UI['STRING_LIST'] = 'This is a string list'
+                    self._FIELDS_UI['MIXED_LIST'] = 'This is a mixed list'
+                    self._FIELDS_UI['INT_TUPLE'] = 'This is an int tuple'
+                    self._FIELDS_UI['SECTION_2'] = '$This is another section$'
+                    self._FIELDS_UI['DROPDOWN'] = 'This is a dropdown'
+                    self._FIELDS_UI['DICT'] = 'This is a dictionary'
+
+                S = Settings()
+                S.Load()  # Load previously saved settings from RoboDK
+                S.ShowUI('Settings for my App')
+
+                print(S.BOOL)
+
+    """
 
     def __init__(self, settings_param='App-Settings'):
-        """Generic application settings class to save and load settings to a RoboDK station with a built-in UI.
-
-        :param str settings_param: RoboDK parameter used to store this app settings, defaults to 'App-Settings'
-        """
         self._ATTRIBS_SAVE = None  #: Optional, specific list of attributes names to save (default use all attributes that does not start with "_")
         self._FIELDS_UI = None  #: Optional, specific list of attributes description for the UI (default use attribute names)
         self._SETTINGS_PARAM = settings_param  #: Optional, settings name (any settings with the same name will override the other on save)
-
-        self._UI_READ_FIELDS = None  #: Function to force the UI to read the current fields and update the attributes (None when the UI is not active)
-        self._UI_RELOAD_FIELDS = None  #: Function to force the UI to reload the fields from the attributes (None when the UI is not active)
-        self._UI_WIDGETS = None  #: dictionary of attributes and their (field name, value getter(s), widget) for advanced configuration (None when the UI is not active). Important: The widget type can be either Qt or Tkinter.
+        self._ATTRIBS_SKIP_DEFAULT = []  #: Optional, specific list of attributes not to restore when restoring defaults (default use all attributes that does not start with "_")
 
     def CopyFrom(self, other):
-        """Copy settings from another AppSettings instance"""
+        """
+        Copy settings from another AppSettings instance.
+
+        :param robodk.roboapps.AppSettings other: The other AppSettings instance
+        """
         attr = self.getAttribs()
         for a in attr:
             if hasattr(other, a):
                 setattr(self, a, getattr(other, a))
 
     def SetDefaults(self):
-        """Set defaults settings"""
-        # List untouched variables for default settings
-        list_untouched = []
-
+        """
+        Set defaults settings.
+        Attributes in 'AppSettings._ATTRIBS_SKIP_DEFAULT', if defined, are ignored.
+        """
         # save in local variables
-        for var in list_untouched:
+        for var in self._ATTRIBS_SKIP_DEFAULT:
             exec('%s=self.%s' % (var, var))
 
         defaults = type(self)()
         self.CopyFrom(defaults)
 
         # restore from local vars
-        for var in list_untouched:
+        for var in self._ATTRIBS_SKIP_DEFAULT:
             exec('self.%s=%s' % (var, var))
 
+    def GetDefaults(self):
+        """Get the default settings."""
+        base = type(self)()
+        defaults = {}
+        for a in self.getAttribs():
+            if hasattr(base, a):
+                defaults[a] = getattr(base, a)
+        return defaults
+
     def getAttribs(self):
-        """Get the list of attributes"""
+        """
+        Get the list of all attributes (settings).
+        Attributes that starts with '_' are ignored.
+        
+        :return: all attributes
+        :rtype: list of str
+        """
         return [a for a in dir(self) if (not callable(getattr(self, a)) and not a.startswith("_"))]
 
     def _getAttribsSave(self):
-        """Get list of attributes to save (list of strings)"""
+        """
+        Get the list of savable attributes (savable settings).
+        Attributes not in 'AppSettings._ATTRIBS_SAVE', if defined, are ignored.
+
+        :return: savable attributes
+        :rtype: list of str
+        """
         if type(self._ATTRIBS_SAVE) is list:
-            return self._ATTRIBS_SAVE
+            return [a for a in self._ATTRIBS_SAVE if hasattr(self, a)]
         return self.getAttribs()
 
     def _getFieldsUI(self):
-        """Get dictionary fields to be displayed in the UI"""
+        """
+        Get dictionary fields to be displayed in the UI.
+        Fields in 'AppSettings._FIELDS_UI', if defined, are used in priority.
+        Otherwise, the attribute name is used.
+
+        :return: dictionary of field label and their value
+        :rtype: dict
+        """
         from collections import OrderedDict
         if type(self._FIELDS_UI) is dict or type(self._FIELDS_UI) is OrderedDict:
             return self._FIELDS_UI
@@ -686,9 +1016,18 @@ class AppSettings:
         if hasattr(self, attrib):
             return getattr(self, attrib)
         return default_value
+        """Save the class attributes as a RoboDK binary parameter"""
 
     def Save(self, rdk=None, autorecover=False):
-        """Save the class attributes as a RoboDK binary parameter"""
+        """
+        Save the class attributes as a RoboDK binary parameter in the specified station.
+        If the station is not provided, it uses the active station.
+
+        :param rdk: Station to save to, defaults to None
+        :type rdk: Robolink, optional
+        :param autorecover: Create a backup in the station, defaults to False
+        :type autorecover: bool, optional
+        """
         # Save the class attributes as a string
         # Use a dictionary and the str/eval buit-in conversion
         attribs_list = self._getAttribsSave()
@@ -721,7 +1060,15 @@ class AppSettings:
             rdk.setParam(param_backup, b'')
 
     def Load(self, rdk=None):
-        """Load the class attributes from a RoboDK binary parameter"""
+        """
+        Load the class attributes from a RoboDK binary parameter.
+        If the station is not provided, it uses the active station.
+        
+        :param rdk: Station to load from, defaults to None
+        :type rdk: Robolink, optional
+
+        :return: True if it succeeds, else false.
+        """
         # Use a dictionary and the str/eval buit-in conversion
         attribs_list = self._getAttribsSave()
         #if len(attribs_list) == 0:
@@ -785,551 +1132,109 @@ class AppSettings:
         rdk.setParam(param_val, b'')
         rdk.setParam(param_backup, b'')
 
-    def ShowUI(self, windowtitle=None, embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
-        """Show the Apps Settings in a GUI, using tkinter or Qt depending on availability.
+    def ShowUI(self, windowtitle=None, embed=False, show_default_button=True, actions=None, *args, **kwargs):
+        """
+        Show the Apps Settings in a GUI.
 
         :param str windowtitle: Window title, defaults to the Settings name
         :param bool embed: Embed the settings window in RoboDK, defaults to False
-        :param wparent: If specified, make this window a child of wparent (as opposed to creating a new window), defaults to None
-        :param callback_frame: If specified, callback the specified function with this window as an argument, defaults to None
         :param bool show_default_button: Set to true to add a Default button to reset the fields, defaults to True
+        :param actions: List of optional action callbacks to add as buttons, formatted as [(str, callable), ...]. e.g. [("Button #1", action_1), ("Button #2", action_2)]
+        :type actions: list of tuples of str, callable
+
+        :return: False if the user cancelled, else True.
         """
+        from robodk.robodialogs import InputDialog
 
         if not windowtitle:
             windowtitle = self._SETTINGS_PARAM
 
-        if ENABLE_QT:
-            self.__ShowUIPyQt(windowtitle, embed, wparent, callback_frame, show_default_button, *args, **kwargs)
-        else:
-            self.__ShowUITkinter(windowtitle, embed, wparent, callback_frame, show_default_button, *args, **kwargs)
+        # Attributes to be displayed, as specified by the user.
+        # This will either be field's description, or field's values
+        attrib_desc = self._getFieldsUI()
+
+        # Get the values of the attributes to display
+        attrib_value = {}
+        for attrib, desc in attrib_desc.items():
+            if desc.endswith('$') and desc.startswith('$'):
+                # Section header
+                attrib_value[attrib] = desc
+            elif hasattr(self, attrib):
+                attrib_value[attrib] = getattr(self, attrib)
+            else:
+                print(f"Unable to find attribute {attrib}")
+
+        # Get the default values of the class, if the user tries to restore them
+        attrib_defaults = self.GetDefaults()
+
+        # Put everything in the expected format for InputDialog
+        desc_value = {attrib_desc[attrib]: attrib_value[attrib] for attrib in attrib_value}
+        desc_default = {attrib_desc[attrib]: attrib_defaults[attrib] if attrib in attrib_defaults else attrib_value[attrib] for attrib in attrib_value}
+
+        # Show the dialog to the user
+        fields_value = InputDialog(msg='', value=desc_value, title=windowtitle, default_button=show_default_button, default_value=desc_default, embed=embed, actions=actions)
+        if fields_value is None:
+            # User cancelled
+            return False
+
+        # Apply the new values
+        desc_value_inv = {v: k for k, v in attrib_desc.items()}
+        for desc, value in fields_value.items():
+            attrib = desc_value_inv[desc]
+            setattr(self, attrib, value)
+
+        # And store them to the station
+        self.Save()
+        return True
+
+
+def ShowExample():
 
-    def __ShowUIPyQt(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
-        """Open settings window using Qt"""
-
-        from PySide2 import QtCore, QtGui, QtWidgets
-
-        app = get_qt_app()
-
-        layoutQtWidgetGrid = QtWidgets.QVBoxLayout()
-        layoutQtWidgetGrid.setContentsMargins(10, 10, 10, 10)
-
-        content = QtWidgets.QWidget()
-        big_form = QtWidgets.QFormLayout(content)
-        big_form.setVerticalSpacing(1)
-        big_form.setHorizontalSpacing(15)
-        big_form.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinimumSize)
-
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(content)
-        layoutQtWidgetGrid.addWidget(scroll)
-
-        windowQt = QtWidgets.QWidget(wparent)
-        windowQt.setLayout(layoutQtWidgetGrid)
-
-        obj = self
-
-        def add_fields():
-            """Creates the UI from the field stored in the variable"""
-            self._UI_WIDGETS = {}
-
-            for fkey, field in self._getFieldsUI().items():
-                # Iterate for each key and add the variable to the UI
-                if not field is list:
-                    field = [field]
-
-                fname = field[0]
-                is_section = fname.endswith('$') and fname.startswith('$')
-                fvalue = fname if is_section else getattr(self, fkey)
-                ftype = type(fvalue)
-
-                # Convert None to double
-                if ftype is None:
-                    ftype = float
-                    fvalue = -1.0
-
-                print(fkey + ' = ' + str(fvalue))
-
-                if is_section:
-                    # Section seperator
-                    widget = QtWidgets.QLabel()
-                    widget.setText(f'[  {fname[1:-1]}  ]'.upper())
-                    widget.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
-                    widget.adjustSize()
-                    if big_form.rowCount() > 0:
-                        widget.setMinimumHeight(widget.height() * 1.75)
-                    big_form.addRow(widget)
-                    continue
-
-                widget, func = value_to_qt_widget(fvalue)
-                if widget is not None:
-                    big_form.addRow(QtWidgets.QLabel(fname), widget)
-                    self._UI_WIDGETS[fkey] = (field, func, widget)
-                else:
-                    big_form.addRow(QtWidgets.QLabel(fname), QtWidgets.QLabel('Unsupported'))
-
-        def read_fields():
-            print("Values entered:")
-            for fkey in self._UI_WIDGETS:
-                entry = self._UI_WIDGETS[fkey]
-                funcs = entry[1]
-                values = [value() for value in funcs]  # tuple needs to be casted below
-                values = [value.strip() if isinstance(value, str) else value for value in values]
-
-                if len(values) == 1:
-                    values = values[0]
-
-                last_value = getattr(obj, fkey)
-                last_value_type = type(last_value)
-
-                # Comboboxes
-                if (last_value_type is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
-                    newvalue = last_value
-                    newvalue[0] = values
-                    values = newvalue
-
-                # Tuples
-                elif last_value_type is tuple:
-                    values = tuple(values)
-
-                # List of a single item
-                elif last_value_type is list and len(last_value) == 1 and type(values) is not list:
-                    values = [values]
-
-                if last_value_type != type(values):
-                    print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
-                    new_type = last_value_type
-                    values = new_type(values)
-
-                print(fkey + " = " + str(values))
-                setattr(obj, fkey, values)
-
-        def command_ok():
-            read_fields()
-            self.Save()
-            command_quit()
-
-        def command_cancel():
-            r = QtWidgets.QMessageBox.warning(windowQt, "Save settings?", "Do you want to save the current settings before closing?", QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
-            if r == QtWidgets.QMessageBox.StandardButton.Yes:
-                read_fields()
-                self.Save()
-            command_quit()
-
-        def command_defaults():
-            r = QtWidgets.QMessageBox.warning(windowQt, "Apply default settings?", "Do you want to discard the current settings and load the default settings?", QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
-            if r == QtWidgets.QMessageBox.StandardButton.Yes:
-                while big_form.rowCount():
-                    big_form.removeRow(0)
-                self.SetDefaults()
-                add_fields()
-
-        def command_reload():
-            while big_form.rowCount():
-                big_form.removeRow(0)
-            add_fields()
-
-        def command_quit():
-            self._UI_READ_FIELDS = None
-            self._UI_RELOAD_FIELDS = None
-            self._UI_WIDGETS = None
-            windowQt.window().close()
-
-        add_fields()
-
-        self._UI_READ_FIELDS = read_fields
-        self._UI_RELOAD_FIELDS = command_reload
-
-        if callback_frame is not None:
-            callback_frame(windowQt)
-
-        if show_default_button:
-            buttonDefaults = QtWidgets.QPushButton('Set defaults')
-            buttonDefaults.clicked.connect(command_defaults)
-            layoutQtWidgetGrid.addWidget(buttonDefaults)
-
-        # Creating the Cancel button
-        buttonCancel = QtWidgets.QPushButton(windowQt)
-        buttonCancel.setText("Discard")
-        buttonCancel.clicked.connect(command_cancel)
-
-        # Creating the OK button
-        buttonOk = QtWidgets.QPushButton(windowQt)
-        buttonOk.setText('Save')
-        buttonOk.clicked.connect(command_ok)
-
-        OkCancelLayout = QtWidgets.QHBoxLayout()
-        OkCancelLayout.addWidget(buttonOk)
-        OkCancelLayout.addWidget(buttonCancel)
-        layoutQtWidgetGrid.addLayout(OkCancelLayout)
-
-        import os
-        from robodk.robolink import getPathIcon
-        iconpath = getPathIcon()
-        if os.path.exists(iconpath):
-            windowQt.setWindowIcon(QtGui.QIcon(iconpath))
-
-        # Set the window style
-        set_qt_theme(app)
-
-        # Important! Ensures we apply the theme and resize the window correctly
-        windowQt.update()
-        content.adjustSize()
-
-        # Since there can be a lot of settings, ensure we are bound to the available space
-        active_screen = app.screenAt(QtGui.QCursor.pos())
-        if active_screen is not None:
-            available_size = active_screen.availableSize()
-            scroll.setMinimumWidth(max(200, min(available_size.width() / 3, content.minimumWidth() + 20)))
-            scroll.setMinimumHeight(max(50, min(available_size.height() * 2 / 3, content.minimumHeight() + 20)))
-        else:
-            scroll.setMinimumWidth(max(200, min(900, content.minimumWidth() + 20)))
-            scroll.setMinimumHeight(max(50, min(900, content.minimumHeight() + 20)))
-
-        if embed:
-            # Embed the window in RoboDK
-            mainWindow = QtWidgets.QMainWindow()
-            mainWindow.setCentralWidget(windowQt)
-            mainWindow.setWindowTitle(windowtitle)
-            mainWindow.update()
-            mainWindow.show()
-
-            from robodk.robolink import EmbedWindow
-            EmbedWindow(windowtitle)
-        else:
-            windowQt.setWindowTitle(windowtitle)
-            windowQt.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
-
-        if wparent is None:
-            # Important for unchecking the action in RoboDK
-            windowQt.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint | QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowMaximizeButtonHint)
-            windowQt.show()
-            app.exec_()
-
-    def __ShowUITkinter(self, windowtitle='Settings', embed=False, wparent=None, callback_frame=None, show_default_button=True, *args, **kwargs):
-        """Open settings window using tkinter"""
-
-        import sys
-        if sys.version_info[0] < 3:
-            # Python 2.X only:
-            import Tkinter as tkinter
-        else:
-            # Python 3.x only
-            import tkinter
-
-        windowTk = None
-        if wparent is not None:
-            windowTk = tkinter.Toplevel(wparent)
-        else:
-            windowTk = tkinter.Tk()
-
-        frame = tkinter.Frame(windowTk)
-
-        obj = self
-
-        def add_fields():
-            """Creates the UI from the field stored in the variable"""
-            self._UI_WIDGETS = {}
-
-            sticky = tkinter.NSEW
-            idrow = -1
-
-            for fkey, field in self._getFieldsUI().items():
-                idrow += 1
-
-                # Iterate for each key and add the variable to the UI
-                if not field is list:
-                    field = [field]
-
-                fname = field[0]
-                is_section = fname.endswith('$') and fname.startswith('$')
-                fvalue = fname if is_section else getattr(self, fkey)
-                ftype = type(fvalue)
-
-                # Convert None to double
-                if ftype is None:
-                    ftype = float
-                    fvalue = -1.0
-
-                print(fkey + ' = ' + str(fvalue))
-
-                if is_section:
-                    # Section seperator
-                    widget = tkinter.Label(frame, text=f'[  {fname[1:-1]}  ]'.upper(), anchor='w')
-                    widget.grid(row=idrow, columnspan=2, sticky=sticky)
-                    continue
-
-                widget, func = value_to_tk_widget(fvalue, frame)
-                label_name = tkinter.Label(frame, text=fname, anchor='w')
-                label_name.grid(row=idrow, column=0, sticky=sticky)
-
-                if widget is not None:
-                    _sticky = sticky
-                    if type(widget) is tkinter.Checkbutton:
-                        _sticky = tkinter.W
-                    widget.grid(row=idrow, column=1, sticky=_sticky)
-
-                    self._UI_WIDGETS[fkey] = (field, func, widget)
-                else:
-                    label_unsupported = tkinter.Label(frame, text='Unsupported')
-                    label_unsupported.grid(row=idrow, column=1, sticky=sticky)
-
-                frame.grid_rowconfigure(idrow, weight=1)
-                frame.grid_columnconfigure(0, weight=1)
-                frame.grid_columnconfigure(1, weight=1)
-
-            frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=1, pady=1)
-
-        def read_fields():
-            print("Values entered:")
-            for fkey in self._UI_WIDGETS:
-                entry = self._UI_WIDGETS[fkey]
-                funcs = entry[1]
-                values = [value() for value in funcs]  # tuple needs to be casted below
-                values = [value.strip() if isinstance(value, str) else value for value in values]
-
-                if len(values) == 1:
-                    values = values[0]
-
-                last_value = getattr(obj, fkey)
-                last_value_type = type(last_value)
-
-                # Comboboxes
-                if (last_value_type is list) and (len(last_value) == 2) and isinstance(last_value[0], (int, str)) and isinstance(last_value[1], list) and all(isinstance(n, str) for n in last_value[1]):
-                    newvalue = last_value
-                    newvalue[0] = values
-                    values = newvalue
-
-                # Tuples
-                elif last_value_type is tuple:
-                    values = tuple(values)
-
-                # List of a single item
-                elif last_value_type is list and len(last_value) == 1 and type(values) is not list:
-                    values = [values]
-
-                if last_value_type != type(values):
-                    print('Warning! Type change detected (old:new): %s:%s' % (str(last_value), str(values)))
-                    new_type = last_value_type
-                    values = new_type(values)
-
-                print(fkey + " = " + str(values))
-                setattr(obj, fkey, values)
-
-        def command_ok():
-            read_fields()
-            self.Save()
-            command_quit()
-
-        def command_cancel():
-            r = tkinter.messagebox.askyesno("Save settings?", "Do you want to save the current settings before closing?")
-            if r:
-                read_fields()
-                self.Save()
-            command_quit()
-
-        def command_defaults():
-            r = tkinter.messagebox.askyesno("Apply default settings?", "Do you want to discard the current settings and load the default settings?")
-            if r:
-                for widget in frame.winfo_children():
-                    widget.destroy()
-                self.SetDefaults()
-                add_fields()
-
-        def command_reload():
-            for widget in frame.winfo_children():
-                widget.destroy()
-            add_fields()
-
-        def command_quit():
-            self._UI_READ_FIELDS = None
-            self._UI_RELOAD_FIELDS = None
-            self._UI_WIDGETS = None
-            windowTk.destroy()
-
-        add_fields()
-
-        self._UI_READ_FIELDS = read_fields
-        self._UI_RELOAD_FIELDS = command_reload
-
-        # Everything after the callframe will be added after whatever is added to the frame
-        if callback_frame is not None:
-            callback_frame(windowTk)
-
-        row = tkinter.Frame(windowTk)
-        id_row = 0
-        if show_default_button:
-            b_defaults = tkinter.Button(row, text='Set defaults', command=command_defaults)
-            b_defaults.grid(row=id_row, column=0, columnspan=2, sticky=tkinter.NSEW)
-            id_row += 1
-
-        # Creating the Cancel button
-        b_cancel = tkinter.Button(row, text='Discard', command=command_cancel)
-        b_cancel.grid(row=id_row, column=1, sticky=tkinter.NSEW)
-
-        # Creating the OK button
-        b_ok = tkinter.Button(row, text='Save', command=command_ok)
-        b_ok.grid(row=id_row, column=0, sticky=tkinter.NSEW)
-
-        row.grid_columnconfigure(0, weight=1)
-        row.grid_columnconfigure(1, weight=1)
-        row.pack(side=tkinter.BOTTOM, fill=tkinter.X, padx=5, pady=5)
-
-        windowTk.title(windowtitle)
-
-        import os
-        from robodk.robolink import getPathIcon
-
-        iconpath = getPathIcon()
-        if os.path.exists(iconpath):
-            windowTk.iconbitmap(iconpath)
-
-        # Embed the window in RoboDK
-        if embed:
-            from robodk.robolink import EmbedWindow
-            EmbedWindow(windowtitle)
-        else:
-            # If not, make sure to make the window stay on top
-            windowTk.attributes("-topmost", True)
-
-        if wparent is None:
-            # Important for unchecking the action in RoboDK
-            def disable_close():
-                pass
-
-            windowTk.protocol("WM_DELETE_WINDOW", disable_close)
-            windowTk.mainloop()
-
-        else:
-            print("Settings window: using parent loop")
-
-
-def example_beginner():
-    #------------------------------------------------------------------------
-    # Using the AppSettings as is
-    # This example is for beginner users that want to use the settings as-is
-    A = AppSettings('A Settings')
-
-    # List the variable names you would like to save and their default values.
-    # Variables that start with underscore (_) will not be saved.
-    # Important: Try to avoid default None type! If None is used as default value, it will attempt to treat it as a float wioth a value of -1.
-    A.Boolean = True
-    A.Int_Value = 123456
-    A.Float_Value = 0.123456789
-    A.String_Value = 'String test'
-    A.Int_List = [1, 2, 3]  # 3 numbers minimum!
-    A.Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
-    A.String_List = ['First line', 'Second line', 'Third line']
-    A.Mixed_List = [False, 1, '2']
-    A.Int_Tuple = (1, 2, 3)
-    A.Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
-    A.Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
-    A.Unsupported = {}
-    A._HiddenUnsavedBool = True
-    A.HiddenSavedBool = True
-
-    # Variable names when displayed on the user interface (detailed descriptions).
-    # Create this dictionary in the same order that you want to display it.
-    # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
-    # Fields within dollar signs (i.e. $abc$) are used as section headers.
-    from collections import OrderedDict
-    A._FIELDS_UI = OrderedDict()
-    A._FIELDS_UI['Section'] = '$This is a section$'
-    A._FIELDS_UI['Boolean'] = 'This is a bool'
-    A._FIELDS_UI['Int_Value'] = 'This is an int'
-    A._FIELDS_UI['Float_Value'] = 'This is a float'
-    A._FIELDS_UI['String_Value'] = 'This is a string'
-    A._FIELDS_UI['Float_List'] = 'This is a float list'
-    A._FIELDS_UI['Int_List'] = 'This is an int list'
-    A._FIELDS_UI['String_List'] = 'This is a string list'
-    A._FIELDS_UI['Mixed_List'] = 'This is a mixed list'
-    A._FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
-    A._FIELDS_UI['Dropdown'] = 'This is a dropdown'
-    A._FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
-    A._FIELDS_UI['Unsupported'] = 'This is unsupported'
-
-    A.Load()  # Load previously stored settings in the station
-    A.ShowUI()  # Show the UI to the user. It would automatically save/discard on close
-    A.Int_Value = -123456  # Manually change a value
-    A.Save()  # Manually save it
-    A.Erase()  # Remove all data from the station
-
-
-def example_advanced():
-    #------------------------------------------------------------------------
-    # Using custom call backs with SettingsExample
-    # This example is for advanced users that whishes to customized settings with additional callbacks
     class SettingsExample(AppSettings):
-        """Example of AppSettings using custom call backs"""
 
-        # List the variable names you would like to save and their default values.
-        # Variables that start with underscore (_) will not be saved.
-        # Important: Try to avoid default None type! If None is used as default value, it will attempt to treat it as a float wioth a value of -1.
-        Boolean = True
-        Int_Value = 123456
-        Float_Value = 0.123456789
-        String_Value = 'String test'
-        Int_List = [1, 2, 3]  # 3 numbers minimum!
-        Float_List = [1.0, 2.0, 3.0]  # 3 numbers minimum!
-        String_List = ['First line', 'Second line', 'Third line']
-        Mixed_List = [False, 1, '2']
-        Int_Tuple = (1, 2, 3)
-        Dropdown = ['Second line', ['First line', 'Second line', 'Third line']]
-        Dropdown2 = [1, ['First line', 'Second line', 'Third line']]
-        Unsupported = {}
-        _HiddenUnsavedBool = True
-        HiddenSavedBool = True
-
-        # Variable names when displayed on the user interface (detailed descriptions).
-        # Create this dictionary in the same order that you want to display it.
-        # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
-        # Fields within dollar signs (i.e. $abc$) are used as section headers.
-        from collections import OrderedDict
-        __FIELDS_UI = OrderedDict()
-        __FIELDS_UI['Section'] = '$This is a section$'
-        __FIELDS_UI['Boolean'] = 'This is a bool'
-        __FIELDS_UI['Int_Value'] = 'This is an int'
-        __FIELDS_UI['Float_Value'] = 'This is a float'
-        __FIELDS_UI['String_Value'] = 'This is a string'
-        __FIELDS_UI['Int_List'] = 'This is an int list'
-        __FIELDS_UI['Float_List'] = 'This is a float list'
-        __FIELDS_UI['String_List'] = 'This is a string list'
-        __FIELDS_UI['Mixed_List'] = 'This is a mixed list'
-        __FIELDS_UI['Int_Tuple'] = 'This is an int tuple'
-        __FIELDS_UI['Dropdown'] = 'This is a dropdown'
-        __FIELDS_UI['Dropdown2'] = 'This is a dropdown too'
-        __FIELDS_UI['Unsupported'] = 'This is unsupported (dict)'
-
-        def __init__(self, settings_param='App-Settings'):
-            # Customize the initialization section if needed
+        def __init__(self, settings_param='App-Settings-Example'):
             super(SettingsExample, self).__init__(settings_param=settings_param)
-            self._FIELDS_UI = self.__FIELDS_UI
+
+            # List the variable names you would like to save and their default values.
+            # Variables that start with underscore (_) will not be saved.
+            # Important: Try to avoid default None type! If None is used as default value, it will attempt to treat it as a float with a value of -1.
+            self.BOOL = True
+            self.INT = 123456
+            self.FLOAT = 0.123456789
+            self.STRING = 'Text'
+            self.INT_LIST = [1, 2, 3]  # 3 numbers minimum!
+            self.FLOAT_LIST = [1.0, 2.0, 3.0]  # 3 numbers minimum!
+            self.STRING_LIST = ['First line', 'Second line', 'Third line']
+            self.MIXED_LIST = [False, 1, '2']
+            self.INT_TUPLE = (1, 2, 3)
+            self.DROPDOWN = [1, ['First line', 'Second line', 'Third line']]
+            self.DICT = {'This is a string': 'Text', 'This is a float': 0.0}
+
+            # Variable names when displayed on the user interface (detailed descriptions).
+            # Create this dictionary in the same order that you want to display it.
+            # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed as is (unless they start with '_').
+            # Fields within dollar signs (i.e. $abc$) are used as section headers.
+            from collections import OrderedDict
+            self._FIELDS_UI = OrderedDict()
+            self._FIELDS_UI['SECTION_1'] = '$This is a section$'
+            self._FIELDS_UI['BOOL'] = 'This is a bool'
+            self._FIELDS_UI['INT'] = 'This is an int'
+            self._FIELDS_UI['FLOAT'] = 'This is a float'
+            self._FIELDS_UI['STRING'] = 'This is a string'
+            self._FIELDS_UI['INT_LIST'] = 'This is an int list'
+            self._FIELDS_UI['FLOAT_LIST'] = 'This is a float list'
+            self._FIELDS_UI['STRING_LIST'] = 'This is a string list'
+            self._FIELDS_UI['MIXED_LIST'] = 'This is a mixed list'
+            self._FIELDS_UI['INT_TUPLE'] = 'This is an int tuple'
+            self._FIELDS_UI['SECTION_2'] = '$This is another section$'
+            self._FIELDS_UI['DROPDOWN'] = 'This is a dropdown'
+            self._FIELDS_UI['DICT'] = 'This is a dictionary'
 
         def ShowUI(self, *args, **kwargs):
-            # Show the UI for these settings including a custom frame with utility functions
 
             def showMessage():
                 from robodk import robodialogs
-                if robodialogs.ShowMessageYesNo('Toggle "This is a bool"?'):
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.Boolean = not self.Boolean
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
-
-            def openFolder():
-                from robodk import robodialogs
-                r = robodialogs.getOpenFolder(strtitle='Open a folder and store its path to "This is a string"')
-                if r:
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.String_Value = r
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
-
-            def itemPick():
-                from robodk.robolink import Robolink
-                item = Robolink().ItemUserPick('Select an Item and store it to "This is a string"')
-                if item.Valid():
-                    self._UI_READ_FIELDS()  # Ensure we read the UI fields to have the latest value
-                    self.String_Value = item.Name()
-                    self._UI_RELOAD_FIELDS()  # Reload the UI fields with the latest changes
+                robodialogs.ShowMessageYesNo('Are you enjoying RoboDK?')
 
             def showIcons():
                 icons = get_qt_robodk_icons()
@@ -1343,79 +1248,27 @@ def example_advanced():
                         icon_layout.addRow(icon_name, icon_label)
                     icon_window.exec_()
 
-            if not ENABLE_QT:
+            actions = [("Show a Yes/No Message", showMessage), ("Show RoboDK Icons", showIcons)]
 
-                def custom_frame(w):
+            return super(SettingsExample, self).ShowUI(actions=actions, *args, **kwargs)
 
-                    # Edit an input field widget manually
-                    _, __, widget = self._UI_WIDGETS['Float_Value']
-                    widget.config(from_=0.0, to=9999.9)
-
-                    sticky = tkinter.NSEW
-                    frame = tkinter.LabelFrame(w)
-
-                    label = tkinter.Label(frame, text=f"This a custom callback frame for {self._SETTINGS_PARAM}.", anchor='w')
-                    label.grid(row=0, column=0, sticky=sticky)
-
-                    customButton0 = tkinter.Button(frame, text="Show a Yes/No Message", command=showMessage)
-                    customButton1 = tkinter.Button(frame, text="Open a folder", command=openFolder)
-                    customButton2 = tkinter.Button(frame, text="Pick an Item", command=itemPick)
-                    customButton0.grid(row=1, column=0, sticky=sticky)
-                    customButton1.grid(row=2, column=0, sticky=sticky)
-                    customButton2.grid(row=3, column=0, sticky=sticky)
-
-                    frame.grid_columnconfigure(0, weight=1)
-                    frame.pack(side=tkinter.TOP, fill=tkinter.X, padx=5, pady=5)
-
-            else:
-
-                def custom_frame(w: QtWidgets.QWidget):
-
-                    # Edit an input field widget manually
-                    _, __, widget = self._UI_WIDGETS['Float_Value']
-                    widget.setRange(0.0, 9999.9)
-
-                    grpBox = QtWidgets.QGroupBox()
-                    vLayout = QtWidgets.QVBoxLayout(grpBox)
-                    vLayout.addWidget(QtWidgets.QLabel(f"This a custom callback frame for {self._SETTINGS_PARAM}."))
-
-                    customButton0 = QtWidgets.QPushButton("Show a Yes/No Message")
-                    customButton0.clicked.connect(showMessage)
-                    customButton1 = QtWidgets.QPushButton("Open a folder")
-                    customButton1.clicked.connect(openFolder)
-                    customButton2 = QtWidgets.QPushButton("Pick an Item")
-                    customButton2.clicked.connect(itemPick)
-                    customButton3 = QtWidgets.QPushButton("Show RoboDK Icons")
-                    customButton3.clicked.connect(showIcons)
-
-                    vLayout.addWidget(customButton0)
-                    vLayout.addWidget(customButton1)
-                    vLayout.addWidget(customButton2)
-                    vLayout.addWidget(customButton3)
-
-                    layout = w.layout()
-                    layout.addWidget(grpBox)
-
-            super(SettingsExample, self).ShowUI(callback_frame=custom_frame, *args, **kwargs)
-
-    S = SettingsExample('S Settings')
+    S = SettingsExample()
     S.Load()  # Load previously stored settings in the station
-    S.ShowUI()  # Show the UI to the user. It would automatically save/discard on close
-    S.Int_Value = -123456  # Manually change a value
+    S.ShowUI('App Settings Example')  # Show the UI to the user. It would automatically save/discard on close
+    S.INT = -123456  # Manually change a value
     S.Save()  # Manually save it
     S.Erase()  # Remove all data from the station
 
 
 def runmain():
 
-    example_beginner()
-    example_advanced()
+    from robodk import robodialogs
 
-    global ENABLE_QT
-    if ENABLE_QT:
-        ENABLE_QT = False
-        example_beginner()
-        example_advanced()
+    ShowExample()
+
+    if robodialogs.ENABLE_QT:
+        robodialogs.ENABLE_QT = False
+        ShowExample()
 
 
 if __name__ == "__main__":

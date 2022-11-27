@@ -37,7 +37,6 @@ filename = None
 if ASK_USER_SAVE_TO_DISK:
     filename = getSaveFileName(strtitle='Save bar code on disk, or cancel to skip', strfile=name, defaultextension='.png', filetypes=[('PNG files', '*.png')])
 if filename is None or filename == '':
-    import_install("tempdir")
     import tempfile
     tempdir = tempfile.gettempdir()
     filename = tempdir + "\\" + name

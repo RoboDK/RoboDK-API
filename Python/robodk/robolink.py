@@ -507,7 +507,7 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=True):
         exec('import ' + module_name, globals())
         return
 
-    except ImportError:
+    except ModuleNotFoundError:
         import os
         import sys
         import subprocess
@@ -548,7 +548,7 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=True):
             if rdk:
                 rdk.ShowMessage(msg, True)
 
-            raise Exception(msg)
+            raise ImportError(msg)
 
 
 def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500, port=None, args=[]):
@@ -5132,7 +5132,7 @@ class Item():
         """
         if item is None:
             item = Item(self.link)
-            
+
         with self.link._lock:
             self.link._check_connection()
             command = 'S_Link_ptr'
@@ -5207,13 +5207,13 @@ class Item():
         if self.link.BUILD > 22916:
             self.setLink(robot)
             return self
-        
+
         else:
             # To be removed in 2024
             with self.link._lock:
                 if robot is None:
                     robot = Item(self.link)
-                    
+
                 self.link._check_connection()
                 command = 'S_Robot'
                 self.link._send_line(command)
@@ -7037,10 +7037,9 @@ class Item():
                 return line
 
 
-if __name__ == "__main__":    
-    def RoboDKInfo():    
-        return
-        
+if __name__ == "__main__":
+
+    def RoboDKInfo():
         print('=======================================')
         print('|        RoboDK API for Python        |')
         print('=======================================')
@@ -7050,4 +7049,4 @@ if __name__ == "__main__":
         print('RoboDK License: ' + RDK.License()[0])
         print('')
 
-    RoboDKInfo()
+    pass  # RoboDKInfo()
