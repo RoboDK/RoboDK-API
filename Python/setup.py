@@ -5,15 +5,14 @@
 #https://robodk.com/doc/en/Post-Processors.html
 
 from __future__ import print_function  # (Must be always at the top)
+from setuptools import setup  # Always prefer setuptools over distutils
+import os  # Python 2.7 compatible (over pathlib)
 
-VERSION = '5.4.0'
+VERSION = '5.5.2'
 
-# Always prefer setuptools over distutils
-from setuptools import setup
-
-from pathlib import Path
-this_directory = Path(__file__).parent
-LONG_DESCRIPTION = (this_directory / "README.md").read_text()
+LONG_DESCRIPTION = ""
+with open(os.path.dirname(__file__) + "/README.md", 'r') as f:
+    LONG_DESCRIPTION = f.read()
 
 setup(
     name='robodk',
@@ -22,20 +21,17 @@ setup(
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     version=VERSION,
-
     description='RoboDK tools for simulating and programming industrial robots (implements the RoboDK API)',
     long_description_content_type='text/markdown',
     long_description=LONG_DESCRIPTION,
 
     # The project's main homepage.
     url='https://robodk.com/doc/en/PythonAPI/index.html',
-
     author='RoboDK Inc.',
     author_email='info@robodk.com',
-    
+
     # Choose your license
     license='Apache Software License',
-
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -50,19 +46,16 @@ setup(
         'Intended Audience :: Education',
         'Intended Audience :: Information Technology',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',        
-        
+        'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Scientific/Engineering :: Visualization',
-        
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Operating System :: OS Independent',
-
         'Framework :: Robot Framework',
         'Framework :: Robot Framework :: Library',
-        'Framework :: Robot Framework :: Tool',   
+        'Framework :: Robot Framework :: Tool',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: Apache Software License',
@@ -104,7 +97,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'apps': ['pyside2'],
+        'apps': ['PySide2'],
         'cv': ['opencv-contrib-python', 'numpy'],
         'lint': ['astroid'],
     },
