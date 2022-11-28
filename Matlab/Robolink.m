@@ -390,7 +390,11 @@ classdef Robolink < handle
         function send_item(this, item)
             % This is a private function.
             % Sends an item pointer
-            write(this.COM, uint64(item.item(1)));
+            if isa(item, 'numeric')
+                write(this.COM, uint64(item)); % 0 is the equivalent of 'None'
+            else
+                write(this.COM, uint64(item.item(1)));
+            end
         end
 
         function item = rec_item(this)
@@ -601,11 +605,11 @@ classdef Robolink < handle
             elseif size(target, 1) == 1 || size(target, 2) == 1 % target are joints
                 send_int(this, 1);
                 send_array(this, target);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             elseif numel(target) == 16 % target is a pose
                 send_int(this, 2);
                 send_array(this, target);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             else
                 error('Invalid input values');
             end
@@ -642,11 +646,11 @@ classdef Robolink < handle
             elseif size(target1, 1) == 1 || size(target1, 2) == 1 % target1 are joints
                 send_int(this, 1);
                 send_array(this, target1);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             elseif numel(target1) == 16 % target1 is a pose
                 send_int(this, 2);
                 send_array(this, target1);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             else
                 error('Invalid input value for target 1');
             end
@@ -658,11 +662,11 @@ classdef Robolink < handle
             elseif size(target2, 1) == 1 || size(target2, 2) == 1 % target2 are joints
                 send_int(this, 1);
                 send_array(this, target2);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             elseif numel(target2) == 16 % target2 is a pose
                 send_int(this, 2);
                 send_array(this, target2);
-                send_item(this, RobolinkItem(this, 0));
+                send_item(this, 0);
             else
                 error('Invalid input value for target 2');
             end
@@ -998,7 +1002,7 @@ classdef Robolink < handle
             %           newobject = Paste();
             %           newobject.setName(newobject, 'My Object (copy 2)');
             if nargin < 2
-                item = RobolinkItem(this);
+                item = 0;
             end
 
             if nargin < 3
@@ -1016,7 +1020,7 @@ classdef Robolink < handle
         function newitem = Paste(this, toparent)
             % Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item.
             if nargin < 2
-                toparent = RobolinkItem(this);
+                toparent = 0;
             end
 
             check_connection(this);
@@ -1036,7 +1040,7 @@ classdef Robolink < handle
             check_connection(this);
 
             if nargin < 3
-                parent = RobolinkItem(this);
+                parent = 0;
             end
 
             check_connection(this);
@@ -1168,7 +1172,7 @@ classdef Robolink < handle
         function Save(this, filename, itemsave)
             % Save an item to a file. If no item is provided, the open station is saved.
             if nargin < 3
-                itemsave = RobolinkItem();
+                itemsave = 0;
             end
 
             check_connection(this);
@@ -1202,11 +1206,11 @@ classdef Robolink < handle
             % In  3 (optional) : item -> main robot that will be used to go to this target
             % Out 1 : item -> the new item created
             if nargin < 3
-                itemparent = RobolinkItem(this);
+                itemparent = 0;
             end
 
             if nargin < 4
-                itemrobot = RobolinkItem(this);
+                itemrobot = 0;
             end
 
             check_connection(this);
@@ -1225,7 +1229,7 @@ classdef Robolink < handle
             % In  2 (optional) : item -> parent to attach to (such as the rrobot base frame)
             % Out 1 : item -> the new item created
             if nargin < 3
-                itemparent = RobolinkItem(this);
+                itemparent = 0;
             end
 
             check_connection(this);
@@ -1243,7 +1247,7 @@ classdef Robolink < handle
             % In  2 (optional) : item -> robot that will be used
             % Out 1 : item -> the new item created
             if nargin < 3
-                itemrobot = RobolinkItem(this);
+                itemrobot = 0;
             end
 
             check_connection(this);
@@ -1258,7 +1262,7 @@ classdef Robolink < handle
         function newitem = AddMachiningProject(this, name, itemrobot)
             % Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points.
             if nargin < 3
-                itemrobot = RobolinkItem(this);
+                itemrobot = 0;
             end
 
             check_connection(this);
@@ -1553,11 +1557,14 @@ classdef Robolink < handle
 
         function response = Command(this, cmd, value)
             % Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
+            if nargin < 3
+                value = ''
+            end
             check_connection(this);
             command = 'SCMD';
             send_line(this, command);
             send_line(this, cmd);
-            send_line(this, strrep(value, '\n', '<br>'));
+            send_line(this, strrep(strrep(value, '\r\n', '<<br>>'), '\n', '<<br>>'));
             this.COM.Timeout = 3600; % wait up to 1 hour for user input
             response = rec_line(this);
             this.COM.Timeout = this.TIMEOUT;
@@ -1626,7 +1633,7 @@ classdef Robolink < handle
             command = 'MeasLT';
             send_line(this, command);
             send_xyz(this, estimate);
-            send_int(this, search > 0);
+            send_int(this, search);
             xyz = rec_xyz(this);
             check_status(this);
         end
@@ -1757,13 +1764,7 @@ classdef Robolink < handle
             send_line(this, programname);
             send_line(this, folder);
             send_line(this, postprocessor);
-
-            if robot
-                send_item(this, RobolinkItem());
-            else
-                send_item(this, robot);
-            end
-
+            send_item(this, robot);
             errors = rec_int(this);
             check_status(this);
         end
@@ -1788,7 +1789,7 @@ classdef Robolink < handle
 
         %------------------------------------------------------------------
         %----------------------- CAMERA VIEWS ----------------------------
-        function cam_h = Cam2D_Add(this, item_object, cam_params, camera_as_item)
+        function cam_handle = Cam2D_Add(this, item_object, cam_params, camera_as_item)
             % Adds a 2D camera view
             % In  1: Parameters of the camera
             % Out 1: camera handle pointer
@@ -1805,7 +1806,7 @@ classdef Robolink < handle
                 send_line(this, command);
                 send_item(this, item_object);
                 send_line(this, cam_params);
-                cam_h = rec_item(this);
+                cam_handle = rec_item(this);
                 check_status(this);
             else
                 check_connection(this);
@@ -1813,13 +1814,13 @@ classdef Robolink < handle
                 send_line(this, command);
                 send_item(this, item_object);
                 send_line(this, cam_params);
-                cam_h = rec_ptr(this);
+                cam_handle = rec_ptr(this);
                 check_status(this);
             end
 
         end
 
-        function success = Cam2D_Snapshot(this, file_save_img, cam_h, params)
+        function success = Cam2D_Snapshot(this, file_save_img, cam_handle, params)
             % Returns the current joints of a list of robots.
             % In  1 : Parameters of the camera
             % Out 1 : 0 if snapshot failed or 1 if succeeded
@@ -1829,7 +1830,7 @@ classdef Robolink < handle
             end
 
             if nargin < 3
-                cam_h = 0;
+                cam_handle = 0;
             end
 
             if nargin < 4
@@ -1838,17 +1839,17 @@ classdef Robolink < handle
 
             check_connection(this);
 
-            if isa(cam_h, 'numeric')
+            if isa(cam_handle, 'numeric')
                 command = 'Cam2D_Snapshot';
                 send_line(this, command);
-                send_ptr(this, cam_h);
+                send_ptr(this, cam_handle);
                 send_line(this, file_save_img);
                 success = rec_int(this);
 
             else
                 command = 'Cam2D_PtrSnapshot';
                 send_line(this, command);
-                send_item(this, cam_h);
+                send_item(this, cam_handle);
                 send_line(this, file_save_img);
                 send_line(this, params);
                 this.COM.Timeout = 3600;
@@ -1866,19 +1867,19 @@ classdef Robolink < handle
             check_status(this);
         end
 
-        function success = Cam2D_Close(this, cam_h)
+        function success = Cam2D_Close(this, cam_handle)
             % Returns the current joints of a list of robots.
             % In  1 : Parameters of the camera
             % Out 1 : 0 if snapshot failed or 1 if succeeded
             if nargin < 2
-                cam_h = 0;
+                cam_handle = 0;
             end
 
             check_connection(this);
 
-            if isa(cam_h, 'numeric')
+            if isa(cam_handle, 'numeric')
 
-                if cam_h == 0
+                if cam_handle == 0
                     command = 'Cam2D_CloseAll';
                     send_line(this, command);
                 else
@@ -2081,7 +2082,7 @@ classdef Robolink < handle
             check_connection(this);
             command = 'G_ObjPoint';
             send_line(this, command);
-            send_item(this, RobolinkItem());
+            send_item(this, 0);
             send_int(this, feature_type);
             feature_id = 0; % not used here
             send_int(this, feature_id);

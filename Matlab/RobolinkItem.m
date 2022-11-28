@@ -573,6 +573,12 @@ classdef RobolinkItem < handle
 
         function [newprog, status] = setMachiningParameters(this, ncfile, part, params)
             % Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+            if nargin < 2
+                ncfile = '';
+            end
+            if nargin < 3
+                part = 0;
+            end
             if nargin < 4
                 params = '';
             end
