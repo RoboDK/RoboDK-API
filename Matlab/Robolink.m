@@ -395,6 +395,7 @@ classdef Robolink < handle
             else
                 write(this.COM, uint64(item.item(1)));
             end
+
         end
 
         function item = rec_item(this)
@@ -583,7 +584,7 @@ classdef Robolink < handle
             % This is a private function.
             % Performs a linear or joint movement. Use MoveJ or MoveL instead.
             if nargin < 5
-                blocking = 300;
+                blocking = 1;
             end
 
             %check_connection(this);
@@ -797,7 +798,7 @@ classdef Robolink < handle
                 send_int(this, itemtype);
             end
 
-            item = rec_item(this); %     item = fread(com, 2, 'ulong'); % ulong is 32 bits!!!
+            item = rec_item(this);
             check_status(this);
         end
 
@@ -1161,7 +1162,7 @@ classdef Robolink < handle
             send_line(this, command);
             send_int(this, length(item_list));
 
-            for itm = 1:lenght(item_list)
+            for itm = 1:length(item_list)
                 send_item(this, item_list{itm});
                 item_list{itm}.item = 0;
             end
@@ -1558,8 +1559,9 @@ classdef Robolink < handle
         function response = Command(this, cmd, value)
             % Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
             if nargin < 3
-                value = ''
+                value = '';
             end
+
             check_connection(this);
             command = 'SCMD';
             send_line(this, command);
@@ -1779,12 +1781,74 @@ classdef Robolink < handle
         end
 
         function pose = ViewPose(this)
-            % Get the pose of the world reference frame with respect to the view (camera/screen)%
+            % Get the pose of the world reference frame with respect to the view (camera/screen)
             check_connection(this);
             command = 'G_ViewPose';
             send_line(this, command);
             pose = rec_pose(this);
             check_status(this);
+        end
+
+        function new_robot = BuildMechanism(this, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base, tool, name, robot)
+            % Create a new robot or mechanism.
+            if nargin < 10
+                base = eye(4);
+            end
+
+            if nargin < 11
+                tool = eye(4);
+            end
+
+            if nargin < 12
+                name = "New robot";
+            end
+
+            if nargin < 13
+                robot = 0;
+            end
+
+            ndofs = length(list_obj) - 1;
+            check_connection(this);
+            command = 'BuildMechanism';
+            send_line(this, command);
+            send_item(this, robot)
+            send_line(this, name);
+            send_int(this, type)
+            send_int(this, ndofs)
+
+            for i = 1:ndofs + 1
+                send_item(this, list_obj{i})
+            end
+
+            send_pose(this, base)
+            send_pose(this, tool)
+            send_array(this, parameters)
+
+            if length(joints_build) < 12
+                joints_build = [joints_build, zeros(1, 12 - length(joints_build))];
+            end
+
+            if length(joints_home) < 12
+                joints_home = [joints_home, zeros(1, 12 - length(joints_home))];
+            end
+
+            if length(joints_senses) < 12
+                joints_senses = [joints_senses, zeros(1, 12 - length(joints_senses))];
+            end
+
+            if length(joints_lim_low) < 12
+                joints_lim_low = [joints_lim_low, zeros(1, 12 - length(joints_lim_low))];
+            end
+
+            if length(joints_lim_high) < 12
+                joints_lim_high = [joints_lim_high, zeros(1, 12 - length(joints_lim_high))];
+            end
+
+            joints_data = transpose([joints_build; joints_home; joints_senses; joints_lim_low; joints_lim_high]);
+            send_matrix(this, joints_data)
+            new_robot = rec_item(this);
+            check_status(this);
+
         end
 
         %------------------------------------------------------------------
@@ -2088,7 +2152,7 @@ classdef Robolink < handle
             send_int(this, feature_id);
             points = [];
 
-            if feature_type == this.FEATURE_HOVER_OBJECT_MESH;
+            if feature_type == this.FEATURE_HOVER_OBJECT_MESH
                 points = rec_matrix(this);
             end
 

@@ -431,7 +431,7 @@ classdef RobolinkItem < handle
             % Set the color of an object, tool or robot.
             % A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
             this.link.check_connection();
-            tocolor = check_color(tocolor);
+            tocolor = check_color(this, tocolor);
             command = 'S_Color';
             this.link.send_line(command);
             this.link.send_item(this);
@@ -443,7 +443,7 @@ classdef RobolinkItem < handle
             % Set the color of an object shape. It can also be used for tools.
             % A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
             this.link.check_connection();
-            tocolor = check_color(tocolor);
+            tocolor = check_color(this, tocolor);
             command = 'S_ShapeColor';
             this.link.send_line(command);
             this.link.send_item(this);
@@ -460,7 +460,7 @@ classdef RobolinkItem < handle
             end
 
             this.link.check_connection();
-            tocolor = check_color(tocolor);
+            tocolor = check_color(this, tocolor);
             command = 'S_CurveColor';
             this.link.send_line(command);
             this.link.send_item(this);
@@ -562,13 +562,14 @@ classdef RobolinkItem < handle
 
             this.link.check_connection();
             command = 'G_ObjPoint';
-            this.link.send_line(command)
-            this.link.send_item(this)
-            this.link.send_int(feature_type)
-            this.link.send_int(feature_id)
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_int(feature_type);
+            this.link.send_int(feature_id);
             points = this.link.rec_matrix();
+            points = transpose(points);
             feature_name = this.link.rec_line();
-            this.link.check_status()
+            this.link.check_status();
         end
 
         function [newprog, status] = setMachiningParameters(this, ncfile, part, params)
@@ -576,9 +577,11 @@ classdef RobolinkItem < handle
             if nargin < 2
                 ncfile = '';
             end
+
             if nargin < 3
                 part = 0;
             end
+
             if nargin < 4
                 params = '';
             end
@@ -1049,11 +1052,17 @@ classdef RobolinkItem < handle
                 blocking = 1;
             end
 
-            if this.type == this.link.ITEM_TYPE_PROGRAM && isa(target, class(this))
-                this.addMoveJ(target);
-            else
-                this.link.moveX(target, this, this.link.MOVE_TYPE_JOINT, blocking);
+            if this.type == this.link.ITEM_TYPE_PROGRAM
+                blocking = 0;
+
+                if isa(target, class(this))
+                    this.addMoveJ(target);
+                    return
+                end
+
             end
+
+            this.link.moveX(target, this, this.link.MOVE_TYPE_JOINT, blocking);
 
         end
 
@@ -1065,11 +1074,17 @@ classdef RobolinkItem < handle
                 blocking = 1;
             end
 
-            if this.type == this.link.ITEM_TYPE_PROGRAM && isa(target, class(this))
-                this.addMoveL(target);
-            else
-                this.link.moveX(target, this, this.link.MOVE_TYPE_LINEAR, blocking);
+            if this.type == this.link.ITEM_TYPE_PROGRAM
+                blocking = 0;
+
+                if isa(target, class(this))
+                    this.addMoveL(target);
+                    return
+                end
+
             end
+
+            this.link.moveX(target, this, this.link.MOVE_TYPE_LINEAR, blocking);
 
         end
 
@@ -1081,11 +1096,12 @@ classdef RobolinkItem < handle
             end
 
             if this.type == this.link.ITEM_TYPE_PROGRAM
-                this.link.moveX(target, this, this.link.MOVE_TYPE_LINEARSEARCH, 0)
-            else
-                this.link.moveX(target, this, this.link.MOVE_TYPE_LINEARSEARCH, blocking)
+                this.moveX(target, this, this.link.MOVE_TYPE_LINEARSEARCH, 0);
+                joints = [];
+                return
             end
 
+            this.link.moveX(target, this, this.link.MOVE_TYPE_LINEARSEARCH, blocking)
             joints = this.SimulatorJoints();
         end
 
@@ -1152,9 +1168,9 @@ classdef RobolinkItem < handle
             this.link.send_array(j3)
             this.link.send_int(minstep_deg * 1000.0)
             this.link.send_int(blend_deg * 1000.0)
-            this.link.COM.settimeout(3600)
+            set(this.link.COM, 'Timeout', 3600);
             collision = this.link.rec_int();
-            this.link.COM.settimeout(this.link.TIMEOUT)
+            set(this.link.COM, 'Timeout', this.link.TIMEOUT);
             this.link.check_status()
         end
 
@@ -1335,10 +1351,10 @@ classdef RobolinkItem < handle
 
         function WaitFinished(this)
             % Wait until a program finishes or a robot completes its movement
-            busy = Busy(this, this.link.TIMEOUT);
+            busy = Busy(this);
 
             while busy
-                busy = Busy(this.link.TIMEOUT);
+                busy = Busy(this);
                 pause(0.05);
             end
 
@@ -1422,9 +1438,9 @@ classdef RobolinkItem < handle
             this.link.send_item(this)
             this.link.send_line(folder_path)
             this.link.send_int(run_mode)
-            this.link.COM.settimeout(300)
+            set(this.link.COM, 'Timeout', 300);
             prog_status = this.link.rec_int();
-            this.link.COM.settimeout(this.link.TIMEOUT)
+            set(this.link.COM, 'Timeout', this.link.TIMEOUT);
             prog_log_str = this.link.rec_line();
             transfer_status = this.link.rec_int();
             this.link.check_status()
@@ -1440,7 +1456,6 @@ classdef RobolinkItem < handle
                 transfer_ok = 1;
             end
 
-            this.link.LAST_STATUS_MESSAGE = prog_log_str;
         end
 
         function setRunType(this, program_run_type)
@@ -1796,19 +1811,18 @@ classdef RobolinkItem < handle
 
             this.link.check_connection();
             command = 'Update2';
-            this.link.send_line(command)
-            this.link.send_item(this)
-            this.link.send_array([check_collisions, mm_step, deg_step])
-            this.link.COM.settimeout(timeout_sec)
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_array([check_collisions, mm_step, deg_step]);
+            set(this.link.COM, 'Timeout', timeout_sec);
             values = this.link.rec_array();
-            this.link.COM.settimeout(this.link.TIMEOUT)
+            set(this.link.COM, 'Timeout', this.link.TIMEOUT);
             readable_msg = this.link.rec_line();
-            this.link.check_status()
-            valid_instructions = values{0};
-            program_time = values{1};
-            program_distance = values{2};
-            valid_ratio = values{3};
-            this.link.LAST_STATUS_MESSAGE = readable_msg;
+            this.link.check_status();
+            valid_instructions = values(1);
+            program_time = values(2);
+            program_distance = values(3);
+            valid_ratio = values(4);
         end
 
         function [insmat, errors] = InstructionList(this)
@@ -1856,7 +1870,7 @@ classdef RobolinkItem < handle
             this.link.send_item(this)
             this.link.send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
             joint_list = save_to_file;
-            this.link.COM.settimeout(3600)
+            set(this.link.COM, 'Timeout', 3600);
 
             if isempty(save_to_file)
                 this.link.send_line('')
@@ -1866,7 +1880,7 @@ classdef RobolinkItem < handle
             end
 
             error_code = this.link.rec_int();
-            this.link.COM.settimeout(this.link.TIMEOUT)
+            set(this.link.COM, 'Timeout', this.link.TIMEOUT);
             error_msg = this.link.rec_line();
             this.link.check_status()
         end
