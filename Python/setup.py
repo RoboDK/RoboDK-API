@@ -6,13 +6,12 @@
 
 from __future__ import print_function  # (Must be always at the top)
 from setuptools import setup  # Always prefer setuptools over distutils
-import os  # Python 2.7 compatible (over pathlib)
+from pathlib import Path
 
 VERSION = '5.5.2'
 
-LONG_DESCRIPTION = ""
-with open(os.path.dirname(__file__) + "/README.md", 'r') as f:
-    LONG_DESCRIPTION = f.read()
+this_directory = Path(__file__).parent
+LONG_DESCRIPTION = (this_directory / "README.md").read_text()
 
 setup(
     name='robodk',
