@@ -635,8 +635,8 @@ if ENABLE_QT:
         if value_type is float:
             widget = QtWidgets.QDoubleSpinBox(parent)
             import decimal
-            decimals = abs(decimal.Decimal(str(value)).as_tuple().exponent)
-            widget.setDecimals(max(4, decimals))
+            decimals = min(4, max(2, abs(decimal.Decimal(str(value)).as_tuple().exponent)))  # Default to 2, up to 4
+            widget.setDecimals(decimals)
             widget.setRange(-9999999., 9999999.)
             widget.setValue(value)
             func = [widget.value]
@@ -799,7 +799,9 @@ if ENABLE_TK:
         if value_type is float:
             tkvar = tkinter.DoubleVar(value=value)
             func = [tkvar.get]
-            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format="%.2f")
+            import decimal
+            decimals = min(4, max(2, abs(decimal.Decimal(str(value)).as_tuple().exponent)))  # Default to 2, up to 4
+            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format=f"%.{decimals}f")
 
         elif value_type is int:
             tkvar = tkinter.IntVar(value=value)
@@ -1016,7 +1018,6 @@ class AppSettings:
         if hasattr(self, attrib):
             return getattr(self, attrib)
         return default_value
-        """Save the class attributes as a RoboDK binary parameter"""
 
     def Save(self, rdk=None, autorecover=False):
         """

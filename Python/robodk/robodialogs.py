@@ -382,7 +382,7 @@ if ENABLE_TK:
 
 if ENABLE_TK:
 
-    from robodk.roboapps import get_tk_app, value_to_tk_widget
+    from robodk.roboapps import get_tk_app, value_to_tk_widget, widget_to_value
 
     class DialogsTk:
 
@@ -724,8 +724,7 @@ if ENABLE_TK:
                 app.destroy()
                 return None
 
-            from robodk import roboapps
-            values = roboapps.widget_to_value(dialog.funcs, value)
+            values = widget_to_value(dialog.funcs, value)
 
             dialog.destroy()
             app.destroy()
@@ -761,7 +760,7 @@ if ENABLE_QT:
 
 if ENABLE_QT:
 
-    from robodk.roboapps import get_qt_app, value_to_qt_widget
+    from robodk.roboapps import get_qt_app, value_to_qt_widget, widget_to_value
 
     class DialogsQt:
 
@@ -993,8 +992,7 @@ if ENABLE_QT:
             if not ret:
                 return None
 
-            from robodk import roboapps
-            return roboapps.widget_to_value(dialog.funcs, value)
+            return widget_to_value(dialog.funcs, value)
 
 
 if __name__ == "__main__":
