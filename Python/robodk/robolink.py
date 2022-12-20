@@ -622,10 +622,9 @@ def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area
 
 
 class Robolink:
-    """The Robolink class is the link to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
-    Any interaction is made through \"items\" (Item() objects). An item is an object in the
-    robodk tree (it can be either a robot, an object, a tool, a frame, a
-    program, ...).
+    """
+    The Robolink class is the link to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
+    Any interaction is made through \"items\" (Item() objects). An item is an object in the robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
 
     :param str robodk_ip: IP of the RoboDK API server (default='localhost')
     :param int port: Port of the RoboDK API server (default=None, it will use the default value)
@@ -775,12 +774,11 @@ class Robolink:
             self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
                 self.LAST_STATUS_MESSAGE = 'Invalid item provided: The item identifier provided is not valid or it does not exist.'
-            elif status == 2:  #output warning
+            elif status == 2:  # output warning
                 self.LAST_STATUS_MESSAGE = self._rec_line()
                 print('WARNING: ' + self.LAST_STATUS_MESSAGE)
-                #warn(self.LAST_STATUS_MESSAGE)# does not show where is the problem...
                 return 0
-            elif status == 3:  #output error
+            elif status == 3:  # output error
                 self.LAST_STATUS_MESSAGE = self._rec_line()
                 raise Exception(self.LAST_STATUS_MESSAGE)
             elif status == 9:
@@ -2875,7 +2873,7 @@ class Robolink:
             if len(xyz) < 3:
                 return None
 
-        # Old versions require checking against 0 mm
+            # Old versions require checking against 0 mm
             if xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2] < 0.0001:
                 return None
 
@@ -2890,6 +2888,8 @@ class Robolink:
         with self._lock:
             array_send = [target, time_avg_ms]
             if tip_xyz is not None:
+                array_send += tip_xyz[:3]
+            else:
                 array_send += [0, 0, 0]
 
             self._check_connection()
@@ -3693,7 +3693,7 @@ class Robolink:
             self._check_connection()
             command = 'MergeItems'
             self._send_line(command)
-            nitems = self._send_int(len(list_items))
+            self._send_int(len(list_items))
             for itm in list_items:
                 self._send_item(itm)
             newitem = self._rec_item()
@@ -3919,7 +3919,7 @@ class Robolink:
             return result > 0
 
 
-class Item():
+class Item:
     """The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     An item can also be seen as a node where other items can be attached to (child items).
     Every item has one parent item/node and can have one or more child items/nodes.
@@ -5837,7 +5837,7 @@ class Item():
         """
         if self.type == ITEM_TYPE_PROGRAM:
             self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, False)
-            return
+            return None
 
         self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, blocking)
         return self.SimulatorJoints()
@@ -6079,7 +6079,7 @@ class Item():
 
         """
 
-        display_ghost_joints = display_type & 2048
+        display_ghost_joints = display_type & SEQUENCE_DISPLAY_ROBOT_JOINTS if display_type > 0 else False
         with self.link._lock:
             if type(matrix) == list and (len(matrix) == 0 or type(matrix[0]) == robomath.Mat or display_ghost_joints):
                 # poses assumed
@@ -6289,8 +6289,6 @@ class Item():
             transfer_ok = False
             if transfer_status > 0:
                 transfer_ok = True
-
-            self.LAST_STATUS_MESSAGE = prog_log_str
 
             return success, prog_log_str, transfer_ok
 
@@ -6829,7 +6827,6 @@ class Item():
             program_time = values[1]
             program_distance = values[2]
             valid_ratio = values[3]
-            self.LAST_STATUS_MESSAGE = readable_msg
             return valid_instructions, program_time, program_distance, valid_ratio, readable_msg
 
     def InstructionList(self):

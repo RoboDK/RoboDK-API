@@ -8,7 +8,7 @@ RDK = Robolink();
 % Get the robot item:
 robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
 
-% Get the robot position (simulated or real if we are connected to 
+% Get the robot position (simulated or real if we are connected to
 % the robot)
 poseref = robot.Pose();
 
@@ -16,7 +16,7 @@ poseref = robot.Pose();
 %home = RDK.Item('Home');
 %target = RDK.Item('Target 1');
 
-% Get the pose of a target (4x4 matrix representing 
+% Get the pose of a target (4x4 matrix representing
 % position and orientation):
 %poseref = target.Pose();
 
@@ -26,9 +26,10 @@ poseref = robot.Pose();
 
 % Draw a polygon around the Target 1:
 nsides = 100;
-for i=0:nsides
-    ang = i*2*pi/nsides; % angle: 0, 60, 120, ...
-    posei = poseref*rotz(ang)*transl(200,0,0)*rotz(-ang);
+
+for i = 0:nsides
+    ang = i * 2 * pi / nsides; % angle: 0, 60, 120, ...
+    posei = poseref * rotz(ang) * transl(200, 0, 0) * rotz(-ang);
     robot.MoveL(posei);
 end
 
