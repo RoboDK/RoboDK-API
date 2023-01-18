@@ -1155,16 +1155,21 @@ void Item_SetVisible(const struct Item_t* inst, bool visible, bool visible_frame
 
 
 struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose, const struct Mat_t* tool, const struct Mat_t* ref) {
-	struct Joints_t jnts;
-	struct Mat_t base2flange = *pose; //pose of the robot flange with respect to the robot base frame
-	if (tool != NULL) {
-		//struct Mat_t poseInv;
-		//Mat_Inv_out();
-		//base2flange = pose * tool->inv();
-	}
-	if (ref != NULL) {
-		//base2flange = (*ref) * base2flange;
-	}
+    struct Joints_t jnts;
+    struct Mat_t base2flange = *pose; // pose of the robot flange with respect to the robot base frame
+    struct Mat_t incoming_pose = *pose; // an extra copy is needed to do matrix multiplication by reference
+    struct Mat_t tool_inv; // the pose of the tool with respect to the robot flange
+    struct Mat_t dummy_matrix; // needed for matrix multiplication by reference
+
+    if (tool != NULL) {
+        Mat_Inv_out(&tool_inv, tool);
+        Mat_Multiply_out(&base2flange, &incoming_pose, &tool_inv);
+    }
+    if (ref != NULL) {
+        struct Mat_t incoming_ref = *ref;
+        Mat_Multiply_out(&dummy_matrix, &incoming_ref, &base2flange);
+        base2flange = dummy_matrix;
+    }
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_IK");
 	_RoboDK_send_Pose(inst->_RDK, base2flange);
