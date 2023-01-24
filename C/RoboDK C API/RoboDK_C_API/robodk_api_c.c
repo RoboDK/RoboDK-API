@@ -1915,7 +1915,7 @@ bool _RoboDK_connect(struct RoboDK_t *inst) {
 	*/
 	SocketWrite(inst->_COM, (void *)ROBODK_API_START_STRING, sizeof(ROBODK_API_START_STRING));
 	SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
-	static const char tempString[] = "1 0\n";
+    static const char tempString[] = "1 0";
 	SocketWrite(inst->_COM, (void *) tempString, sizeof(tempString));
 	SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
 	//ThreadSleep(inst->_TIMEOUT);
