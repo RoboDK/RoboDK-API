@@ -1884,7 +1884,11 @@ bool _RoboDK_connect(struct RoboDK_t *inst) {
 	//_disconnect();
 	//_COM = new QTcpSocket();
 	struct sockaddr_in _COM_PORT;
+    int use_nodelay = 0;
 	inst->_COM = socket(AF_INET, SOCK_STREAM, 0);
+    if (use_nodelay > 0){
+        setsockopt(inst->_COM, IPPROTO_TCP, TCP_NODELAY, (char*)&use_nodelay, sizeof(use_nodelay));
+    }
 	_COM_PORT.sin_family = AF_INET;
 	_COM_PORT.sin_port = htons((uint16_t)inst->_PORT);
 	if (strlen(inst->_IP) == 0) {
