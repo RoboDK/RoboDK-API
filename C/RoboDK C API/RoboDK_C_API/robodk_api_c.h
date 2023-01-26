@@ -283,6 +283,10 @@ void RoboDK_Connect_default(struct RoboDK_t *inst); //Complete
 void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_port, const char *args, const char *path); //Complete
 void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup); //Complete
 struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM_TYPE itemtype); //Complete
+
+// Undocumented:
+void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout);
+
 void RoboDK_SetRunMode(struct RoboDK_t *inst, enum eRobotRunMode run_mode); //Complete
 enum eRobotRunMode RoboDK_RunMode(struct RoboDK_t* inst);
 void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value);

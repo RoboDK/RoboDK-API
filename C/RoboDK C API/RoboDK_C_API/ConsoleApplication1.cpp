@@ -20,9 +20,29 @@ int main()
 	RoboDK_Connect_default(&rdk);
 
 	if (!_RoboDK_connected(&rdk)) {
-		fprintf(stderr, "Failed to start RoboDK API!!");
+        fprintf(stderr, "Failed to start RoboDK API!!\n");
 		return -1;
 	}
+
+    /*
+    // Test retrieving all items at once
+    #define MAX_ITEMS 1000
+    struct Item_t itemlist[MAX_ITEMS];
+    int size_out = 0;
+    RoboDK_getItemList(&rdk, itemlist, MAX_ITEMS, &size_out);
+    if (size_out > MAX_ITEMS){
+        fprintf(stderr, "Warning! Max size item size exceeded\n");
+    }
+    size_out = min(size_out, MAX_ITEMS);
+    printf("Items in the station: %i\n", size_out);
+    for (int i=0; i<size_out; i++){
+        char item_name[MAX_STR_LENGTH];
+        Item_Name(&itemlist[i], item_name);
+        printf("  %i -> %s\n", i, item_name);
+    }
+    return 0;
+    */
+
     // To prevent memory allocation issues, keep your string MAX_STR_LENGTH long
     char robotName[MAX_STR_LENGTH];
     char bufferOut[MAX_STR_LENGTH];

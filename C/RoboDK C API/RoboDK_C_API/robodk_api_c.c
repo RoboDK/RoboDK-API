@@ -200,20 +200,51 @@ void RoboDK_CloseStation(struct RoboDK_t* inst) {
 
 
 struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM_TYPE itemtype) {
-	_RoboDK_check_connection(inst);
-	if (itemtype < 0) {
-		_RoboDK_send_Line(inst, "G_Item");
-		_RoboDK_send_Line(inst, name);
-	}
-	else {
-		_RoboDK_send_Line(inst, "G_Item2");
-		_RoboDK_send_Line(inst, name);
-		_RoboDK_send_Int(inst, itemtype);
-	}
-	struct Item_t item = _RoboDK_recv_Item(inst);
-	_RoboDK_check_status(inst);
-	return item;
+    _RoboDK_check_connection(inst);
+    if (itemtype < 0) {
+        _RoboDK_send_Line(inst, "G_Item");
+        _RoboDK_send_Line(inst, name);
+    }
+    else {
+        _RoboDK_send_Line(inst, "G_Item2");
+        _RoboDK_send_Line(inst, name);
+        _RoboDK_send_Int(inst, itemtype);
+    }
+    struct Item_t item = _RoboDK_recv_Item(inst);
+    _RoboDK_check_status(inst);
+    return item;
 }
+
+void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout) {
+    int32_t nitems;
+    char item_name[MAX_STR_LENGTH];
+    char program_data[MAX_STR_LENGTH];
+    struct Item_t item;
+    struct Item_t item_parent;
+    int32_t is_expanded;
+    int32_t is_visible;
+    int32_t is_loop = 0;
+    int32_t i;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "G_List_Items_WASM");
+    nitems = _RoboDK_recv_Int(inst);
+    *itemlist_sizeout = nitems;
+    for (i=0; i<nitems; i++){
+        item = _RoboDK_recv_Item(inst);
+        // printf("%llu\n" , item._PTR);
+        _RoboDK_recv_Line(inst, item_name);
+        item_parent = _RoboDK_recv_Item(inst);
+        is_expanded = _RoboDK_recv_Int(inst);
+        is_visible = _RoboDK_recv_Int(inst);
+        is_loop = _RoboDK_recv_Int(inst);
+        if (itemlist != NULL && i < itemlist_maxsize){
+            itemlist[i] = item;
+        }
+    }
+    _RoboDK_recv_Line(inst, program_data);
+    _RoboDK_check_status(inst);
+}
+
 
 void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value) {
 	_RoboDK_check_connection(inst);
