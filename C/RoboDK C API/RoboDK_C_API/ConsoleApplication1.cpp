@@ -24,7 +24,7 @@ int main()
 		return -1;
 	}
 
-    /*
+
     // Test retrieving all items at once
     #define MAX_ITEMS 1000
     struct Item_t itemlist[MAX_ITEMS];
@@ -38,10 +38,10 @@ int main()
     for (int i=0; i<size_out; i++){
         char item_name[MAX_STR_LENGTH];
         Item_Name(&itemlist[i], item_name);
-        printf("  %i -> %s\n", i, item_name);
+        printf("  %i -> %llu, %s\n", i, itemlist[i]._PTR, item_name);
     }
     return 0;
-    */
+
 
     // To prevent memory allocation issues, keep your string MAX_STR_LENGTH long
     char robotName[MAX_STR_LENGTH];

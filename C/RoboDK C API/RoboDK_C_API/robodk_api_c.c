@@ -231,8 +231,8 @@ void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t 
     *itemlist_sizeout = nitems;
     for (i=0; i<nitems; i++){
         item = _RoboDK_recv_Item(inst);
-        // printf("%llu\n" , item._PTR);
         _RoboDK_recv_Line(inst, item_name);
+        //printf("%llu->%s\n" , item._PTR, item_name);
         item_parent = _RoboDK_recv_Item(inst);
         is_expanded = _RoboDK_recv_Int(inst);
         is_visible = _RoboDK_recv_Int(inst);
@@ -240,8 +240,8 @@ void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t 
         if (itemlist != NULL && i < itemlist_maxsize){
             itemlist[i] = item;
         }
+        _RoboDK_recv_Line(inst, program_data);
     }
-    _RoboDK_recv_Line(inst, program_data);
     _RoboDK_check_status(inst);
 }
 
@@ -1956,9 +1956,11 @@ bool _RoboDK_connect(struct RoboDK_t *inst) {
 	//ThreadSleep(inst->_TIMEOUT);
 	//QString read(_COM->readAll());
 	char receiveBuffer[MAX_STR_LENGTH];
-	int ret = socketRead(inst->_COM, receiveBuffer, MAX_STR_LENGTH);
+    int recv_ok = _RoboDK_recv_Line(inst, receiveBuffer);
+    //int ret = socketRead(inst->_COM, receiveBuffer, MAX_STR_LENGTH);
 	// make sure we receive the OK from RoboDK
-	if ((ret <= 0) || strstr(receiveBuffer, ROBODK_API_READY_STRING) == NULL) {
+    //if ((ret <= 0) || strstr(receiveBuffer, ROBODK_API_READY_STRING) == NULL) {
+    if (!recv_ok){
 		inst->_isConnected = false;
 		return false;
 	}
@@ -2100,6 +2102,9 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
 	int i;
 	if (inst->_isConnected == false) { return false; }
 	char buffer[sizeof(int32_t)];
+    while (socketBytesAvailable(inst->_COM) < sizeof(int32_t)){
+        // waste time?
+    }
 	int bytesReceived = socketRead(inst->_COM, buffer, sizeof(int32_t));
 	if (bytesReceived <= 0) {
 		return -1;
@@ -2115,7 +2120,10 @@ bool _RoboDK_recv_Line(struct RoboDK_t *inst, char *output) {
 	int i = 0;
 	bool isDone = false;
 	while (!isDone) {
-		char curByte;
+        char curByte;
+        while (socketBytesAvailable(inst->_COM) < 1){
+            // waste time?
+        }
 		socketRead(inst->_COM, &curByte, 1);
 		if (curByte == '\n') {
             curByte = '\0';
@@ -2139,21 +2147,23 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
 	item._PTR = 0;
 	item._TYPE = -1;
 	if (inst->_isConnected == false) { return item; }
-	if (socketBytesAvailable(inst->_COM) <= sizeof(uint64_t) + sizeof(int32_t)) {
-		unsigned char buffer[8 + 4];
-		int bytesReceived = socketRead(inst->_COM, buffer, sizeof(uint64_t) + sizeof(int32_t));
-		if (bytesReceived <= 0) {
-			return item;
-		}
-		item._PTR = 0;
-		for (i = 0; i < 8; i++) {
-			item._PTR += ((uint64_t)buffer[0 + i]) << (i * 8);
-		}
-		item._TYPE = 0;
-		for (i = 0; i < 4; i++) {
-			item._TYPE += buffer[sizeof(uint64_t) + i] << (24 - i * 8);
-		}
-	}
+    while (socketBytesAvailable(inst->_COM) < sizeof(uint64_t) + sizeof(int32_t)){
+        // waste time?
+    }
+    //if (socketBytesAvailable(inst->_COM) >= sizeof(uint64_t) + sizeof(int32_t)) {
+    unsigned char buffer[8 + 4];
+    int bytesReceived = socketRead(inst->_COM, buffer, sizeof(uint64_t) + sizeof(int32_t));
+    if (bytesReceived <= 0) {
+        return item;
+    }
+    item._PTR = 0;
+    for (i = 0; i < 8; i++) {
+        item._PTR += ((uint64_t)buffer[0 + i]) << (i * 8);
+    }
+    item._TYPE = 0;
+    for (i = 0; i < 4; i++) {
+        item._TYPE += buffer[sizeof(uint64_t) + i] << (24 - i * 8);
+    }
 
 	return item;
 }
@@ -2164,6 +2174,9 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst) {
 	if (inst->_isConnected == false) { return pose; }
 	int size = 16 * sizeof(double);
 	char bufferBytes[16 * sizeof(double)];
+    while (socketBytesAvailable(inst->_COM) < size){
+        // waste time?
+    }
 	socketRead(inst->_COM, bufferBytes, size);
 	for (int j = 0; j < 4; j++) {
 		for (int i = 0; i < 4; i++) {
@@ -2192,6 +2205,9 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
 	for (int i = 0; i < nvalues; i++) {
 		char bufferCurValue[sizeof(double)];
 		char valueIBytes[sizeof(double)];
+        while (socketBytesAvailable(inst->_COM) < sizeof(double)){
+            // waste time?
+        }
 		int nread = socketRead(inst->_COM, &bufferCurValue, sizeof(double));
 		if (nread < 0) {
 			return false;
