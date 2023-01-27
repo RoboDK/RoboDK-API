@@ -690,7 +690,7 @@ struct Mat_t Item_PoseFrame(const struct Item_t* inst) { //in progress
 	_RoboDK_send_Item(inst->_RDK, inst);
 	pose = _RoboDK_recv_Pose(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
-	printf("Retrieving Active Reference Frame...\n");
+    //printf("Retrieving Active Reference Frame...\n");
 	return pose;
 }
 
@@ -702,7 +702,7 @@ struct Mat_t Item_PoseTool(const struct Item_t* inst) { //in progress
 	_RoboDK_send_Item(inst->_RDK, inst);
 	pose = _RoboDK_recv_Pose(inst->_RDK);
 	_RoboDK_check_status(inst->_RDK);
-	printf("Retrieving Pose of Tool...\n");
+    //printf("Retrieving Tool Pose...\n");
 	return pose;
 }
 
