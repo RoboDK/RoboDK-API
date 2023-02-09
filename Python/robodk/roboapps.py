@@ -596,20 +596,99 @@ if ENABLE_QT:
             "nodemachining_points",
             "python",
             "folder",
+            "notes",
+            "curve",
+            "point",
+            "surface",
         ]
 
-        other_icons = [
-            "newfile",
+        sim_icons = [
+            'play',
+            'pause',
+            'stop',
+            'fastfwd',
+            'start',
+            'end',
+        ]
+
+        edit_icons = [
+            'edit-copy',
+            'edit-cut',
+            'edit-paste',
+            'edit',
+            'loopno',
+            'loopyes',
+            'redo',
+            'undo',
             'save',
             'saveas',
+            'config',
+            'configure',
+            'newfile',
+            'newfile_online',
+            'newstation',
+        ]
+
+        mouse_icons = [
+            'cursormoveframe',
+            'cursormoveobject',
+            'cursorpan',
+            'cursorselectrectangle',
+            'cursorsnone',
+            'cursorsrotate',
+            'cursorzoom',
+        ]
+
+        program_icons = [
+            'inschangespeed',
+            'inschangezone',
+            'inscode',
+            'inscomment',
+            'insevent',
+            'insmanageio',
+            'insmoveC',
+            'insmoveJ',
+            'insmoveL',
+            'insprint',
+            'insprogcall',
+            'instimer',
+        ]
+
+        view_icons = [
+            'view-axometric',
+            'view-bottom',
+            'view-front',
+            'view-fullscreen',
+            'view-isometric',
+            'view-left',
+            'view-rear',
+            'view-right',
+            'view-rotate-left',
+            'view-rotate-right',
+            'view-top',
+        ]
+
+        action_icons = [
+            'add',
+            'plus',
+            'minus',
+            'yes',
+            'no',
+            'close',
+            'replace',
+            'information',
+            'questionmark',
+            'warning',
+            'snapshot',
+            'workspace',
+            'anchor',
+            'connect',
             'export',
             'package',
-            'config',
-            'connect',
         ]
 
         icons = {}
-        for name in tree_icons + other_icons:
+        for name in tree_icons + sim_icons + edit_icons + mouse_icons + program_icons + view_icons + action_icons:
             icon = get_qt_robodk_icon(name, RDK)
             if not icon:
                 continue
@@ -1240,13 +1319,25 @@ def ShowExample():
             def showIcons():
                 icons = get_qt_robodk_icons()
                 if icons:
-                    icon_window = QtWidgets.QDialog()
-                    icon_window.setWindowTitle('RoboDK Icons')
-                    icon_layout = QtWidgets.QFormLayout(icon_window)
+                    icon_widget = QtWidgets.QWidget()
+                    icon_layout = QtWidgets.QFormLayout(icon_widget)
                     for icon_name, icon_image in icons.items():
                         icon_label = QtWidgets.QLabel(icon_name)
                         icon_label.setPixmap(QtGui.QPixmap.fromImage(icon_image).scaledToHeight(32, QtCore.Qt.TransformationMode.SmoothTransformation))
                         icon_layout.addRow(icon_name, icon_label)
+                    icon_widget.adjustSize()
+
+                    scroll_widget = QtWidgets.QScrollArea()
+                    scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    scroll_widget.setWidgetResizable(True)
+                    scroll_widget.setWidget(icon_widget)
+                    scroll_widget.setMinimumWidth(icon_widget.minimumWidth() + 20)
+
+                    icon_window = QtWidgets.QDialog()
+                    icon_window.setWindowTitle('RoboDK Icons')
+                    icon_window.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
+                    icon_window.setLayout(QtWidgets.QVBoxLayout())
+                    icon_window.layout().addWidget(scroll_widget)
                     icon_window.exec_()
 
             actions = [("Show a Yes/No Message", showMessage), ("Show RoboDK Icons", showIcons)]

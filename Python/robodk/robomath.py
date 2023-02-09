@@ -236,7 +236,7 @@ def point_Xaxis_2_pose(point, xaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[0, -1,
     pose.setPos(point)
     pose.setVX(xaxis)
     zaprox = zaxis_hint1
-    if angle3(xaxis, zaprox) < 2 * pi / 180:
+    if abs(angle3(xaxis, zaprox)) < 0.03 or abs(angle3(xaxis, zaprox)) - pi < 0.03:
         zaprox = zaxis_hint2
     yaxis = normalize3(cross(zaprox, xaxis))
     zaxis = cross(xaxis, yaxis)
@@ -251,7 +251,7 @@ def point_Yaxis_2_pose(point, yaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[-1, 0,
     pose.setPos(point)
     pose.setVY(yaxis)
     zaprox = zaxis_hint1
-    if angle3(yaxis, zaprox) < 2 * pi / 180:
+    if abs(angle3(yaxis, zaprox)) < 0.03 or abs(angle3(yaxis, zaprox)) - pi < 0.03:
         zaprox = zaxis_hint2
     xaxis = normalize3(cross(yaxis, zaprox))
     zaxis = cross(xaxis, yaxis)
@@ -266,7 +266,7 @@ def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1
     pose.setPos(point)
     pose.setVZ(zaxis)
     yaprox = yaxis_hint1
-    if angle3(zaxis, yaprox) < 2 * pi / 180:
+    if abs(angle3(zaxis, yaprox)) < 0.03 or abs(angle3(zaxis, yaprox)) - pi < 0.03:
         yaprox = yaxis_hint2
     xaxis = normalize3(cross(yaprox, zaxis))
     yaxis = cross(zaxis, xaxis)
