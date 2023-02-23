@@ -181,17 +181,21 @@ def getPoseWrt(item1, item2):
     if item1 == item2:
         return robomath.eye(4)
 
-    parents1 = getAncestors(item1)
-    if item2 in parents1:
-        return getAncestorPose(item1, item2)
+    pose1 = item1.PoseAbs()
+    pose2 = item2.PoseAbs()
 
-    parents2 = getAncestors(item2)
-    if item1 in parents2:
-        return getAncestorPose(item2, item1).inv()
+    if item1.Type() in [robolink.ITEM_TYPE_ROBOT, robolink.ITEM_TYPE_TOOL] or item2.Type() in [robolink.ITEM_TYPE_ROBOT, robolink.ITEM_TYPE_TOOL]:
+        parents1 = getAncestors(item1)
+        if item2 in parents1:
+            return getAncestorPose(item1, item2)
 
-    lca = getLowestCommonAncestor(item1, item2)
-    pose1 = getAncestorPose(item1, lca)
-    pose2 = getAncestorPose(item2, lca)
+        parents2 = getAncestors(item2)
+        if item1 in parents2:
+            return getAncestorPose(item2, item1).inv()
+
+        lca = getLowestCommonAncestor(item1, item2)
+        pose1 = getAncestorPose(item1, lca)
+        pose2 = getAncestorPose(item2, lca)
 
     return pose2.inv() * pose1
 

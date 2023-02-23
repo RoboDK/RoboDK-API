@@ -1260,6 +1260,9 @@ class AppSettings:
         # Apply the new values
         desc_value_inv = {v: k for k, v in attrib_desc.items()}
         for desc, value in fields_value.items():
+            if desc.endswith('$') and desc.startswith('$'):
+                # Section header
+                continue
             attrib = desc_value_inv[desc]
             setattr(self, attrib, value)
 
