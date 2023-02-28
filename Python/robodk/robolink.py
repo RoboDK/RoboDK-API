@@ -1,4 +1,4 @@
-# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2023 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -6995,10 +6995,36 @@ class Item:
                 self.link._send_bytes(value)
                 self.link._check_status()
                 return True
+                
             elif isinstance(value, Item):
                 value = str(value.item)
+            
             elif isinstance(value, bool):
                 value = '1' if value else '0'
+            
+            elif isinstance(value, robomath.Mat):
+                # Special 2D matrix write/read
+                self.link._check_connection()
+                command = 'G_Gen_Mat'
+                self.link._send_line(command)
+                self.link._send_item(self)
+                self.link._send_line(str(param))
+                self.link._send_matrix(value)
+                self.link.COM.settimeout(3600)
+                nmats = self.link._rec_int()
+                self.link.COM.settimeout(self.link.TIMEOUT)
+                mat2d_list = []
+                if nmats == 1:
+                    mat2d_list = self.link._rec_matrix()
+                elif nmats == 0:
+                    mat2d_list = None
+                else:
+                    for i in range(nmats):
+                        mat2d_list.append(self.link._rec_matrix())
+
+                self.link._check_status()
+                return mat2d_list
+                
             else:
                 value = str(value)
             value = value.replace('\n', '<br>')
