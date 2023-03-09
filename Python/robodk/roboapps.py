@@ -23,13 +23,20 @@
 import sys
 import time
 
-if 'ENABLE_TK' not in globals():
-    global ENABLE_TK
-    ENABLE_TK = True
+from robodk import robodialogs
 
-if 'ENABLE_QT' not in globals():
-    global ENABLE_QT
-    ENABLE_QT = True
+if robodialogs.ENABLE_QT:
+    from PySide2 import QtWidgets, QtCore, QtGui
+
+if robodialogs.ENABLE_TK:
+    if sys.version_info[0] < 3:
+        import Tkinter as tkinter
+        import tkFileDialog as filedialog
+        import tkMessageBox as messagebox
+    else:
+        import tkinter
+        from tkinter import filedialog
+        from tkinter import messagebox
 """
 App/actions control utilities.
 
@@ -318,7 +325,7 @@ def value_to_widget(value, parent):
 
     .. seealso:: :func:`~robodk.roboapps.widget_to_value`
     """
-    if ENABLE_QT:
+    if robodialogs.ENABLE_QT:
         return value_to_qt_widget(value, parent)
     else:
         return value_to_tk_widget(value, parent)
@@ -442,15 +449,7 @@ def get_robodk_theme(RDK=None):
 PySide2 / Qt utilities
 """
 
-if ENABLE_QT:
-    try:
-        from robodk.robolink import import_install
-        import_install("PySide2", "PySide2==5.15.*")
-        from PySide2 import QtCore, QtGui, QtWidgets
-    except:
-        ENABLE_QT = False
-
-if ENABLE_QT:
+if robodialogs.ENABLE_QT:
 
     def get_qt_app(robodk_icon=True, robodk_theme=True):
         """
@@ -474,7 +473,6 @@ if ENABLE_QT:
             icon_path = robolink.getPathIcon()
             from os import path
             if path.exists(icon_path):
-                import sys
                 if sys.platform.startswith('win'):
                     import ctypes
                     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
@@ -553,10 +551,10 @@ if ENABLE_QT:
             from robodk.robolink import Robolink
             RDK = Robolink()
 
-        #if 'OK' != RDK.Command('PluginLoad', 'App Loader'):  # Ensure the plugin is loaded
-        #    return None
-
-        img_hex = RDK.PluginCommand('App Loader', 'IconGet', icon_name)
+        if 'Addin Manager' in RDK.Command('PluginsList'):
+            img_hex = RDK.PluginCommand('Addin Manager', 'IconGet', icon_name)
+        else:
+            img_hex = RDK.PluginCommand('App Loader', 'IconGet', icon_name)
         if type(img_hex) is not str or img_hex == '':
             return None
 
@@ -805,22 +803,7 @@ if ENABLE_QT:
 Tkinter utilities
 """
 
-if ENABLE_TK:
-    import sys
-    if sys.version_info[0] < 3:
-        # Python 2.X only:
-        try:
-            import Tkinter as tkinter
-        except:
-            ENABLE_TK = False
-    else:
-        # Python 3.x only
-        try:
-            import tkinter
-        except:
-            ENABLE_TK = False
-
-if ENABLE_TK:
+if robodialogs.ENABLE_TK:
 
     def get_tk_app(robodk_icon=True, robodk_theme=True):
         """
@@ -848,7 +831,6 @@ if ENABLE_TK:
             icon_path = robolink.getPathIcon()
             from os import path
             if path.exists(icon_path):
-                import sys
                 if sys.platform.startswith('win'):
                     import ctypes
                     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
@@ -1342,6 +1324,9 @@ def ShowExample():
                     icon_window.setLayout(QtWidgets.QVBoxLayout())
                     icon_window.layout().addWidget(scroll_widget)
                     icon_window.exec_()
+                else:
+                    from robodk import robodialogs
+                    robodialogs.ShowMessage('No icons to display! Is the plug-in enabled?')
 
             actions = [("Show a Yes/No Message", showMessage), ("Show RoboDK Icons", showIcons)]
 
@@ -1356,8 +1341,6 @@ def ShowExample():
 
 
 def runmain():
-
-    from robodk import robodialogs
 
     ShowExample()
 

@@ -21,13 +21,34 @@
 #
 # --------------------------------------------
 
-if 'ENABLE_TK' not in globals():
-    global ENABLE_TK
-    ENABLE_TK = True
+import sys
 
-if 'ENABLE_QT' not in globals():
-    global ENABLE_QT
+# robodialogs is compatible with PySide2 and tkinter. At least one must be present.
+ENABLE_QT = False
+try:
+    from PySide2 import QtWidgets, QtCore
     ENABLE_QT = True
+except:
+    pass
+
+ENABLE_TK = False
+try:
+    if sys.version_info[0] < 3:
+        import Tkinter as tkinter
+        import tkFileDialog as filedialog
+        import tkMessageBox as messagebox
+    else:
+        import tkinter
+        from tkinter import filedialog
+        from tkinter import messagebox
+    ENABLE_TK = True
+except:
+    pass
+
+if not ENABLE_TK and not ENABLE_QT:
+    s = 'PySide2 and/or tkinter is not present on the system. Please install PySide2: "python -m pip install PySide2" or "python -m pip install robodk[apps]"'
+    print(s)
+    raise ImportError(s)
 
 FILE_TYPES_ALL = ('All Files', '.*')  #: File type filter for all files
 FILE_TYPES_ROBODK = ('RoboDK Files', '.sld .rdk .robot .tool .rdka .rdkbak .rdkp .py')  #: File type filter for RoboDK files
@@ -360,25 +381,6 @@ def InputDialog(msg, value, title=None, default_button=False, default_value=None
 def _message_to_window_title(message):
     return message.split('\n', 1)[0].split('.', 1)[0].split(':', 1)[0]
 
-
-if ENABLE_TK:
-    import sys
-    if sys.version_info[0] < 3:
-        # Python 2.X only:
-        try:
-            import Tkinter as tkinter
-            import tkFileDialog as filedialog
-            import tkMessageBox as messagebox
-        except:
-            ENABLE_TK = False
-    else:
-        # Python 3.x only
-        try:
-            import tkinter
-            from tkinter import filedialog
-            from tkinter import messagebox
-        except:
-            ENABLE_TK = False
 
 if ENABLE_TK:
 
@@ -749,14 +751,6 @@ if ENABLE_TK:
             msgbox.root.destroy()
             return msgbox.returning
 
-
-if ENABLE_QT:
-    try:
-        from robodk.robolink import import_install
-        import_install("PySide2", "PySide2==5.15.*")
-        from PySide2 import QtCore, QtWidgets
-    except:
-        ENABLE_QT = False
 
 if ENABLE_QT:
 

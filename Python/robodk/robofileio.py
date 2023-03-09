@@ -26,7 +26,7 @@ import time
 import os.path
 import time
 
-from . import robomath
+from robodk import robomath
 
 #----------------------------------------------------
 #--------      Generic file usage     ---------------

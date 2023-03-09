@@ -484,7 +484,7 @@ def getPathIcon():
     return iconpath
 
 
-def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=True):
+def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
     """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
 
@@ -508,7 +508,6 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=True):
         return
 
     except ModuleNotFoundError:
-        import os
         import sys
         import subprocess
         import io
@@ -4450,7 +4449,10 @@ class Item:
             return self
 
     def Pose(self):
-        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree). For robot items, this function returns the pose of the active tool with respect to the active reference. It returns the pose as :class:`~robodk.robomath.Mat`.
+        """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree).
+        For robot items, this function returns the pose of the active tool with respect to the active reference frame.
+
+        It returns the pose as :class:`~robodk.robomath.Mat`.
 
         Tip: Use a Pose_2_* function from the robodk module (such as :class:`robomath.Pose_2_KUKA`) to convert the pose to XYZABC (XYZ position in mm and ABC orientation in degrees), specific to a robot brand.
 
@@ -4526,7 +4528,10 @@ class Item:
             return self
 
     def PoseAbs(self):
-        """Return the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station.
+        """Return the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-).
+        For example, the position of an object/frame/target with respect to the origin of the station.
+
+        For robot items, this returns the pose of the robot base with respect to the origin of the station.
 
         Example:
 
@@ -6995,13 +7000,13 @@ class Item:
                 self.link._send_bytes(value)
                 self.link._check_status()
                 return True
-                
+
             elif isinstance(value, Item):
                 value = str(value.item)
-            
+
             elif isinstance(value, bool):
                 value = '1' if value else '0'
-            
+
             elif isinstance(value, robomath.Mat):
                 # Special 2D matrix write/read
                 self.link._check_connection()
@@ -7024,7 +7029,7 @@ class Item:
 
                 self.link._check_status()
                 return mat2d_list
-                
+
             else:
                 value = str(value)
             value = value.replace('\n', '<br>')

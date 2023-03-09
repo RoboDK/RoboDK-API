@@ -69,7 +69,13 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: C',
         'Programming Language :: C#',
+        'Programming Language :: C++',
         'Programming Language :: Visual Basic',
     ],
 
@@ -96,7 +102,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'apps': ['PySide2'],
+        'apps': ['PySide2==5.15.*'],
         'cv': ['opencv-contrib-python', 'numpy'],
         'lint': ['astroid'],
     },
