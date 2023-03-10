@@ -48,7 +48,7 @@ except:
 if not ENABLE_TK and not ENABLE_QT:
     s = 'PySide2 and/or tkinter is not present on the system. Please install PySide2: "python -m pip install PySide2" or "python -m pip install robodk[apps]"'
     print(s)
-    raise ImportError(s)
+    #raise ImportError(s)
 
 FILE_TYPES_ALL = ('All Files', '.*')  #: File type filter for all files
 FILE_TYPES_ROBODK = ('RoboDK Files', '.sld .rdk .robot .tool .rdka .rdkbak .rdkp .py')  #: File type filter for RoboDK files
