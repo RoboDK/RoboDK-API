@@ -3613,8 +3613,7 @@ class Robolink:
             self._send_line(command)
             self._send_int(id_spray)
             info = self._rec_line()
-            info.replace('<br>', '\t')
-            print(info)
+            info = self._rec_line().replace('<br>', '\t')
             data = self._rec_matrix()
             self._check_status()
             return info, data
