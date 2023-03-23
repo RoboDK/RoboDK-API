@@ -3612,7 +3612,6 @@ class Robolink:
             command = 'Gun_Stats'
             self._send_line(command)
             self._send_int(id_spray)
-            info = self._rec_line()
             info = self._rec_line().replace('<br>', '\t')
             data = self._rec_matrix()
             self._check_status()
