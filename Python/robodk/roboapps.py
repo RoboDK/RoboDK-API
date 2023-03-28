@@ -127,7 +127,7 @@ def Unchecked():
 def Checked():
     """
     Verify if the command "Checked" is present. In this case it means the action was just checked from RoboDK (applicable to checkable actions only).
-    
+
     Example for a 'Checkable Action':
 
     .. code-block:: python
@@ -173,7 +173,7 @@ def SkipKill():
     """
     For Checkable actions, this setting will tell RoboDK App loader to not kill the process a few seconds after the terminate function is called.
     This is needed if we want the user input to save the file. For example: The Record action from the Record App.
-    
+
     Example for a 'Momentary Action':
 
     .. code-block:: python
@@ -451,12 +451,15 @@ PySide2 / Qt utilities
 
 if robodialogs.ENABLE_QT:
 
-    def get_qt_app(robodk_icon=True, robodk_theme=True):
+    def get_qt_app(robodk_icon=True, robodk_theme=True, RDK=None):
         """
         Get the QApplication instance.
 
+        Note: If RoboDK is not running, The RoboDK theme is not applied.
+
         :param bool robodk_icon: Applies the RoboDK logo, defaults to True
         :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
+        :param robolink.Robolink RDK: Link to the running RoboDK instance for the theme, defaults to None
 
         :return: The QApplication instance
         :rtype: :class:`PySide2.QtWidgets.QApplication`
@@ -480,7 +483,13 @@ if robodialogs.ENABLE_QT:
                 app.setWindowIcon(app_icon)
 
         if robodk_theme:
-            set_qt_theme(app)
+            if RDK is None:
+                RDK = robolink.Robolink(robodk_path='')  # If no running instance of RoboDK is found, do not instantiate RoboDK
+            try:
+                if RDK._is_connected():
+                    set_qt_theme(app, RDK)
+            except:
+                pass
 
         return app
 
@@ -805,12 +814,13 @@ Tkinter utilities
 
 if robodialogs.ENABLE_TK:
 
-    def get_tk_app(robodk_icon=True, robodk_theme=True):
+    def get_tk_app(robodk_icon=True, robodk_theme=True, RDK=None):
         """
         Get the QApplication instance.
 
         :param bool robodk_icon: Applies the RoboDK logo, defaults to True
         :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
+        :param robolink.Robolink RDK: Link to the running RoboDK instance for the theme, defaults to None
 
         :return: The QApplication instance
         :rtype: :class:`PySide2.QtWidgets.QApplication`
@@ -937,7 +947,7 @@ class AppSettings:
     Example:
 
         .. code-block:: python
-        
+
             class Settings(AppSettings):
 
                 def __init__(self, settings_param='My-App-Settings'):
@@ -949,8 +959,8 @@ class AppSettings:
                     self.INT = 123456
                     self.FLOAT = 0.123456789
                     self.STRING = 'Text'
-                    self.INT_LIST = [1, 2, 3]  
-                    self.FLOAT_LIST = [1.0, 2.0, 3.0]  
+                    self.INT_LIST = [1, 2, 3]
+                    self.FLOAT_LIST = [1.0, 2.0, 3.0]
                     self.STRING_LIST = ['First line', 'Second line', 'Third line']
                     self.MIXED_LIST = [False, 1, '2']
                     self.INT_TUPLE = (1, 2, 3)
@@ -1031,7 +1041,7 @@ class AppSettings:
         """
         Get the list of all attributes (settings).
         Attributes that starts with '_' are ignored.
-        
+
         :return: all attributes
         :rtype: list of str
         """
@@ -1125,7 +1135,7 @@ class AppSettings:
         """
         Load the class attributes from a RoboDK binary parameter.
         If the station is not provided, it uses the active station.
-        
+
         :param rdk: Station to load from, defaults to None
         :type rdk: Robolink, optional
 

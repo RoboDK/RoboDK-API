@@ -1387,6 +1387,8 @@ class Robolink:
 
                     try:
                         if self.APPLICATION_DIR == '':
+                            if self.COM:
+                                self.COM = None
                             connected = 0
                             return connected
                         command = [self.APPLICATION_DIR]
@@ -1394,6 +1396,8 @@ class Robolink:
                             command += self.ARGUMENTS
 
                         if not start_robodk(command):
+                            if self.COM:
+                                self.COM = None
                             connected = 0
                             return connected
                         #import time

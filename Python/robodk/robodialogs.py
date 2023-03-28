@@ -396,7 +396,7 @@ if ENABLE_TK:
             options['defaultextension'] = defaultextension
             options['filetypes'] = filetypes
             options['initialfile'] = strfile
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.askopenfile(**options)
@@ -410,7 +410,7 @@ if ENABLE_TK:
             options['defaultextension'] = defaultextension
             options['filetypes'] = filetypes
             options['initialfile'] = strfile
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.asksaveasfile(**options)
@@ -424,7 +424,7 @@ if ENABLE_TK:
             options['defaultextension'] = defaultextension
             options['filetypes'] = filetypes
             options['initialfile'] = strfile
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.askopenfilename(**options)
@@ -438,7 +438,7 @@ if ENABLE_TK:
             options['defaultextension'] = defaultextension
             options['filetypes'] = filetypes
             options['initialfile'] = strfile
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.askopenfilenames(**options)
@@ -452,7 +452,7 @@ if ENABLE_TK:
             options['defaultextension'] = defaultextension
             options['filetypes'] = filetypes
             options['initialfile'] = strfile
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.asksaveasfilename(**options)
@@ -463,7 +463,7 @@ if ENABLE_TK:
             options = {}
             options['title'] = strtitle
             options['initialdir'] = path_preference
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.askdirectory(**options)
@@ -474,7 +474,7 @@ if ENABLE_TK:
             options = {}
             options['title'] = strtitle
             options['initialdir'] = path_preference
-            root = get_tk_app()
+            root = get_tk_app(robodk_theme=False)
             root.withdraw()
             root.attributes("-topmost", True)
             file_path = filedialog.askdirectory(**options)
@@ -777,34 +777,34 @@ if ENABLE_QT:
 
         @staticmethod
         def getOpenFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
-            app = get_qt_app()
+            app = get_qt_app(robodk_theme=False)
             filetypes, defaultextension = DialogsQt.convert_filetypes(filetypes, defaultextension)
             file, ext = QtWidgets.QFileDialog.getOpenFileName(None, strtitle, path_preference if not strfile else path_preference + "/" + strfile, filetypes, defaultextension)
             return file if file else None
 
         @staticmethod
         def getOpenFileNames(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File(s)', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
-            app = get_qt_app()
+            app = get_qt_app(robodk_theme=False)
             filetypes, defaultextension = DialogsQt.convert_filetypes(filetypes, defaultextension)
             file, ext = QtWidgets.QFileDialog.getOpenFileNames(None, strtitle, path_preference if not strfile else path_preference + "/" + strfile, filetypes, defaultextension)
             return file if file else None
 
         @staticmethod
         def getSaveFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save As', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
-            app = get_qt_app()
+            app = get_qt_app(robodk_theme=False)
             filetypes, defaultextension = DialogsQt.convert_filetypes(filetypes, defaultextension)
             file, ext = QtWidgets.QFileDialog.getSaveFileName(None, strtitle, path_preference if not strfile else path_preference + "/" + strfile, filetypes, defaultextension)
             return file if file else None
 
         @staticmethod
         def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
-            app = get_qt_app()
+            app = get_qt_app(robodk_theme=False)
             file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
             return file if file else None
 
         @staticmethod
         def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder'):
-            app = get_qt_app()
+            app = get_qt_app(robodk_theme=False)
             file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
             return file if file else None
 
