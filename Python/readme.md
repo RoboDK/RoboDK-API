@@ -14,9 +14,11 @@ The `robodk` package is available on [PyPi](https://pypi.python.org/pypi/robodk/
 
 ![Python programming in RoboDK](https://raw.githubusercontent.com/RoboDK/RoboDK-API/master/Python/Python-Programming-RoboDK.png)
 
-RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place, and so on.
- * [Industrial Robot application examples](https://robodk.com/examples)
- * [RoboDK Blog](https://robodk.com/blog)
+RoboDK can be used for a wide range of robot manufacturing applications, such as robot machining, 3D printing, synchronizing multiple robots, pick and place, and so on.
+ * [Industrial Robot application examples](https://robodk.com/stations)
+ * [Robot library](https://robodk.com/library)
+ * [RoboDK Blog](https://robodk.com/blog/)
+ * [RoboDK Forum](https://robodk.com/forum/)
 
 **Important:** The RoboDK API is not the same as the [RoboDK Plug-In interface](https://robodk.com/doc/en/PlugIns/index.html).
 

@@ -18,9 +18,11 @@ The RoboDK API provides an alternative to using vendor-specific programming lang
 While RoboDK's graphical user interface can be used to create programs, it is possible to extend the robot controller limitations by using a universal programming language such as Python.
 The following page provides an overview of the RoboDK API using Python: <https://robodk.com/offline-programming>.
 
-RoboDK can be used for a wide range of applications, such as 3D printing, robot machining, synchronizing multiple robots, pick and place, and so on.
- * [Industrial Robot application examples](https://robodk.com/examples)
- * [RoboDK Blog](https://robodk.com/blog)
+RoboDK can be used for a wide range of robot manufacturing applications, such as robot machining, 3D printing, synchronizing multiple robots, pick and place, and so on.
+ * [Industrial Robot application examples](https://robodk.com/stations)
+ * [Robot library](https://robodk.com/library)
+ * [RoboDK Blog](https://robodk.com/blog/)
+ * [RoboDK Forum](https://robodk.com/forum/)
 
 **Important:** The RoboDK API is not the same as the [RoboDK Plug-In interface](https://robodk.com/doc/en/PlugIns/index.html).
 
