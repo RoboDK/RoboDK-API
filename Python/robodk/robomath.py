@@ -1084,6 +1084,21 @@ def proj_pt_2_line(point, paxe, vaxe):
 
 
 def fitPlane(points):
+    """Returns the equation and normal for a best fit plane to a cloud of points.
+    
+    Uses singular value decomposition to produce a least squares fit to a plane. Points must have centroid at [0, 0, 0]. Must provide at least 4 points.
+    
+    Returns 
+
+    :param array-like points: a 3xN array of points. Each column represents one point.
+    :type array_like:
+    
+    :return: pplane: the equation of the best-fit plane, in the form b(1)*X + b(2)*Y +b(3)*Z + b(4) = 0.
+    :rtype: array_like
+    :return: vplane: the normal vector of the best-fit plane.
+    :rtype: list of floats
+
+    """
     """Best fits a plane to a cloud of points"""
     import numpy as np
     XYZ = np.array(points)
