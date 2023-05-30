@@ -90,53 +90,58 @@ RDK.Render(False)
 program.ShowInstructions(False)
 
 # Open the file and iterate through each line
-f = open(src_file_path)
-count = 0
-for line in f:
-    # Remove empty characters:
-    line = line.strip()
-    print("Loading line: " + line)
+with open(src_file_path) as f:
+    count = 0
+    for line in f:
+        # Remove empty characters:
+        line = line.strip()
+        print("Loading line: " + line)
 
-    # Get all the numeric values in order
-    values = GetValues(line)
+        # Get all the numeric values in order
+        values = GetValues(line)
 
-    # Increase the counter
-    count = count + 1
+        # Increase the counter
+        count = count + 1
 
-    # Update TCP speed (KUKA works in m/s, RoboDK works in mm/s)
-    if line.startswith("$VEL.CP"):
-        program.setSpeed(values[0] * 1000)
-        continue
+        # Update TCP speed (KUKA works in m/s, RoboDK works in mm/s)
+        if line.startswith("$VEL.CP"):
+            program.setSpeed(values[0]*1000)
+            continue
+            
+        # Check operations that involve a pose
+        if len(values) < 6:
+            print("Warning! Invalid line: " + line)
+            continue
 
-    # Check operations that involve a pose
-    if len(values) < 6:
-        print("Warning! Invalid line: " + line)
-        continue
+        # Check what instruction we need to add:
+        if line.startswith("LIN"):
+            target = RDK.AddTarget('T%i'% count, frame)
+            
+            # Check if we have external axes information, if so, provided it to joints E1 to En
+            if len(values) > 6:
+                target.setJoints([0,0,0,0,0,0] + values[6:])
+                
+            target.setPose(KUKA_2_Pose(values[:6]))
+            program.MoveL(target)
 
-    # Check what instruction we need to add:
-    if line.startswith("LIN"):
-        target = RDK.AddTarget('T%i' % count, frame)
-        target.setPose(KUKA_2_Pose(values))
-        program.MoveL(target)
+        # Check PTP move
+        elif line.startswith("PTP"):
+            target = RDK.AddTarget('T%i'% count, frame)
+            target.setAsJointTarget()
+            target.setJoints(values)
+            program.MoveJ(target)
 
-    # Check PTP move
-    elif line.startswith("PTP"):
-        target = RDK.AddTarget('T%i' % count, frame)
-        target.setAsJointTarget()
-        target.setJoints(values)
-        program.MoveJ(target)
+        # Set the tool
+        elif line.startswith("$TOOL"):
+            pose = KUKA_2_Pose(values[:6])
+            tool = robot.AddTool(pose, "SRC TOOL")
+            program.setTool(tool)
 
-    # Set the tool
-    elif line.startswith("$TOOL"):
-        pose = KUKA_2_Pose(values)
-        tool = robot.AddTool(pose, "SRC TOOL")
-        program.setTool(tool)
-
-    # Set the reference frame
-    elif line.startswith("$BASE"):
-        frame = RDK.AddFrame("SRC BASE", robot.Parent())
-        frame.setPose(KUKA_2_Pose(values))
-        program.setFrame(frame)
+        # Set the reference frame
+        elif line.startswith("$BASE"):
+            frame = RDK.AddFrame("SRC BASE", robot.Parent())
+            frame.setPose(KUKA_2_Pose(values[:6]))
+            program.setFrame(frame)
 
 # Hide the targets
 program.ShowTargets(False)
