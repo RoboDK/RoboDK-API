@@ -439,6 +439,9 @@ void Mat_Multiply_rotxyz(struct Mat_t *in1out, const double rx, const double ry,
 bool Mat_isHomogeneous(const struct Mat_t *inst);
 void Mat_SetPos(struct Mat_t *in1out, const double x, const double y, const double z);
 void Mat_SetPose_KUKA(struct Mat_t *in1out, const struct XYZWPR_t in);
+void KUKA_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in);
+void Mat_SetPose_XYZRPW(struct Mat_t* in1out, const struct XYZWPR_t in);
+void XYZRPW_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in);
 void Mat_Get_VX(const struct Mat_t *inst, struct XYZ_t *out);
 void Mat_Get_VY(const struct Mat_t *inst, struct XYZ_t *out);
 void Mat_Get_VZ(const struct Mat_t *inst, struct XYZ_t *out);

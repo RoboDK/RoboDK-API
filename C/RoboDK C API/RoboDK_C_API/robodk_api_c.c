@@ -1499,6 +1499,109 @@ void Mat_SetPose_KUKA(struct Mat_t *in1out, const struct XYZWPR_t in) {
 	in1out->arr16[15] = 1.0;
 }
 
+void KUKA_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in) {
+	double x = in->arr16[12];
+	double y = in->arr16[13];
+	double z = in->arr16[14];
+	double r, p, w;
+	if (in->arr16[2] > (1.0 - 1e-10))
+	{
+		p = -M_PI / 2.0;
+		r = 0.0;
+		w = atan2(-in->arr16[9], in->arr16[5]);
+	}
+	else if (in->arr16[2] < -1.0 + 1e-10)
+	{
+		p = M_PI / 2.0;
+		r = 0.0;
+		w = atan2(in->arr16[9], in->arr16[5]);
+	}
+	else
+	{
+		p = atan2(-in->arr16[2], sqrt(in->arr16[0] * in->arr16[0] + in->arr16[1] * in->arr16[1]));
+		w = atan2(in->arr16[1], in->arr16[0]);
+		r = atan2(in->arr16[6], in->arr16[10]);
+	}
+	in1out->arr6[0] = x;
+	in1out->arr6[1] = y;
+	in1out->arr6[2] = z;
+	in1out->arr6[3] = w * 180.0 / M_PI;
+	in1out->arr6[4] = p * 180.0 / M_PI;
+	in1out->arr6[5] = r * 180.0 / M_PI;
+}
+
+void Mat_SetPose_XYZRPW(struct Mat_t* in1out, const struct XYZWPR_t in) {
+	double x = in.arr6[0];
+	double y = in.arr6[1];
+	double z = in.arr6[2];
+	double r = in.arr6[3];
+	double p = in.arr6[4];
+	double w = in.arr6[5];
+
+	double a = r * M_PI / 180.0;
+	double b = p * M_PI / 180.0;
+	double c = w * M_PI / 180.0;
+
+	double ca = cos(a);
+	double sa = sin(a);
+	double cb = cos(b);
+	double sb = sin(b);
+	double cc = cos(c);
+	double sc = sin(c);
+
+	in1out->arr16[0] = cb * cc;
+	in1out->arr16[4] = cc * sa * sb - ca * sc;
+	in1out->arr16[8] = sa * sc + ca * cc * sb;
+	in1out->arr16[12] = x;
+
+	in1out->arr16[1] = cb * sc;
+	in1out->arr16[5] = ca * cc + sa * sb * sc;
+	in1out->arr16[9] = ca * sb * sc - cc * sa;
+	in1out->arr16[13] = y;
+
+	in1out->arr16[2] = -sb;
+	in1out->arr16[6] = cb * sa;
+	in1out->arr16[10] = ca * cb;
+	in1out->arr16[14] = z;
+
+	in1out->arr16[3] = 0.0;
+	in1out->arr16[7] = 0.0;
+	in1out->arr16[11] = 0.0;
+	in1out->arr16[15] = 1.0;
+}
+
+void XYZRPW_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in)
+{
+	double x = in->arr16[12];
+	double y = in->arr16[13];
+	double z = in->arr16[14];
+	double r, p, w;
+	if (in->arr16[2] > 1.0 - 1e-10)
+	{
+		p = -M_PI / 2.0;
+		r = 0.0;
+		w = atan2(-in->arr16[9], in->arr16[5]);
+	}
+	else if (in->arr16[2] < -1.0 + 1e-10)
+	{
+		p = M_PI / 2.0;
+		r = 0.0;
+		w = atan2(in->arr16[9], in->arr16[5]);
+	}
+	else
+	{
+		p = atan2(-in->arr16[2], sqrt(in->arr16[0] * in->arr16[0] + in->arr16[1] * in->arr16[1]));
+		w = atan2(in->arr16[1], in->arr16[0]);
+		r = atan2(in->arr16[6], in->arr16[10]);
+	}
+	in1out->arr6[0] = x;
+	in1out->arr6[1] = y;
+	in1out->arr6[2] = z;
+	in1out->arr6[3] = r * 180.0 / M_PI;
+	in1out->arr6[4] = p * 180.0 / M_PI;
+	in1out->arr6[5] = w * 180.0 / M_PI;
+}
+
 void Mat_Get_VX(const struct Mat_t *inst, struct XYZ_t *out) {
 	out->arr3[0] = inst->arr16[0];
 	out->arr3[1] = inst->arr16[1];
