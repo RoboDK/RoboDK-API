@@ -318,7 +318,7 @@ void RoboDK_Update(struct RoboDK_t* inst);
 bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct Item_t* object_parent);
 uint32_t RoboDK_SetCollisionActive(struct RoboDK_t* inst, enum eCollisionState check_state);
 uint32_t RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2);
-
+int RoboDK_Collisions(struct RoboDK_t* inst);
 
 
 
