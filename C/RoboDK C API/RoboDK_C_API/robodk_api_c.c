@@ -1499,29 +1499,28 @@ void Mat_SetPose_KUKA(struct Mat_t *in1out, const struct XYZWPR_t in) {
 	in1out->arr16[15] = 1.0;
 }
 
-void KUKA_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in) {
+void KUKA_SetPose_Mat(struct XYZWPR_t *in1out, const struct Mat_t *in) {
 	double x = in->arr16[12];
 	double y = in->arr16[13];
 	double z = in->arr16[14];
 	double r, p, w;
-	if (in->arr16[2] > (1.0 - 1e-10))
-	{
+
+	if (in->arr16[2] > (1.0 - 1e-10)) {
 		p = -M_PI / 2.0;
 		r = 0.0;
 		w = atan2(-in->arr16[9], in->arr16[5]);
-	}
-	else if (in->arr16[2] < -1.0 + 1e-10)
-	{
+	} 
+	else if (in->arr16[2] < -1.0 + 1e-10) {
 		p = M_PI / 2.0;
 		r = 0.0;
 		w = atan2(in->arr16[9], in->arr16[5]);
-	}
-	else
-	{
+	} 
+	else {
 		p = atan2(-in->arr16[2], sqrt(in->arr16[0] * in->arr16[0] + in->arr16[1] * in->arr16[1]));
 		w = atan2(in->arr16[1], in->arr16[0]);
 		r = atan2(in->arr16[6], in->arr16[10]);
 	}
+
 	in1out->arr6[0] = x;
 	in1out->arr6[1] = y;
 	in1out->arr6[2] = z;
@@ -1530,7 +1529,7 @@ void KUKA_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in) {
 	in1out->arr6[5] = r * 180.0 / M_PI;
 }
 
-void Mat_SetPose_XYZRPW(struct Mat_t* in1out, const struct XYZWPR_t in) {
+void Mat_SetPose_XYZRPW(struct Mat_t *in1out, const struct XYZWPR_t in) {
 	double x = in.arr6[0];
 	double y = in.arr6[1];
 	double z = in.arr6[2];
@@ -1570,30 +1569,28 @@ void Mat_SetPose_XYZRPW(struct Mat_t* in1out, const struct XYZWPR_t in) {
 	in1out->arr16[15] = 1.0;
 }
 
-void XYZRPW_SetPose_Mat(struct XYZWPR_t* in1out, const struct Mat_t* in)
-{
+void XYZRPW_SetPose_Mat(struct XYZWPR_t *in1out, const struct Mat_t *in) {
 	double x = in->arr16[12];
 	double y = in->arr16[13];
 	double z = in->arr16[14];
 	double r, p, w;
-	if (in->arr16[2] > 1.0 - 1e-10)
-	{
+
+	if (in->arr16[2] > 1.0 - 1e-10) {
 		p = -M_PI / 2.0;
 		r = 0.0;
 		w = atan2(-in->arr16[9], in->arr16[5]);
-	}
-	else if (in->arr16[2] < -1.0 + 1e-10)
-	{
+	} 
+	else if (in->arr16[2] < -1.0 + 1e-10) {
 		p = M_PI / 2.0;
 		r = 0.0;
 		w = atan2(in->arr16[9], in->arr16[5]);
-	}
-	else
-	{
+	} 
+	else {
 		p = atan2(-in->arr16[2], sqrt(in->arr16[0] * in->arr16[0] + in->arr16[1] * in->arr16[1]));
 		w = atan2(in->arr16[1], in->arr16[0]);
 		r = atan2(in->arr16[6], in->arr16[10]);
 	}
+
 	in1out->arr6[0] = x;
 	in1out->arr6[1] = y;
 	in1out->arr6[2] = z;
