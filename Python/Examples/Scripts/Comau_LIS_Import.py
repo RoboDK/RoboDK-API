@@ -61,6 +61,8 @@ if __name__ == "__main__":
 
     # csv_file = 'C:/Users/UserName/Desktop/Var_P.csv'
     csv_file = getOpenFileName(RDK.getParam('PATH_OPENSTATION'), defaultextension='*.LIS')
+    if not csv_file:
+        quit()
 
     # Ask the user to select the robot (ignores the popup if only one robot is available)
     ROBOT = RDK.ItemUserPick('Select a robot', ITEM_TYPE_ROBOT)
