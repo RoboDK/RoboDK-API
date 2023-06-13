@@ -23,7 +23,7 @@ if not robot.Valid():
 folder_path = RDK.getParam('PATH_OPENSTATION')
 
 # Ask the user to select a file
-#filename = getOpenFile(path_preference=folder_path, strfile='', strtitle='Open CSV file ...', defaultextension='.csv', filetypes=[('CSV files', '*.csv'), ('All files', '*.*')])
+#filename = getOpenFileName(path_preference=folder_path, strfile='', strtitle='Open CSV file ...', defaultextension='.csv', filetypes=[('CSV files', '*.csv'), ('All files', '*.*')])
 filename = RDK.getParam('PATH_OPENSTATION') + '/joints-test.csv'
 
 # Load the CSV file as a list of lists (each row is a list)

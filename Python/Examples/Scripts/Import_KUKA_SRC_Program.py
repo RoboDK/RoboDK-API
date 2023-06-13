@@ -34,7 +34,7 @@ RDK = Robolink()
 
 # Ask the user to pick an SRC file:
 rdk_file_path = RDK.getParam("PATH_OPENSTATION")
-src_file_path = getOpenFile(rdk_file_path + "/")
+src_file_path = getOpenFileName(rdk_file_path + "/")
 if not src_file_path:
     print("Nothing selected")
     quit()

@@ -46,7 +46,7 @@ def xyzwpr_to_pose(xyzwpr):
 
 
 # csv_file = 'C:/Users/Albert/Desktop/Var_P.csv'
-csv_file = getOpenFile(RDK.getParam('PATH_OPENSTATION'))
+csv_file = getOpenFileName(RDK.getParam('PATH_OPENSTATION'))
 
 # Specify file codec
 codec = 'utf-8'  #'ISO-8859-1'
