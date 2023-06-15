@@ -25,7 +25,7 @@ RDK = Robolink()
 
 # Ask the user to pick a file:
 rdk_file_path = RDK.getParam("PATH_OPENSTATION")
-path_file = getOpenFile(rdk_file_path + "/")
+path_file = getOpenFileName(rdk_file_path + "/")
 if not path_file:
     print("Nothing selected")
     quit()

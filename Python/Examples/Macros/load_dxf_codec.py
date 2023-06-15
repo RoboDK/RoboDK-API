@@ -8,7 +8,7 @@ RDK = Robolink()
 import codecs
 
 #file_location = r'C:\Users\albert\Desktop\Sunpattern2D123.dxf'
-file_location = getOpenFile()
+file_location = getOpenFileName()
 if not file_location or not file_location.endswith('.dxf'):
     raise Exception('dxf file not provided')
 

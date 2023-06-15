@@ -26,7 +26,7 @@ RDK = Robolink()
 
 # Ask the user to select a text file:
 rdk_file_path = RDK.getParam("PATH_OPENSTATION")
-script_file_path = getOpenFile(rdk_file_path + "/")
+script_file_path = getOpenFileName(rdk_file_path + "/")
 if not script_file_path:
     print("Nothing selected")
     quit()

@@ -211,7 +211,7 @@ def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
         return DialogsTk.getOpenFolder(path_preference, strtitle)
 
 
-def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder'):
+def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder', **kwargs):
     """
     Pop up a folder dialog window to select a folder to save into.
     Returns the path of the folder as a string.
@@ -224,6 +224,12 @@ def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder'):
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFolder`
     """
+    # For backward compatibility
+    if 'path_programs' in kwargs:
+        path_preference = kwargs['path_programs']
+    if 'popup_msg' in kwargs:
+        strtitle = kwargs['popup_msg']
+
     if ENABLE_QT:
         return DialogsQt.getSaveFolder(path_preference, strtitle)
     else:
@@ -910,7 +916,7 @@ if ENABLE_QT:
                 # Create the widget holding the value
                 self.widget, self.funcs = value_to_qt_widget(value)
                 if self.widget is None:
-                    raise Exception(f"Invalid or unsupported input type: {value}")
+                    raise Exception(f"Invalid or unsupported input type: {str(value)}")
 
                 # Add the static buttons
                 button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Horizontal, self)
