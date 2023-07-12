@@ -1914,6 +1914,22 @@ namespace RoboDk.API
             check_status();
             return success > 0;
         }
+		
+		/// <inheritdoc />
+        public bool Cam2DSnapshot(string fileSaveImg, IItem cam, string cameraParameters="")
+        {
+			if (fileSaveImg.Length == 0){
+				throw new Exception("Retrieving binary image data is not supported");
+			}
+            check_connection();
+            send_line("Cam2D_PtrSnapshot");
+            send_item(cam);
+            send_line(fileSaveImg);
+			send_line(cameraParameters);			
+            var success = rec_int();
+            check_status();
+            return success > 0;
+        }
 
         /// <inheritdoc />
         public bool Cam2DClose(long camHandle = 0)

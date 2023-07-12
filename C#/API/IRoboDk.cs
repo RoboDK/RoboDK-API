@@ -865,8 +865,17 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="fileSaveImg">file path to save.Formats supported include PNG, JPEG, TIFF, ...</param>
         /// <param name="camHandle">Camera handle(pointer returned by Cam2DAdd)</param>
-        /// <returns>Return true if image has been saved successfully.</returns>
+        /// <returns>Returns true if image has been saved successfully.</returns>
         bool Cam2DSnapshot(string fileSaveImg, long camHandle = 0);
+
+        /// <summary>
+        /// Take a snapshot from a simulated camera view and save it to a file. 
+        /// </summary>
+        /// <param name="fileSaveImg">file path to save.Formats supported include PNG, JPEG, TIFF, ...</param>
+        /// <param name="cam">Camera handle(pointer returned by Cam2DAdd)</param>
+        /// <param name="cameraParameters">Camera parameters as a string. Refer to the documentation for more information.</param>
+        /// <returns>Returns true if image has been saved successfully.</returns>
+        bool Cam2DSnapshot(string fileSaveImg, IItem cam, string cameraParameters = "");
 
         /// <summary>
         /// Closes all camera windows or one specific camera if the camera handle is provided. 
