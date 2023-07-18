@@ -513,6 +513,8 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
         import subprocess
         import io
 
+        msg = "Installing required Python module: " + module_name
+
         def execute(cmd):
             print("Running command:")
             print(cmd)
@@ -522,17 +524,24 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
                 # display line output
                 line = line.strip()
                 print(line)
+                msgproc = msg + " - " + line
                 if rdk:
-                    rdk.ShowMessage(line, False)
+                    rdk.ShowMessage(msgproc, False)
+                else:
+                    sys.stdout.flush()
+                    print("Status Message: " + msgproc)
+                    sys.stdout.flush()
 
         if pip_name is None:
             pip_name = module_name
 
-        msg = "Installing required module: " + module_name + " ..."
-        print(msg)
-
+        
         if rdk:
             rdk.ShowMessage(msg, False)
+        else:
+            sys.stdout.flush()
+            print("Status Message: " + msg + " ...")
+            sys.stdout.flush()
 
         try:
             if upgrade_pip:
@@ -541,12 +550,23 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
             cmd = sys.executable + ' -m pip install ' + pip_name
             execute(cmd)
             exec('import ' + module_name, globals())
+            msg = "Python module installed successfully: " + module_name + "."
+            if rdk:
+                rdk.ShowMessage(msg, True)
+            else:
+                sys.stdout.flush()
+                print("Status Message: " + msg)
+                sys.stdout.flush()
 
         except:
             msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
             print(msg)
             if rdk:
                 rdk.ShowMessage(msg, True)
+            else:
+                sys.stdout.flush()
+                print("Status Message: " + msg)
+                sys.stdout.flush()
 
             raise ImportError(msg)
 
