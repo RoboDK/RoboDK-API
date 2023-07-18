@@ -67,6 +67,7 @@ INS_TYPE_CODE = 8  #: Code instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 INS_TYPE_PRINT = 9  #: Show Message instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 INS_TYPE_ROUNDING = 10  #: Rounding instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 INS_TYPE_IO = 11  #: Set or Wait I/O instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
+INS_TYPE_CUSTOM = 12  #: Custom instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 
 # Move types
 MOVE_TYPE_INVALID = -1  #: Invalid move type of a :class:`.ITEM_TYPE_INSTRUCTION`

@@ -12,14 +12,15 @@ writeline = "Program name\tProgram status (100%=OK)\tTravel length\tCycle Time"
 msg_html = "<table border=1><tr><td>" + writeline.replace('\t', '</td><td>') + "</td></tr>"
 
 # Ask the user to select a program
-#program = RDK.ItemUserPick('Select a program', ITEM_TYPE_PROGRAM)
 for program in RDK.ItemList(ITEM_TYPE_PROGRAM):
 
     # Retrieve the robot linked to the selected program
-    #robot = program.getLink(ITEM_TYPE_ROBOT)
+    robot = program.getLink(ITEM_TYPE_ROBOT)
+    if not robot.Valid():
+        RDK.ShowMessage("Cycle time requires a robot to be linked to the program '" + program.Name() + "'. Right-click the program to link it.")
+        continue
 
     # Output the linear speed, joint speed and time (separated by tabs)
-
     result = program.Update()
     instructions, time, travel, ok, error = result
 

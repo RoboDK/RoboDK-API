@@ -10,9 +10,14 @@ RDK = Robolink()
 
 # Ask the user to select a program
 program = RDK.ItemUserPick('Select a program', ITEM_TYPE_PROGRAM)
+if not program.Valid():
+    quit()
 
 # Retrieve the robot linked to the selected program
 robot = program.getLink(ITEM_TYPE_ROBOT)
+if not robot.Valid():
+    RDK.ShowMessage("Cycle time requires a robot to be linked to the program '" + program.Name() + "'. Right-click the program to link it.")
+    quit()
 
 # Output the linear speed, joint speed and time (separated by tabs)
 writeline = "Program name\tProgram status (100%=OK)\tTravel length\tCycle Time"

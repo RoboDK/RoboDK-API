@@ -68,7 +68,7 @@ def DateModified(filepath, stringformat=False):
 
 
 def DateCreated(filepath, stringformat=False):
-    """Returns the time that a file was modified"""
+    """Returns the time that a file was created"""
     time_in_s = os.path.getctime(filepath)
     if stringformat:
         return time.ctime(time_in_s)
