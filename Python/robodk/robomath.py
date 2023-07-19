@@ -521,13 +521,27 @@ def Pose_2_Staubli(H):
     :param H: pose
     :type H: :class:`.Mat`
 
-    .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
+    .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Staubli_2_Pose`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
     """
     xyzwpr = Pose_2_TxyzRxyz(H)
     xyzwpr[3] = xyzwpr[3] * 180.0 / pi
     xyzwpr[4] = xyzwpr[4] * 180.0 / pi
     xyzwpr[5] = xyzwpr[5] * 180.0 / pi
     return xyzwpr
+
+
+def Staubli_2_Pose(xyzwpr):
+    """Converts a Staubli XYZWPR target to a pose (4x4 matrix)
+
+    :param H: pose
+    :type H: :class:`.Mat`
+
+    .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
+    """
+    xyzwpr[3] = xyzwpr[3] * pi / 180.0
+    xyzwpr[4] = xyzwpr[4] * pi / 180.0
+    xyzwpr[5] = xyzwpr[5] * pi / 180.0
+    return TxyzRxyz_2_Pose(xyzwpr)
 
 
 def Pose_2_Motoman(H):
