@@ -293,6 +293,13 @@ void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value
 void RoboDK_GetParam(struct RoboDK_t* inst, const char* param, char* value);
 void RoboDK_License(struct RoboDK_t* inst, char* license);
 void RoboDK_SetViewPose(struct RoboDK_t* inst, struct Mat_t* pose);
+struct Mat_t RoboDK_GetViewPose(struct RoboDK_t* inst);
+
+struct Item_t RoboDK_Cam2D_Add(struct RoboDK_t* inst, const struct Item_t* item_object, const char *cam_params, const struct Item_t *camera_item);
+int RoboDK_Cam2D_Snapshot(struct RoboDK_t* inst, const char *file_save_img, const struct Item_t *cam_handle, const char *params);
+int RoboDK_Cam2D_Close(struct RoboDK_t* inst, const struct Item_t *cam_handle);
+int RoboDK_Cam2D_SetParams(struct RoboDK_t* inst, const char *params, const struct Item_t *cam_handle);
+
 void RoboDK_ShowRoboDK(struct RoboDK_t* inst);
 void RoboDK_HideRoboDK(struct RoboDK_t* inst);
 void RoboDK_CloseRoboDK(struct RoboDK_t* inst);

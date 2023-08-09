@@ -2103,6 +2103,10 @@ bool _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number) {
 }
 
 bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
+    if (inputLine == NULL){
+        SocketWrite(inst->_COM, (void *)ROBODK_API_LF, 1);
+        return true;
+    }
 	char sendBuffer[MAX_STR_LENGTH];
 	memset(sendBuffer, 0, MAX_STR_LENGTH);
 	char *outputChar = sendBuffer;
@@ -2476,12 +2480,67 @@ void RoboDK_License(struct RoboDK_t* inst, char* license) {
 }
 
 void RoboDK_SetViewPose(struct RoboDK_t* inst, struct Mat_t* pose) {
-	_RoboDK_check_connection(inst);
-	_RoboDK_send_Line(inst, "S_ViewPose");
-	_RoboDK_send_Pose(inst,*pose);
-	_RoboDK_check_status(inst);
-
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "S_ViewPose");
+    _RoboDK_send_Pose(inst,*pose);
+    _RoboDK_check_status(inst);
 }
+
+struct Mat_t RoboDK_GetViewPose(struct RoboDK_t* inst) {
+    struct Mat_t pose;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "G_ViewPose");
+    pose = _RoboDK_recv_Pose(inst);
+    _RoboDK_check_status(inst);
+    return pose;
+}
+
+struct Item_t RoboDK_Cam2D_Add(struct RoboDK_t* inst, const struct Item_t* item_object, const char *cam_params, const struct Item_t *camera_item) {
+    struct Item_t cam_handle;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "Cam2D_PtrAdd");
+    _RoboDK_send_Item(inst, item_object);
+    _RoboDK_send_Item(inst, camera_item);
+    _RoboDK_send_Line(inst, cam_params);
+    cam_handle = _RoboDK_recv_Item(inst);
+    _RoboDK_check_status(inst);
+    return cam_handle;
+}
+
+int RoboDK_Cam2D_Snapshot(struct RoboDK_t* inst, const char *file_save_img, const struct Item_t *cam_handle, const char *params) {
+    int success = 0;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "Cam2D_PtrSnapshot");
+    _RoboDK_send_Item(inst, cam_handle);
+    _RoboDK_send_Line(inst, file_save_img);
+    _RoboDK_send_Line(inst, params);
+    success = _RoboDK_recv_Int(inst);
+    _RoboDK_check_status(inst);
+    return success;
+}
+
+int RoboDK_Cam2D_Close(struct RoboDK_t* inst, const struct Item_t *cam_handle) {
+    int success = 0;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "Cam2D_PtrClose");
+    _RoboDK_send_Item(inst, cam_handle);
+    success = _RoboDK_recv_Int(inst);
+    _RoboDK_check_status(inst);
+    return success;
+}
+
+int RoboDK_Cam2D_SetParams(struct RoboDK_t* inst, const char *params, const struct Item_t *cam_handle) {
+    int success = 0;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "Cam2D_PtrSetParams");
+    _RoboDK_send_Item(inst, cam_handle);
+    _RoboDK_send_Line(inst, params);
+    success = _RoboDK_recv_Int(inst);
+    _RoboDK_check_status(inst);
+    return success;
+}
+
+
 
 void RoboDK_ShowRoboDK(struct RoboDK_t* inst) {
 	_RoboDK_check_connection(inst);
