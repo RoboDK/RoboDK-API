@@ -3706,7 +3706,7 @@ class Robolink:
             self._check_status()
 
     def MergeItems(self, list_items=[]):
-        """Merge multiple object items as one. Source objects are not deleted and a new object is created.
+        """Merge multiple object items as one. A new object is created and returned. Provided objects are deleted.
 
         :param list list_items: List of items to set as selected
         :return: New object created
