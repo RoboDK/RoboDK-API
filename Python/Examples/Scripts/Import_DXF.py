@@ -1,44 +1,61 @@
 from robodk import robolink
-from robodk import robodk
+from robodk import robodialogs, robofileio
 
 import sys
+from pathlib import Path
 
 robolink.import_install('ezdxf')
+
 import ezdxf
 from ezdxf import recover, path
 
-# file_path = "C:\\Users\\RoboDK\\Downloads\\example.dxf"
+def LoadDXF(file_path=None):
+    # file_path = "C:\\Users\\RoboDK\\Downloads\\example.dxf"
+    # file_path = None
+    if file_path is None and len(sys.argv) >= 2:
+        file_path = sys.argv[1]
 
-file_path = robodk.getOpenFileName()
+    if file_path is None:
+        file_path = robodialogs.getOpenFileName(filetypes=[('DXF files', '.DXF .dxf')])
 
-doc, auditor = ezdxf.recover.readfile(file_path)
+    if Path(str(file_path)).is_file() :
 
-RDK = robolink.Robolink()
+        doc, auditor = ezdxf.recover.readfile(file_path)
 
-RDK.ShowMessage("Loading DXF file: " + file_path, False)
+        RDK = robolink.Robolink()
 
-RDK.Render(False)
+        RDK.ShowMessage("Loading DXF file: " + file_path, False)
 
-objects = []
-for entity in doc.modelspace():
-    print(entity.DXFTYPE)
+        RDK.Render(False)
 
-    if entity.DXFTYPE not in ['LINE', 'ARC', 'CIRCLE']:
-        continue
+        objects = []
 
-    entity_path = ezdxf.path.make_path(entity)
-    #points = list(entity_path.flattening(2))
-    points = [list(v.xyz) for v in entity_path.flattening(2)]
-    objects.append(RDK.AddCurve(points))
+        for entity in doc.modelspace():
+            print(entity.DXFTYPE)
 
-if len(objects) == 0:
-    RDK.ShowMessage("No valid geometry found for: " + file_path, False)
-    quit()
+            if entity.DXFTYPE not in ['LINE', 'ARC', 'CIRCLE', 'LWPOLYLINE', 'SPLINE']:
+                continue
 
-dxf = RDK.MergeItems(objects)
-dxf.setName(robodk.getFileName(file_path))
-# dxf.Scale(1000)
+            entity_path = ezdxf.path.make_path(entity)
+            #points = list(entity_path.flattening(2))
+            points = [list(v.xyz) for v in entity_path.flattening(2)]
+            objects.append(RDK.AddCurve(points))
 
-RDK.ShowMessage("Done loading: " + file_path, False)
+        if len(objects) == 0:
+            RDK.ShowMessage("No valid geometry found for: " + file_path, False)
+            quit()
 
-RDK.Render(True)
+        dxf = RDK.MergeItems(objects)
+        dxf.setName(robofileio.getFileName(file_path))
+        #dxf.Scale(1000)
+
+        RDK.ShowMessage("Done loading: " + file_path, False)
+
+        RDK.Render(True)
+        
+    else:
+        print("Invalid file:")
+        print(file_path)
+
+if __name__ == "__main__":
+    LoadDXF()
