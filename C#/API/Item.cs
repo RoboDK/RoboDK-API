@@ -1432,7 +1432,12 @@ namespace RoboDk.API
             Link.check_status();
             return progstatus;
         }
-
+		
+		/// <inheritdoc />
+		public bool RunInstruction(string code, ProgramRunType runType = ProgramRunType.CallProgram)
+		{
+			return RunCodeCustom(code, runType);
+		}
         /// <inheritdoc />
         public bool RunCodeCustom(string code, ProgramRunType runType = ProgramRunType.CallProgram)
         {

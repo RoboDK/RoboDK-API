@@ -913,8 +913,16 @@ namespace RoboDk.API
         /// <param name="code">string of the code or program to run </param>
         /// <param name="runType">specify if the code is a program</param>
         /// <returns>True if success; False othwersise</returns>
+        bool RunInstruction(string code, ProgramRunType runType = ProgramRunType.CallProgram);
+		
+		/// <summary>
+        /// Adds a program call, code, message or comment to the program. Returns True if succeeded.
+        /// </summary>
+        /// <param name="code">string of the code or program to run </param>
+        /// <param name="runType">specify if the code is a program</param>
+        /// <returns>True if success; False othwersise</returns>
         bool RunCodeCustom(string code, ProgramRunType runType = ProgramRunType.CallProgram);
-
+		
         /// <summary>
         ///     Generates a pause instruction for a robot or a program when generating code. Set it to -1 (default) if you want the
         ///     robot to stop and let the user resume the program anytime.
