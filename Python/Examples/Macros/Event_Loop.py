@@ -16,6 +16,14 @@ EVENT_ITEM_MOVED_POSE = 11
 EVENT_COLLISIONMAP_RESET=12
 EVENT_COLLISIONMAP_TOO_LARGE=13
 EVENT_CALIB_MEASUREMENT=14
+EVENT_SELECTION_3D_CLICK=15 # An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information)
+EVENT_ITEM_CHANGED=16 # The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
+EVENT_ITEM_RENAMED=17 # The name of an item changed.
+EVENT_ITEM_VISIBILITY=18 # The visibility state of an item changed.
+EVENT_STATION_CHANGED=19 # A new robodk station was loaded
+
+
+
 
 class RobolinkEvents(Robolink):
     def EventsListen(self):
@@ -155,6 +163,25 @@ class RobolinkEvents(Robolink):
             
             # Save the calibration table as a CSV file (Important: the first line should be ignored)
             table = item.setParam("SaveTableCalib", rdk.getParam("PATH_OPENSTATION") + "/CalibValues.csv")            
+        
+        elif evt == EVENT_SELECTION_3D_CLICK:                
+            print("Event: An object was clicked in the 3D view")
+            
+        elif evt == EVENT_ITEM_CHANGED:                
+            print("Event: An object was clicked in the 3D view")
+            
+        elif evt == EVENT_ITEM_RENAMED:            
+            name = data = self._rec_line()
+            print("Event: Item renamed to: " + name)
+            
+        elif evt == EVENT_ITEM_VISIBILITY:                
+            data = self._rec_array().list()
+            visible_object = data[0]
+            visible_frame = data[1]            
+            print("Event: The visibility state of the item changed. Visible: " + str(visible_object))
+        
+        elif evt == EVENT_STATION_CHANGED:                
+            print("Event: A new RDK file was loaded.")
         
         else:
             print("Unknown event ID:" + str(evt))

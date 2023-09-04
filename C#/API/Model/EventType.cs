@@ -123,7 +123,27 @@ namespace RoboDk.API.Model
         /// <summary>
         /// An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information)
         /// </summary>
-        Selection3DClick = 15
+        Selection3DClick = 15,
+		
+		/// <summary>
+        /// The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
+        /// </summary>
+        ItemChanged = 16,
+		
+		/// <summary>
+        /// The name of an item changed.
+        /// </summary>
+        ItemRenamed = 17,
+		
+		/// <summary>
+        /// The visibility state of an item changed.
+        /// </summary>
+        ItemVisibility = 18,
+		
+		/// <summary>
+        /// The active station changed, a new RDK file was loaded.
+        /// </summary>
+        StationChanged = 19
     }
 }
 

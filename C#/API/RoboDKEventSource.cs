@@ -115,13 +115,31 @@ namespace RoboDk.API
                         int ignored = _roboDkEventConnection.rec_int(); // 1 = key pressed, 0 = key released
                         int measurementId = _roboDkEventConnection.rec_int(); // 1 = key pressed, 0 = key released
                         return new EventResult(EventType.NewMeasurement, null);
-
+						
+					case EventType.ItemChanged:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.ItemChanged, null);
+						
+					case EventType.ItemRenamed:
+						string name = _roboDkEventConnection.rec_line();
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.ItemRenamed, null);
+						
+					case EventType.ItemVisibility:
+						double[] values = _roboDkEventConnection.rec_array();
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.ItemVisibility, null);
+						
+					case EventType.StationChanged:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.StationChanged, null);
+					
                     default:
                         Debug.WriteLine($"unknown RoboDK Event: {eventType}");
 
                         // In debug target we fail -> Exception.
                         // In Release we send a NoEvent event
-                        Debug.Fail($"unknown RoboDK Event: {eventType}");
+                        // Debug.Fail($"unknown RoboDK Event: {eventType}");
                         return new EventResult(EventType.NoEvent, null);
                 }
             }
