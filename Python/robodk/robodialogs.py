@@ -668,7 +668,7 @@ if ENABLE_TK:
                 # Create the widget holding the value
                 self.widget, self.funcs = value_to_tk_widget(value, body)
                 if self.widget is None:
-                    raise Exception(f"Invalid or unsupported input type: {value}")
+                    raise Exception("Invalid or unsupported input type: " + str(value))
                 self.widget.grid(row=1, padx=5, sticky=tkinter.W + tkinter.E)
 
                 # Add the custom button(s)
@@ -774,7 +774,7 @@ if ENABLE_QT:
             for (name, exts) in filetypes:
                 exts = exts.split(' ')
                 exts_str = "*" + " *".join(exts)
-                f = f"{name} ({exts_str.strip()})"
+                f = name + " (" + exts_str.strip() + ")"
                 filetypes_qt.append(f)
                 if defaultextension in exts:
                     defaultextension_qt = f
@@ -830,7 +830,7 @@ if ENABLE_QT:
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
-            ret = msg_box.exec()
+            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -849,7 +849,7 @@ if ENABLE_QT:
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
-            ret = msg_box.exec()
+            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -868,7 +868,7 @@ if ENABLE_QT:
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec()
+            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
 
         @staticmethod
@@ -887,7 +887,7 @@ if ENABLE_QT:
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec()
+            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             if ret == QtWidgets.QMessageBox.StandardButton.Cancel:
                 return None
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
@@ -916,7 +916,7 @@ if ENABLE_QT:
                 # Create the widget holding the value
                 self.widget, self.funcs = value_to_qt_widget(value)
                 if self.widget is None:
-                    raise Exception(f"Invalid or unsupported input type: {str(value)}")
+                    raise Exception("Invalid or unsupported input type: " + str(value))
 
                 # Add the static buttons
                 button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Horizontal, self)
@@ -988,7 +988,7 @@ if ENABLE_QT:
                 size = dialog.sizeHint()
                 EmbedWindow(dialog.windowTitle(), size_w=size.width(), size_h=size.height())
 
-            ret = dialog.exec()
+            ret = dialog.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             if not ret:
                 return None
 

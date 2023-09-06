@@ -1,7 +1,7 @@
 @echo off
 
 @echo Creating Python env..
-C:\RoboDK\Python37\python.exe -m venv .\env
+C:\Python310\python.exe -m venv .\env
 
 :: Use this for Python 2.7
 ::C:\RoboDK\Python37\python.exe -m pip install virtualenv
