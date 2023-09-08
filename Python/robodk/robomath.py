@@ -1234,6 +1234,13 @@ class Mat(object):
             for j in range(sz[1]):
                 newmat[i, j] = self[i, j]
         return newmat
+    
+    def fromNumpy(ndarray):
+        return Mat(ndarray.tolist())
+
+    def toNumpy(self):
+        import numpy
+        return numpy.asarray(self.rows, float)
 
     def __len__(self):
         """Return the number of columns"""
@@ -1692,4 +1699,10 @@ class Mat(object):
 
 
 if __name__ == "__main__":
+    #import numpy as np
+    #a=transl(10,20,30)
+    #b1 = a.toNumpy()
+    #b2 = np.asarray(a.rows, float)
+    #c1 = Mat.fromNumpy(b1)
+    #c2 = Mat(b1)    
     pass
