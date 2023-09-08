@@ -1236,9 +1236,11 @@ class Mat(object):
         return newmat
     
     def fromNumpy(ndarray):
+        """Convert a numpy array to a Mat matrix"""
         return Mat(ndarray.tolist())
 
     def toNumpy(self):
+        """Return a copy of the Mat matrix as a numpy array"""
         import numpy
         return numpy.asarray(self.rows, float)
 
