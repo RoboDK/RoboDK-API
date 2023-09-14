@@ -1869,9 +1869,43 @@ class Robolink:
         """
         with self._lock:
             if isinstance(triangle_points, list):
+                if isinstance(triangle_points[0], robomath.Mat):
+                    # Check special case where we send multiple shapes in one shot
+                    list_shapes = []
+                    list_colours = []
+                    idx = 0
+                    while idx < len(triangle_points):
+                        if isinstance(triangle_points[idx], robomath.Mat):
+                            list_shapes.append(triangle_points[idx])
+                        else:
+                            # list of 4 floats assumed
+                            list_colours.append(triangle_points[idx])
+                            
+                        idx = idx + 1
+                            
+                    while len(list_colours) < len(list_shapes):
+                        # this will use default colour
+                        list_colours.append([])                            
+                    
+                    self._check_connection()
+                    command = 'AddShape4'
+                    self._send_line(command)
+                    self._send_item(add_to)
+                    self._send_int(1 if override_shapes else 0)
+                    self._send_int(len(list_shapes))
+                    for shape, color in zip(list_shapes, list_colours):
+                        self._send_matrix(shape)
+                        self._send_array(color)
+                    
+                    newitem = self._rec_item()
+                    self._check_status()
+                    return newitem
+                
+                # add a shape based on the list of points
                 triangle_points = robomath.tr(robomath.Mat(triangle_points))
             elif not isinstance(triangle_points, robomath.Mat):
                 raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
+                
             self._check_connection()
             command = 'AddShape2'
             self._send_line(command)
@@ -7100,5 +7134,24 @@ if __name__ == "__main__":
         print('RoboDK Version: ' + RDK.Command("Version"))
         print('RoboDK License: ' + RDK.License()[0])
         print('')
+        
+    def TestAddShape():    
+        RDK = Robolink()
+        
+        list_meshes_color = []
+        
+        n_meshes = 10
+        for i in range(n_meshes):
+            mesh = [[-10,0+30*i,0], [10,0+30*i,0], [0,25+30*i,0]]
+            mesh_mat = robomath.tr(robomath.Mat(mesh))
+            mesh_clr = [1,0+i/n_meshes,1-i/n_meshes,1]
+            
+            list_meshes_color.append(mesh_mat)
+            list_meshes_color.append(mesh_clr)
+        
+        print(list_meshes_color)
+        itm = RDK.AddShape(list_meshes_color)
+        itm.setName("My object")
 
+    # TestAddShape()
     pass  # RoboDKInfo()
