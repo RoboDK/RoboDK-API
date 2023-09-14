@@ -1261,7 +1261,7 @@ class Mat(object):
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.ColsCount`
 
         """
-        return len(self.rows[0])
+        return len(self.rows)
 
     def Cols(self):
         """Retrieve the matrix as a list of columns (list of list of float).

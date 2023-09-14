@@ -126,24 +126,34 @@ namespace RoboDk.API.Model
         Selection3DClick = 15,
 		
 		/// <summary>
-        /// The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
+        /// The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered (Requires RoboDK v5.6.3 or later).
         /// </summary>
         ItemChanged = 16,
 		
 		/// <summary>
-        /// The name of an item changed.
+        /// The name of an item changed (Requires RoboDK v5.6.3 or later).
         /// </summary>
         ItemRenamed = 17,
 		
 		/// <summary>
-        /// The visibility state of an item changed.
+        /// The visibility state of an item changed (Requires RoboDK v5.6.3 or later).
         /// </summary>
         ItemVisibility = 18,
 		
 		/// <summary>
-        /// The active station changed, a new RDK file was loaded.
+        /// The active station changed, a new RDK file was loaded (Requires RoboDK v5.6.3 or later).
         /// </summary>
-        StationChanged = 19
+        StationChanged = 19,
+		
+		/// <summary>
+        /// The program slider was opened, changed or closed (Requires RoboDK v5.6.4 or later).
+        /// </summary>
+        ProgsliderChanged = 20,
+		
+		/// <summary>
+        /// The index of a program slider changed (Requires RoboDK v5.6.4 or later).
+        /// </summary>
+		ProgsliderSet = 21
     }
 }
 

@@ -1,7 +1,9 @@
-# This example shows how to implement RoboDK's event loop
+# This example shows how to listen to events
+# Listening to events should be done with a dedicated Robolink instance. This same instance should only be used for events.
 
 from robolink import *
 
+# List of events that are reported via the event loop
 EVENT_SELECTION_TREE_CHANGED = 1
 EVENT_ITEM_MOVED = 2 # obsolete after RoboDK 4.2.0. Use EVENT_ITEM_MOVED_POSE instead
 EVENT_REFERENCE_PICKED = 3
@@ -16,18 +18,26 @@ EVENT_ITEM_MOVED_POSE = 11
 EVENT_COLLISIONMAP_RESET=12
 EVENT_COLLISIONMAP_TOO_LARGE=13
 EVENT_CALIB_MEASUREMENT=14
-EVENT_SELECTION_3D_CLICK=15 # An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information)
-EVENT_ITEM_CHANGED=16 # The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
-EVENT_ITEM_RENAMED=17 # The name of an item changed.
-EVENT_ITEM_VISIBILITY=18 # The visibility state of an item changed.
-EVENT_STATION_CHANGED=19 # A new robodk station was loaded
+EVENT_SELECTION_3D_CLICK=15     # An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information)
+EVENT_ITEM_CHANGED=16           # The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
+EVENT_ITEM_RENAMED=17           # The name of an item changed (RoboDK 5.6.3 required)
+EVENT_ITEM_VISIBILITY=18        # The visibility state of an item changed (RoboDK 5.6.3 required)
+EVENT_STATION_CHANGED=19        # A new robodk station was loaded (RoboDK 5.6.3 required)
+EVENT_PROGSLIDER_CHANGED=20     # A program slider was opened, changed, or closed (RoboDK 5.6.4 required)
+EVENT_PROGSLIDER_SET=21         # The index of a program slider changed (RoboDK 5.6.4 required)
 
 
 
 
 class RobolinkEvents(Robolink):
-    def EventsListen(self):
+    """Extension of the Robolink class to support events"""
+    def __init__(self):
+        Robolink.__init__(self)
+        self._SliderList = None
+        
+    def EventsListen(self, filter_events=None):
         """Start this connection as an event communication channel. 
+        You can optionally past the list of events you want to listen to. Other events will be ignored.
         Use EventsLoop to wait for a new event or use EventsLoop as an example to implement an event loop."""
         try:
         #if True:
@@ -49,7 +59,17 @@ class RobolinkEvents(Robolink):
             print("Failed to reconnect (2)")
             return False
         
-        self._send_line("RDK_EVT") #, _COM_EVT);
+        if filter_events is None:
+            self._send_line("RDK_EVT")
+            
+        else:
+            print("Filtering by desired events (RoboDK v5.6.4 or later required)")
+            self._send_line("RDK_EVT_FILTER")
+            nevents = len(filter_events)
+            self._send_int(nevents)
+            for i in range(nevents):
+                self._send_int(filter_events[i])
+            
         self._send_int(0) # , _COM_EVT);
         response = self._rec_line()#_COM_EVT);
         ver_evt = self._rec_int()#_COM_EVT);
@@ -60,8 +80,6 @@ class RobolinkEvents(Robolink):
         self.COM.settimeout(3600)            
         print("Events loop started")
         return True
-        
-    
     
     def EventsLoop(self):
         """Run the RoboDK event loop. This is loop blocks until RoboDK finishes execution. Run this loop as a separate thread or create a similar loop to customize the event loop behavior."""        
@@ -69,7 +87,6 @@ class RobolinkEvents(Robolink):
             self.ProcessEvent()
             
         print("Event loop disconnected")
-    
 
     def ProcessEvent(self):
         """Wait and process next event"""
@@ -182,15 +199,46 @@ class RobolinkEvents(Robolink):
         
         elif evt == EVENT_STATION_CHANGED:                
             print("Event: A new RDK file was loaded.")
+            
+        elif evt == EVENT_PROGSLIDER_CHANGED:
+            from robodk import robomath
+            self._SliderList = item.setParam("ProgSlider", robomath.Mat(0,0))
+            if self._SliderList is not None:
+                self._SliderList = self._SliderList.Cols()
+                print("Event: The program slider was updated. NUM VALUES: " + str(len(self._SliderList)))
+                for jnt_xyz in self._SliderList:
+                    print(jnt_xyz)
+                    
+            else:
+                print("Event: The program slider was Deleted")            
+            
+        elif evt == EVENT_PROGSLIDER_SET:
+            from robodk import robomath
+            slider_index = self._rec_int()
+            print("Event: The program slider index changed. INDEX = " + str(slider_index))
+            if self._SliderList is None:
+                print("We missed the EVENT_PROGSLIDER_CHANGED event. Recalculating...")
+                self._SliderList = item.setParam("ProgSlider", robomath.Mat(0,0))
+                self._SliderList = self._SliderList.Cols()
+                
+            print(self._SliderList[slider_index])
         
         else:
             print("Unknown event ID:" + str(evt))
+            raise Exception("Unknown event received. You can filter by desired events.")
         
         return True
-        
-        
+
+# Example to filter for certain events (all other events are not reported)
+# Setting an empty list will provide all events
+#
+# WantedEvents = []
+# WantedEvents.append(EVENT_PROGSLIDER_CHANGED)
+# WantedEvents.append(EVENT_PROGSLIDER_SET)
+
 RDKEVT = RobolinkEvents()
 RDKEVT.EventsListen()
+# RDKEVT.EventsListen(WantedEvents)
 RDKEVT.EventsLoop()
 
 

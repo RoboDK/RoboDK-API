@@ -134,6 +134,15 @@ namespace RoboDk.API
                         //Debug.WriteLine($"RoboDK Event: {eventType}");
                         return new EventResult(EventType.StationChanged, null);
 					
+					case EventType.ProgsliderChanged:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+                        return new EventResult(EventType.StationChanged, null);
+					
+					case EventType.ProgsliderSet:
+                        //Debug.WriteLine($"RoboDK Event: {eventType}");
+						int slider_index = _roboDkEventConnection.rec_int();
+                        return new EventResult(EventType.StationChanged, null);
+					
                     default:
                         Debug.WriteLine($"unknown RoboDK Event: {eventType}");
 

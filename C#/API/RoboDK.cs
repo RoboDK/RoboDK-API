@@ -98,6 +98,7 @@ namespace RoboDk.API
         private BufferedSocketAdapter _bufferedSocket;
         private readonly RoboDkCommandLineParameter _commandLineParameter;
         private ConnectionType _connectionType;
+		private List<int> _eventFilter;
         private int _roboDKServerStartPort;
 
 
@@ -474,7 +475,8 @@ namespace RoboDk.API
                 Name = this.Name,
                 Process = this.Process,
                 ItemInterceptFunction = this.ItemInterceptFunction,
-                _connectionType = connectionType
+                _connectionType = connectionType,
+				_eventFilter = this._eventFilter
             };
             rdk.Connect();
             return rdk;
@@ -2787,7 +2789,16 @@ namespace RoboDk.API
                         return response == "RDK_API";
 
                     case ConnectionType.Event:
-                        send_line("RDK_EVT");
+						if (_eventFilter.Count == 0){
+							send_line("RDK_EVT");
+						} else {
+							// WARNING: RoboDK v5.6.4 required
+							send_line("RDK_EVT_FILTER");
+							send_int(_eventFilter.Count);
+							for (int i = 0; i < _eventFilter.Count; i++){
+								send_int(_eventFilter[i]);
+							}								
+						}
                         send_int(0);
                         response = rec_line();
                         EventChannelVersion = rec_int();
