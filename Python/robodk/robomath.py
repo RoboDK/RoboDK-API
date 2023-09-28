@@ -697,6 +697,33 @@ def Pose_2_Adept(H):
         w = atan2(sc, cc)
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
+def Pose_2_Catia(H):
+    """Converts a pose to Catia or Solidworks format, in mm and deg. It returns the values that correspond to the following operation:
+    H = transl(x,y,z)*rotz(a)*rotx(b)*rotz(c).
+
+    :param H: pose
+    :type H: :class:`.Mat`
+
+    .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
+    """
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    if H[2, 2] > (1.0 - 1e-10):
+        r = 0
+        p = 0
+        w = atan2(H[1, 0], H[0, 0])
+    elif H[2, 2] < (-1.0 + 1e-10):
+        r = 0
+        p = pi
+        w = atan2(H[1, 0], H[0, 0])
+    else:
+        r = atan2(H[0,2],-H[1,2])
+        p = atan2(sqrt(H[0,2]*H[0,2] + H[1,2]*H[1,2]),H[2,2])
+        w = atan2(H[2,0],H[2,1])
+        
+    return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
+
 
 def Comau_2_Pose(xyzrpw):
     """Converts a Comau XYZRPW target to a pose (4x4 matrix), the same representation required by PDL Comau programs.
@@ -1286,6 +1313,14 @@ class Mat(object):
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
         """
         return self.rows
+    
+    def Col(self, n):
+        """"Get the Column n from the matrix"""
+        return self.tr().rows[n]
+    
+    def Row(self, n):
+        """"Get the Row n from the matrix"""
+        return self.rows[n]
 
     def __getitem__(self, idx):
         if isinstance(idx, int):  #integer A[1]
@@ -1387,9 +1422,10 @@ class Mat(object):
 
     def tr(self):
         """Returns the transpose of the matrix"""
-        if self.size(0) == 0 or self.size(1) == 0:
+        if len(self.rows) == 0 or len(self.rows[0]) == 0:
             return Mat(0, 0)
-        mat = Mat([list(item) for item in zip(*self.rows)])
+        # mat = Mat([list(item) for item in zip(*self.rows)])
+        mat = Mat(list(map(list, zip(*self.rows))))
         return mat
 
     def size(self, dim=None):
@@ -1606,31 +1642,35 @@ class Mat(object):
 
     def tolist(self):
         """Returns the first column of the matrix as a list"""
-        return tr(self).rows[0]
+        return self.tr().rows[0]
 
     def list(self):
         """Returns the first column of the matrix as a list"""
-        return tr(self).rows[0]
+        return self.tr().rows[0]
 
     def list2(self):
         """Returns the matrix as list of lists (one list per column)"""
-        return tr(self).rows
+        return self.tr().rows
 
     def Pos(self):
         """Returns the position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3, 3].tolist()
+        # return self[0:3, 3].tolist()
+        return [self.rows[0][3], self.rows[1][3], self.rows[2][3]]
 
     def VX(self):
         """Returns the X vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3, 0].tolist()
+        # return self[0:3, 0].tolist()
+        return [self.rows[0][0], self.rows[1][0], self.rows[2][0]]
 
     def VY(self):
         """Returns the Y vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3, 1].tolist()
+        # return self[0:3, 1].tolist()
+        return [self.rows[0][1], self.rows[1][1], self.rows[2][1]]
 
     def VZ(self):
         """Returns the Z vector of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        return self[0:3, 2].tolist()
+        # return self[0:3, 2].tolist()
+        return [self.rows[0][2], self.rows[1][2], self.rows[2][2]]
 
     def Rot33(self):
         """Returns the sub 3x3 rotation matrix"""
@@ -1638,33 +1678,33 @@ class Mat(object):
 
     def setPos(self, newpos):
         """Sets the XYZ position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
-        self[0, 3] = newpos[0]
-        self[1, 3] = newpos[1]
-        self[2, 3] = newpos[2]
+        self.rows[0][3] = newpos[0]
+        self.rows[1][3] = newpos[1]
+        self.rows[2][3] = newpos[2]
         return self
 
     def setVX(self, v_xyz):
         """Sets the VX vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0, 0] = v_xyz[0]
-        self[1, 0] = v_xyz[1]
-        self[2, 0] = v_xyz[2]
+        self.rows[0][0] = v_xyz[0]
+        self.rows[1][0] = v_xyz[1]
+        self.rows[2][0] = v_xyz[2]
         return self
 
     def setVY(self, v_xyz):
         """Sets the VY vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0, 1] = v_xyz[0]
-        self[1, 1] = v_xyz[1]
-        self[2, 1] = v_xyz[2]
+        self.rows[0][1] = v_xyz[0]
+        self.rows[1][1] = v_xyz[1]
+        self.rows[2][1] = v_xyz[2]
         return self
 
     def setVZ(self, v_xyz):
         """Sets the VZ vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
-        self[0, 2] = v_xyz[0]
-        self[1, 2] = v_xyz[1]
-        self[2, 2] = v_xyz[2]
+        self.rows[0][2] = v_xyz[0]
+        self.rows[1][2] = v_xyz[1]
+        self.rows[2][2] = v_xyz[2]
         return self
 
     def translationPose(self):

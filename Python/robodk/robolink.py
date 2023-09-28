@@ -741,6 +741,9 @@ class Robolink:
 
     # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
     APPLICATION_DIR = ''
+    
+    # Add shapes using files (faster but it uses the hard drive)
+    _ADDSHAPE_VIA_FILE = False
 
     DEBUG = False  # Debug output through console
     COM = None  # tcpip com
@@ -915,11 +918,10 @@ class Robolink:
         #if not pose.isHomogeneous(): # this check is expansive!
         #    print("Warning: pose is not homogeneous!")
         #    print(pose)
-        posebytes = b''
-        for j in range(4):
-            for i in range(4):
-                posebytes = posebytes + struct.pack('>d', pose[i, j])
-        self.COM.send(posebytes)
+        lst2 = list(map(list, zip(*pose.rows)))
+        data = [struct.pack('>4d', *(lst2[i])) for i in range(4)]
+        data_all = b''.join(data)
+        self.COM.send(data_all)
 
     def _rec_pose(self):
         """Receives a pose (4x4 matrix)"""
@@ -929,7 +931,7 @@ class Robolink:
         cnt = 0
         for j in range(4):
             for i in range(4):
-                pose[i, j] = posenums[cnt]
+                pose.rows[i][j] = posenums[cnt]
                 cnt = cnt + 1
         return pose
 
@@ -970,10 +972,12 @@ class Robolink:
         nval = len(values)
         self._send_int(nval)
         if nval > 0:
-            buffer = b''
-            for i in range(nval):
-                buffer = buffer + struct.pack('>d', values[i])
-            self.COM.send(buffer)
+            data = struct.pack('>' + str(nval) + 'd', *values)                
+            self.COM.send(data)
+            
+    def _send_array_float_data(self, values):
+        nval = len(values)
+        return struct.pack('>i', nval) + struct.pack('>' + str(nval) + 'f', *values)
 
     def _rec_array(self):
         """Receives an array of doubles"""
@@ -994,14 +998,30 @@ class Robolink:
             return
         if type(mat) == list:
             mat = robomath.Mat(mat).tr()
-        size = mat.size()
-        self._send_int(size[0])
-        self._send_int(size[1])
-        for j in range(size[1]):
-            matbytes = b''
-            for i in range(size[0]):
-                matbytes = matbytes + struct.pack('>d', mat[i, j])
-            self.COM.send(matbytes)
+        # size = mat.size()
+        #self._send_int(size[0])
+        #self._send_int(size[1])
+        sz1 = len(mat.rows)
+        sz2 = len(mat.rows[0])
+        self._send_int(sz1)
+        self._send_int(sz2)
+        # list(map(list, zip(*mat.rows)))
+        lst2 = list(map(list, zip(*mat.rows)))
+        data = [struct.pack('>' + str(sz1) + 'd', *(lst2[i])) for i in range(sz2)]
+        data_all = b''.join(data)
+        data_size = len(data_all)
+        w = 0
+        b_sz = 4096*2
+        while w < data_size:
+            w += self.COM.send(data_all[w:min(w+b_sz, data_size)])
+            
+    def _send_matrix_float_data(self, mat):
+        """Sends a 2 dimensional matrix (nxm)"""
+        sz1 = len(mat.rows)
+        sz2 = len(mat.rows[0])
+        lst2 = list(map(list, zip(*mat.rows)))
+        data = [struct.pack('>' + str(sz1) + 'f', *(lst2[i])) for i in range(sz2)]
+        return struct.pack('>i', sz1) + struct.pack('>i', sz2) + b''.join(data)
 
     def _rec_matrix(self):
         """Receives a 2 dimensional matrix (nxm)"""
@@ -1867,45 +1887,102 @@ class Robolink:
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddCurve`, :func:`~robodk.robolink.Robolink.AddPoints`
         """
-        with self._lock:
-            if isinstance(triangle_points, list):
-                if isinstance(triangle_points[0], robomath.Mat):
-                    # Check special case where we send multiple shapes in one shot
-                    list_shapes = []
-                    list_colours = []
-                    idx = 0
-                    while idx < len(triangle_points):
-                        if isinstance(triangle_points[idx], robomath.Mat):
-                            list_shapes.append(triangle_points[idx])
-                        else:
-                            # list of 4 floats assumed
-                            list_colours.append(triangle_points[idx])
-                            
-                        idx = idx + 1
-                            
+    
+        if isinstance(triangle_points, list):
+            if isinstance(triangle_points[0], robomath.Mat):
+                # Check special case where we send multiple shapes in one shot
+                list_shapes = []
+                list_colours = []
+                idx = 0
+                while idx < len(triangle_points):
+                    if isinstance(triangle_points[idx], robomath.Mat):
+                        list_shapes.append(triangle_points[idx])
+                    else:
+                        # list of 4 floats assumed
+                        list_colours.append(triangle_points[idx])
+                        
+                    idx = idx + 1
+                    
+
+                if self._ADDSHAPE_VIA_FILE:
+                    if self.BUILD < 23742:
+                        raise Exception("Adding shapes through file is not supported with your current version of RoboDK. Update to RoboDK v5.6.4 or later.")
+                    
                     while len(list_colours) < len(list_shapes):
                         # this will use default colour
-                        list_colours.append([])                            
+                        list_colours.append([0.6,0.6,0.6,1])    
                     
-                    self._check_connection()
-                    command = 'AddShape4'
-                    self._send_line(command)
-                    self._send_item(add_to)
-                    self._send_int(1 if override_shapes else 0)
-                    self._send_int(len(list_shapes))
-                    for shape, color in zip(list_shapes, list_colours):
-                        self._send_matrix(shape)
-                        self._send_array(color)
+                    data = []
+                    data.append(struct.pack('<Q', len(list_shapes)))
+                    
+                    for shape, color in zip(list_shapes, list_colours):    
+                        # sz1 = len(shape.rows)
+                        sz2 = len(shape.rows[0])                    
+                        ntriangles = int(sz2/3)
+                        data.append(struct.pack('<Q', ntriangles))
+                        data.append(struct.pack('<4f', *(color[:4])))
+                        lst2 = list(map(list, zip(*shape.rows)))
+                        data.extend([struct.pack('<3f', *(r[:3])) for r in lst2])
+                                            
+                    import tempfile
+                    filetemp = tempfile.gettempdir() + "/Added Object.rdkcadv"
+                    with open(filetemp, 'wb') as fid:
+                        fid.write(b''.join(data))
+                    
+                    newitem = self.AddFile(filetemp)
+                    
+                    os.remove(filetemp)
+                
+                    return newitem
+                    
+                while len(list_colours) < len(list_shapes):
+                    # this will use default colour
+                    list_colours.append([])
+
+                with self._lock:
+                    self._check_connection()                    
+                    if self.BUILD < 23742:
+                        # Old method (uses doubles, slower)
+                        print("Warning: Update RoboDK to v5.6.5 or later to add shapes faster")
+                        command = 'AddShape4'
+                        self._send_line(command)
+                        self._send_item(add_to)
+                        self._send_int(1 if override_shapes else 0)
+                        self._send_int(len(list_shapes))
+                        for shape, color in zip(list_shapes, list_colours):
+                            self._send_matrix(shape)
+                            self._send_array(color)
+                        
+                    else:
+                        # New method (requires 5.6.5 o later)
+                        command = 'AddShape5'
+                        self._send_line(command)
+                        self._send_item(add_to)
+                        self._send_int(1 if override_shapes else 0)
+                        self._send_int(len(list_shapes))
+                        data = []
+                        for shape, color in zip(list_shapes, list_colours):
+                            data.append(self._send_matrix_float_data(shape))
+                            data.append(self._send_array_float_data(color))
+                            
+                        data_all = b''.join(data)
+                        data_size = len(data_all)
+                        w = 0
+                        b_sz = 4096*2
+                        while w < data_size:
+                            w += self.COM.send(data_all[w:min(w+b_sz, data_size)])
+                    
                     
                     newitem = self._rec_item()
                     self._check_status()
                     return newitem
+            
+            # add a shape based on the list of points
+            triangle_points = robomath.tr(robomath.Mat(triangle_points))
+        elif not isinstance(triangle_points, robomath.Mat):
+            raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
                 
-                # add a shape based on the list of points
-                triangle_points = robomath.tr(robomath.Mat(triangle_points))
-            elif not isinstance(triangle_points, robomath.Mat):
-                raise Exception("triangle_points must be a 3xN or 6xN list or matrix")
-                
+        with self._lock:
             self._check_connection()
             command = 'AddShape2'
             self._send_line(command)
@@ -7137,12 +7214,13 @@ if __name__ == "__main__":
         
     def TestAddShape():    
         RDK = Robolink()
+        # RDK._ADDSHAPE_VIA_FILE = True
         
         list_meshes_color = []
         
         n_meshes = 10
         for i in range(n_meshes):
-            mesh = [[-10,0+30*i,0], [10,0+30*i,0], [0,25+30*i,0]]
+            mesh = [[-10,0+30*i,0], [10,0+30*i,0], [0,25+30*i,0], [-10,0+30*i,10], [10,0+30*i,10], [0,25+30*i,10]]
             mesh_mat = robomath.tr(robomath.Mat(mesh))
             mesh_clr = [1,0+i/n_meshes,1-i/n_meshes,1]
             
