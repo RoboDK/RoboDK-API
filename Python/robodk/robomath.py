@@ -697,6 +697,7 @@ def Pose_2_Adept(H):
         w = atan2(sc, cc)
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
+
 def Pose_2_Catia(H):
     """Converts a pose to Catia or Solidworks format, in mm and deg. It returns the values that correspond to the following operation:
     H = transl(x,y,z)*rotz(a)*rotx(b)*rotz(c).
@@ -721,7 +722,7 @@ def Pose_2_Catia(H):
         r = atan2(H[0,2],-H[1,2])
         p = atan2(sqrt(H[0,2]*H[0,2] + H[1,2]*H[1,2]),H[2,2])
         w = atan2(H[2,0],H[2,1])
-        
+
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
 
@@ -1126,12 +1127,12 @@ def proj_pt_2_line(point, paxe, vaxe):
 
 def fitPlane(points):
     """Returns the equation and normal for a best fit plane to a cloud of points.
-    
+
     Uses singular value decomposition to produce a least squares fit to a plane. Points must have centroid at [0, 0, 0]. Must provide at least 4 points.
-    
+
     :param array-like points: a 3xN array of points. Each column represents one point.
     :type array_like:
-    
+
     :return: pplane: the equation of the best-fit plane, in the form b(1)*X + b(2)*Y +b(3)*Z + b(4) = 0.
     :rtype: array_like
     :return: vplane: the normal vector of the best-fit plane.
@@ -1261,7 +1262,7 @@ class Mat(object):
             for j in range(sz[1]):
                 newmat[i, j] = self[i, j]
         return newmat
-    
+
     def fromNumpy(ndarray):
         """Convert a numpy array to a Mat matrix"""
         return Mat(ndarray.tolist())
@@ -1313,11 +1314,11 @@ class Mat(object):
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
         """
         return self.rows
-    
+
     def Col(self, n):
         """"Get the Column n from the matrix"""
         return self.tr().rows[n]
-    
+
     def Row(self, n):
         """"Get the Row n from the matrix"""
         return self.rows[n]
@@ -1741,10 +1742,4 @@ class Mat(object):
 
 
 if __name__ == "__main__":
-    #import numpy as np
-    #a=transl(10,20,30)
-    #b1 = a.toNumpy()
-    #b2 = np.asarray(a.rows, float)
-    #c1 = Mat.fromNumpy(b1)
-    #c2 = Mat(b1)    
     pass
