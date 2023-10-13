@@ -24,7 +24,7 @@ To build the library, run the following from the root C++ directory:
 mkdir build
 cd build
 cmake ..
-cmake --build 
+cmake --build .
 ```
 A CMake Project Configuration file is generated so this project can be easily added
 to another CMake project. Additionally, a basic top level CMakeLists file is included 
