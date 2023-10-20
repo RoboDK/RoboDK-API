@@ -14,21 +14,31 @@
           ]
         }
       ],
-      "dest": "obj/api"
+      "dest": "api",
+      "outputFormat": "mref",
+      "includePrivateMembers": false,
+      "disableGitFeatures": true,
+      "disableDefaultFilter": false,
+      "noRestore": false,
+      "namespaceLayout": "flattened",
+      "memberLayout": "samePage",
+      "enumSortOrder": "alphabetic",
+      "allowCompilationErrors": false
     }
   ],
   "build": {
     "content": [
       {
         "files": [
-          "api/**.yml"
-        ],
-        "cwd": "obj"
+          "api/**.yml",
+          "api/index.md"
+        ]
       },
       {
         "files": [
           "api/*.md",
           "articles/**.md",
+          "articles/**/toc.yml",
           "toc.yml",
           "*.md"
         ],
@@ -60,9 +70,19 @@
         ]
       }
     ],
-    "dest": "_site",
+    "output": "_site",
+    "globalMetadata": {
+      "_appLogoPath": "images/logo.svg",
+      "_appFaviconPath": "images/favicon.ico"
+    },
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
     "template": [
-      "default"
-    ]
+      "default",
+      "modern"
+    ],
+    "postProcessors": [],
+    "keepFileLink": false,
+    "disableGitFeatures": true
   }
 }

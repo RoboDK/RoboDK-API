@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30413.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboDKAPITest", "APIUnitTest\RoboDKAPITest.csproj", "{7F39391B-EBB8-4CA5-87F8-A174CAA585FD}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{3886CE50-B935-4ADB-8505-3C187C6F2377}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{02D0E90F-6631-4B18-A438-7A77CF8C7C72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboDKApiWPFApplication", "APIExamples\RoboDKApiWPFApplication\RoboDKApiWPFApplication.csproj", "{2CAADFFC-EB8F-42F8-8117-A6410E5F487D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CAADFFC-EB8F-42F8-8117-A6410E5F487D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CAADFFC-EB8F-42F8-8117-A6410E5F487D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CAADFFC-EB8F-42F8-8117-A6410E5F487D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CAADFFC-EB8F-42F8-8117-A6410E5F487D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +67,7 @@ Global
 		{F96E10E6-BFF1-4E5A-84C5-B19DB809F759} = {D22322C9-632E-444A-9F35-19BFE61F159D}
 		{8B79D70D-399A-4A94-BBB9-C9DF4F96DA53} = {3886CE50-B935-4ADB-8505-3C187C6F2377}
 		{6C7C4BB7-0421-4F2B-BE41-46363AEB0CC3} = {D22322C9-632E-444A-9F35-19BFE61F159D}
+		{2CAADFFC-EB8F-42F8-8117-A6410E5F487D} = {D22322C9-632E-444A-9F35-19BFE61F159D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DFA45C8E-CCA8-49F3-95B4-44C4D7802C92}

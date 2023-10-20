@@ -1,0 +1,41 @@
+name: RoboDK-API
+
+on: 
+  pull_request:
+  push:
+  workflow_dispatch: # Run workflow manually
+    branches: [master]
+    paths:
+      - "Python/**"
+      - "!Python/Examples/**"
+      - "!Python/setup.py"
+      - "**.py"
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest]
+        python-version: ["3.7"]
+
+    steps:
+      - name: Setup Python (x64)
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Display Python version (x64)
+        run: python -c "import sys; print(sys.version)"
+
+      - uses: actions/checkout@v2
+
+      - name: Tests the Python API
+        run: |
+          cd ${{ github.workspace }}
+          python _Compile_Posts.py
