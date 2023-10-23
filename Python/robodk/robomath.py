@@ -159,7 +159,7 @@ def rotz(rz):
     return Mat([[ct, -st, 0, 0], [st, ct, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
 
-def transl(tx, ty=0, tz=0):
+def transl(tx=0, ty=0, tz=0):
     r"""Returns a translation matrix (mm) given translations in each dimension.
     Supports passing inputs as a list through the tx argument, but this ignores ty and tz.
 
@@ -812,8 +812,8 @@ def pose_2_quaternion(Ti):
             sign3 = -1.0
         if Ti[1, 0] - Ti[0, 1] < 0.0:
             sign4 = -1.0
-        q1 =         sqrt(max( a + b + c + 1.0, 0.0)) / 2.0
-        q2 = sign2 * sqrt(max( a - b - c + 1.0, 0.0)) / 2.0
+        q1 = sqrt(max(a + b + c + 1.0, 0.0)) / 2.0
+        q2 = sign2 * sqrt(max(a - b - c + 1.0, 0.0)) / 2.0
         q3 = sign3 * sqrt(max(-a + b - c + 1.0, 0.0)) / 2.0
         q4 = sign4 * sqrt(max(-a - b + c + 1.0, 0.0)) / 2.0
 
@@ -859,10 +859,7 @@ def quaternion_2_pose(qin):
     q[1] = q[1] / qnorm
     q[2] = q[2] / qnorm
     q[3] = q[3] / qnorm
-    pose = Mat([[1 - 2*q[2]*q[2] - 2*q[3]*q[3], 2*q[1]*q[2] - 2*q[3]*q[0],     2*q[1]*q[3] + 2*q[2]*q[0],     0],
-                [2*q[1]*q[2] + 2*q[3]*q[0],     1 - 2*q[1]*q[1] - 2*q[3]*q[3], 2*q[2]*q[3] - 2*q[1]*q[0],     0],
-                [2*q[1]*q[3] - 2*q[2]*q[0],     2*q[2]*q[3] + 2*q[1]*q[0],     1 - 2*q[1]*q[1] - 2*q[2]*q[2], 0],
-                [0,                             0,                             0,                             1]])
+    pose = Mat([[1 - 2 * q[2] * q[2] - 2 * q[3] * q[3], 2 * q[1] * q[2] - 2 * q[3] * q[0], 2 * q[1] * q[3] + 2 * q[2] * q[0], 0], [2 * q[1] * q[2] + 2 * q[3] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[3] * q[3], 2 * q[2] * q[3] - 2 * q[1] * q[0], 0], [2 * q[1] * q[3] - 2 * q[2] * q[0], 2 * q[2] * q[3] + 2 * q[1] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2], 0], [0, 0, 0, 1]])
     return pose
 
 
@@ -962,10 +959,8 @@ def dh(rz, tx=None, tz=None, rx=None):
     srx = math.sin(rx)
     crz = math.cos(rz)
     srz = math.sin(rz)
-    return Mat( [[crz, -srz*crx,  srz*srx, tx*crz],
-                 [srz,  crz*crx, -crz*srx, tx*srz],
-                 [  0,      srx,      crx,     tz],
-                 [  0,        0,        0,      1]])
+    return Mat([[crz, -srz * crx, srz * srx, tx * crz], [srz, crz * crx, -crz * srx, tx * srz], [0, srx, crx, tz], [0, 0, 0, 1]])
+
 
 def dhm(rx, tx=None, tz=None, rz=None):
     """Returns the Denavit-Hartenberg Modified 4x4 matrix for a robot link (Craig 1986).
@@ -981,10 +976,8 @@ def dhm(rx, tx=None, tz=None, rz=None):
     srx = math.sin(rx)
     crz = math.cos(rz)
     srz = math.sin(rz)
-    return Mat([[crz,        -srz,    0,      tx],
-                [crx*srz, crx*crz, -srx, -tz*srx],
-                [srx*srz, crz*srx,  crx,  tz*crx],
-                [      0,       0,    0,       1]])
+    return Mat([[crz, -srz, 0, tx], [crx * srz, crx * crz, -srx, -tz * srx], [srx * srz, crz * srx, crx, tz * crx], [0, 0, 0, 1]])
+
 
 def joints_2_angles(jin, type):
     """Converts the robot encoders into angles between links depending on the type of the robot."""
@@ -1047,9 +1040,7 @@ def normalize3(a):
 
 def cross(a, b):
     """Returns the cross product of two 3D vectors"""
-    c = [a[1]*b[2] - a[2]*b[1],
-         a[2]*b[0] - a[0]*b[2],
-         a[0]*b[1] - a[1]*b[0]]
+    c = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
     return c
 
 
