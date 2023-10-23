@@ -743,7 +743,7 @@ class Robolink:
 
     # Add shapes using files (faster but it uses the hard drive)
     _ADDSHAPE_VIA_FILE = False
-    
+
     # Raise an exception when a warning message is provided by RoboDK
     _RAISE_EXCEPTION_ON_WARNING = False
 
@@ -806,7 +806,7 @@ class Robolink:
                 if self._RAISE_EXCEPTION_ON_WARNING:
                     print("Throwing Exception (set RDK._RAISE_EXCEPTION_ON_WARNING to False to prevent raising this exception)")
                     raise Exception('WARNING: ' + self.LAST_STATUS_MESSAGE)
-                    
+
                 return 0
             elif status == 3:  # output error
                 self.LAST_STATUS_MESSAGE = self._rec_line()
@@ -2030,19 +2030,19 @@ class Robolink:
                     self._send_item(reference_object)
                     self._send_int(1 if add_to_ref else 0)
                     self._send_int(projection_type)
-                    self._send_int(len(curve_points))                
+                    self._send_int(len(curve_points))
                     for c in curve_points:
                         self._send_matrix(c)
-                    
+
                     newitem = self._rec_item()
                     self._check_status()
-                    
+
                 return newitem
-            
+
             curve_points = robomath.Mat(curve_points).tr()
         elif not isinstance(curve_points, robomath.Mat):
             raise Exception("curve_points must be a 3xN or 6xN list or matrix")
-            
+
         with self._lock:
             self._check_connection()
             command = 'AddWire'

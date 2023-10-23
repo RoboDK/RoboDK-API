@@ -159,8 +159,9 @@ def rotz(rz):
     return Mat([[ct, -st, 0, 0], [st, ct, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
 
-def transl(tx, ty=None, tz=None):
-    r"""Returns a translation matrix (mm)
+def transl(tx, ty=0, tz=0):
+    r"""Returns a translation matrix (mm) given translations in each dimension.
+    Supports passing inputs as a list through the tx argument, but this ignores ty and tz.
 
     .. math::
 
@@ -170,13 +171,14 @@ def transl(tx, ty=None, tz=None):
         0 & 0 & 0 & 1
         \end{bmatrix}
 
-    :param float tx: translation along the X axis
-    :param float ty: translation along the Y axis
-    :param float tz: translation along the Z axis
+    :param tx: translation along the X axis (mm) or list of the supported parameters (i.e. [tx, ty, tz])
+    :type tx: float or list of float
+    :param float ty: translation along the Y axis (mm)
+    :param float tz: translation along the Z axis (mm)
 
     .. seealso:: :func:`~robodk.robomath.rotx`, :func:`~robodk.robomath.roty`, :func:`~robodk.robomath.rotz`
     """
-    if ty is None:
+    if isinstance(tx, list):
         xx = tx[0]
         yy = tx[1]
         zz = tx[2]
@@ -719,9 +721,9 @@ def Pose_2_Catia(H):
         p = pi
         w = atan2(H[1, 0], H[0, 0])
     else:
-        r = atan2(H[0,2],-H[1,2])
-        p = atan2(sqrt(H[0,2]*H[0,2] + H[1,2]*H[1,2]),H[2,2])
-        w = atan2(H[2,0],H[2,1])
+        r = atan2(H[0, 2], -H[1, 2])
+        p = atan2(sqrt(H[0, 2] * H[0, 2] + H[1, 2] * H[1, 2]), H[2, 2])
+        w = atan2(H[2, 0], H[2, 1])
 
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
