@@ -30,6 +30,7 @@ int main()
     struct Item_t itemlist[MAX_ITEMS];
     int size_out = 0;
     RoboDK_getItemList(&rdk, itemlist, MAX_ITEMS, &size_out);
+    //RoboDK_getItemListFilter(&rdk, ITEM_TYPE_ROBOT, itemlist, MAX_ITEMS, &size_out);
     if (size_out > MAX_ITEMS){
         fprintf(stderr, "Warning! Max size item size exceeded\n");
     }

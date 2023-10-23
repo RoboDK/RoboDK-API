@@ -214,7 +214,8 @@ struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM
     _RoboDK_check_status(inst);
     return item;
 }
-
+/*
+// Older version of ItemList which retrieves more information that is ignored
 void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout) {
     int32_t nitems;
     char item_name[MAX_STR_LENGTH];
@@ -241,6 +242,40 @@ void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t 
             itemlist[i] = item;
         }
         _RoboDK_recv_Line(inst, program_data);
+    }
+    _RoboDK_check_status(inst);
+}
+*/
+void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout) {
+    int32_t nitems;
+    struct Item_t item;
+    int32_t i;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "G_List_Items_ptr");
+    nitems = _RoboDK_recv_Int(inst);
+    *itemlist_sizeout = nitems;
+    for (i=0; i<nitems; i++){
+        item = _RoboDK_recv_Item(inst);
+        if (itemlist != NULL && i < itemlist_maxsize){
+            itemlist[i] = item;
+        }
+    }
+    _RoboDK_check_status(inst);
+}
+void RoboDK_getItemListFilter(struct RoboDK_t *inst, const int32_t filter, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout) {
+    int32_t nitems;
+    struct Item_t item;
+    int32_t i;
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "G_List_Items_Type_ptr");
+    _RoboDK_send_Int(inst, filter);
+    nitems = _RoboDK_recv_Int(inst);
+    *itemlist_sizeout = nitems;
+    for (i=0; i<nitems; i++){
+        item = _RoboDK_recv_Item(inst);
+        if (itemlist != NULL && i < itemlist_maxsize){
+            itemlist[i] = item;
+        }
     }
     _RoboDK_check_status(inst);
 }
@@ -1991,17 +2026,17 @@ void XYZ_Copy(struct XYZ_t *out, const struct XYZ_t *in) {
 bool _RoboDK_connect_smart(struct RoboDK_t *inst) {
 	//Establishes a connection with robodk. robodk must be running, otherwise, it will attempt to start it
 	if (_RoboDK_connect(inst)) {
-		fprintf(stderr, "The RoboDK API is connected!\n");
+        fprintf(stdout, "The RoboDK API is connected!\n");
 		return true;
 	}
-	fprintf(stderr, "...Trying to start RoboDK: ");
-	fprintf(stderr, inst->_ROBODK_BIN);
-	fprintf(stderr, " %s\n\0", inst->_ARGUMENTS);
+    fprintf(stdout, "...Trying to start RoboDK: ");
+    fprintf(stdout, inst->_ROBODK_BIN);
+    fprintf(stdout, " %s\n\0", inst->_ARGUMENTS);
 	// Start RoboDK
 	StartProcess(inst->_ROBODK_BIN, inst->_ARGUMENTS, &inst->_PROCESS);
 	bool is_connected = _RoboDK_connect(inst);
 	if (is_connected) {
-		fprintf(stderr, "The RoboDK API is connected\n");
+        fprintf(stdout, "The RoboDK API is connected\n");
 		return is_connected;
 	}
 	else {
