@@ -116,7 +116,12 @@ def rotx(rx):
     """
     ct = math.cos(rx)
     st = math.sin(rx)
-    return Mat([[1, 0, 0, 0], [0, ct, -st, 0], [0, st, ct, 0], [0, 0, 0, 1]])
+    return Mat([
+        [1, 0, 0, 0],
+        [0, ct, -st, 0],
+        [0, st, ct, 0],
+        [0, 0, 0, 1],
+    ])
 
 
 def roty(ry):
@@ -136,7 +141,12 @@ def roty(ry):
     """
     ct = math.cos(ry)
     st = math.sin(ry)
-    return Mat([[ct, 0, st, 0], [0, 1, 0, 0], [-st, 0, ct, 0], [0, 0, 0, 1]])
+    return Mat([
+        [ct, 0, st, 0],
+        [0, 1, 0, 0],
+        [-st, 0, ct, 0],
+        [0, 0, 0, 1],
+    ])
 
 
 def rotz(rz):
@@ -156,7 +166,12 @@ def rotz(rz):
     """
     ct = math.cos(rz)
     st = math.sin(rz)
-    return Mat([[ct, -st, 0, 0], [st, ct, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    return Mat([
+        [ct, -st, 0, 0],
+        [st, ct, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ])
 
 
 def transl(tx=0, ty=0, tz=0):
@@ -186,7 +201,12 @@ def transl(tx=0, ty=0, tz=0):
         xx = tx
         yy = ty
         zz = tz
-    return Mat([[1, 0, 0, xx], [0, 1, 0, yy], [0, 0, 1, zz], [0, 0, 0, 1]])
+    return Mat([
+        [1, 0, 0, xx],
+        [0, 1, 0, yy],
+        [0, 0, 1, zz],
+        [0, 0, 0, 1],
+    ])
 
 
 def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0):
@@ -296,7 +316,12 @@ def eye(size=4):
     .. seealso:: :func:`~robodk.robomath.transl`, :func:`~robodk.robomath.rotx`, :func:`~robodk.robomath.roty`, :func:`~robodk.robomath.rotz`
     """
     if size == 4:
-        return Mat([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+        return Mat([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ])
     else:
         newmat = Mat(size, size)
         for i in range(size):
@@ -380,7 +405,12 @@ def PosePP(x, y, z, r, p, w):
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x], [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y], [-sb, cb * sc, cc * cb, z], [0.0, 0.0, 0.0, 1.0]])
+    return Mat([
+        [cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x],
+        [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y],
+        [-sb, cb * sc, cc * cb, z],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
 
 
 def pose_2_xyzrpw(H):
@@ -428,7 +458,12 @@ def xyzrpw_2_pose(xyzrpw):
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    H = Mat([[cb * cc, cc * sa * sb - ca * sc, sa * sc + ca * cc * sb, x], [cb * sc, ca * cc + sa * sb * sc, ca * sb * sc - cc * sa, y], [-sb, cb * sa, ca * cb, z], [0, 0, 0, 1]])
+    H = Mat([
+        [cb * cc, cc * sa * sb - ca * sc, sa * sc + ca * cc * sb, x],
+        [cb * sc, ca * cc + sa * sb * sc, ca * sb * sc - cc * sa, y],
+        [-sb, cb * sa, ca * cb, z],
+        [0, 0, 0, 1],
+    ])
     return H
 
 
@@ -455,7 +490,12 @@ def Pose(x, y, z, rxd, ryd, rzd):
     cry = math.cos(ry)
     srz = math.sin(rz)
     crz = math.cos(rz)
-    return Mat([[cry * crz, -cry * srz, sry, x], [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y], [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z], [0, 0, 0, 1]])
+    return Mat([
+        [cry * crz, -cry * srz, sry, x],
+        [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y],
+        [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z],
+        [0, 0, 0, 1],
+    ])
 
 
 def TxyzRxyz_2_Pose(xyzrpw):
@@ -474,7 +514,12 @@ def TxyzRxyz_2_Pose(xyzrpw):
     cry = math.cos(ry)
     srz = math.sin(rz)
     crz = math.cos(rz)
-    H = Mat([[cry * crz, -cry * srz, sry, x], [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y], [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z], [0, 0, 0, 1]])
+    H = Mat([
+        [cry * crz, -cry * srz, sry, x],
+        [crx * srz + crz * srx * sry, crx * crz - srx * sry * srz, -cry * srx, y],
+        [srx * srz - crx * crz * sry, crz * srx + crx * sry * srz, crx * cry, z],
+        [0, 0, 0, 1],
+    ])
     return H
 
 
@@ -647,7 +692,12 @@ def KUKA_2_Pose(xyzrpw):
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x], [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y], [-sb, cb * sc, cc * cb, z], [0.0, 0.0, 0.0, 1.0]])
+    return Mat([
+        [cb * ca, ca * sc * sb - cc * sa, sc * sa + cc * ca * sb, x],
+        [cb * sa, cc * ca + sc * sb * sa, cc * sb * sa - ca * sc, y],
+        [-sb, cb * sc, cc * cb, z],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
 
 
 def Adept_2_Pose(xyzrpw):
@@ -665,7 +715,12 @@ def Adept_2_Pose(xyzrpw):
     sb = math.sin(b)
     cc = math.cos(c)
     sc = math.sin(c)
-    return Mat([[ca * cb * cc - sa * sc, -cc * sa - ca * cb * sc, ca * sb, x], [ca * sc + cb * cc * sa, ca * cc - cb * sa * sc, sa * sb, y], [-cc * sb, sb * sc, cb, z], [0.0, 0.0, 0.0, 1.0]])
+    return Mat([
+        [ca * cb * cc - sa * sc, -cc * sa - ca * cb * sc, ca * sb, x],
+        [ca * sc + cb * cc * sa, ca * cc - cb * sa * sc, sa * sb, y],
+        [-cc * sb, sb * sc, cb, z],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
 
 
 def Pose_2_Adept(H):
@@ -859,7 +914,12 @@ def quaternion_2_pose(qin):
     q[1] = q[1] / qnorm
     q[2] = q[2] / qnorm
     q[3] = q[3] / qnorm
-    pose = Mat([[1 - 2 * q[2] * q[2] - 2 * q[3] * q[3], 2 * q[1] * q[2] - 2 * q[3] * q[0], 2 * q[1] * q[3] + 2 * q[2] * q[0], 0], [2 * q[1] * q[2] + 2 * q[3] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[3] * q[3], 2 * q[2] * q[3] - 2 * q[1] * q[0], 0], [2 * q[1] * q[3] - 2 * q[2] * q[0], 2 * q[2] * q[3] + 2 * q[1] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2], 0], [0, 0, 0, 1]])
+    pose = Mat([
+        [1 - 2 * q[2] * q[2] - 2 * q[3] * q[3], 2 * q[1] * q[2] - 2 * q[3] * q[0], 2 * q[1] * q[3] + 2 * q[2] * q[0], 0],
+        [2 * q[1] * q[2] + 2 * q[3] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[3] * q[3], 2 * q[2] * q[3] - 2 * q[1] * q[0], 0],
+        [2 * q[1] * q[3] - 2 * q[2] * q[0], 2 * q[2] * q[3] + 2 * q[1] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2], 0],
+        [0, 0, 0, 1],
+    ])
     return pose
 
 
@@ -959,7 +1019,12 @@ def dh(rz, tx=None, tz=None, rx=None):
     srx = math.sin(rx)
     crz = math.cos(rz)
     srz = math.sin(rz)
-    return Mat([[crz, -srz * crx, srz * srx, tx * crz], [srz, crz * crx, -crz * srx, tx * srz], [0, srx, crx, tz], [0, 0, 0, 1]])
+    return Mat([
+        [crz, -srz * crx, srz * srx, tx * crz],
+        [srz, crz * crx, -crz * srx, tx * srz],
+        [0, srx, crx, tz],
+        [0, 0, 0, 1],
+    ])
 
 
 def dhm(rx, tx=None, tz=None, rz=None):
@@ -976,7 +1041,12 @@ def dhm(rx, tx=None, tz=None, rz=None):
     srx = math.sin(rx)
     crz = math.cos(rz)
     srz = math.sin(rz)
-    return Mat([[crz, -srz, 0, tx], [crx * srz, crx * crz, -srx, -tz * srx], [srx * srz, crz * srx, crx, tz * crx], [0, 0, 0, 1]])
+    return Mat([
+        [crz, -srz, 0, tx],
+        [crx * srz, crx * crz, -srx, -tz * srx],
+        [srx * srz, crz * srx, crx, tz * crx],
+        [0, 0, 0, 1],
+    ])
 
 
 def joints_2_angles(jin, type):
