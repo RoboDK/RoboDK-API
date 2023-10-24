@@ -99,7 +99,7 @@ def name_2_id(str_name_id):
 #--------     Generic matrix usage    ---------------
 
 
-def rotx(rx):
+def rotx(rx)->'Mat':
     r"""Returns a rotation matrix around the X axis (radians)
 
     .. math::
@@ -124,7 +124,7 @@ def rotx(rx):
     ])
 
 
-def roty(ry):
+def roty(ry)->'Mat':
     r"""Returns a rotation matrix around the Y axis (radians)
 
     .. math::
@@ -149,7 +149,7 @@ def roty(ry):
     ])
 
 
-def rotz(rz):
+def rotz(rz)->'Mat':
     r"""Returns a rotation matrix around the Z axis (radians)
 
     .. math::
@@ -174,7 +174,7 @@ def rotz(rz):
     ])
 
 
-def transl(tx=0, ty=0, tz=0):
+def transl(tx:float|list[float]=0, ty:float=0, tz:float=0)->'Mat':
     r"""Returns a translation matrix (mm) given translations in each dimension.
     Supports passing inputs as a list through the tx argument, but this ignores ty and tz.
 
@@ -209,7 +209,7 @@ def transl(tx=0, ty=0, tz=0):
     ])
 
 
-def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0):
+def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0)->'Mat':
     """Calculates a relative target with respect to the tool coordinates. This procedure has exactly the same behavior as ABB's RelTool instruction.
     X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
@@ -229,7 +229,7 @@ def RelTool(target_pose, x, y, z, rx=0, ry=0, rz=0):
     return new_target
 
 
-def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0):
+def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0)->'Mat':
     """Calculates a relative target with respect to the reference frame coordinates.
     X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
@@ -252,7 +252,7 @@ def Offset(target_pose, x, y, z, rx=0, ry=0, rz=0):
     return new_target
 
 
-def point_Xaxis_2_pose(point, xaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[0, -1, 0]):
+def point_Xaxis_2_pose(point, xaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[0, -1, 0])->'Mat':
     """Returns a pose given the origin as a point, a X axis and a preferred orientation for the Z axis"""
     pose = eye(4)
     pose.setPos(point)
@@ -268,7 +268,7 @@ def point_Xaxis_2_pose(point, xaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[0, -1,
     return pose
 
 
-def point_Yaxis_2_pose(point, yaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[-1, 0, 0]):
+def point_Yaxis_2_pose(point, yaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[-1, 0, 0])->'Mat':
     """Returns a pose given the origin as a point, a Y axis and a preferred orientation for the Z axis"""
     pose = eye(4)
     pose.setPos(point)
@@ -284,7 +284,7 @@ def point_Yaxis_2_pose(point, yaxis, zaxis_hint1=[0, 0, -1], zaxis_hint2=[-1, 0,
     return pose
 
 
-def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1]):
+def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1])->'Mat':
     """Returns a pose given the origin as a point, a Z axis and a preferred orientation for the Y axis"""
     pose = eye(4)
     pose.setPos(point)
@@ -300,7 +300,7 @@ def point_Zaxis_2_pose(point, zaxis, yaxis_hint1=[0, 0, 1], yaxis_hint2=[0, 1, 1
     return pose
 
 
-def eye(size=4):
+def eye(size:int=4)->'Mat':
     r"""Returns the identity matrix
 
     .. math::
@@ -329,7 +329,7 @@ def eye(size=4):
         return newmat
 
 
-def size(matrix, dim=None):
+def size(matrix:'Mat', dim=None):
     """Returns the size of a matrix (m,n).
     Dim can be set to 0 to return m (rows) or 1 to return n (columns)
 
@@ -341,7 +341,7 @@ def size(matrix, dim=None):
     return matrix.size(dim)
 
 
-def tr(matrix):
+def tr(matrix:'Mat')->'Mat':
     """Returns the transpose of the matrix
 
     :param matrix: pose
@@ -349,7 +349,7 @@ def tr(matrix):
     return matrix.tr()
 
 
-def invH(matrix):
+def invH(matrix:'Mat')->'Mat':
     """Returns the inverse of a homogeneous matrix
 
     :param matrix: pose
@@ -360,12 +360,12 @@ def invH(matrix):
     return matrix.invH()
 
 
-def catV(mat1, mat2):
+def catV(mat1:'Mat', mat2:'Mat')->'Mat':
     """Concatenate 2 matrices (vertical concatenation)"""
     return mat1.catV(mat2)
 
 
-def catH(mat1, mat2):
+def catH(mat1:'Mat', mat2:'Mat')->'Mat':
     """Concatenate 2 matrices (horizontal concatenation)"""
     return mat1.catH(mat2)
 
@@ -391,7 +391,7 @@ def toc():
 
 #----------------------------------------------------
 #------ Pose to xyzrpw and xyzrpw to pose------------
-def PosePP(x, y, z, r, p, w):
+def PosePP(x, y, z, r, p, w)->'Mat':
     """Create a pose from XYZRPW coordinates. The pose format is the one used by KUKA (XYZABC coordinates). This is function is the same as KUKA_2_Pose (with the difference that the input values are not a list). This function is used as "p" by the intermediate file when generating a robot program.
 
     .. seealso:: :func:`~robodk.robomath.KUKA_2_Pose`, :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -413,7 +413,7 @@ def PosePP(x, y, z, r, p, w):
     ])
 
 
-def pose_2_xyzrpw(H):
+def pose_2_xyzrpw(H)->list[float]:
     """Calculates the equivalent position (mm) and Euler angles (deg) as an [x,y,z,r,p,w] array, given a pose.
     It returns the values that correspond to the following operation:
     transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
@@ -442,7 +442,7 @@ def pose_2_xyzrpw(H):
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
 
-def xyzrpw_2_pose(xyzrpw):
+def xyzrpw_2_pose(xyzrpw)->'Mat':
     """Calculates the pose from the position (mm) and Euler angles (deg), given a [x,y,z,r,p,w] array.
     The result is the same as calling: H = transl(x,y,z)*rotz(w*pi/180)*roty(p*pi/180)*rotx(r*pi/180)
 
@@ -467,7 +467,7 @@ def xyzrpw_2_pose(xyzrpw):
     return H
 
 
-def Pose(x, y, z, rxd, ryd, rzd):
+def Pose(x, y, z, rxd, ryd, rzd)->'Mat':
     """Returns the pose (:class:`.Mat`) given the position (mm) and Euler angles (deg) as an array [x,y,z,rx,ry,rz].
     The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
     This pose format is printed for homogeneous poses automatically. This Pose is the same representation used by Mecademic or Staubli robot controllers.
@@ -498,7 +498,7 @@ def Pose(x, y, z, rxd, ryd, rzd):
     ])
 
 
-def TxyzRxyz_2_Pose(xyzrpw):
+def TxyzRxyz_2_Pose(xyzrpw)->'Mat':
     """Returns the pose given the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz].
     The result is the same as calling: H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz)
 
@@ -523,7 +523,7 @@ def TxyzRxyz_2_Pose(xyzrpw):
     return H
 
 
-def Pose_2_TxyzRxyz(H):
+def Pose_2_TxyzRxyz(H)->list[float]:
     """Retrieve the position (mm) and Euler angles (rad) as an array [x,y,z,rx,ry,rz] given a pose.
     It returns the values that correspond to the following operation:
     H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz).
@@ -562,7 +562,7 @@ def Pose_2_TxyzRxyz(H):
     return [x, y, z, rx1, ry1, rz1]
 
 
-def Pose_2_Staubli(H):
+def Pose_2_Staubli(H)->list[float]:
     """Converts a pose (4x4 matrix) to a Staubli XYZWPR target
 
     :param H: pose
@@ -577,7 +577,7 @@ def Pose_2_Staubli(H):
     return xyzwpr
 
 
-def Staubli_2_Pose(xyzwpr):
+def Staubli_2_Pose(xyzwpr)->'Mat':
     """Converts a Staubli XYZWPR target to a pose (4x4 matrix)
 
     :param H: pose
@@ -591,7 +591,7 @@ def Staubli_2_Pose(xyzwpr):
     return TxyzRxyz_2_Pose(xyzwpr)
 
 
-def Pose_2_Motoman(H):
+def Pose_2_Motoman(H)->list[float]:
     """Converts a pose (4x4 matrix) to a Motoman XYZWPR target (mm and deg)
 
     :param H: pose
@@ -603,7 +603,7 @@ def Pose_2_Motoman(H):
     return xyzwpr
 
 
-def Pose_2_Fanuc(H):
+def Pose_2_Fanuc(H)->list[float]:
     """Converts a pose (4x4 matrix) to a Fanuc XYZWPR target (mm and deg)
 
     :param H: pose
@@ -615,7 +615,7 @@ def Pose_2_Fanuc(H):
     return xyzwpr
 
 
-def Pose_2_Techman(H):
+def Pose_2_Techman(H)->list[float]:
     """Converts a pose (4x4 matrix) to a Techman XYZWPR target (mm and deg)
 
     :param H: pose
@@ -627,7 +627,7 @@ def Pose_2_Techman(H):
     return xyzwpr
 
 
-def Motoman_2_Pose(xyzwpr):
+def Motoman_2_Pose(xyzwpr)->'Mat':
     """Converts a Motoman target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -635,7 +635,7 @@ def Motoman_2_Pose(xyzwpr):
     return xyzrpw_2_pose(xyzwpr)
 
 
-def Fanuc_2_Pose(xyzwpr):
+def Fanuc_2_Pose(xyzwpr)->'Mat':
     """Converts a Fanuc target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -643,7 +643,7 @@ def Fanuc_2_Pose(xyzwpr):
     return xyzrpw_2_pose(xyzwpr)
 
 
-def Techman_2_Pose(xyzwpr):
+def Techman_2_Pose(xyzwpr)->'Mat':
     """Converts a Techman target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -651,7 +651,7 @@ def Techman_2_Pose(xyzwpr):
     return xyzrpw_2_pose(xyzwpr)
 
 
-def Pose_2_KUKA(H):
+def Pose_2_KUKA(H)->list[float]:
     """Converts a pose (4x4 matrix) to an XYZABC KUKA target (Euler angles), required by KUKA KRC controllers.
 
     :param H: pose
@@ -677,7 +677,7 @@ def Pose_2_KUKA(H):
     return [x, y, z, w * 180 / pi, p * 180 / pi, r * 180 / pi]
 
 
-def KUKA_2_Pose(xyzrpw):
+def KUKA_2_Pose(xyzrpw)->'Mat':
     """Converts a KUKA XYZABC target to a pose (4x4 matrix), required by KUKA KRC controllers.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -700,7 +700,7 @@ def KUKA_2_Pose(xyzrpw):
     ])
 
 
-def Adept_2_Pose(xyzrpw):
+def Adept_2_Pose(xyzrpw)->'Mat':
     """Converts an Adept XYZRPW target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -723,7 +723,7 @@ def Adept_2_Pose(xyzrpw):
     ])
 
 
-def Pose_2_Adept(H):
+def Pose_2_Adept(H)->list[float]:
     """Converts a pose to an Adept target
 
     :param H: pose
@@ -755,7 +755,7 @@ def Pose_2_Adept(H):
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
 
-def Pose_2_Catia(H):
+def Pose_2_Catia(H)->list[float]:
     """Converts a pose to Catia or Solidworks format, in mm and deg. It returns the values that correspond to the following operation:
     H = transl(x,y,z)*rotz(a)*rotx(b)*rotz(c).
 
@@ -783,7 +783,7 @@ def Pose_2_Catia(H):
     return [x, y, z, r * 180 / pi, p * 180 / pi, w * 180 / pi]
 
 
-def Comau_2_Pose(xyzrpw):
+def Comau_2_Pose(xyzrpw)->'Mat':
     """Converts a Comau XYZRPW target to a pose (4x4 matrix), the same representation required by PDL Comau programs.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -791,7 +791,7 @@ def Comau_2_Pose(xyzrpw):
     return Adept_2_Pose(xyzrpw)
 
 
-def Pose_2_Comau(H):
+def Pose_2_Comau(H)->list[float]:
     """Converts a pose to a Comau target, the same representation required by PDL Comau programs.
 
     :param H: pose
@@ -801,7 +801,7 @@ def Pose_2_Comau(H):
     return Pose_2_Adept(H)
 
 
-def Pose_2_Nachi(pose):
+def Pose_2_Nachi(pose)->list[float]:
     """Converts a pose to a Nachi XYZRPW target
 
     :param pose: pose
@@ -813,7 +813,7 @@ def Pose_2_Nachi(pose):
     return [x, y, z, w, p, r]
 
 
-def Nachi_2_Pose(xyzwpr):
+def Nachi_2_Pose(xyzwpr)->'Mat':
     """Converts a Nachi XYZRPW target to a pose (4x4 matrix)
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -821,7 +821,7 @@ def Nachi_2_Pose(xyzwpr):
     return xyzrpw_2_pose(xyzwpr)
 
 
-def pose_2_quaternion(Ti):
+def pose_2_quaternion(Ti)->list[float]:
     """Returns the quaternion orientation vector of a pose (4x4 matrix)
 
     :param Ti: pose
@@ -875,7 +875,7 @@ def pose_2_quaternion(Ti):
     return [q1, q2, q3, q4]
 
 
-def Pose_Split(pose1, pose2, delta_mm=1.0):
+def Pose_Split(pose1:'Mat', pose2:'Mat', delta_mm:float=1.0)->list['Mat']:
     """Create a sequence of poses that transitions from pose1 to pose2 by steps of delta_mm in mm (the first and last pose are not included in the list)"""
     pose_delta = invH(pose1) * pose2
     distance = norm(pose_delta.Pos())
@@ -901,7 +901,7 @@ def Pose_Split(pose1, pose2, delta_mm=1.0):
     return pose_list
 
 
-def quaternion_2_pose(qin):
+def quaternion_2_pose(qin)->'Mat':
     """Returns the pose orientation matrix (4x4 matrix) given a quaternion orientation vector
 
     :param list qin: quaternions as 4 float values
@@ -923,7 +923,7 @@ def quaternion_2_pose(qin):
     return pose
 
 
-def Pose_2_ABB(H):
+def Pose_2_ABB(H)->list[float]:
     """Converts a pose to an ABB target (using quaternion representation).
 
     :param H: pose
@@ -935,7 +935,7 @@ def Pose_2_ABB(H):
     return [H[0, 3], H[1, 3], H[2, 3], q[0], q[1], q[2], q[3]]
 
 
-def print_pose_ABB(pose):
+def print_pose_ABB(pose:'Mat'):
     """Displays an ABB RAPID target (the same way it is displayed in IRC5 controllers).
 
     :param pose: pose
@@ -947,7 +947,7 @@ def print_pose_ABB(pose):
     print('[[%.3f,%.3f,%.3f],[%.6f,%.6f,%.6f,%.6f]]' % (pose[0, 3], pose[1, 3], pose[2, 3], q[0], q[1], q[2], q[3]))
 
 
-def Pose_2_UR(pose):
+def Pose_2_UR(pose:'Mat')->list[float]:
     """Calculate the p[x,y,z,u,v,w] position with rotation vector for a pose target. This is the same format required by Universal Robot controllers.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`, :func:`~robodk.robomath.Pose_2_TxyzRxyz`, :func:`~robodk.robomath.Pose_2_ABB`, :func:`~robodk.robomath.Pose_2_Adept`, :func:`~robodk.robomath.Pose_2_Comau`, :func:`~robodk.robomath.Pose_2_Fanuc`, :func:`~robodk.robomath.Pose_2_KUKA`, :func:`~robodk.robomath.Pose_2_Motoman`, :func:`~robodk.robomath.Pose_2_Nachi`, :func:`~robodk.robomath.Pose_2_Staubli`, :func:`~robodk.robomath.Pose_2_UR`, :func:`~robodk.robomath.quaternion_2_pose`
@@ -981,7 +981,7 @@ def Pose_2_UR(pose):
     return [pose[0, 3], pose[1, 3], pose[2, 3], rxyz[0], rxyz[1], rxyz[2]]
 
 
-def UR_2_Pose(xyzwpr):
+def UR_2_Pose(xyzwpr)->'Mat':
     """Calculate the pose target given a p[x,y,z,u,v,w] cartesian target with rotation vector. This is the same format required by Universal Robot controllers.
 
     .. seealso:: :class:`.Mat`, :func:`~robodk.robomath.TxyzRxyz_2_Pose`
@@ -1097,36 +1097,36 @@ def angles_2_joints(jin, type):
 #-------- Useful geometric tools ---------------
 
 
-def norm(p):
+def norm(p)->float:
     """Returns the norm of a 3D vector"""
     return sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2])
 
 
-def normalize3(a):
+def normalize3(a)->list[float]:
     """Returns the unitary vector"""
     norminv = 1.0 / norm(a)
     return [a[0] * norminv, a[1] * norminv, a[2] * norminv]
 
 
-def cross(a, b):
+def cross(a, b)->list[float]:
     """Returns the cross product of two 3D vectors"""
     c = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
     return c
 
 
-def dot(a, b):
+def dot(a, b)->list[float]:
     """Returns the dot product of two 3D vectors"""
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
-def angle3(a, b):
+def angle3(a, b)->list[float]:
     """Returns the angle in radians of two 3D vectors"""
     cos_angle = dot(normalize3(a), normalize3(b))
     cos_angle = min(1.0, max(-1.0, cos_angle))
     return acos(cos_angle)
 
 
-def pose_angle(pose):
+def pose_angle(pose)->'Mat':
     """Returns the angle in radians of a 4x4 matrix pose
 
     :param pose: pose
@@ -1136,39 +1136,39 @@ def pose_angle(pose):
     return acos(cos_ang)
 
 
-def pose_angle_between(pose1, pose2):
+def pose_angle_between(pose1:'Mat', pose2:'Mat')->float:
     """Returns the angle in radians between two poses (4x4 matrix pose)"""
     return pose_angle(invH(pose1) * pose2)
 
 
-def mult3(v, d):
+def mult3(v, d:float)->list[float]:
     """Multiplies a 3D vector to a scalar"""
     return [v[0] * d, v[1] * d, v[2] * d]
 
 
-def subs3(a, b):
+def subs3(a, b)->list[float]:
     """Subtracts two 3D vectors c=a-b"""
     return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 
 
-def add3(a, b):
+def add3(a, b)->list[float]:
     """Adds two 3D vectors c=a+b"""
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 
 
-def distance(a, b):
+def distance(a, b)->float:
     """Calculates the distance between two points"""
     return norm(subs3(a, b))
 
 
-def pose_is_similar(a, b, tolerance=0.1):
+def pose_is_similar(a:'Mat', b:'Mat', tolerance=0.1)->bool:
     """Check if the pose is similar. Returns True if both poses are less than 0.1 mm or 0.1 deg appart. Optionally provide the tolerance in mm+deg"""
     if distance(a.Pos(), b.Pos()) + pose_angle_between(a, b) * 180 / pi < tolerance:
         return True
     return False
 
 
-def intersect_line_2_plane(pline, vline, pplane, vplane):
+def intersect_line_2_plane(pline, vline, pplane, vplane)->list[float]:
     """Calculates the intersection betweeen a line and a plane"""
     D = -dot(vplane, pplane)
     k = -(D + dot(vplane, pline)) / dot(vplane, vline)
@@ -1176,12 +1176,12 @@ def intersect_line_2_plane(pline, vline, pplane, vplane):
     return p
 
 
-def proj_pt_2_plane(point, planepoint, planeABC):
+def proj_pt_2_plane(point, planepoint, planeABC)->list[float]:
     """Projects a point to a plane"""
     return intersect_line_2_plane(point, planeABC, planepoint, planeABC)
 
 
-def proj_pt_2_line(point, paxe, vaxe):
+def proj_pt_2_line(point, paxe, vaxe)->list[float]:
     """Projects a point to a line"""
     vpaxe2point = subs3(point, paxe)
     dist = dot(vaxe, vpaxe2point) / dot(vaxe, vaxe)
@@ -1318,7 +1318,7 @@ class Mat(object):
             return iter([])
         return iter(self.tr().rows)
 
-    def copy(self):
+    def copy(self)->'Mat':
         sz = self.size()
         newmat = Mat(sz[0], sz[1])
         for i in range(sz[0]):
@@ -1326,7 +1326,7 @@ class Mat(object):
                 newmat[i, j] = self[i, j]
         return newmat
 
-    def fromNumpy(ndarray):
+    def fromNumpy(ndarray)->'Mat':
         """Convert a numpy array to a Mat matrix"""
         return Mat(ndarray.tolist())
 
@@ -1339,14 +1339,14 @@ class Mat(object):
         """Return the number of columns"""
         return len(self.rows[0])
 
-    def ColsCount(self):
+    def ColsCount(self)->int:
         """Return the number of coumns. Same as len().
 
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.RowsCount`
         """
         return len(self.rows[0])
 
-    def RowsCount(self):
+    def RowsCount(self)->int:
         """Return the number of rows
 
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.Rows`, :func:`~Mat.ColsCount`
@@ -1354,8 +1354,8 @@ class Mat(object):
         """
         return len(self.rows)
 
-    def Cols(self):
-        """Retrieve the matrix as a list of columns (list of list of float).
+    def Cols(self)->list[list[float]]:
+        """Get the matrix as a list of columns (list of lists of floats).
 
         .. seealso:: :func:`~Mat.Rows`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
 
@@ -1371,18 +1371,18 @@ class Mat(object):
         """
         return self.tr().rows
 
-    def Rows(self):
-        """Get the matrix as a list of lists
+    def Rows(self)->list[list[float]]:
+        """Get the matrix as a list of rows (list of lists of floats)
 
         .. seealso:: :func:`~Mat.Cols`, :func:`~Mat.ColsCount`, :func:`~Mat.RowsCount`
         """
         return self.rows
 
-    def Col(self, n):
+    def Col(self, n)->list[float]:
         """"Get the Column n from the matrix"""
         return self.tr().rows[n]
 
-    def Row(self, n):
+    def Row(self, n)->list[float]:
         """"Get the Row n from the matrix"""
         return self.rows[n]
 
@@ -1484,7 +1484,7 @@ class Mat(object):
         rep = "Matrix: %s\n%s" % (rank, s)
         return rep
 
-    def tr(self):
+    def tr(self)->'Mat':
         """Returns the transpose of the matrix"""
         if len(self.rows) == 0 or len(self.rows[0]) == 0:
             return Mat(0, 0)
@@ -1510,7 +1510,7 @@ class Mat(object):
         else:
             raise Exception(MatrixError, "Invalid dimension!")
 
-    def catV(self, mat2):
+    def catV(self, mat2)->'Mat':
         """Concatenate with another matrix (vertical concatenation)"""
         if not isinstance(mat2, Mat):
             #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
@@ -1526,7 +1526,7 @@ class Mat(object):
         newmat[sz1[0]:, :] = mat2
         return newmat
 
-    def catH(self, mat2):
+    def catH(self, mat2)->'Mat':
         """Concatenate with another matrix (horizontal concatenation)"""
         if not isinstance(mat2, Mat):
             #raise Exception(MatrixError, "Concatenation must be performed with 2 matrices")
@@ -1632,7 +1632,7 @@ class Mat(object):
                     mulmat.rows[x][y] = sum([item[0] * item[1] for item in zip(self.rows[x], mat_t.rows[y])])
             return mulmat
 
-    def eye(self, m=4):
+    def eye(self, m=4)->'Mat':
         """Make identity matrix of size (mxm)"""
         rows = [[0] * m for x in range(m)]
         idx = 0
@@ -1641,7 +1641,7 @@ class Mat(object):
             idx += 1
         return Mat(rows)
 
-    def isHomogeneous(self):
+    def isHomogeneous(self)->bool:
         """returns 1 if it is a Homogeneous matrix"""
         m, n = self.size()
         if m != 4 or n != 4:
@@ -1661,7 +1661,7 @@ class Mat(object):
             return False
         return True
 
-    def RelTool(self, x, y, z, rx=0, ry=0, rz=0):
+    def RelTool(self, x, y, z, rx=0, ry=0, rz=0)->'Mat':
         """Calculates a relative target with respect to the tool coordinates. This procedure has exactly the same behavior as ABB's RelTool instruction.
         X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
@@ -1676,7 +1676,7 @@ class Mat(object):
         """
         return RelTool(self, x, y, z, rx, ry, rz)
 
-    def Offset(self, x, y, z, rx=0, ry=0, rz=0):
+    def Offset(self, x, y, z, rx=0, ry=0, rz=0)->'Mat':
         """Calculates a relative target with respect to this pose.
         X,Y,Z are in mm, RX,RY,RZ are in degrees.
 
@@ -1691,7 +1691,7 @@ class Mat(object):
         """
         return Offset(self, x, y, z, rx, ry, rz)
 
-    def invH(self):
+    def invH(self)->'Mat':
         """Returns the inverse of this pose (homogeneous matrix assumed)"""
         if not self.isHomogeneous():
             raise Exception(MatrixError, "Pose matrix is not homogeneous. invH() can only compute the inverse of a homogeneous matrix")
@@ -1700,15 +1700,15 @@ class Mat(object):
         Hout[0:3, 3] = (Hout[0:3, 0:3] * self[0:3, 3]) * (-1)
         return Hout
 
-    def inv(self):
+    def inv(self)->'Mat':
         """Returns the inverse of this pose (homogeneous matrix assumed)"""
         return self.invH()
 
-    def tolist(self):
+    def tolist(self)->list[float]:
         """Returns the first column of the matrix as a list"""
         return self.tr().rows[0]
 
-    def list(self):
+    def list(self)->list[float]:
         """Returns the first column of the matrix as a list"""
         return self.tr().rows[0]
 
@@ -1736,18 +1736,18 @@ class Mat(object):
         # return self[0:3, 2].tolist()
         return [self.rows[0][2], self.rows[1][2], self.rows[2][2]]
 
-    def Rot33(self):
+    def Rot33(self)->'Mat':
         """Returns the sub 3x3 rotation matrix"""
         return self[0:3, 0:3]
 
-    def setPos(self, newpos):
+    def setPos(self, newpos)->'Mat':
         """Sets the XYZ position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
         self.rows[0][3] = newpos[0]
         self.rows[1][3] = newpos[1]
         self.rows[2][3] = newpos[2]
         return self
 
-    def setVX(self, v_xyz):
+    def setVX(self, v_xyz)->'Mat':
         """Sets the VX vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
         self.rows[0][0] = v_xyz[0]
@@ -1755,7 +1755,7 @@ class Mat(object):
         self.rows[2][0] = v_xyz[2]
         return self
 
-    def setVY(self, v_xyz):
+    def setVY(self, v_xyz)->'Mat':
         """Sets the VY vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
         self.rows[0][1] = v_xyz[0]
@@ -1763,7 +1763,7 @@ class Mat(object):
         self.rows[2][1] = v_xyz[2]
         return self
 
-    def setVZ(self, v_xyz):
+    def setVZ(self, v_xyz)->'Mat':
         """Sets the VZ vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
         v_xyz = normalize3(v_xyz)
         self.rows[0][2] = v_xyz[0]
@@ -1771,11 +1771,11 @@ class Mat(object):
         self.rows[2][2] = v_xyz[2]
         return self
 
-    def translationPose(self):
+    def translationPose(self)->'Mat':
         """Return the translation pose of this matrix. The rotation returned is set to identity (assumes that a 4x4 homogeneous matrix is being used)"""
         return transl(self.Pos())
 
-    def rotationPose(self):
+    def rotationPose(self)->'Mat':
         """Return the rotation pose of this matrix. The position returned is set to [0,0,0] (assumes that a 4x4 homogeneous matrix is being used)"""
         mat_rotation = Mat(self)
         mat_rotation.setPos([0, 0, 0])
