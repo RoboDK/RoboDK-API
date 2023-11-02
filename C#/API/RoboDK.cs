@@ -49,10 +49,10 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-#if NETCORE
-using System.Drawing;
-#else
+#if NET45
 using System.Windows.Media;
+#else
+using System.Drawing;
 #endif
 using Microsoft.Win32;
 using RoboDk.API.Exceptions;
@@ -2808,7 +2808,6 @@ namespace RoboDk.API
                     case ConnectionType.None:
                     default:
                         throw new RdkException($"unknown ConnectionType: {_connectionType}");
-                        return false;
                 }
             }
             catch (SocketException socketException)

@@ -2,6 +2,8 @@ doxygen_output
 _site
 packages
 /C#/API/log.txt
+/C#/API/api/*.yml
+/C#/API/api/.manifest
 *.bak
 Python/unit_tests/report.html
 

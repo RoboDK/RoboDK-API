@@ -1,10 +1,10 @@
 ﻿#region Namespaces
 
 using System.Diagnostics;
-#if NETCORE
-using System.Drawing;
-#else
+#if NET45
 using System.Windows.Media;
+#else
+using System.Drawing;
 #endif
 
 #endregion

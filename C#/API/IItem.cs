@@ -42,10 +42,10 @@
 
 using System;
 using System.Collections.Generic;
-#if NETCORE
-using System.Drawing;
-#else
+#if NET45
 using System.Windows.Media;
+#else
+using System.Drawing;
 #endif
 using RoboDk.API.Model;
 
