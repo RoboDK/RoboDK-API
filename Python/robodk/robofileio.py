@@ -86,14 +86,29 @@ def FileExists(file):
     return os.path.exists(file)
 
 
-def FilterName(namefilter, safechar='P', reserved_names=None):
-    """Get a safe program or variable name that can be used for robot programming"""
-    # remove non accepted characters
-    for c in r' -[]/\;,><&*:%=+@!#^|?^':
+def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1):
+    """
+    Get a safe program or variable name that can be used for robot programming.
+    Removes invalid characters ( .-[]/\;,><&*:%=+@!#^|?), remove non-english characters, etc.
+
+    :param namefilter: The name to filter
+    :type namefilter: str
+    :param safechar: Safe character to start a name with, in case the first character is a digit. Defaults to 'P'
+    :type safechar: str, optional
+    :param reserved_names: List of reserved names. A number is appended at the end if it already exists. The new name is added to the list. Defaults to None
+    :type reserved_names: list of str, optional
+    :param max_len: Maximum length of the name, -1 means no maximum. Defaults to -1.
+    :type max_len: int, optional
+
+    :return: The filtered name
+    :rtype: str
+    """
+    # Remove non accepted characters
+    for c in r' .-[]/\;,><&*:%=+@!#^|?^':
         namefilter = namefilter.replace(c, '')
 
-    # remove non english characters
-    char_list = (c for c in namefilter if 0 < ord(c) < 127)
+    # Remove non english characters
+    char_list = [c for c in namefilter if 0 < ord(c) < 127]
     namefilter = ''.join(char_list)
 
     # Make sure we have a non empty string
@@ -102,18 +117,58 @@ def FilterName(namefilter, safechar='P', reserved_names=None):
 
     # Make sure we don't start with a number
     if namefilter[0].isdigit():
-        print(namefilter)
         namefilter = safechar + namefilter
 
+    # Some controllers have a limit of characters
+    if max_len > 0:
+        namefilter = namefilter[:max_len]
+
     # Make sure we are not using a reserved name
-    if reserved_names is not None:
-        while namefilter.lower() in reserved_names:
-            namefilter = safechar + namefilter
+    if reserved_names:
+        reserved_names_lower = [n.lower() for n in reserved_names]
+
+        cnt = 1  # Count current instance as 1, subsequent is 2
+        while namefilter.lower() in reserved_names_lower:
+            if len(namefilter) == max_len:
+                namefilter = namefilter[:-1]
+            cnt += 1
+        if cnt > 1:
+            len(str(cnt))
+            if max_len > 0:
+                namefilter = namefilter[:min(max_len - len(str(cnt)), len(namefilter))]
+            namefilter = namefilter + "%i" % cnt
 
         # Add the name to reserved names
         reserved_names.append(namefilter)
 
     return namefilter
+
+
+def FilterNumber(number, fixed_points=6, strip_zeros=True, round_number=True):
+    """
+    Get a formatted numerical number (float or int) as a string.
+
+    :param number: The number
+    :type number: float or int
+    :param fixed_points: Maximum number of decimals, defaults to 6
+    :type fixed_points: int, optional
+    :param strip_zeros: Remove trailing zeros, including the decimal point. Defaults to True
+    :type strip_zeros: bool, optional
+    :param round_number: Round the number instead of cropping it. Defaults to True
+    :type round_number: bool, optional
+
+    :return: The formatted number
+    :rtype: str
+    """
+    fixed_points = max(0, fixed_points)
+    if round_number:
+        s = format(number, f'.{fixed_points}f')  # format automatically rounds
+    else:
+        s = format(number, f'.{fixed_points+1}f')
+        s = s[:-1]
+    if strip_zeros:
+        s = s.rstrip('0').rstrip('.')
+    return s
 
 
 #-------------------------------------------------------
