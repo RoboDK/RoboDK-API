@@ -622,21 +622,14 @@ struct Joints_t Item_JointsHome(const struct Item_t* inst) {
 }
 
 void Item_SetJointsHome(const struct Item_t* inst, struct Joints_t jnts) {
-	double angles[6];
-	angles[0] = jnts._Values[0];
-	angles[1] = jnts._Values[1];
-	angles[2] = jnts._Values[2];
-	angles[3] = jnts._Values[3];
-	angles[4] = jnts._Values[4];
-	angles[5] = jnts._Values[5];
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Home");
-	_RoboDK_send_Array(inst->_RDK, angles, jnts._nDOFs);
+    _RoboDK_send_Array(inst->_RDK, jnts._Values, jnts._nDOFs);
 	_RoboDK_send_Item(inst->_RDK,inst);
 	_RoboDK_check_status(inst->_RDK);
 }
 
-struct Item_t Item_ObjectLink(const struct Item_t* inst,uint32_t link_id) {
+struct Item_t Item_ObjectLink(const struct Item_t* inst, uint32_t link_id) {
 	struct Item_t item1;
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "G_LinkObjId");
@@ -701,16 +694,9 @@ struct Item_t Item_AddTool(const struct Item_t* inst, const struct Mat_t *tool_p
 
 
 void Item_SetJoints(const struct Item_t* inst, struct Joints_t jnts) {
-	double angles[6];
-	angles[0] = jnts._Values[0];
-	angles[1] = jnts._Values[1];
-	angles[2] = jnts._Values[2];
-	angles[3] = jnts._Values[3];
-	angles[4] = jnts._Values[4];
-	angles[5] = jnts._Values[5];
 	_RoboDK_check_connection(inst->_RDK);
 	_RoboDK_send_Line(inst->_RDK, "S_Thetas");
-	_RoboDK_send_Array(inst->_RDK, angles, jnts._nDOFs);
+    _RoboDK_send_Array(inst->_RDK, jnts._Values, jnts._nDOFs);
 	_RoboDK_send_Item(inst->_RDK, inst);
 	_RoboDK_check_status(inst->_RDK);
 }
