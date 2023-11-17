@@ -1742,6 +1742,9 @@ class Mat(object):
 
     def setPos(self, newpos):
         """Sets the XYZ position of a pose (assumes that a 4x4 homogeneous matrix is being used)"""
+        if type(newpos) == Mat:
+            newpos = list(newpos)[0]
+            
         self.rows[0][3] = newpos[0]
         self.rows[1][3] = newpos[1]
         self.rows[2][3] = newpos[2]
@@ -1749,6 +1752,9 @@ class Mat(object):
 
     def setVX(self, v_xyz):
         """Sets the VX vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
+        if type(v_xyz) == Mat:
+            v_xyz = list(v_xyz)[0]
+        
         v_xyz = normalize3(v_xyz)
         self.rows[0][0] = v_xyz[0]
         self.rows[1][0] = v_xyz[1]
@@ -1757,6 +1763,9 @@ class Mat(object):
 
     def setVY(self, v_xyz):
         """Sets the VY vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
+        if type(v_xyz) == Mat:
+            v_xyz = list(v_xyz)[0]
+            
         v_xyz = normalize3(v_xyz)
         self.rows[0][1] = v_xyz[0]
         self.rows[1][1] = v_xyz[1]
@@ -1765,6 +1774,9 @@ class Mat(object):
 
     def setVZ(self, v_xyz):
         """Sets the VZ vector of a pose, which is the first column of a homogeneous matrix (assumes that a 4x4 homogeneous matrix is being used)"""
+        if type(v_xyz) == Mat:
+            v_xyz = list(v_xyz)[0]
+            
         v_xyz = normalize3(v_xyz)
         self.rows[0][2] = v_xyz[0]
         self.rows[1][2] = v_xyz[1]
