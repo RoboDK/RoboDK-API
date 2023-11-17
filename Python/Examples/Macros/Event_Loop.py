@@ -75,7 +75,7 @@ class RobolinkEvents(Robolink):
         ver_evt = self._rec_int()#_COM_EVT);
         status = self._rec_int()#_COM_EVT);
         if (response != "RDK_EVT" or status != 0):
-            return false
+            return False
         
         self.COM.settimeout(3600)            
         print("Events loop started")

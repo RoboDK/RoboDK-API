@@ -86,7 +86,7 @@ def FileExists(file):
     return os.path.exists(file)
 
 
-def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1):
+def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1, space_to_underscore=False, invalid_chars=r' .-[]/\;,><&*:%=+@!#^|?^'):
     """
     Get a safe program or variable name that can be used for robot programming.
     Removes invalid characters ( .-[]/\;,><&*:%=+@!#^|?), remove non-english characters, etc.
@@ -97,19 +97,25 @@ def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1):
     :type safechar: str, optional
     :param reserved_names: List of reserved names. A number is appended at the end if it already exists. The new name is added to the list. Defaults to None
     :type reserved_names: list of str, optional
-    :param max_len: Maximum length of the name, -1 means no maximum. Defaults to -1.
+    :param max_len: Maximum length of the name (number of characters), -1 means no maximum. Defaults to -1
     :type max_len: int, optional
+    :param space_to_underscore: Replace whitespaces with underscores
+    :type space_to_underscore: bool, optional
+    :param invalid_chars: string containing all invalid character to remove. Defaults to r' .-[]/\;,><&*:%=+@!#^|?^'
+    :type invalid_chars: str, optional
 
     :return: The filtered name
     :rtype: str
     """
+    if space_to_underscore and not '_' in invalid_chars:
+        namefilter = namefilter.replace(' ', '_')
+
     # Remove non accepted characters
-    for c in r' .-[]/\;,><&*:%=+@!#^|?^':
+    for c in invalid_chars:
         namefilter = namefilter.replace(c, '')
 
     # Remove non english characters
-    char_list = [c for c in namefilter if 0 < ord(c) < 127]
-    namefilter = ''.join(char_list)
+    namefilter = ''.join((c for c in namefilter if 0 < ord(c) < 127))
 
     # Make sure we have a non empty string
     if len(namefilter) <= 0:
@@ -131,15 +137,17 @@ def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1):
         while namefilter.lower() in reserved_names_lower:
             if len(namefilter) == max_len:
                 namefilter = namefilter[:-1]
+            if cnt > 1:
+                if max_len > 0:
+                    namefilter = namefilter[:min(max_len - len(str(cnt)), len(namefilter))]
+                namefilter = namefilter + "%i" % cnt
             cnt += 1
-        if cnt > 1:
-            len(str(cnt))
-            if max_len > 0:
-                namefilter = namefilter[:min(max_len - len(str(cnt)), len(namefilter))]
-            namefilter = namefilter + "%i" % cnt
 
         # Add the name to reserved names
-        reserved_names.append(namefilter)
+        if type(reserved_names) is list:
+            reserved_names.append(namefilter)
+        else:
+            reserved_names.add(namefilter)
 
     return namefilter
 

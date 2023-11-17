@@ -46,7 +46,7 @@ RDK = Robolink()
 RDK.setSelection([])
 
 # Ask the user to select an object or tool
-obj = RDK.ItemUserPick('Select an object or tool to scale')
+obj = RDK.ItemUserPick('Select an object or tool to scale', RDK.ItemList(ITEM_TYPE_TOOL) + RDK.ItemList(ITEM_TYPE_OBJECT))
 if not obj.Valid():
     quit(0)
 
