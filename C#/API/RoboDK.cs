@@ -2080,8 +2080,7 @@ namespace RoboDk.API
             return selectedItem;
         }
 
-
-
+        /// <inheritdoc />
         public IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
             var target = AddTarget(targetName, robotBase, robot);
@@ -2102,6 +2101,27 @@ namespace RoboDk.API
             pgm.AddMoveJ(target);
 
             return target;
+        }
+
+        /// <inheritdoc />
+        public bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500)
+        {
+            check_connection();
+            send_line("WinProcDock");
+            send_line(dockedName != null ? dockedName : windowName);
+            send_line(windowName);
+
+            double[] size = { width, height };
+            send_array(size);
+
+            send_line(pid.ToString(CultureInfo.InvariantCulture));
+            send_int(areaAdd);
+            send_int(areaAllowed);
+            send_int(timeout);
+
+            int result = rec_int();
+            check_status();
+            return (result > 0);
         }
 
         #endregion

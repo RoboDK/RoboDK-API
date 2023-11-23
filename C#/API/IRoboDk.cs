@@ -953,7 +953,22 @@ namespace RoboDk.API
         /// <param name="joints"></param>
         /// <param name="robotBase"></param>
         /// <param name="robot"></param>
+        /// <returns>New target item created.</returns>
         IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null);
+
+        /// <summary>
+        /// Embed a window from a separate process in RoboDK as a docked window
+        /// </summary>
+        /// <param name="windowName">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
+        /// <param name="dockedName">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="pid">Process ID (optional)</param>
+        /// <param name="areaAdd">Set to 1 (right) or 2 (left) (default is 1)</param>
+        /// <param name="areaAllowed">Areas allowed (default is 15: no constrain)</param>
+        /// <param name="timeout">Timeout to abort attempting to embed the window (optional)</param>
+        /// <returns>Returns true if successful.</returns>
+        bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500);
 
         #endregion
     }

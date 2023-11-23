@@ -49,6 +49,7 @@ using System.Net;
 using System.Threading;
 using System.Drawing;
 using System.Linq;
+using System.Globalization;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -4725,6 +4726,38 @@ public class RoboDK
             xyz_station.Add(xyz[0]); xyz_station.Add(xyz[1]); xyz_station.Add(xyz[2]);
         }
         return selected_item;
+    }
+
+    /// <summary>
+    /// Embed a window from a separate process in RoboDK as a docked window
+    /// </summary>
+    /// <param name="windowName">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
+    /// <param name="dockedName">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="pid">Process ID (optional)</param>
+    /// <param name="areaAdd">Set to 1 (right) or 2 (left) (default is 1)</param>
+    /// <param name="areaAllowed">Areas allowed (default is 15: no constrain)</param>
+    /// <param name="timeout">Timeout to abort attempting to embed the window (optional)</param>
+    /// <returns>Returns true if successful.</returns>    
+    public bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500)
+    {
+        _check_connection();
+        _send_Line("WinProcDock");
+        _send_Line(dockedName != null ? dockedName : windowName);
+        _send_Line(windowName);
+
+        double[] size = { width, height };
+        _send_Array(size);
+
+        _send_Line(pid.ToString(CultureInfo.InvariantCulture));
+        _send_Int(areaAdd);
+        _send_Int(areaAllowed);
+        _send_Int(timeout);
+
+        int result = _recv_Int();
+        _check_status();
+        return (result > 0);
     }
 
     /// <summary>
