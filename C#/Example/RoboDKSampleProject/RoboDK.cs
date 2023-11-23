@@ -4731,28 +4731,28 @@ public class RoboDK
     /// <summary>
     /// Embed a window from a separate process in RoboDK as a docked window
     /// </summary>
-    /// <param name="windowName">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
-    /// <param name="dockedName">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
+    /// <param name="window_name">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
+    /// <param name="docked_name">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
+    /// <param name="size_w"></param>
+    /// <param name="size_h"></param>
     /// <param name="pid">Process ID (optional)</param>
-    /// <param name="areaAdd">Set to 1 (right) or 2 (left) (default is 1)</param>
-    /// <param name="areaAllowed">Areas allowed (default is 15: no constrain)</param>
+    /// <param name="area_add">Set to 1 (right) or 2 (left) (default is 1)</param>
+    /// <param name="area_allowed">Areas allowed (default is 15: no constrain)</param>
     /// <param name="timeout">Timeout to abort attempting to embed the window (optional)</param>
     /// <returns>Returns true if successful.</returns>    
-    public bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500)
+    public bool EmbedWindow(string window_name, string docked_name = null, int size_w = -1, int size_h = -1, int pid = 0, int area_add = 1, int area_allowed = 15, int timeout = 500)
     {
         _check_connection();
         _send_Line("WinProcDock");
-        _send_Line(dockedName != null ? dockedName : windowName);
-        _send_Line(windowName);
+        _send_Line(docked_name != null ? docked_name : window_name);
+        _send_Line(window_name);
 
-        double[] size = { width, height };
+        double[] size = { size_w, size_h };
         _send_Array(size);
 
         _send_Line(pid.ToString(CultureInfo.InvariantCulture));
-        _send_Int(areaAdd);
-        _send_Int(areaAllowed);
+        _send_Int(area_add);
+        _send_Int(area_allowed);
         _send_Int(timeout);
 
         int result = _recv_Int();
