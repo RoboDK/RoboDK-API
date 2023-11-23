@@ -2356,8 +2356,8 @@ struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst) {
 bool _RoboDK_check_status(struct RoboDK_t *inst) {
 	int32_t status = _RoboDK_recv_Int(inst);
 	if (status == 0) {
-		// everything is OK
-		//status = status
+		// Everything is OK
+		return true;
 	}
 	else if (status > 0 && status < 10) {
 		if (status == 1) {
@@ -2367,7 +2367,6 @@ bool _RoboDK_check_status(struct RoboDK_t *inst) {
 			char strProblems[MAX_STR_LENGTH];
 			_RoboDK_recv_Line(inst, strProblems);
 			fprintf(stderr, "RoboDK API WARNING: %s\n", strProblems);
-			return 0;
 		}
 		else if (status == 3) { // output error
 			char strProblems[MAX_STR_LENGTH];
@@ -2380,8 +2379,6 @@ bool _RoboDK_check_status(struct RoboDK_t *inst) {
 		else {
 			fprintf(stderr, "Unknown error");
 		}
-		//print(strproblems);
-		//throw new RDKException(strproblems); //raise Exception(strproblems)
 	}
 	else if (status < 100) {
 		char strProblems[MAX_STR_LENGTH];
@@ -2391,7 +2388,8 @@ bool _RoboDK_check_status(struct RoboDK_t *inst) {
 	else {
 		fprintf(stderr, "Communication problems with the RoboDK API");
 	}
-	return status;
+	
+	return false;
 }
 
 
@@ -2425,12 +2423,11 @@ void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const str
 		return;
 	}
 	_RoboDK_send_Item(inst, itemrobot);
-	_RoboDK_check_status(inst);
+	if (!_RoboDK_check_status(inst))
+		return;
+
 	if (blocking) {
-		//Item_WaitMove(itemrobot, 300);
-		setSocketTimeout(inst->_COM, 3600 * 1000); // wait 1h at most
-		_RoboDK_check_status(inst);
-		setSocketTimeout(inst->_COM, inst->_TIMEOUT);
+		Item_WaitMove(itemrobot, 300);
 	}
 }
 
