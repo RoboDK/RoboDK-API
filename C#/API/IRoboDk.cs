@@ -970,6 +970,13 @@ namespace RoboDk.API
         /// <returns>Returns true if successful.</returns>
         bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500);
 
+        /// <summary>
+        /// Retrieves the object under the mouse cursor
+        /// </summary>
+        /// <param name="featureType">Set to ObjectSelectionType.HoverObjectMesh to retrieve object under the mouse cursor, the selected feature and mesh, or ObjectSelectionType.HoverObject if you don't need the mesh (faster)</param>
+        /// <returns>Returns GetPointsResult with an object under the mouse cursor, selected feature, feature id, list of points and description.</returns>
+        GetPointsResult GetPoints(ObjectSelectionType featureType = ObjectSelectionType.HoverObjectMesh);
+
         #endregion
     }
 }

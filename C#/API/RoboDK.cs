@@ -2124,6 +2124,38 @@ namespace RoboDk.API
             return (result > 0);
         }
 
+        /// <inheritdoc />
+        public GetPointsResult GetPoints(ObjectSelectionType featureType = ObjectSelectionType.HoverObjectMesh)
+        {
+            if (featureType < ObjectSelectionType.HoverObjectMesh)
+            {
+                throw new RdkException("Invalid feature type, use ObjectSelectionType.HoverObjectMesh, ObjectSelectionType.HoverObject or equivalent");
+            }
+
+            check_connection();
+            send_line("G_ObjPoint");
+            send_item(null);
+            send_int((int)featureType);
+
+            int featureId = 0;
+            send_int(0);
+            
+            Mat points = null;
+            if (featureType == ObjectSelectionType.HoverObjectMesh)
+            {
+                points = rec_matrix();
+            }
+
+            IItem item = rec_item();
+            rec_int(); // IsFrame
+            featureType = (ObjectSelectionType)rec_int();
+            featureId = rec_int();
+            string name = rec_line();
+            check_status();
+
+            return new GetPointsResult(item, featureType, featureId, name, points);
+        }
+
         #endregion
 
         #region Protected Methods

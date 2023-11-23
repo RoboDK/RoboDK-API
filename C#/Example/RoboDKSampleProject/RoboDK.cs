@@ -1623,6 +1623,11 @@ public class RoboDK
     public const int FEATURE_SURFACE = 1;
     public const int FEATURE_CURVE = 2;
     public const int FEATURE_POINT = 3;
+    public const int FEATURE_OBJECT_MESH = 7;
+    public const int FEATURE_SURFACE_PREVIEW = 8;
+    public const int FEATURE_MESH = 9;
+    public const int FEATURE_HOVER_OBJECT_MESH = 10;
+    public const int FEATURE_HOVER_OBJECT = 11;
 
     // Spray gun simulation:
     public const int SPRAY_OFF = 0;
@@ -4758,6 +4763,44 @@ public class RoboDK
         int result = _recv_Int();
         _check_status();
         return (result > 0);
+    }
+
+    /// <summary>
+    /// Retrieves the object under the mouse cursor
+    /// </summary>
+    /// <param name="feature_type">Set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster)</param>
+    /// <param name="feature_id">Retrieved feature ID</param>
+    /// <param name="feature_name">Retrieved feature name</param>
+    /// <param name="points">Retrieved points</param>
+    /// <returns>Returns an object under the mouse cursor.</returns>
+    public Item GetPoints(ref int feature_type, out int feature_id, out string feature_name, out Mat points)
+    {
+        if (feature_type < RoboDK.FEATURE_HOVER_OBJECT_MESH)
+        {
+            throw new RDKException("Invalid feature type, use FEATURE_HOVER_OBJECT_MESH, FEATURE_HOVER_OBJECT or equivalent");
+        }
+
+        _check_connection();
+        _send_Line("G_ObjPoint");
+        _send_Item(null);
+        _send_Int(feature_type);
+
+        _send_Int(0);
+
+        points = null;
+        if (feature_type == RoboDK.FEATURE_HOVER_OBJECT_MESH)
+        {
+            points = _recv_Matrix2D();
+        }
+
+        Item item = _recv_Item();
+        _recv_Int(); // IsFrame
+        feature_type = _recv_Int();
+        feature_id = _recv_Int();
+        feature_name = _recv_Line();
+        _check_status();
+
+        return item;
     }
 
     /// <summary>
