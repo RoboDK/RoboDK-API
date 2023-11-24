@@ -49,7 +49,6 @@ using System.Net;
 using System.Threading;
 using System.Drawing;
 using System.Linq;
-using System.Globalization;
 
 /// <summary>
 /// Matrix class for robotics. 
@@ -4755,7 +4754,7 @@ public class RoboDK
         double[] size = { size_w, size_h };
         _send_Array(size);
 
-        _send_Line(pid.ToString(CultureInfo.InvariantCulture));
+        _send_Line(pid.ToString());
         _send_Int(area_add);
         _send_Int(area_allowed);
         _send_Int(timeout);
@@ -4829,6 +4828,27 @@ public class RoboDK
         _check_status();
 
         return pose;
+    }
+
+    /// <summary>
+    /// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin
+    /// </summary>
+    /// <param name="plugin_name">The plugin name must match the PluginName() implementation in the RoboDK plugin</param>
+    /// <param name="plugin_command">Specific command handled by your plugin</param>
+    /// <param name="value">Specific value (optional) handled by your plugin</param>
+    /// <returns>Returns the result as a string.</returns>
+    public string PluginCommand(string plugin_name, string plugin_command, string value)
+    {
+        _check_connection();
+        _send_Line("PluginCommand");
+        _send_Line(plugin_name);
+        _send_Line(plugin_command);
+        _send_Line(value);
+        _COM.ReceiveTimeout = 3600 * 24 * 7;
+        string result = _recv_Line();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return result;
     }
 
     /// <summary>

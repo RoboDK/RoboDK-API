@@ -986,6 +986,15 @@ namespace RoboDk.API
         /// <returns>Returns MeasurePoseResult with a pose of measured object reference frame, and error values in mm.</returns>
         MeasurePoseResult MeasurePose(int target = -1, int averageTime = 0, List<double> tipOffset = null);
 
+        /// <summary>
+        /// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin
+        /// </summary>
+        /// <param name="pluginName">The plugin name must match the PluginName() implementation in the RoboDK plugin</param>
+        /// <param name="command">Specific command handled by your plugin</param>
+        /// <param name="value">Specific value (optional) handled by your plugin</param>
+        /// <returns>Returns the result as a string.</returns>
+        string PluginCommand(string pluginName, string command, string value);
+
         #endregion
     }
 }

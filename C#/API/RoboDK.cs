@@ -2177,6 +2177,21 @@ namespace RoboDk.API
             return new MeasurePoseResult(pose, array[0], array[1]);
         }
 
+        /// <inheritdoc />
+        public string PluginCommand(string pluginName, string command, string value)
+        {
+            check_connection();
+            send_line("PluginCommand");
+            send_line(pluginName);
+            send_line(command);
+            send_line(value);
+            ReceiveTimeout = 3600 * 24 * 7;
+            string result = rec_line();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods
