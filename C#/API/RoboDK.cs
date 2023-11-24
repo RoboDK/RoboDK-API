@@ -2192,6 +2192,20 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public bool PluginLoad(string pluginName, PluginOperation operation = PluginOperation.Load)
+        {
+            switch (operation)
+            {
+                case PluginOperation.Load:
+                    return (Command("PluginLoad", pluginName) == "OK");
+                case PluginOperation.Reload:
+                    Command("PluginUnload", pluginName);
+                    return (Command("PluginLoad", pluginName) == "OK");
+            }
+            return (Command("PluginUnload", pluginName) == "OK");
+        }
+
         #endregion
 
         #region Protected Methods

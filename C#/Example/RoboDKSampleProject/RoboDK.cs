@@ -4852,6 +4852,25 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin name to reload all plugins
+    /// </summary>
+    /// <param name="plugin_name">The name of the plugin or path (if it is not in the default directory)</param>
+    /// <param name="load">Type of operation (0 - unload, 1 - load, 2 - reload)</param>
+    /// <returns>Boolean result of operation.</returns>
+    public bool PluginLoad(string plugin_name, int load = 1)
+    {
+        switch (load)
+        {
+            case 1:
+                return (Command("PluginLoad", plugin_name) == "OK");
+            case 2:
+                Command("PluginUnload", plugin_name);
+                return (Command("PluginLoad", plugin_name) == "OK");
+        }
+        return (Command("PluginUnload", plugin_name) == "OK");
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes

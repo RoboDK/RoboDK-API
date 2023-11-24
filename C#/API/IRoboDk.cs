@@ -995,6 +995,14 @@ namespace RoboDk.API
         /// <returns>Returns the result as a string.</returns>
         string PluginCommand(string pluginName, string command, string value);
 
+        /// <summary>
+        /// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin name to reload all plugins
+        /// </summary>
+        /// <param name="pluginName">The name of the plugin or path (if it is not in the default directory)</param>
+        /// <param name="operation">Type of operation (load, unload, reload)</param>
+        /// <returns>Boolean result of operation.</returns>
+        bool PluginLoad(string pluginName, PluginOperation operation = PluginOperation.Load);
+
         #endregion
     }
 }
