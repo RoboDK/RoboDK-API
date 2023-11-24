@@ -977,6 +977,15 @@ namespace RoboDk.API
         /// <returns>Returns GetPointsResult with an object under the mouse cursor, selected feature, feature id, list of points and description.</returns>
         GetPointsResult GetPoints(ObjectSelectionType featureType = ObjectSelectionType.HoverObjectMesh);
 
+        /// <summary>
+        /// Takes a measurement with a 6D measurement device
+        /// </summary>
+        /// <param name="target">Target type</param>
+        /// <param name="averageTime">Take the measurement for a period of time and average the result</param>
+        /// <param name="tipOffset">Offet the measurement to the tip</param>
+        /// <returns>Returns MeasurePoseResult with a pose of measured object reference frame, and error values in mm.</returns>
+        MeasurePoseResult MeasurePose(int target = -1, int averageTime = 0, List<double> tipOffset = null);
+
         #endregion
     }
 }

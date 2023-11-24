@@ -4804,6 +4804,34 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Takes a measurement with a 6D measurement device
+    /// </summary>
+    /// <param name="errors">Extra data is [error_avg, error_max] in mm, if we are averaging a pose</param>
+    /// <param name="target">Target type</param>
+    /// <param name="time_avg_ms">Take the measurement for a period of time and average the result</param>
+    /// <param name="tip_xyz">Offet the measurement to the tip</param>
+    /// <returns>Returns MeasurePoseResult with a pose of measured object reference frame, and error values in mm.</returns>
+    public Mat MeasurePose(out double[] errors, int target = -1, int time_avg_ms = 0, List<double> tip_xyz = null)
+    {
+        double[] array = { (double)target, (double)time_avg_ms, 0.0, 0.0, 0.0 };
+        if (tip_xyz != null && tip_xyz.Count >= 3)
+        {
+            array[2] = tip_xyz[0];
+            array[3] = tip_xyz[1];
+            array[4] = tip_xyz[2];
+        }
+
+        _check_connection();
+        _send_Line("MeasPose4");
+        _send_Array(array);
+        Mat pose = _recv_Pose();
+        errors = _recv_Array();
+        _check_status();
+
+        return pose;
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes

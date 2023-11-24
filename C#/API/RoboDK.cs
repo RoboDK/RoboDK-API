@@ -2156,6 +2156,27 @@ namespace RoboDk.API
             return new GetPointsResult(item, featureType, featureId, name, points);
         }
 
+        /// <inheritdoc />
+        public MeasurePoseResult MeasurePose(int target = -1, int averageTime = 0, List<double> tipOffset = null)
+        {
+            double[] array = { (double)target, (double)averageTime, 0.0, 0.0, 0.0 };
+            if (tipOffset != null && tipOffset.Count >= 3)
+            {
+                array[2] = tipOffset[0];
+                array[3] = tipOffset[1];
+                array[4] = tipOffset[2];
+            }
+
+            check_connection();
+            send_line("MeasPose4");
+            send_array(array);
+            Mat pose = rec_pose();
+            array = rec_array();
+            check_status();
+
+            return new MeasurePoseResult(pose, array[0], array[1]);
+        }
+
         #endregion
 
         #region Protected Methods
