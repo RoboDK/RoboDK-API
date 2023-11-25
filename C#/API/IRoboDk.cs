@@ -1011,6 +1011,18 @@ namespace RoboDk.API
         /// <returns>Returns the simulation time in seconds.</returns>
         double GetSimulationTime();
 
+        /// <summary>
+        ///     Add a simulated spray gun that allows projecting particles to a part.
+        ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.
+        /// </summary>
+        /// <param name="tool">Active tool (null for auto detect)</param>
+        /// <param name="referenceObject">Object in active reference frame (null for auto detect)</param>
+        /// <param name="parameters">A string specifying the behavior of the simulated particles</param>
+        /// <param name="points">Provide the volume as a list of points as described in the sample macro SprayOn.py</param>
+        /// <param name="geometry">Provide a list of points describing triangles to define a specific particle geometry</param>
+        /// <returns>Returns ID of the spray gun.</returns>
+        int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null);
+
         #endregion
     }
 }

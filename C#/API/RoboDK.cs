@@ -2216,6 +2216,21 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null)
+        {
+            check_connection();
+            send_line("Gun_Add");
+            send_item(tool);
+            send_item(referenceObject);
+            send_line(parameters);
+            send_matrix(points);
+            send_matrix(geometry);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods

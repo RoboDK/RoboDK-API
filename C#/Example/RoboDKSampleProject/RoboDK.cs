@@ -4886,6 +4886,30 @@ public class RoboDK
     }
 
     /// <summary>
+    ///     Add a simulated spray gun that allows projecting particles to a part.
+    ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.
+    /// </summary>
+    /// <param name="item_tool">Active tool (null for auto detect)</param>
+    /// <param name="item_object">Object in active reference frame (null for auto detect)</param>
+    /// <param name="parameters">A string specifying the behavior of the simulated particles</param>
+    /// <param name="points">Provide the volume as a list of points as described in the sample macro SprayOn.py</param>
+    /// <param name="geometry">Provide a list of points describing triangles to define a specific particle geometry</param>
+    /// <returns>Returns ID of the spray gun.</returns>    
+    public int Spray_Add(Item item_tool = null, Item item_object = null, string parameters = "", Mat points = null, Mat geometry = null)
+    {
+        _check_connection();
+        _send_Line("Gun_Add");
+        _send_Item(item_tool);
+        _send_Item(item_object);
+        _send_Line(parameters);
+        _send_Matrix2D(points);
+        _send_Matrix2D(geometry);
+        int result = _recv_Int();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes
