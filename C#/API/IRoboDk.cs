@@ -1038,6 +1038,14 @@ namespace RoboDk.API
         /// <returns>Returns statistics string.</returns>
         string SprayGetStats(out Mat data, int sprayId = -1);
 
+        /// <summary>
+        /// Sets the state of a simulated spray gun (ON or OFF)
+        /// </summary>
+        /// <param name="state">Set to SprayGunStates.SprayOn or SprayGunStates.SprayOff</param>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns result code of the operation.</returns>
+        int SpraySetState(SprayGunStates state = SprayGunStates.SprayOn, int sprayId = -1);
+
         #endregion
     }
 }

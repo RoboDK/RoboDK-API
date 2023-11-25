@@ -2254,6 +2254,18 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public int SpraySetState(SprayGunStates state = SprayGunStates.SprayOn, int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_SetState");
+            send_int(sprayId);
+            send_int((int)state);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods

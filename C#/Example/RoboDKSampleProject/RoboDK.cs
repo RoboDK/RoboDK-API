@@ -4928,7 +4928,7 @@ public class RoboDK
     /// Gets statistics from all simulated spray guns or a specific spray gun
     /// </summary>
     /// <param name="data">Extra data output</param>
-    /// <param name="id_spray">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
     /// <returns>Returns statistics string.</returns>
     public string Spray_GetStats(out Mat data, int id_spray = -1)
     {
@@ -4937,6 +4937,23 @@ public class RoboDK
         _send_Int(id_spray);
         string result = _recv_Line().Replace("<br>", "\t");
         data = _recv_Matrix2D();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    /// Sets the state of a simulated spray gun (ON or OFF)
+    /// </summary>
+    /// <param name="state">Set to SPRAY_ON or SPRAY_OFF</param>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns result code of the operation.</returns>
+    public int Spray_SetState(int state = SPRAY_ON, int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_SetState");
+        _send_Int(id_spray);
+        _send_Int(state);
+        int result = _recv_Int();
         _check_status();
         return result;
     }
