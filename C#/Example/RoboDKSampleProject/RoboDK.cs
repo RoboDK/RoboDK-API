@@ -4910,6 +4910,21 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Stops simulating a spray gun. This will clear the simulated particles.
+    /// </summary>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns result code of the operation.</returns>
+    public int Spray_Clear(int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_Clear");
+        _send_Int(id_spray);
+        int result = _recv_Int();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes

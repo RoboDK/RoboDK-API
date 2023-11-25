@@ -2231,6 +2231,17 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public int SprayClear(int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_Clear");
+            send_int(sprayId);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods

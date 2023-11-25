@@ -1023,6 +1023,13 @@ namespace RoboDk.API
         /// <returns>Returns ID of the spray gun.</returns>
         int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null);
 
+        /// <summary>
+        /// Stops simulating a spray gun. This will clear the simulated particles.
+        /// </summary>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns result code of the operation.</returns>
+        int SprayClear(int sprayId = -1);
+
         #endregion
     }
 }
