@@ -4925,6 +4925,23 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Gets statistics from all simulated spray guns or a specific spray gun
+    /// </summary>
+    /// <param name="data">Extra data output</param>
+    /// <param name="id_spray">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns statistics string.</returns>
+    public string Spray_GetStats(out Mat data, int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_Stats");
+        _send_Int(id_spray);
+        string result = _recv_Line().Replace("<br>", "\t");
+        data = _recv_Matrix2D();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes

@@ -1006,14 +1006,14 @@ namespace RoboDk.API
         /// <summary>
         ///     Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
         ///     The simulation time changes depending on the simulation speed.
-        ///     The simulation time is usually faster than the real time (5 times by default).
+        ///     The simulation time is usually faster than the real time (5 times by default)
         /// </summary>
         /// <returns>Returns the simulation time in seconds.</returns>
         double GetSimulationTime();
 
         /// <summary>
         ///     Add a simulated spray gun that allows projecting particles to a part.
-        ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.
+        ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace
         /// </summary>
         /// <param name="tool">Active tool (null for auto detect)</param>
         /// <param name="referenceObject">Object in active reference frame (null for auto detect)</param>
@@ -1024,11 +1024,19 @@ namespace RoboDk.API
         int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null);
 
         /// <summary>
-        /// Stops simulating a spray gun. This will clear the simulated particles.
+        /// Stops simulating a spray gun. This will clear the simulated particles
         /// </summary>
         /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
         /// <returns>Returns result code of the operation.</returns>
         int SprayClear(int sprayId = -1);
+
+        /// <summary>
+        /// Gets statistics from all simulated spray guns or a specific spray gun
+        /// </summary>
+        /// <param name="data">Extra data output</param>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns statistics string.</returns>
+        string SprayGetStats(out Mat data, int sprayId = -1);
 
         #endregion
     }

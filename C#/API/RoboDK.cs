@@ -2242,6 +2242,18 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public string SprayGetStats(out Mat data, int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_Stats");
+            send_int(sprayId);
+            string result = rec_line().Replace("<br>", "\t");
+            data = rec_matrix();
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods
