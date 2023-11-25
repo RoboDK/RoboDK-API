@@ -2206,6 +2206,16 @@ namespace RoboDk.API
             return (Command("PluginUnload", pluginName) == "OK");
         }
 
+        /// <inheritdoc />
+        public double GetSimulationTime()
+        {
+            check_connection();
+            send_line("GetSimTime");
+            double result = (double)rec_int() / 1000.0;
+            check_status();
+            return result;
+        }
+
         #endregion
 
         #region Protected Methods

@@ -1000,8 +1000,16 @@ namespace RoboDk.API
         /// </summary>
         /// <param name="pluginName">The name of the plugin or path (if it is not in the default directory)</param>
         /// <param name="operation">Type of operation (load, unload, reload)</param>
-        /// <returns>Boolean result of operation.</returns>
+        /// <returns>Returns boolean result of operation.</returns>
         bool PluginLoad(string pluginName, PluginOperation operation = PluginOperation.Load);
+
+        /// <summary>
+        ///     Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
+        ///     The simulation time changes depending on the simulation speed.
+        ///     The simulation time is usually faster than the real time (5 times by default).
+        /// </summary>
+        /// <returns>Returns the simulation time in seconds.</returns>
+        double GetSimulationTime();
 
         #endregion
     }

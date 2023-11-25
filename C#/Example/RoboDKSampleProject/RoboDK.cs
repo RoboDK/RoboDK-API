@@ -4871,6 +4871,21 @@ public class RoboDK
     }
 
     /// <summary>
+    ///     Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
+    ///     The simulation time changes depending on the simulation speed.
+    ///     The simulation time is usually faster than the real time (5 times by default).
+    /// </summary>
+    /// <returns>Returns the simulation time in seconds.</returns>
+    public double SimulationTime()
+    {
+        _check_connection();
+        _send_Line("GetSimTime");
+        double result = (double)_recv_Int() / 1000.0;
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes
