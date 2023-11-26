@@ -4989,6 +4989,36 @@ public class RoboDK
     }
 
     /// <summary>
+    ///     Sets the relative positions (poses) of a list of items with respect to their parent.
+    ///     For example, the position of an object/frame/target with respect to its parent.
+    ///     Use this function instead of setPose() for faster speed.
+    /// </summary>
+    /// <param name="items">List of items</param>
+    /// <param name="poses">List of poses for each item</param>    
+    public void setPoses(List<Item> items, List<Mat> poses)
+    {
+        if (items.Count != poses.Count)
+        {
+            throw new RDKException("The number of items must match the number of poses");
+        }
+
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        _check_connection();
+        _send_Line("S_Hlocals");
+        _send_Int(items.Count);
+        for (int i = 0; i < items.Count; i++)
+        {
+            _send_Item(items[i]);
+            _send_Pose(poses[i]);
+        }
+        _check_status();
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes

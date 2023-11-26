@@ -2300,6 +2300,29 @@ namespace RoboDk.API
             return result;
         }
 
+        public void SetPoses(List<IItem> items, List<Mat> poses)
+        {
+            if (items.Count != poses.Count)
+            {
+                throw new RdkException("The number of items must match the number of poses");
+            }
+
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            check_connection();
+            send_line("S_Hlocals");
+            send_int(items.Count);
+            for (int i = 0; i < items.Count; i++)
+            {
+                send_item(items[i]);
+                send_pose(poses[i]);
+            }
+            check_status();
+        }
+
         #endregion
 
         #region Protected Methods

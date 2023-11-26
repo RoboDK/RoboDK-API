@@ -1070,6 +1070,15 @@ namespace RoboDk.API
         /// <returns>Returns result code of the operation.</returns>
         int SpraySetState(SprayGunStates state = SprayGunStates.SprayOn, int sprayId = -1);
 
+        /// <summary>
+        ///     Sets the relative positions (poses) of a list of items with respect to their parent.
+        ///     For example, the position of an object/frame/target with respect to its parent.
+        ///     Use this function instead of setPose() for faster speed.
+        /// </summary>
+        /// <param name="items">List of items</param>
+        /// <param name="poses">List of poses for each item</param>
+        void SetPoses(List<IItem> items, List<Mat> poses);
+
         #endregion
     }
 }
