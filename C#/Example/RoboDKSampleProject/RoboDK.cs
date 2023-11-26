@@ -3146,10 +3146,10 @@ public class RoboDK
     }
 
     /// <summary>
-    /// Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
+    /// Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features.
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
+    /// <param name="item">Item to get flags</param>
+    /// <returns>Returns flags (FLAG_ITEM_*) of the item.</returns>
     public int getFlagsItem(Item item)
     {
         _check_connection();

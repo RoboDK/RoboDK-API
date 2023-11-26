@@ -336,6 +336,14 @@ namespace RoboDk.API
         void SetWindowFlags(WindowFlags flags);
 
         /// <summary>
+        /// Retrieve current item flags.
+        /// Item flags allow defining how much access the user has to item-specific features.
+        /// </summary>
+        /// <param name="item">Item to get flags</param>
+        /// <returns>Returns ItemFlags of the item.</returns>
+        ItemFlags GetItemFlags(IItem item);
+
+        /// <summary>
         /// Update global item flags.
         /// Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
         /// </summary>

@@ -915,6 +915,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public ItemFlags GetItemFlags(IItem item)
+        {
+            check_connection();
+            send_line("G_Item_Rights");
+            send_item(item);
+            ItemFlags result = (ItemFlags)rec_int();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
         public void SetItemFlags(ItemFlags itemFlags = ItemFlags.All)
         {
             var flags = (int) itemFlags;
