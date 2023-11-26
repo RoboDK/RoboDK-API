@@ -1073,11 +1073,20 @@ namespace RoboDk.API
         /// <summary>
         ///     Sets the relative positions (poses) of a list of items with respect to their parent.
         ///     For example, the position of an object/frame/target with respect to its parent.
-        ///     Use this function instead of setPose() for faster speed.
+        ///     Use this function instead of SetPose() for faster speed.
         /// </summary>
         /// <param name="items">List of items</param>
         /// <param name="poses">List of poses for each item</param>
         void SetPoses(List<IItem> items, List<Mat> poses);
+
+        /// <summary>
+        ///     Set the absolute positions (poses) of a list of items with respect to the station reference.
+        ///     For example, the position of an object/frame/target with respect to its parent.
+        ///     Use this function instead of SetPoseAbs() for faster speed.
+        /// </summary>
+        /// <param name="items">List of items</param>
+        /// <param name="poses">List of poses for each item</param>        
+        void SetPosesAbs(List<IItem> items, List<Mat> poses);
 
         #endregion
     }
