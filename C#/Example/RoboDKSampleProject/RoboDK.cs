@@ -3867,6 +3867,36 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Gets a global or a user binary parameter from the open RoboDK station
+    /// </summary>
+    /// <param name="param">RoboDK parameter</param>
+    /// <returns>Arrray of bytes.</returns>
+    public byte[] getBinaryParam(string param)
+    {
+        _check_connection();
+        _send_Line("G_DataParam");
+        _send_Line(param);
+        byte[] value = _recv_bytes();
+        _check_status();
+        return value;
+    }
+
+    /// <summary>
+    /// Sets a global binary parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+    /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+    /// </summary>
+    /// <param name="param">RoboDK parameter name</param>
+    /// <param name="value">Parameter binary data</param>
+    public void setBinaryParam(string param, byte[] value)
+    {
+        _check_connection();
+        _send_Line("S_DataParam");
+        _send_Line(param);
+        _send_bytes(value);
+        _check_status();
+    }
+
+    /// <summary>
     /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
     /// </summary>
     /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>

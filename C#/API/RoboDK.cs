@@ -1394,6 +1394,29 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public byte[] GetBinaryParameter(string parameter)
+        {
+            check_connection();
+            const string command = "G_DataParam";
+            send_line(command);
+            send_line(parameter);
+            var value = rec_bytes();
+            check_status();
+            return value;
+        }
+
+        /// <inheritdoc />
+        public void SetBinaryParameter(string parameter, byte[] data)
+        {
+            check_connection();
+            var command = "S_DataParam";
+            send_line(command);
+            send_line(parameter);
+            send_bytes(data);
+            check_status();
+        }
+
+        /// <inheritdoc />
         public string Command(string cmd, string value = "")
         {
             check_connection();

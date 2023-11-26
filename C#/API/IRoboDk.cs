@@ -626,6 +626,22 @@ namespace RoboDk.API
         void SetParameter(string parameter, double value);
 
         /// <summary>
+        /// Gets a global or a user binary parameter from the open RoboDK station
+        /// </summary>
+        /// <param name="parameter">RoboDK parameter</param>
+        /// <returns>Arrray of bytes.</returns>
+        byte[] GetBinaryParameter(string parameter);
+
+        /// <summary>
+        /// Sets a global binary parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+        /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+        /// </summary>
+        /// <param name="parameter">RoboDK parameter name</param>
+        /// <param name="data">Parameter binary data</param>
+        void SetBinaryParameter(string parameter, byte[] data);
+
+
+        /// <summary>
         /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
         /// </summary>
         /// <param name="cmd">Command Name, such as Trace, Threads or Window.</param>
