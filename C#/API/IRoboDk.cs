@@ -1088,6 +1088,21 @@ namespace RoboDk.API
         /// <param name="poses">List of poses for each item</param>        
         void SetPosesAbs(List<IItem> items, List<Mat> poses);
 
+        /// <summary>
+        ///     Displays a sequence of joints
+        /// </summary>
+        /// <param name="sequence">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+        void ShowSequence(Mat sequence);
+
+        /// <summary>
+        ///     Displays a sequence of joints or poses
+        /// </summary>
+        /// <param name="joints">List of joint arrays</param>
+        /// <param name="poses">List of poses</param>
+        /// <param name="flags">Display options</param>
+        /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>        
+        void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1);
+
         #endregion
     }
 }

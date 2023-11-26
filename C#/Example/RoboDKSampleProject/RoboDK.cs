@@ -1755,6 +1755,17 @@ public class RoboDK
     public const int VISIBLE_ROBOT_ALL = 0x7FFFFFFF;
     public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
 
+    // ShowSequence() display type flags (use as mask)
+    public const int SEQUENCE_DISPLAY_DEFAULT = -1;          // Default sequence display flag
+    public const int SEQUENCE_DISPLAY_TOOL_POSES = 0;        // Using tool poses (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_ROBOT_POSES = 256;     // Using robot poses (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_ROBOT_JOINTS = 2048;   // Using robot joints (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_SELECTED = 1;    // Selected color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_TRANSPARENT = 2; // Transparent color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_GOOD = 3;        // Good (green) color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_BAD = 4;         // Bad (red) color sequence display flag
+    public const int SEQUENCE_DISPLAY_OPTION_RESET = 1024;   // Reset previous sequences (force timeout) sequence display flag
+
     // Saturate robot joints when using robot.setJoints()
     public const int SETJOINTS_DEFAULT = 0;         // Default behavior, will saturate the joints and apply the result. This option is used for older versions of RoboDK.
     public const int SETJOINTS_ALWAYS = 1;          // setJoints will apply the robot joints in any case. The robot may be displayed in an invalid solution: robot panel values and sliders will not show the correct robot position.
@@ -5049,6 +5060,27 @@ public class RoboDK
     }
 
     /// <summary>
+    /// Displays a sequence of joints
+    /// </summary>
+    /// <param name="sequence">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+    public void ShowSequence(Mat sequence)
+    {
+        new Item(this).ShowSequence(sequence);
+    }
+
+    /// <summary>
+    ///     Displays a sequence of joints or poses
+    /// </summary>
+    /// <param name="joints">List of joint arrays</param>
+    /// <param name="poses">List of poses</param>
+    /// <param name="display_type">Display options</param>
+    /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>
+    public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, int display_type = SEQUENCE_DISPLAY_DEFAULT, int timeout = -1)
+    {
+        new Item(this).ShowSequence(joints, poses, display_type, timeout);
+    }
+
+    /// <summary>
     /// The Item class represents an item in RoboDK station. An item can be a robot, a frame, a tool, an object, a target, ... any item visible in the station tree.
     /// An item can also be seen as a node where other items can be attached to (child items).
     /// Every item has one parent item/node and can have one or more child items/nodes
@@ -6550,6 +6582,43 @@ public class RoboDK
             link._check_status();
         }
 
+        /// <summary>
+        ///     Displays a sequence of joints or poses
+        /// </summary>
+        /// <param name="joints">List of joint arrays</param>
+        /// <param name="poses">List of poses</param>
+        /// <param name="display_type">Display options</param>
+        /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>
+        public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, int display_type = SEQUENCE_DISPLAY_DEFAULT, int timeout = -1)
+        {
+            if (joints == null && poses == null)
+            {
+                return;
+            }
+
+            link._check_connection();
+            link._send_Line("Show_SeqPoses");
+            link._send_Item(this);
+            double[] options = { (double)display_type, (double)timeout };
+            link._send_Array(options);
+            if (display_type != SEQUENCE_DISPLAY_DEFAULT && (display_type & SEQUENCE_DISPLAY_ROBOT_JOINTS) != 0)
+            {
+                link._send_Int(joints.Count);
+                for (int i = 0; i < joints.Count; i++)
+                {
+                    link._send_Array(joints[i]);
+                }
+            }
+            else
+            {
+                link._send_Int(poses.Count);
+                for (int i = 0; i < poses.Count; i++)
+                {
+                    link._send_Pose(poses[i]);
+                }
+            }
+            link._check_status();
+        }
 
         /// <summary>
         /// Checks if a robot or program is currently running (busy or moving)

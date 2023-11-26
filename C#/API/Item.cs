@@ -1318,6 +1318,38 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+        /// <inheritdoc />
+        public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1)
+        {
+            if (joints == null && poses == null)
+            {
+                return;
+            }
+
+            Link.check_connection();
+            var command = "Show_SeqPoses";
+            Link.send_line(command);
+            Link.send_item(this);
+            double[] options = { (double)flags, (double)timeout };
+            Link.send_array(options);
+            if (flags != SequenceDisplayFlags.Default && flags.HasFlag(SequenceDisplayFlags.RobotJoints))
+            {
+                Link.send_int(joints.Count);
+                for (int i = 0; i < joints.Count; i++)
+                {
+                    Link.send_array(joints[i]);
+                }
+            }
+            else
+            {
+                Link.send_int(poses.Count);
+                for (int i = 0; i < poses.Count; i++)
+                {
+                    Link.send_pose(poses[i]);
+                }
+            }
+            Link.check_status();
+        }
 
         /// <inheritdoc />
         public bool Busy()

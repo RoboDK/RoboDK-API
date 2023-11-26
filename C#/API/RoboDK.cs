@@ -2348,6 +2348,18 @@ namespace RoboDk.API
             check_status();
         }
 
+        /// <inheritdoc />
+        public void ShowSequence(Mat sequence)
+        {
+            new Item(this).ShowSequence(sequence);
+        }
+
+        /// <inheritdoc />
+        public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1)
+        {
+            new Item(this).ShowSequence(joints, poses, flags, timeout);
+        }
+
         #endregion
 
         #region Protected Methods
