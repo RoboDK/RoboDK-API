@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <iostream>
 
 #include "robodk_api_c.h"
 
@@ -58,7 +57,7 @@ int main()
     printf("Selected robot: \n%s\n\n", robotName);
 
     printf("Current robot joints: \n");
-    Joints_t joints = Item_Joints(&robotItem);
+    struct Joints_t joints = Item_Joints(&robotItem);
     for (int i=0;i<joints._nDOFs; i++){
         printf("J%i = %.3f deg\n", i+1, joints._Values[i]);
     }
