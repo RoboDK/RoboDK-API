@@ -4,13 +4,6 @@
 
 int main()
 {
-    WSADATA wsaData;
-    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return 1;
-    }
-
     //The RoboDK_t structures store the socket and parameters passed to robodk
     //This structure's pointer must remain valid as long as you are using the api,
     //all the api items  it's used to create keep a copy of it's location.

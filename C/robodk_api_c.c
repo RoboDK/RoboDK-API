@@ -1,5 +1,27 @@
 #include "robodk_api_c.h"
 
+#include <stdio.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+// Networking includes
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <sys/socket.h>
+#endif
+
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#pragma warning(disable : 4996) // _CRT_SECURE_NO_WARNINGS
+#endif
+
 static const char ROBODK_API_START_STRING[] = "CMD_START";
 static const char ROBODK_API_READY_STRING[] = "READY";
 static const char ROBODK_API_LF[] = "\n";
@@ -13,25 +35,17 @@ void ThreadSleep(unsigned long nMilliseconds) {
 #endif
 }
 
-uint32_t SocketWrite(SOCKET sock, void *buffer, uint32_t bufferSize) {
-#if defined(_WIN32)
-    return send(sock, (char *)buffer, bufferSize, 0);
-#elif defined(POSIX)
-    #warning todo
-#endif
+int SocketWrite(socket_t sock, void *buffer, int bufferSize) {
+    return send(sock, (char *) buffer, bufferSize, 0);
 }
 
 
-int socketRead(SOCKET sock, void *outBuffer, int bufferSize) {
-#if defined(_WIN32)
+int SocketRead(socket_t sock, void *outBuffer, int bufferSize) {
     return recv(sock, (char *)outBuffer, bufferSize, 0);
-#elif defined(POSIX)
-    #warning todo
-#endif
 }
 
 //Takes timeout in ms
-void setSocketTimeout(SOCKET sock, int timeout_ms) {
+void SetSocketTimeout(socket_t sock, int timeout_ms) {
     struct timeval timeout;      
 #if defined(_WIN32)
     timeout.tv_sec = (long) (timeout_ms * 0.001);
@@ -42,7 +56,7 @@ void setSocketTimeout(SOCKET sock, int timeout_ms) {
 #endif
 }
 
-int socketBytesAvailable(SOCKET sock) {
+int SocketBytesAvailable(socket_t sock) {
 #if defined(_WIN32)
     unsigned long bytes_available;
     ioctlsocket(sock, FIONREAD, &bytes_available);
@@ -55,33 +69,28 @@ int socketBytesAvailable(SOCKET sock) {
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
 #if defined(_WIN32)
-    char commandLineStr[MAX_STR_LENGTH] = {0};
-    strcat(commandLineStr, applicationPath);
-    strcat(commandLineStr, " ");
-    strcat(commandLineStr, arguments);
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
+    char commandLine[MAX_STR_LENGTH];
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
-    /*
-    if( argc != 2 )
-    {
-        printf("Usage: %s [cmdline]\n", argv[0]);
-        return;
-    }
-    */
+
+    strncpy(commandLine, arguments, MAX_STR_LENGTH - 1);
+    commandLine[MAX_STR_LENGTH - 1] = '\0';
+
     // Start the child process. 
-    if (!CreateProcessA(NULL,   // No module name (use command line)
-        commandLineStr,        // Command line
-        NULL,           // Process handle not inheritable
-        NULL,           // Thread handle not inheritable
-        FALSE,          // Set handle inheritance to FALSE
-        0,              // No creation flags
-        NULL,           // Use parent's environment block
-        NULL,           // Use parent's starting directory 
-        &si,            // Pointer to STARTUPINFO structure
-        &pi)           // Pointer to PROCESS_INFORMATION structure
+    if (!CreateProcessA(
+        applicationPath, // No module name (use command line)
+        commandLine,     // Command line
+        NULL,            // Process handle not inheritable
+        NULL,            // Thread handle not inheritable
+        FALSE,           // Set handle inheritance to FALSE
+        0,               // No creation flags
+        NULL,            // Use parent's environment block
+        NULL,            // Use parent's starting directory 
+        &si,             // Pointer to STARTUPINFO structure
+        &pi)             // Pointer to PROCESS_INFORMATION structure
         )
     {
         printf("CreateProcess failed (%d).\n", GetLastError());
@@ -106,8 +115,17 @@ void RoboDK_Connect_default(struct RoboDK_t *inst) {
 }
 
 void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_port, const char *args, const char *path) {
-    //_COM = nullptr;
-    //_IP = robodk_ip;
+#ifdef _WIN32
+    static bool s_socketsReady = false;
+    static WSADATA wsaData;
+    if (!s_socketsReady) {
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+            return;
+
+        s_socketsReady = true;
+    }
+#endif
+
     strcpy(inst->_IP, robodk_ip);
     strcpy(inst->_ARGUMENTS, args);
     //_TIMEOUT = ROBODK_API_TIMEOUT;
@@ -135,9 +153,9 @@ void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup
     {
         _RoboDK_send_Line(inst, "ShowMessage");
         _RoboDK_send_Line(inst, message);
-        setSocketTimeout(inst->_COM, (int)(3600 * 1000));
+        SetSocketTimeout(inst->_COM, (int)(3600 * 1000));
         _RoboDK_check_status(inst); //Will wait here
-        setSocketTimeout(inst->_COM, inst->_TIMEOUT);
+        SetSocketTimeout(inst->_COM, inst->_TIMEOUT);
     }
     else
     {
@@ -464,9 +482,9 @@ void Item_WaitMove(const struct Item_t *inst, double timeout_sec) {
     _RoboDK_send_Line(inst->_RDK, "WaitMove");
     _RoboDK_send_Item(inst->_RDK, inst);
     _RoboDK_check_status(inst->_RDK);
-    setSocketTimeout(inst->_RDK->_COM,(int)(timeout_sec * 1000.0));
+    SetSocketTimeout(inst->_RDK->_COM,(int)(timeout_sec * 1000.0));
     _RoboDK_check_status(inst->_RDK); //Will wait here
-    setSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
+    SetSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
 }
 
 bool Item_Connect(const struct Item_t *inst,const char *robot_ip) {
@@ -577,9 +595,9 @@ struct Item_t Item_SetMachiningParameters(const struct Item_t* inst, char ncfile
     _RoboDK_send_Item(inst->_RDK, part_obj);
     //_RoboDK_send_Line(inst->_RDK, "NO_UPDATE " + options);
     _RoboDK_send_Line(inst->_RDK, options);
-    setSocketTimeout(inst->_RDK->_COM, (int)(3600 * 1000));
+    SetSocketTimeout(inst->_RDK->_COM, (int)(3600 * 1000));
     program = _RoboDK_recv_Item(inst->_RDK); //Will wait here
-    setSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
+    SetSocketTimeout(inst->_RDK->_COM, inst->_RDK->_TIMEOUT);
     double status = _RoboDK_recv_Int(inst->_RDK) / 1000.0;
     _RoboDK_check_status(inst->_RDK);
     return program;
@@ -2078,7 +2096,7 @@ bool _RoboDK_connect(struct RoboDK_t *inst) {
     //QString read(_COM->readAll());
     char receiveBuffer[MAX_STR_LENGTH];
     int recv_ok = _RoboDK_recv_Line(inst, receiveBuffer);
-    //int ret = socketRead(inst->_COM, receiveBuffer, MAX_STR_LENGTH);
+    //int ret = SocketRead(inst->_COM, receiveBuffer, MAX_STR_LENGTH);
     // make sure we receive the OK from RoboDK
     //if ((ret <= 0) || strstr(receiveBuffer, ROBODK_API_READY_STRING) == NULL) {
     if (!recv_ok){
@@ -2227,10 +2245,10 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
     int i;
     if (inst->_isConnected == false) { return false; }
     char buffer[sizeof(int32_t)];
-    while (socketBytesAvailable(inst->_COM) < sizeof(int32_t)){
+    while (SocketBytesAvailable(inst->_COM) < sizeof(int32_t)){
         // waste time?
     }
-    int bytesReceived = socketRead(inst->_COM, buffer, sizeof(int32_t));
+    int bytesReceived = SocketRead(inst->_COM, buffer, sizeof(int32_t));
     if (bytesReceived <= 0) {
         return -1;
     }
@@ -2246,10 +2264,10 @@ bool _RoboDK_recv_Line(struct RoboDK_t *inst, char *output) {
     bool isDone = false;
     while (!isDone) {
         char curByte;
-        while (socketBytesAvailable(inst->_COM) < 1){
+        while (SocketBytesAvailable(inst->_COM) < 1){
             // waste time?
         }
-        socketRead(inst->_COM, &curByte, 1);
+        SocketRead(inst->_COM, &curByte, 1);
         if (curByte == '\n') {
             curByte = '\0';
             isDone = true;
@@ -2272,12 +2290,12 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
     item._PTR = 0;
     item._TYPE = -1;
     if (inst->_isConnected == false) { return item; }
-    while (socketBytesAvailable(inst->_COM) < sizeof(uint64_t) + sizeof(int32_t)){
+    while (SocketBytesAvailable(inst->_COM) < sizeof(uint64_t) + sizeof(int32_t)){
         // waste time?
     }
-    //if (socketBytesAvailable(inst->_COM) >= sizeof(uint64_t) + sizeof(int32_t)) {
+    //if (SocketBytesAvailable(inst->_COM) >= sizeof(uint64_t) + sizeof(int32_t)) {
     unsigned char buffer[8 + 4];
-    int bytesReceived = socketRead(inst->_COM, buffer, sizeof(uint64_t) + sizeof(int32_t));
+    int bytesReceived = SocketRead(inst->_COM, buffer, sizeof(uint64_t) + sizeof(int32_t));
     if (bytesReceived <= 0) {
         return item;
     }
@@ -2299,10 +2317,10 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst) {
     if (inst->_isConnected == false) { return pose; }
     int size = 16 * sizeof(double);
     char bufferBytes[16 * sizeof(double)];
-    while (socketBytesAvailable(inst->_COM) < size){
+    while (SocketBytesAvailable(inst->_COM) < size){
         // waste time?
     }
-    socketRead(inst->_COM, bufferBytes, size);
+    SocketRead(inst->_COM, bufferBytes, size);
     for (int j = 0; j < 4; j++) {
         for (int i = 0; i < 4; i++) {
             char valueIBytes[sizeof(double)];
@@ -2325,15 +2343,15 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
     }
     if (nvalues < 0 || nvalues > 50) { return false; } //check if the value is not too big
     int size = nvalues * sizeof(double);
-    //if (socketBytesAvailable(inst->_COM) <= (size + 4)) {
+    //if (SocketBytesAvailable(inst->_COM) <= (size + 4)) {
     double valuei;
     for (int i = 0; i < nvalues; i++) {
         char bufferCurValue[sizeof(double)];
         char valueIBytes[sizeof(double)];
-        while (socketBytesAvailable(inst->_COM) < sizeof(double)){
+        while (SocketBytesAvailable(inst->_COM) < sizeof(double)){
             // waste time?
         }
-        int nread = socketRead(inst->_COM, &bufferCurValue, sizeof(double));
+        int nread = SocketRead(inst->_COM, &bufferCurValue, sizeof(double));
         if (nread < 0) {
             return false;
         }
@@ -2427,7 +2445,9 @@ void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const str
         return;
 
     if (blocking) {
-        Item_WaitMove(itemrobot, 300);
+        SetSocketTimeout(inst->_COM, 3600 * 1000);
+        _RoboDK_check_status(inst);
+        SetSocketTimeout(inst->_COM, inst->_TIMEOUT);
     }
 }
 
@@ -2485,7 +2505,9 @@ void _RoboDK_moveC(struct RoboDK_t* inst, const struct Item_t* target1, const st
     _RoboDK_send_Item(inst, itemrobot);
     _RoboDK_check_status(inst);
     if (isblocking) {
-        Item_WaitMove(itemrobot, 300);
+        SetSocketTimeout(inst->_COM, 3600 * 1000);
+        _RoboDK_check_status(inst);
+        SetSocketTimeout(inst->_COM, inst->_TIMEOUT);
     }
 }
 

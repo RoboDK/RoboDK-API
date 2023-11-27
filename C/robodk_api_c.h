@@ -5,36 +5,21 @@
 extern "C" {
 #endif
 
-//Standard libraries used by the robodk api
-#include <math.h>
-#include <stdio.h>
+// Standard Libraries
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-//Networking includes
-#ifdef _WIN32
-#include <Ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-#include <winsock2.h>
-#endif // _WIN32
 
-//Robodk defines from c++
+// RoboDK defines from C++
 #ifdef _WIN32
 // Default path on Windows:
 #define ROBODK_DEFAULT_PATH_BIN "C:/RoboDK/bin/RoboDK.exe"
 #elif __APPLE__
 // Default Install Path on Mac
 #define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-
 #else
-
 // Default Install Path on Linux:
 #define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/bin/RoboDK"
-
-#endif
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
 #endif
 
 enum { ROBODK_DEFAULT_PORT = 20500 };
@@ -212,11 +197,16 @@ enum eCollisionState{
     COLLISION_ON = 1
 };
 
+// Structures
+#ifdef _WIN32
+typedef uintptr_t socket_t;
+#else
+typedef int socket_t;
+#endif
 
-//Structures
-//Represents an instance of the RoboDK communication class
+// Represents an instance of the RoboDK communication class
 struct RoboDK_t {
-    SOCKET _COM;
+    socket_t _COM;
     bool _isConnected;
     char _IP[MAX_STR_LENGTH];
     uint16_t _PORT;
@@ -273,12 +263,10 @@ struct  XYZWPR_t {
 };
 
 
-//Platform indepedent IO operations
+// Platform indepedent IO operations
 void ThreadSleep(unsigned long nMilliseconds);
-void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID);
-uint32_t  SocketWrite(SOCKET, void *buffer, uint32_t bufferSize);
 
-//RoboDK class Functions
+// RoboDK Class Functions
 void RoboDK_Connect_default(struct RoboDK_t *inst); //Complete
 void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_port, const char *args, const char *path); //Complete
 void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup); //Complete
