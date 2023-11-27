@@ -41,7 +41,7 @@ int SocketWrite(socket_t sock, void *buffer, int bufferSize) {
 
 
 int SocketRead(socket_t sock, void *outBuffer, int bufferSize) {
-    return recv(sock, (char *)outBuffer, bufferSize, 0);
+    return recv(sock, (char *) outBuffer, bufferSize, 0);
 }
 
 //Takes timeout in ms
