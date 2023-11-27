@@ -55,221 +55,221 @@ enum { MAX_STR_LENGTH = 2048 };
 //Enums
 /// Tree item types
 enum eITEM_TYPE {
-	/// Any item type.
-	ITEM_TYPE_ANY = -1,
+    /// Any item type.
+    ITEM_TYPE_ANY = -1,
 
-	/// Item of type station (RDK file).
-	ITEM_TYPE_STATION = 1,
+    /// Item of type station (RDK file).
+    ITEM_TYPE_STATION = 1,
 
-	/// Item of type robot (.robot file).
-	ITEM_TYPE_ROBOT = 2,
+    /// Item of type robot (.robot file).
+    ITEM_TYPE_ROBOT = 2,
 
-	/// Item of type reference frame.
-	ITEM_TYPE_FRAME = 3,
+    /// Item of type reference frame.
+    ITEM_TYPE_FRAME = 3,
 
-	/// Item of type tool (.tool).
-	ITEM_TYPE_TOOL = 4,
+    /// Item of type tool (.tool).
+    ITEM_TYPE_TOOL = 4,
 
-	/// Item of type object (.stl, .step or .iges for example).
-	ITEM_TYPE_OBJECT = 5,
+    /// Item of type object (.stl, .step or .iges for example).
+    ITEM_TYPE_OBJECT = 5,
 
-	/// Target item.
-	ITEM_TYPE_TARGET = 6,
+    /// Target item.
+    ITEM_TYPE_TARGET = 6,
 
-	/// Program item.
-	ITEM_TYPE_PROGRAM = 8,
+    /// Program item.
+    ITEM_TYPE_PROGRAM = 8,
 
-	/// Instruction.
-	ITEM_TYPE_INSTRUCTION = 9,
+    /// Instruction.
+    ITEM_TYPE_INSTRUCTION = 9,
 
-	/// Python macro.
-	ITEM_TYPE_PROGRAM_PYTHON = 10,
+    /// Python macro.
+    ITEM_TYPE_PROGRAM_PYTHON = 10,
 
-	/// Robot machining project, curve follow, point follow or 3D printing project.
-	ITEM_TYPE_MACHINING = 11,
+    /// Robot machining project, curve follow, point follow or 3D printing project.
+    ITEM_TYPE_MACHINING = 11,
 
-	/// Ballbar validation project.
-	ITEM_TYPE_BALLBARVALIDATION = 12,
+    /// Ballbar validation project.
+    ITEM_TYPE_BALLBARVALIDATION = 12,
 
-	/// Robot calibration project.
-	ITEM_TYPE_CALIBPROJECT = 13,
+    /// Robot calibration project.
+    ITEM_TYPE_CALIBPROJECT = 13,
 
-	/// Robot path accuracy validation project.
-	ITEM_TYPE_VALID_ISO9283 = 14
+    /// Robot path accuracy validation project.
+    ITEM_TYPE_VALID_ISO9283 = 14
 };
 
 enum eInstructionType{
-	/// Invalid instruction.
-	INS_TYPE_INVALID = -1,
+    /// Invalid instruction.
+    INS_TYPE_INVALID = -1,
 
-	/// Linear or joint movement instruction.
-	INS_TYPE_MOVE = 0,
+    /// Linear or joint movement instruction.
+    INS_TYPE_MOVE = 0,
 
-	/// Circular movement instruction.
-	INS_TYPE_MOVEC = 1,
+    /// Circular movement instruction.
+    INS_TYPE_MOVEC = 1,
 
-	/// Set speed instruction.
-	INS_TYPE_CHANGESPEED = 2,
+    /// Set speed instruction.
+    INS_TYPE_CHANGESPEED = 2,
 
-	/// Set reference frame instruction.
-	INS_TYPE_CHANGEFRAME = 3,
+    /// Set reference frame instruction.
+    INS_TYPE_CHANGEFRAME = 3,
 
-	/// Set the tool (TCP) instruction.
-	INS_TYPE_CHANGETOOL = 4,
+    /// Set the tool (TCP) instruction.
+    INS_TYPE_CHANGETOOL = 4,
 
-	/// Set the robot instruction (obsolete).
-	INS_TYPE_CHANGEROBOT = 5,
+    /// Set the robot instruction (obsolete).
+    INS_TYPE_CHANGEROBOT = 5,
 
-	/// Pause instruction.
-	INS_TYPE_PAUSE = 6,
+    /// Pause instruction.
+    INS_TYPE_PAUSE = 6,
 
-	/// Simulation event instruction.
-	INS_TYPE_EVENT = 7,
+    /// Simulation event instruction.
+    INS_TYPE_EVENT = 7,
 
-	/// Program call or raw code output.
-	INS_TYPE_CODE = 8,
+    /// Program call or raw code output.
+    INS_TYPE_CODE = 8,
 
-	/// Display message on the teach pendant.
-	INS_TYPE_PRINT = 9
+    /// Display message on the teach pendant.
+    INS_TYPE_PRINT = 9
 };
 
 /// Instruction program call type:
 enum eProgInstructionType {
-	/// Instruction to call a program.
-	INSTRUCTION_CALL_PROGRAM = 0,
+    /// Instruction to call a program.
+    INSTRUCTION_CALL_PROGRAM = 0,
 
-	/// Instructio to insert raw code (this will not provoke a program call).
-	INSTRUCTION_INSERT_CODE = 1,
+    /// Instructio to insert raw code (this will not provoke a program call).
+    INSTRUCTION_INSERT_CODE = 1,
 
-	/// Instruction to start a parallel thread. Program execution will continue and also trigger a thread.
-	INSTRUCTION_START_THREAD = 2,
+    /// Instruction to start a parallel thread. Program execution will continue and also trigger a thread.
+    INSTRUCTION_START_THREAD = 2,
 
-	/// Comment output.
-	INSTRUCTION_COMMENT = 3,
+    /// Comment output.
+    INSTRUCTION_COMMENT = 3,
 
-	/// Instruction to pop up a message on the robot teach pendant.
-	INSTRUCTION_SHOW_MESSAGE = 4
+    /// Instruction to pop up a message on the robot teach pendant.
+    INSTRUCTION_SHOW_MESSAGE = 4
 };
 
 
 
 /// Script execution types used by IRoboDK.setRunMode and IRoboDK.RunMode
 enum eRobotRunMode{
-	/// Performs the simulation moving the robot (default)
-	RUNMODE_SIMULATE = 1,
+    /// Performs the simulation moving the robot (default)
+    RUNMODE_SIMULATE = 1,
 
-	/// Performs a quick check to validate the robot movements.
-	RUNMODE_QUICKVALIDATE = 2,
+    /// Performs a quick check to validate the robot movements.
+    RUNMODE_QUICKVALIDATE = 2,
 
-	/// Makes the robot program.
-	RUNMODE_MAKE_ROBOTPROG = 3,
+    /// Makes the robot program.
+    RUNMODE_MAKE_ROBOTPROG = 3,
 
-	/// Makes the robot program and updates it to the robot.
-	RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD = 4,
+    /// Makes the robot program and updates it to the robot.
+    RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD = 4,
 
-	/// Makes the robot program and starts it on the robot (independently from the PC).
-	RUNMODE_MAKE_ROBOTPROG_AND_START = 5,
+    /// Makes the robot program and starts it on the robot (independently from the PC).
+    RUNMODE_MAKE_ROBOTPROG_AND_START = 5,
 
-	/// Moves the real robot from the PC (PC is the client, the robot behaves like a server).
-	RUNMODE_RUN_ROBOT = 6
+    /// Moves the real robot from the PC (PC is the client, the robot behaves like a server).
+    RUNMODE_RUN_ROBOT = 6
 };
 
 
 /// State of the RoboDK window
 enum eRoboDKWindowState{
 
-	/// Hide the RoboDK window. RoboDK will keep running as a process.
-	WINDOWSTATE_HIDDEN = -1,
+    /// Hide the RoboDK window. RoboDK will keep running as a process.
+    WINDOWSTATE_HIDDEN = -1,
 
-	/// Display the RoboDK window.
-	WINDOWSTATE_SHOW = 0,
+    /// Display the RoboDK window.
+    WINDOWSTATE_SHOW = 0,
 
-	/// Minimize the RoboDK window.
-	WINDOWSTATE_MINIMIZED = 1,
+    /// Minimize the RoboDK window.
+    WINDOWSTATE_MINIMIZED = 1,
 
-	/// Display the RoboDK window in a normal state (not maximized)
-	WINDOWSTATE_NORMAL = 2,
+    /// Display the RoboDK window in a normal state (not maximized)
+    WINDOWSTATE_NORMAL = 2,
 
-	/// Maximize the RoboDK Window.
-	WINDOWSTATE_MAXIMIZED = 3,
+    /// Maximize the RoboDK Window.
+    WINDOWSTATE_MAXIMIZED = 3,
 
-	/// Make the RoboDK window fullscreen.
-	WINDOWSTATE_FULLSCREEN = 4,
+    /// Make the RoboDK window fullscreen.
+    WINDOWSTATE_FULLSCREEN = 4,
 
-	/// Display RoboDK in cinema mode (hide the toolbar and the menu).
-	WINDOWSTATE_CINEMA = 5,
+    /// Display RoboDK in cinema mode (hide the toolbar and the menu).
+    WINDOWSTATE_CINEMA = 5,
 
-	/// Display RoboDK in cinema mode and fullscreen.
-	WINDOWSTATE_FULLSCREEN_CINEMA = 6
+    /// Display RoboDK in cinema mode and fullscreen.
+    WINDOWSTATE_FULLSCREEN_CINEMA = 6
 };
 
 /// Collision checking state
 enum eCollisionState{
-	/// Do not use collision checking
-	COLLISION_OFF = 0,
+    /// Do not use collision checking
+    COLLISION_OFF = 0,
 
-	/// Use collision checking
-	COLLISION_ON = 1
+    /// Use collision checking
+    COLLISION_ON = 1
 };
 
 
 //Structures
 //Represents an instance of the RoboDK communication class
 struct RoboDK_t {
-	SOCKET _COM;
-	bool _isConnected;
-	char _IP[MAX_STR_LENGTH];
-	uint16_t _PORT;
-	uint32_t _TIMEOUT;
-	int64_t _PROCESS;
-	char _ROBODK_BIN[MAX_STR_LENGTH]; // file path to the robodk program (executable), typically C:/RoboDK/bin/RoboDK.exe. Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
-	char _ARGUMENTS[MAX_STR_LENGTH];  // arguments to provide to RoboDK on startup
+    SOCKET _COM;
+    bool _isConnected;
+    char _IP[MAX_STR_LENGTH];
+    uint16_t _PORT;
+    uint32_t _TIMEOUT;
+    int64_t _PROCESS;
+    char _ROBODK_BIN[MAX_STR_LENGTH]; // file path to the robodk program (executable), typically C:/RoboDK/bin/RoboDK.exe. Leave empty to use the registry key: HKEY_LOCAL_MACHINE\SOFTWARE\RoboDK
+    char _ARGUMENTS[MAX_STR_LENGTH];  // arguments to provide to RoboDK on startup
 };
 
 //Represents an instance of a RoboDK Item class
 struct Item_t {
-	struct RoboDK_t *_RDK;
-	/// Pointer to the item inside RoboDK
-	uint64_t _PTR;
-	/// Item type
-	int32_t _TYPE;
+    struct RoboDK_t *_RDK;
+    /// Pointer to the item inside RoboDK
+    uint64_t _PTR;
+    /// Item type
+    int32_t _TYPE;
 };
 
 //Represents a 4x4 matrix from robodk, represented as an array of 16 doubles
 //Units are in mm/radians
 struct Mat_t {
-	double arr16[16];
+    double arr16[16];
 };
 
 
 struct Joints_t {
-	/// number of degrees of freedom
-	int _nDOFs;
-	/// joint values (doubles, used to store the joint values)
-	double _Values[RDK_SIZE_JOINTS_MAX];
+    /// number of degrees of freedom
+    int _nDOFs;
+    /// joint values (doubles, used to store the joint values)
+    double _Values[RDK_SIZE_JOINTS_MAX];
 };
 
 /// \brief The Matrix2D_t struct represents a variable size 2d Matrix. Use the Matrix2D_... functions to operate on this variable sized matrix.
 /// This type of data can be used to get/set a program as a list. This is also useful for backwards compatibility functions related to RoKiSim.
 struct Matrix2D_t {
-	/// Pointer to the data
-	double *data;
-	/// Pointer to the size array.
-	int *size;
-	/// Allocated size.
-	int allocatedSize;
-	/// Number of dimensions (usually 2)
-	int numDimensions;
-	bool canFreeData;
+    /// Pointer to the data
+    double *data;
+    /// Pointer to the size array.
+    int *size;
+    /// Allocated size.
+    int allocatedSize;
+    /// Number of dimensions (usually 2)
+    int numDimensions;
+    bool canFreeData;
 };
 
 //Wraps a xyz array in a struct so that functions can return it by value
 struct XYZ_t {
-	double arr3[3];
+    double arr3[3];
 };
 
 struct  XYZWPR_t {
-	double arr6[6];
+    double arr6[6];
 };
 
 
@@ -434,8 +434,8 @@ struct Mat_t Mat_roty(const double ry);
 struct Mat_t Mat_rotz(const double rz);
 struct Mat_t Mat_makeCopy(struct Mat_t *inst);
 struct Mat_t Mat_values(const double nx, const double ox, const double ax, const double tx,
-	const double ny, const double oy, const double ay, const double ty,
-	const double nz, const double oz, const double az, const double tz);
+    const double ny, const double oy, const double ay, const double ty,
+    const double nz, const double oz, const double az, const double tz);
 
 
 void Mat_Copy(struct Mat_t *out1, const struct Mat_t *in1);
@@ -479,7 +479,7 @@ void Debug_Matrix2D(const struct Matrix2D_t *mat);
 
 
 struct XYZWPR_t XYZWPR_Create(double x,double y,double z,
-						      double w,double p,double r);
+                              double w,double p,double r);
 
 //XYZ functions, consider adding inline if debug performance matters
 double XYZ_Dot(const struct XYZ_t *v, const struct XYZ_t *q);
@@ -492,7 +492,7 @@ void XYZ_Copy(struct XYZ_t *out, const struct XYZ_t *in);
 
 
 //Internal functions
-bool		  _RoboDK_connect_smart(struct RoboDK_t *inst); //Complete
+bool          _RoboDK_connect_smart(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_connect(struct RoboDK_t *inst); //Complete
 
 bool          _RoboDK_disconnect(struct RoboDK_t* inst); /// 
@@ -512,7 +512,7 @@ int32_t       _RoboDK_recv_Int(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_Line(struct RoboDK_t *inst, char *output); //Complete
 struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst); //Complete
 struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst); //Complete
-bool		  _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize); //Complete
+bool          _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize); //Complete
 struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst); //Complete
 
 bool          _RoboDK_check_status(struct RoboDK_t *inst); //Complete
