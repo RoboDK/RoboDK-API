@@ -915,6 +915,17 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public ItemFlags GetItemFlags(IItem item)
+        {
+            check_connection();
+            send_line("G_Item_Rights");
+            send_item(item);
+            ItemFlags result = (ItemFlags)rec_int();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
         public void SetItemFlags(ItemFlags itemFlags = ItemFlags.All)
         {
             var flags = (int) itemFlags;
@@ -1379,6 +1390,29 @@ namespace RoboDk.API
             send_line(command);
             send_line(parameter);
             send_line(value.ToString(CultureInfo.InvariantCulture));
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public byte[] GetBinaryParameter(string parameter)
+        {
+            check_connection();
+            const string command = "G_DataParam";
+            send_line(command);
+            send_line(parameter);
+            var value = rec_bytes();
+            check_status();
+            return value;
+        }
+
+        /// <inheritdoc />
+        public void SetBinaryParameter(string parameter, byte[] data)
+        {
+            check_connection();
+            var command = "S_DataParam";
+            send_line(command);
+            send_line(parameter);
+            send_bytes(data);
             check_status();
         }
 
@@ -2080,8 +2114,7 @@ namespace RoboDk.API
             return selectedItem;
         }
 
-
-
+        /// <inheritdoc />
         public IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null)
         {
             var target = AddTarget(targetName, robotBase, robot);
@@ -2102,6 +2135,229 @@ namespace RoboDk.API
             pgm.AddMoveJ(target);
 
             return target;
+        }
+
+        /// <inheritdoc />
+        public bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500)
+        {
+            check_connection();
+            send_line("WinProcDock");
+            send_line(dockedName != null ? dockedName : windowName);
+            send_line(windowName);
+
+            double[] size = { width, height };
+            send_array(size);
+
+            send_line(pid.ToString(CultureInfo.InvariantCulture));
+            send_int(areaAdd);
+            send_int(areaAllowed);
+            send_int(timeout);
+
+            int result = rec_int();
+            check_status();
+            return (result > 0);
+        }
+
+        /// <inheritdoc />
+        public GetPointsResult GetPoints(ObjectSelectionType featureType = ObjectSelectionType.HoverObjectMesh)
+        {
+            if (featureType < ObjectSelectionType.HoverObjectMesh)
+            {
+                throw new RdkException("Invalid feature type, use ObjectSelectionType.HoverObjectMesh, ObjectSelectionType.HoverObject or equivalent");
+            }
+
+            check_connection();
+            send_line("G_ObjPoint");
+            send_item(null);
+            send_int((int)featureType);
+
+            int featureId = 0;
+            send_int(0);
+            
+            Mat points = null;
+            if (featureType == ObjectSelectionType.HoverObjectMesh)
+            {
+                points = rec_matrix();
+            }
+
+            IItem item = rec_item();
+            rec_int(); // IsFrame
+            featureType = (ObjectSelectionType)rec_int();
+            featureId = rec_int();
+            string name = rec_line();
+            check_status();
+
+            return new GetPointsResult(item, featureType, featureId, name, points);
+        }
+
+        /// <inheritdoc />
+        public MeasurePoseResult MeasurePose(int target = -1, int averageTime = 0, List<double> tipOffset = null)
+        {
+            double[] array = { (double)target, (double)averageTime, 0.0, 0.0, 0.0 };
+            if (tipOffset != null && tipOffset.Count >= 3)
+            {
+                array[2] = tipOffset[0];
+                array[3] = tipOffset[1];
+                array[4] = tipOffset[2];
+            }
+
+            check_connection();
+            send_line("MeasPose4");
+            send_array(array);
+            Mat pose = rec_pose();
+            array = rec_array();
+            check_status();
+
+            return new MeasurePoseResult(pose, array[0], array[1]);
+        }
+
+        /// <inheritdoc />
+        public string PluginCommand(string pluginName, string command, string value)
+        {
+            check_connection();
+            send_line("PluginCommand");
+            send_line(pluginName);
+            send_line(command);
+            send_line(value);
+            ReceiveTimeout = 3600 * 24 * 7;
+            string result = rec_line();
+            ReceiveTimeout = DefaultSocketTimeoutMilliseconds;
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public bool PluginLoad(string pluginName, PluginOperation operation = PluginOperation.Load)
+        {
+            switch (operation)
+            {
+                case PluginOperation.Load:
+                    return (Command("PluginLoad", pluginName) == "OK");
+                case PluginOperation.Reload:
+                    Command("PluginUnload", pluginName);
+                    return (Command("PluginLoad", pluginName) == "OK");
+            }
+            return (Command("PluginUnload", pluginName) == "OK");
+        }
+
+        /// <inheritdoc />
+        public double GetSimulationTime()
+        {
+            check_connection();
+            send_line("GetSimTime");
+            double result = (double)rec_int() / 1000.0;
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null)
+        {
+            check_connection();
+            send_line("Gun_Add");
+            send_item(tool);
+            send_item(referenceObject);
+            send_line(parameters);
+            send_matrix(points);
+            send_matrix(geometry);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public int SprayClear(int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_Clear");
+            send_int(sprayId);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public string SprayGetStats(out Mat data, int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_Stats");
+            send_int(sprayId);
+            string result = rec_line().Replace("<br>", "\t");
+            data = rec_matrix();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public int SpraySetState(SprayGunStates state = SprayGunStates.SprayOn, int sprayId = -1)
+        {
+            check_connection();
+            send_line("Gun_SetState");
+            send_int(sprayId);
+            send_int((int)state);
+            int result = rec_int();
+            check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public void SetPoses(List<IItem> items, List<Mat> poses)
+        {
+            if (items.Count != poses.Count)
+            {
+                throw new RdkException("The number of items must match the number of poses");
+            }
+
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            check_connection();
+            send_line("S_Hlocals");
+            send_int(items.Count);
+            for (int i = 0; i < items.Count; i++)
+            {
+                send_item(items[i]);
+                send_pose(poses[i]);
+            }
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public void SetPosesAbs(List<IItem> items, List<Mat> poses)
+        {
+            if (items.Count != poses.Count)
+            {
+                throw new RdkException("The number of items must match the number of poses");
+            }
+
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            check_connection();
+            send_line("S_Hlocal_AbsS");
+            send_int(items.Count);
+            for (int i = 0; i < items.Count; i++)
+            {
+                send_item(items[i]);
+                send_pose(poses[i]);
+            }
+            check_status();
+        }
+
+        /// <inheritdoc />
+        public void ShowSequence(Mat sequence)
+        {
+            new Item(this).ShowSequence(sequence);
+        }
+
+        /// <inheritdoc />
+        public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1)
+        {
+            new Item(this).ShowSequence(joints, poses, flags, timeout);
         }
 
         #endregion

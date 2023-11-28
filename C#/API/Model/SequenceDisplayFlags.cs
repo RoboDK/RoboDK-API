@@ -1,5 +1,5 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
-// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Copyright 2023 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -38,24 +38,21 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-
+using System;
 
 namespace RoboDk.API.Model
 {
-    /// <summary>
-    /// Object selection features:
-    /// </summary>
-    public enum ObjectSelectionType
+    [Flags]
+    public enum SequenceDisplayFlags
     {
-        None = 0,
-        Surface = 1,
-        Curve = 2,
-        Point = 3,
-        ObjectMesh = 7,
-        SurfacePreview = 8,
-        Mesh = 9,
-        HoverObjectMesh = 10,
-        HoverObject = 11
+        Default = -1,
+        ToolPoses = 0,
+        RobotPoses = 256,
+        RobotJoints = 2048,
+        ColorSelected = 1,
+        ColorTransparent = 2,
+        ColorGood = 3,
+        ColorBad = 4,
+        OptionReset = 1024
     }
 }
-

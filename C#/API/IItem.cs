@@ -844,6 +844,15 @@ namespace RoboDk.API
         void ShowSequence(Mat sequence);
 
         /// <summary>
+        ///     Displays a sequence of joints or poses
+        /// </summary>
+        /// <param name="joints">List of joint arrays</param>
+        /// <param name="poses">List of poses</param>
+        /// <param name="flags">Display options</param>
+        /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>
+        void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1);
+
+        /// <summary>
         ///     Checks if a robot or program is currently running (busy or moving)
         /// </summary>
         /// <returns>busy status (true=moving, false=stopped)</returns>

@@ -1622,6 +1622,11 @@ public class RoboDK
     public const int FEATURE_SURFACE = 1;
     public const int FEATURE_CURVE = 2;
     public const int FEATURE_POINT = 3;
+    public const int FEATURE_OBJECT_MESH = 7;
+    public const int FEATURE_SURFACE_PREVIEW = 8;
+    public const int FEATURE_MESH = 9;
+    public const int FEATURE_HOVER_OBJECT_MESH = 10;
+    public const int FEATURE_HOVER_OBJECT = 11;
 
     // Spray gun simulation:
     public const int SPRAY_OFF = 0;
@@ -1749,6 +1754,17 @@ public class RoboDK
     public const int VISIBLE_ROBOT_DEFAULT = 0x2AAAAAAB;
     public const int VISIBLE_ROBOT_ALL = 0x7FFFFFFF;
     public const int VISIBLE_ROBOT_ALL_REFS = 0x15555555;
+
+    // ShowSequence() display type flags (use as mask)
+    public const int SEQUENCE_DISPLAY_DEFAULT = -1;          // Default sequence display flag
+    public const int SEQUENCE_DISPLAY_TOOL_POSES = 0;        // Using tool poses (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_ROBOT_POSES = 256;     // Using robot poses (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_ROBOT_JOINTS = 2048;   // Using robot joints (argument type) sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_SELECTED = 1;    // Selected color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_TRANSPARENT = 2; // Transparent color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_GOOD = 3;        // Good (green) color sequence display flag
+    public const int SEQUENCE_DISPLAY_COLOR_BAD = 4;         // Bad (red) color sequence display flag
+    public const int SEQUENCE_DISPLAY_OPTION_RESET = 1024;   // Reset previous sequences (force timeout) sequence display flag
 
     // Saturate robot joints when using robot.setJoints()
     public const int SETJOINTS_DEFAULT = 0;         // Default behavior, will saturate the joints and apply the result. This option is used for older versions of RoboDK.
@@ -3141,10 +3157,10 @@ public class RoboDK
     }
 
     /// <summary>
-    /// Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
+    /// Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features.
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
+    /// <param name="item">Item to get flags</param>
+    /// <returns>Returns flags (FLAG_ITEM_*) of the item.</returns>
     public int getFlagsItem(Item item)
     {
         _check_connection();
@@ -3858,6 +3874,36 @@ public class RoboDK
         _send_Line("S_Param");
         _send_Line(param);
         _send_Line(value.ToString());
+        _check_status();
+    }
+
+    /// <summary>
+    /// Gets a global or a user binary parameter from the open RoboDK station
+    /// </summary>
+    /// <param name="param">RoboDK parameter</param>
+    /// <returns>Arrray of bytes.</returns>
+    public byte[] getBinaryParam(string param)
+    {
+        _check_connection();
+        _send_Line("G_DataParam");
+        _send_Line(param);
+        byte[] value = _recv_bytes();
+        _check_status();
+        return value;
+    }
+
+    /// <summary>
+    /// Sets a global binary parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+    /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+    /// </summary>
+    /// <param name="param">RoboDK parameter name</param>
+    /// <param name="value">Parameter binary data</param>
+    public void setBinaryParam(string param, byte[] value)
+    {
+        _check_connection();
+        _send_Line("S_DataParam");
+        _send_Line(param);
+        _send_bytes(value);
         _check_status();
     }
 
@@ -4725,6 +4771,313 @@ public class RoboDK
             xyz_station.Add(xyz[0]); xyz_station.Add(xyz[1]); xyz_station.Add(xyz[2]);
         }
         return selected_item;
+    }
+
+    /// <summary>
+    /// Embed a window from a separate process in RoboDK as a docked window
+    /// </summary>
+    /// <param name="window_name">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
+    /// <param name="docked_name">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
+    /// <param name="size_w"></param>
+    /// <param name="size_h"></param>
+    /// <param name="pid">Process ID (optional)</param>
+    /// <param name="area_add">Set to 1 (right) or 2 (left) (default is 1)</param>
+    /// <param name="area_allowed">Areas allowed (default is 15: no constrain)</param>
+    /// <param name="timeout">Timeout to abort attempting to embed the window (optional)</param>
+    /// <returns>Returns true if successful.</returns>    
+    public bool EmbedWindow(string window_name, string docked_name = null, int size_w = -1, int size_h = -1, int pid = 0, int area_add = 1, int area_allowed = 15, int timeout = 500)
+    {
+        _check_connection();
+        _send_Line("WinProcDock");
+        _send_Line(docked_name != null ? docked_name : window_name);
+        _send_Line(window_name);
+
+        double[] size = { size_w, size_h };
+        _send_Array(size);
+
+        _send_Line(pid.ToString());
+        _send_Int(area_add);
+        _send_Int(area_allowed);
+        _send_Int(timeout);
+
+        int result = _recv_Int();
+        _check_status();
+        return (result > 0);
+    }
+
+    /// <summary>
+    /// Retrieves the object under the mouse cursor
+    /// </summary>
+    /// <param name="feature_type">Set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster)</param>
+    /// <param name="feature_id">Retrieved feature ID</param>
+    /// <param name="feature_name">Retrieved feature name</param>
+    /// <param name="points">Retrieved points</param>
+    /// <returns>Returns an object under the mouse cursor.</returns>
+    public Item GetPoints(ref int feature_type, out int feature_id, out string feature_name, out Mat points)
+    {
+        if (feature_type < RoboDK.FEATURE_HOVER_OBJECT_MESH)
+        {
+            throw new RDKException("Invalid feature type, use FEATURE_HOVER_OBJECT_MESH, FEATURE_HOVER_OBJECT or equivalent");
+        }
+
+        _check_connection();
+        _send_Line("G_ObjPoint");
+        _send_Item(null);
+        _send_Int(feature_type);
+
+        _send_Int(0);
+
+        points = null;
+        if (feature_type == RoboDK.FEATURE_HOVER_OBJECT_MESH)
+        {
+            points = _recv_Matrix2D();
+        }
+
+        Item item = _recv_Item();
+        _recv_Int(); // IsFrame
+        feature_type = _recv_Int();
+        feature_id = _recv_Int();
+        feature_name = _recv_Line();
+        _check_status();
+
+        return item;
+    }
+
+    /// <summary>
+    /// Takes a measurement with a 6D measurement device
+    /// </summary>
+    /// <param name="errors">Extra data is [error_avg, error_max] in mm, if we are averaging a pose</param>
+    /// <param name="target">Target type</param>
+    /// <param name="time_avg_ms">Take the measurement for a period of time and average the result</param>
+    /// <param name="tip_xyz">Offet the measurement to the tip</param>
+    /// <returns>Returns MeasurePoseResult with a pose of measured object reference frame, and error values in mm.</returns>
+    public Mat MeasurePose(out double[] errors, int target = -1, int time_avg_ms = 0, List<double> tip_xyz = null)
+    {
+        double[] array = { (double)target, (double)time_avg_ms, 0.0, 0.0, 0.0 };
+        if (tip_xyz != null && tip_xyz.Count >= 3)
+        {
+            array[2] = tip_xyz[0];
+            array[3] = tip_xyz[1];
+            array[4] = tip_xyz[2];
+        }
+
+        _check_connection();
+        _send_Line("MeasPose4");
+        _send_Array(array);
+        Mat pose = _recv_Pose();
+        errors = _recv_Array();
+        _check_status();
+
+        return pose;
+    }
+
+    /// <summary>
+    /// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin
+    /// </summary>
+    /// <param name="plugin_name">The plugin name must match the PluginName() implementation in the RoboDK plugin</param>
+    /// <param name="plugin_command">Specific command handled by your plugin</param>
+    /// <param name="value">Specific value (optional) handled by your plugin</param>
+    /// <returns>Returns the result as a string.</returns>
+    public string PluginCommand(string plugin_name, string plugin_command, string value)
+    {
+        _check_connection();
+        _send_Line("PluginCommand");
+        _send_Line(plugin_name);
+        _send_Line(plugin_command);
+        _send_Line(value);
+        _COM.ReceiveTimeout = 3600 * 24 * 7;
+        string result = _recv_Line();
+        _COM.ReceiveTimeout = _TIMEOUT;
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    /// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin name to reload all plugins
+    /// </summary>
+    /// <param name="plugin_name">The name of the plugin or path (if it is not in the default directory)</param>
+    /// <param name="load">Type of operation (0 - unload, 1 - load, 2 - reload)</param>
+    /// <returns>Boolean result of operation.</returns>
+    public bool PluginLoad(string plugin_name, int load = 1)
+    {
+        switch (load)
+        {
+            case 1:
+                return (Command("PluginLoad", plugin_name) == "OK");
+            case 2:
+                Command("PluginUnload", plugin_name);
+                return (Command("PluginLoad", plugin_name) == "OK");
+        }
+        return (Command("PluginUnload", plugin_name) == "OK");
+    }
+
+    /// <summary>
+    ///     Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
+    ///     The simulation time changes depending on the simulation speed.
+    ///     The simulation time is usually faster than the real time (5 times by default).
+    /// </summary>
+    /// <returns>Returns the simulation time in seconds.</returns>
+    public double SimulationTime()
+    {
+        _check_connection();
+        _send_Line("GetSimTime");
+        double result = (double)_recv_Int() / 1000.0;
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    ///     Add a simulated spray gun that allows projecting particles to a part.
+    ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.
+    /// </summary>
+    /// <param name="item_tool">Active tool (null for auto detect)</param>
+    /// <param name="item_object">Object in active reference frame (null for auto detect)</param>
+    /// <param name="parameters">A string specifying the behavior of the simulated particles</param>
+    /// <param name="points">Provide the volume as a list of points as described in the sample macro SprayOn.py</param>
+    /// <param name="geometry">Provide a list of points describing triangles to define a specific particle geometry</param>
+    /// <returns>Returns ID of the spray gun.</returns>    
+    public int Spray_Add(Item item_tool = null, Item item_object = null, string parameters = "", Mat points = null, Mat geometry = null)
+    {
+        _check_connection();
+        _send_Line("Gun_Add");
+        _send_Item(item_tool);
+        _send_Item(item_object);
+        _send_Line(parameters);
+        _send_Matrix2D(points);
+        _send_Matrix2D(geometry);
+        int result = _recv_Int();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    /// Stops simulating a spray gun. This will clear the simulated particles.
+    /// </summary>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns result code of the operation.</returns>
+    public int Spray_Clear(int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_Clear");
+        _send_Int(id_spray);
+        int result = _recv_Int();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    /// Gets statistics from all simulated spray guns or a specific spray gun
+    /// </summary>
+    /// <param name="data">Extra data output</param>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns statistics string.</returns>
+    public string Spray_GetStats(out Mat data, int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_Stats");
+        _send_Int(id_spray);
+        string result = _recv_Line().Replace("<br>", "\t");
+        data = _recv_Matrix2D();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    /// Sets the state of a simulated spray gun (ON or OFF)
+    /// </summary>
+    /// <param name="state">Set to SPRAY_ON or SPRAY_OFF</param>
+    /// <param name="id_spray">Spray ID (value returned by Spray_Add). Leave the default -1 to apply to all simulated sprays</param>
+    /// <returns>Returns result code of the operation.</returns>
+    public int Spray_SetState(int state = SPRAY_ON, int id_spray = -1)
+    {
+        _check_connection();
+        _send_Line("Gun_SetState");
+        _send_Int(id_spray);
+        _send_Int(state);
+        int result = _recv_Int();
+        _check_status();
+        return result;
+    }
+
+    /// <summary>
+    ///     Sets the relative positions (poses) of a list of items with respect to their parent.
+    ///     For example, the position of an object/frame/target with respect to its parent.
+    ///     Use this function instead of setPose() for faster speed.
+    /// </summary>
+    /// <param name="items">List of items</param>
+    /// <param name="poses">List of poses for each item</param>    
+    public void setPoses(List<Item> items, List<Mat> poses)
+    {
+        if (items.Count != poses.Count)
+        {
+            throw new RDKException("The number of items must match the number of poses");
+        }
+
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        _check_connection();
+        _send_Line("S_Hlocals");
+        _send_Int(items.Count);
+        for (int i = 0; i < items.Count; i++)
+        {
+            _send_Item(items[i]);
+            _send_Pose(poses[i]);
+        }
+        _check_status();
+    }
+
+    /// <summary>
+    ///     Set the absolute positions (poses) of a list of items with respect to the station reference.
+    ///     For example, the position of an object/frame/target with respect to its parent.
+    ///     Use this function instead of setPoseAbs() for faster speed.
+    /// </summary>
+    /// <param name="items">List of items</param>
+    /// <param name="poses">List of poses for each item</param>    
+    public void setPosesAbs(List<Item> items, List<Mat> poses)
+    {
+        if (items.Count != poses.Count)
+        {
+            throw new RDKException("The number of items must match the number of poses");
+        }
+
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        _check_connection();
+        _send_Line("S_Hlocal_AbsS");
+        _send_Int(items.Count);
+        for (int i = 0; i < items.Count; i++)
+        {
+            _send_Item(items[i]);
+            _send_Pose(poses[i]);
+        }
+        _check_status();
+    }
+
+    /// <summary>
+    /// Displays a sequence of joints
+    /// </summary>
+    /// <param name="sequence">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+    public void ShowSequence(Mat sequence)
+    {
+        new Item(this).ShowSequence(sequence);
+    }
+
+    /// <summary>
+    ///     Displays a sequence of joints or poses
+    /// </summary>
+    /// <param name="joints">List of joint arrays</param>
+    /// <param name="poses">List of poses</param>
+    /// <param name="display_type">Display options</param>
+    /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>
+    public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, int display_type = SEQUENCE_DISPLAY_DEFAULT, int timeout = -1)
+    {
+        new Item(this).ShowSequence(joints, poses, display_type, timeout);
     }
 
     /// <summary>
@@ -6229,6 +6582,43 @@ public class RoboDK
             link._check_status();
         }
 
+        /// <summary>
+        ///     Displays a sequence of joints or poses
+        /// </summary>
+        /// <param name="joints">List of joint arrays</param>
+        /// <param name="poses">List of poses</param>
+        /// <param name="display_type">Display options</param>
+        /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>
+        public void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, int display_type = SEQUENCE_DISPLAY_DEFAULT, int timeout = -1)
+        {
+            if (joints == null && poses == null)
+            {
+                return;
+            }
+
+            link._check_connection();
+            link._send_Line("Show_SeqPoses");
+            link._send_Item(this);
+            double[] options = { (double)display_type, (double)timeout };
+            link._send_Array(options);
+            if (display_type != SEQUENCE_DISPLAY_DEFAULT && (display_type & SEQUENCE_DISPLAY_ROBOT_JOINTS) != 0)
+            {
+                link._send_Int(joints.Count);
+                for (int i = 0; i < joints.Count; i++)
+                {
+                    link._send_Array(joints[i]);
+                }
+            }
+            else
+            {
+                link._send_Int(poses.Count);
+                for (int i = 0; i < poses.Count; i++)
+                {
+                    link._send_Pose(poses[i]);
+                }
+            }
+            link._check_status();
+        }
 
         /// <summary>
         /// Checks if a robot or program is currently running (busy or moving)

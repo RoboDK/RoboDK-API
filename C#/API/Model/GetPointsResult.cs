@@ -1,5 +1,5 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
-// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Copyright 2023 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -38,24 +38,38 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-
-
 namespace RoboDk.API.Model
 {
-    /// <summary>
-    /// Object selection features:
-    /// </summary>
-    public enum ObjectSelectionType
+    public class GetPointsResult
     {
-        None = 0,
-        Surface = 1,
-        Curve = 2,
-        Point = 3,
-        ObjectMesh = 7,
-        SurfacePreview = 8,
-        Mesh = 9,
-        HoverObjectMesh = 10,
-        HoverObject = 11
+        public GetPointsResult(IItem item, ObjectSelectionType featureType, int featureId, string featureName, Mat points)
+        {
+            Object = item;
+            FeatureType = featureType;
+            FeatureId = featureId;
+            FeatureName = featureName;
+            Points = points;
+        }
+
+        /// <summary>
+        /// Object under the mouse cursor
+        /// </summary>
+        public IItem Object { get; private set; }
+        /// <summary>
+        /// Selected feature
+        /// </summary>
+        public ObjectSelectionType FeatureType { get; private set; }
+        /// <summary>
+        /// Feature ID
+        /// </summary>
+        public int FeatureId { get; private set; }
+        /// <summary>
+        /// Feature Name
+        /// </summary>
+        public string FeatureName { get; private set; }
+        /// <summary>
+        /// Points
+        /// </summary>
+        public Mat Points { get; private set; }
     }
 }
-

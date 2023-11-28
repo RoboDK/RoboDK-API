@@ -336,6 +336,14 @@ namespace RoboDk.API
         void SetWindowFlags(WindowFlags flags);
 
         /// <summary>
+        /// Retrieve current item flags.
+        /// Item flags allow defining how much access the user has to item-specific features.
+        /// </summary>
+        /// <param name="item">Item to get flags</param>
+        /// <returns>Returns ItemFlags of the item.</returns>
+        ItemFlags GetItemFlags(IItem item);
+
+        /// <summary>
         /// Update global item flags.
         /// Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
         /// </summary>
@@ -616,6 +624,22 @@ namespace RoboDk.API
         /// <param name="parameter">RoboDK parameter name</param>
         /// <param name="value">parameter value (number)</param>
         void SetParameter(string parameter, double value);
+
+        /// <summary>
+        /// Gets a global or a user binary parameter from the open RoboDK station
+        /// </summary>
+        /// <param name="parameter">RoboDK parameter</param>
+        /// <returns>Arrray of bytes.</returns>
+        byte[] GetBinaryParameter(string parameter);
+
+        /// <summary>
+        /// Sets a global binary parameter from the RoboDK station. If the parameters exists, it will be modified. If not, it will be added to the station.
+        /// The parameters can also be modified by right clicking the station and selecting "shared parameters"
+        /// </summary>
+        /// <param name="parameter">RoboDK parameter name</param>
+        /// <param name="data">Parameter binary data</param>
+        void SetBinaryParameter(string parameter, byte[] data);
+
 
         /// <summary>
         /// Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
@@ -953,7 +977,131 @@ namespace RoboDk.API
         /// <param name="joints"></param>
         /// <param name="robotBase"></param>
         /// <param name="robot"></param>
+        /// <returns>New target item created.</returns>
         IItem AddTargetJ(IItem pgm, string targetName, double[] joints, IItem robotBase = null, IItem robot = null);
+
+        /// <summary>
+        /// Embed a window from a separate process in RoboDK as a docked window
+        /// </summary>
+        /// <param name="windowName">The name of the window currently open. Make sure the window name is unique and it is a top level window</param>
+        /// <param name="dockedName">Name of the docked tab in RoboDK (optional, if different from the window name)</param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="pid">Process ID (optional)</param>
+        /// <param name="areaAdd">Set to 1 (right) or 2 (left) (default is 1)</param>
+        /// <param name="areaAllowed">Areas allowed (default is 15: no constrain)</param>
+        /// <param name="timeout">Timeout to abort attempting to embed the window (optional)</param>
+        /// <returns>Returns true if successful.</returns>
+        bool EmbedWindow(string windowName, string dockedName = null, int width = -1, int height = -1, int pid = 0, int areaAdd = 1, int areaAllowed = 15, int timeout = 500);
+
+        /// <summary>
+        /// Retrieves the object under the mouse cursor
+        /// </summary>
+        /// <param name="featureType">Set to ObjectSelectionType.HoverObjectMesh to retrieve object under the mouse cursor, the selected feature and mesh, or ObjectSelectionType.HoverObject if you don't need the mesh (faster)</param>
+        /// <returns>Returns GetPointsResult with an object under the mouse cursor, selected feature, feature id, list of points and description.</returns>
+        GetPointsResult GetPoints(ObjectSelectionType featureType = ObjectSelectionType.HoverObjectMesh);
+
+        /// <summary>
+        /// Takes a measurement with a 6D measurement device
+        /// </summary>
+        /// <param name="target">Target type</param>
+        /// <param name="averageTime">Take the measurement for a period of time and average the result</param>
+        /// <param name="tipOffset">Offet the measurement to the tip</param>
+        /// <returns>Returns MeasurePoseResult with a pose of measured object reference frame, and error values in mm.</returns>
+        MeasurePoseResult MeasurePose(int target = -1, int averageTime = 0, List<double> tipOffset = null);
+
+        /// <summary>
+        /// Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin
+        /// </summary>
+        /// <param name="pluginName">The plugin name must match the PluginName() implementation in the RoboDK plugin</param>
+        /// <param name="command">Specific command handled by your plugin</param>
+        /// <param name="value">Specific value (optional) handled by your plugin</param>
+        /// <returns>Returns the result as a string.</returns>
+        string PluginCommand(string pluginName, string command, string value);
+
+        /// <summary>
+        /// Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin name to reload all plugins
+        /// </summary>
+        /// <param name="pluginName">The name of the plugin or path (if it is not in the default directory)</param>
+        /// <param name="operation">Type of operation (load, unload, reload)</param>
+        /// <returns>Returns boolean result of operation.</returns>
+        bool PluginLoad(string pluginName, PluginOperation operation = PluginOperation.Load);
+
+        /// <summary>
+        ///     Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
+        ///     The simulation time changes depending on the simulation speed.
+        ///     The simulation time is usually faster than the real time (5 times by default)
+        /// </summary>
+        /// <returns>Returns the simulation time in seconds.</returns>
+        double GetSimulationTime();
+
+        /// <summary>
+        ///     Add a simulated spray gun that allows projecting particles to a part.
+        ///     This is useful to simulate applications such as: arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace
+        /// </summary>
+        /// <param name="tool">Active tool (null for auto detect)</param>
+        /// <param name="referenceObject">Object in active reference frame (null for auto detect)</param>
+        /// <param name="parameters">A string specifying the behavior of the simulated particles</param>
+        /// <param name="points">Provide the volume as a list of points as described in the sample macro SprayOn.py</param>
+        /// <param name="geometry">Provide a list of points describing triangles to define a specific particle geometry</param>
+        /// <returns>Returns ID of the spray gun.</returns>
+        int SprayAdd(IItem tool = null, IItem referenceObject = null, string parameters = "", Mat points = null, Mat geometry = null);
+
+        /// <summary>
+        /// Stops simulating a spray gun. This will clear the simulated particles
+        /// </summary>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns result code of the operation.</returns>
+        int SprayClear(int sprayId = -1);
+
+        /// <summary>
+        /// Gets statistics from all simulated spray guns or a specific spray gun
+        /// </summary>
+        /// <param name="data">Extra data output</param>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns statistics string.</returns>
+        string SprayGetStats(out Mat data, int sprayId = -1);
+
+        /// <summary>
+        /// Sets the state of a simulated spray gun (ON or OFF)
+        /// </summary>
+        /// <param name="state">Set to SprayGunStates.SprayOn or SprayGunStates.SprayOff</param>
+        /// <param name="sprayId">Spray ID (value returned by SprayAdd). Leave the default -1 to apply to all simulated sprays</param>
+        /// <returns>Returns result code of the operation.</returns>
+        int SpraySetState(SprayGunStates state = SprayGunStates.SprayOn, int sprayId = -1);
+
+        /// <summary>
+        ///     Sets the relative positions (poses) of a list of items with respect to their parent.
+        ///     For example, the position of an object/frame/target with respect to its parent.
+        ///     Use this function instead of SetPose() for faster speed.
+        /// </summary>
+        /// <param name="items">List of items</param>
+        /// <param name="poses">List of poses for each item</param>
+        void SetPoses(List<IItem> items, List<Mat> poses);
+
+        /// <summary>
+        ///     Set the absolute positions (poses) of a list of items with respect to the station reference.
+        ///     For example, the position of an object/frame/target with respect to its parent.
+        ///     Use this function instead of SetPoseAbs() for faster speed.
+        /// </summary>
+        /// <param name="items">List of items</param>
+        /// <param name="poses">List of poses for each item</param>        
+        void SetPosesAbs(List<IItem> items, List<Mat> poses);
+
+        /// <summary>
+        ///     Displays a sequence of joints
+        /// </summary>
+        /// <param name="sequence">joint sequence as a 6xN matrix or instruction sequence as a 7xN matrix</param>
+        void ShowSequence(Mat sequence);
+
+        /// <summary>
+        ///     Displays a sequence of joints or poses
+        /// </summary>
+        /// <param name="joints">List of joint arrays</param>
+        /// <param name="poses">List of poses</param>
+        /// <param name="flags">Display options</param>
+        /// <param name="timeout">Display timeout, in milliseconds (default: -1)</param>        
+        void ShowSequence(List<double[]> joints = null, List<Mat> poses = null, SequenceDisplayFlags flags = SequenceDisplayFlags.Default, int timeout = -1);
 
         #endregion
     }
