@@ -2131,12 +2131,7 @@ bool _RoboDK_check_connection(struct RoboDK_t *inst) {
 
 
 bool _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number) {
-    int32_t networkOrderNumber = 0;
-    int i;
-    for (i = 0; i < 4; i++) {
-        networkOrderNumber += (((number >> (i * 8)) & (0xFF)) << (24 - i * 8));
-    }
-
+    int32_t networkOrderNumber = htonl(number);
     SocketWrite(inst->_COM, &networkOrderNumber, sizeof(int32_t));
     return true;
 }
@@ -2183,18 +2178,8 @@ bool _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item) {
     if (inst->_isConnected == false) {
         return false;
     }
-    char buffer[sizeof(uint64_t)];
-    uint64_t ptrVal;
-    if (item == NULL) {
-        ptrVal = (uint64_t) NULL;
-    }
-    else {
-        ptrVal = item->_PTR;
-    }
-    for (int i = 0; i < 8; i++) {
-        buffer[i] = (ptrVal >> (i * 8)) & 0xFF;
-    }
-    SocketWrite(inst->_COM, buffer, sizeof(uint64_t));
+    uint64_t networkOrderPointer = item ? htonll(item->_PTR) : 0;
+    SocketWrite(inst->_COM, &networkOrderPointer, sizeof(uint64_t));
     return true;
 }
 
@@ -2241,21 +2226,22 @@ bool _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose) {
 
 
 int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
-    int32_t value = -1; // do not change type
-    int i;
-    if (inst->_isConnected == false) { return false; }
-    char buffer[sizeof(int32_t)];
+    int32_t value = 0;
+
+    if (inst->_isConnected == false) {
+        return false;
+    }
+
     while (SocketBytesAvailable(inst->_COM) < sizeof(int32_t)){
         // waste time?
     }
-    int bytesReceived = SocketRead(inst->_COM, buffer, sizeof(int32_t));
+
+    int bytesReceived = SocketRead(inst->_COM, &value, sizeof(int32_t));
     if (bytesReceived <= 0) {
         return -1;
     }
-    for (i = 0; i < 4; i++) {
-        value = buffer[i] << (24 - i * 8);
-    }
-    return value;
+
+    return ntohl(value);
 }
 
 
@@ -2285,29 +2271,30 @@ bool _RoboDK_recv_Line(struct RoboDK_t *inst, char *output) {
 
 struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
     struct Item_t item;
-    int i;
     item._RDK = inst;
     item._PTR = 0;
     item._TYPE = -1;
-    if (inst->_isConnected == false) { return item; }
+
+    if (inst->_isConnected == false) {
+        return item;
+    }
+
     while (SocketBytesAvailable(inst->_COM) < sizeof(uint64_t) + sizeof(int32_t)){
         // waste time?
     }
-    //if (SocketBytesAvailable(inst->_COM) >= sizeof(uint64_t) + sizeof(int32_t)) {
-    unsigned char buffer[8 + 4];
-    int bytesReceived = SocketRead(inst->_COM, buffer, sizeof(uint64_t) + sizeof(int32_t));
-    if (bytesReceived <= 0) {
+
+    int bytesReceived = SocketRead(inst->_COM, &item._PTR, sizeof(uint64_t));
+    if (bytesReceived != sizeof(uint64_t)) {
         return item;
     }
-    item._PTR = 0;
-    for (i = 0; i < 8; i++) {
-        item._PTR += ((uint64_t)buffer[0 + i]) << (i * 8);
-    }
-    item._TYPE = 0;
-    for (i = 0; i < 4; i++) {
-        item._TYPE += buffer[sizeof(uint64_t) + i] << (24 - i * 8);
+
+    bytesReceived = SocketRead(inst->_COM, &item._TYPE, sizeof(int32_t));
+    if (bytesReceived != sizeof(int32_t)) {
+        return item;
     }
 
+    item._PTR = ntohll(item._PTR);
+    item._TYPE = ntohl(item._TYPE);
     return item;
 }
 
