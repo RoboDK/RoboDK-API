@@ -506,14 +506,14 @@ bool Item_Disconnect(const struct Item_t* inst) {
     return status != 0;
 }
 
-int Item_Type(const struct Item_t* inst) {
+enum eITEM_TYPE Item_Type(const struct Item_t* inst) {
     _RoboDK_check_connection(inst->_RDK);
     _RoboDK_send_Line(inst->_RDK, "G_Item_Type");
     _RoboDK_send_Item(inst->_RDK, inst);
 
     int itemtype = _RoboDK_recv_Int(inst->_RDK);
     _RoboDK_check_status(inst->_RDK);
-    return itemtype;
+    return (enum eITEM_TYPE) itemtype;
 }
 
 void Item_Save(const struct Item_t* inst, char* filename) {
