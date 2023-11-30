@@ -1243,6 +1243,13 @@ namespace RoboDk.API
         /// <param name="value">Acceleration in deg/s2 for rotary joints and mm/s2 for linear joints</param>
         void SetAccelerationJoints(double value);
 
+        /// <summary>
+        /// Sets the joint speed of a robot
+        /// </summary>
+        /// <param name="value">Speed in deg/s for rotary joints and mm/s for linear joints</param>
+        void SetSpeedJoints(double value);
+
+
         #endregion
     }
 }

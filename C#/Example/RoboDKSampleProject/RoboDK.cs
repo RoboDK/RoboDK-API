@@ -7342,7 +7342,7 @@ public class RoboDK
         /// Sets the linear acceleration of a robot in mm/s2
         /// </summary>
         /// <param name="accel_linear">Acceleration in mm/s2</param>
-        void setAcceleration(double accel_linear)
+        public void setAcceleration(double accel_linear)
         {
             setSpeed(-1.0, -1.0, accel_linear, -1.0);
         }
@@ -7351,9 +7351,18 @@ public class RoboDK
         /// Sets the joint acceleration of a robot
         /// </summary>
         /// <param name="value">Acceleration in deg/s2 for rotary joints and mm/s2 for linear joints</param>
-        void setAccelerationJoints(double accel_joints)
+        public void setAccelerationJoints(double accel_joints)
         {
             setSpeed(-1.0, -1.0, -1.0, accel_joints);
+        }
+
+        /// <summary>
+        /// Sets the joint speed of a robot
+        /// </summary>
+        /// <param name="value">Speed in deg/s for rotary joints and mm/s for linear joints</param>
+        public void setSpeedJoints(double speed_joints)
+        {
+            setSpeed(-1.0, speed_joints, -1.0, -1.0);
         }
     }
 
