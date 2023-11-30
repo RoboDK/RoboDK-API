@@ -2003,6 +2003,17 @@ namespace RoboDk.API
             return Link.IsInside(this, objectParent);
         }
 
+        /// <inheritdoc />
+        public bool IsJointTarget()
+        {
+            Link.check_connection();
+            Link.send_line("Target_Is_JT");
+            Link.send_item(this);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (result > 0);
+        }
+
 #endregion
 
     }

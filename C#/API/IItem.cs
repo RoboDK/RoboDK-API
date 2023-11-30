@@ -1215,8 +1215,15 @@ namespace RoboDk.API
         /// Check if the object is inside the provided object.
         /// </summary>
         /// <param name="objectParent"></param>
-        /// <returns>Returns true if the object is inside the objectParent</returns>
+        /// <returns>Returns true if the object is inside the objectParent.</returns>
         bool IsInside(IItem objectParent);
+
+        /// <summary>
+        ///     Check if the target is a joint target.
+        ///     A joint target moves to the joint position without taking into account the cartesian coordinates.
+        /// </summary>
+        /// <returns>Returns true if the target is a joint target.</returns>        
+        bool IsJointTarget();
 
         #endregion
     }

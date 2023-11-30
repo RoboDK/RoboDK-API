@@ -7308,6 +7308,21 @@ public class RoboDK
         {
             return link.IsInside(this, objectParent);
         }
+
+        /// <summary>
+        ///     Check if the target is a joint target.
+        ///     A joint target moves to the joint position without taking into account the cartesian coordinates.
+        /// </summary>
+        /// <returns>Returns true if the target is a joint target.</returns>
+        public bool IsJointTarget()
+        {
+            link._check_connection();
+            link._send_Line("Target_Is_JT");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return (result > 0);
+        }
     }
 
 }
