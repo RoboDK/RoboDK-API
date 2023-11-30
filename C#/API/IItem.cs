@@ -1091,6 +1091,12 @@ namespace RoboDk.API
         /// <param name="accurate">Set true to use the accurate model or false to use the nominal model</param>
         void SetAccuracyActive(bool accurate = true);
 
+        /// <summary>
+        /// Request accurate kinematics status
+        /// </summary>
+        /// <returns>Returns true if the accurate kinematics are being used</returns>
+        bool AccuracyActive();
+
         #endregion
     }
 }

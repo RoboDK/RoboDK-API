@@ -6686,6 +6686,20 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Request accurate kinematics status
+        /// </summary>
+        /// <returns>Returns true if the accurate kinematics are being used</returns>
+        public bool AccuracyActive()
+        {
+            link._check_connection();
+            link._send_Line("G_AbsAccOn");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return result != 0;
+        }
+
+        /// <summary>
         /// Saves a program to a file.
         /// </summary>
         /// <param name="filename">File path of the program</param>
