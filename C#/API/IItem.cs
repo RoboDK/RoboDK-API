@@ -387,6 +387,13 @@ namespace RoboDk.API
         void SetColor(int shapeId, Color tocolor);
 
         /// <summary>
+        /// Set the color of a curve object. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>        
+        /// <param name="curveId">ID of the curve: the ID is the order in which the shape was added using AddCurve()</param>
+        void SetColorCurve(Color tocolor, int curveId = -1);
+
+        /// <summary>
         /// Set the alpha channel of an object, tool or robot. 
         /// The alpha channel must remain between 0 and 1.
         /// </summary>

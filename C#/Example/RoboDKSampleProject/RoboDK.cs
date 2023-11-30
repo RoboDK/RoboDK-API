@@ -5723,6 +5723,22 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Set the color of a curve object. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>        
+        /// <param name="curve_id">ID of the curve: the ID is the order in which the shape was added using AddCurve()</param>
+        public void SetColorCurve(List<double> tocolor, int curve_id = -1)
+        {
+            link.check_color(tocolor);
+            link._check_connection();
+            link._send_Line("S_CurveColor");
+            link._send_Item(this);
+            link._send_Int(curve_id);
+            link._send_ArrayList(tocolor);
+            link._check_status();
+        }
+
+        /// <summary>
         /// Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
         /// A color is in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
         /// </summary>

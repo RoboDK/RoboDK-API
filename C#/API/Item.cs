@@ -658,6 +658,19 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void SetColorCurve(Color tocolor, int curveId = -1)
+        {
+            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_color(tocolorArray);
+            Link.check_connection();
+            Link.send_line("S_CurveColor");
+            Link.send_item(this);
+            Link.send_int(curveId);
+            Link.send_array(tocolorArray);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
         public void SetTransparency(double alpha)
         {
             // saturate the alpha channel so it remains between 0 and 1.
