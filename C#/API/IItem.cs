@@ -1159,6 +1159,17 @@ namespace RoboDk.API
         /// </returns>
         string GetAnalogInput(string input);
 
+        /// <summary>
+        ///     Get a Digital Input (DI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="input">Digital Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Digital Input (0/1 or other value depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string GetDigitalInput(string input);
+
         #endregion
     }
 }

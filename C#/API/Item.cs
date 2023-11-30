@@ -1916,10 +1916,22 @@ namespace RoboDk.API
         }
         
         /// <inheritdoc />
-        string GetAnalogInput(string input)
+        public string GetAnalogInput(string input)
         {
             Link.check_connection();
             Link.send_line("getAI");
+            Link.send_item(this);
+            Link.send_line(input);
+            string result = Link.rec_line();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public string GetDigitalInput(string input)
+        {
+            Link.check_connection();
+            Link.send_line("getDI");
             Link.send_item(this);
             Link.send_line(input);
             string result = Link.rec_line();

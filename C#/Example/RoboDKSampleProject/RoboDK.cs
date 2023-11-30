@@ -7228,6 +7228,26 @@ public class RoboDK
             link._check_status();
             return result;
         }
+
+        /// <summary>
+        ///     Get a Digital Input (DI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="io_var">Digital Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Digital Input (0/1 or other value depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        public string getDI(string io_var)
+        {
+            link._check_connection();
+            link._send_Line("getDI");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            string result = link._recv_Line();
+            link._check_status();
+            return result;
+        }
     }
 
 }
