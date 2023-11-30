@@ -1895,6 +1895,12 @@ namespace RoboDk.API
         {
             return Link.Collision(this, item);
         }
+        
+        /// <inheritdoc />
+        public void Copy(bool copy_children = true)
+        {
+            Link.Copy(this, copy_children);
+        }
 
 #endregion
 

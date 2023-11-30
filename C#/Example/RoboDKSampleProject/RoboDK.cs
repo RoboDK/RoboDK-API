@@ -3200,12 +3200,25 @@ public class RoboDK
     /// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
     /// </summary>
     /// <param name="tocopy">Item to copy</param>
-    public void Copy(Item tocopy)
+    /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+    public void Copy(Item tocopy, bool copy_children = true)
     {
-        _check_connection();
-        _send_Line("Copy");
-        _send_Item(tocopy);
-        _check_status();
+        if (BUILD < 18705)
+        {
+            _check_connection();
+            _send_Line("Copy");
+            _send_Item(tocopy);
+            _check_status();
+        }
+        else
+        {
+            _require_build(18705);
+            _check_connection();
+            _send_Line("Copy2");
+            _send_Item(tocopy);
+            _send_Int(copy_children ? 1 : 0);
+            _check_status();
+        }
     }
 
     /// <summary>
@@ -7165,6 +7178,16 @@ public class RoboDK
         public int Collision(Item item_check)
         {
             return link.Collision(this, item_check);
+        }
+
+        /// <summary>
+        ///     Copy the item to the clipboard (same as Ctrl+C).
+        ///     Use together with Paste() to duplicate items.
+        /// </summary>        
+        /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+        public void Copy(bool copy_children = true)
+        {
+            link.Copy(this, copy_children);
         }
     }
 

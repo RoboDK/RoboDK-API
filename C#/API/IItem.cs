@@ -1132,6 +1132,13 @@ namespace RoboDk.API
         /// <returns>Returns true if this item collides with another item; false otherwise.</returns>
         bool Collision(IItem item);
 
+        /// <summary>
+        ///     Copy the item to the clipboard (same as Ctrl+C).
+        ///     Use together with Paste() to duplicate items.
+        /// </summary>        
+        /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+        void Copy(bool copy_children = true);
+
         #endregion
     }
 }
