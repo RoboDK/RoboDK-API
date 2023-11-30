@@ -7189,6 +7189,25 @@ public class RoboDK
         {
             link.Copy(this, copy_children);
         }
+
+        /// <summary>
+        ///     Filter a program file to improve accuracy for a specific robot.
+        ///     The robot must have been previously calibrated.
+        /// </summary>
+        /// <param name="filestr">File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC)</param>
+        /// <param name="filter_msg">The summary of the filtering</param>
+        /// <returns>Returns 0 if the filter succeeded, or a negative value if there are filtering problems.</returns>
+        public int FilterProgram(string filestr, out string filter_msg)
+        {
+            link._check_connection();
+            link._send_Line("FilterProg2");
+            link._send_Item(this);
+            link._send_Line(filestr);
+            int result = link._recv_Int();
+            filter_msg = link._recv_Line();
+            link._check_status();
+            return result;
+        }
     }
 
 }

@@ -1139,6 +1139,15 @@ namespace RoboDk.API
         /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
         void Copy(bool copy_children = true);
 
+        /// <summary>
+        ///     Filter a program file to improve accuracy for a specific robot.
+        ///     The robot must have been previously calibrated.
+        /// </summary>
+        /// <param name="filename">File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC)</param>
+        /// <param name="filterMessage">The summary of the filtering</param>
+        /// <returns>Returns true if the filter succeeded, or false if there are filtering problems.</returns>
+        bool FilterProgram(string filename, out string filterMessage);
+
         #endregion
     }
 }

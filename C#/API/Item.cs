@@ -1901,6 +1901,19 @@ namespace RoboDk.API
         {
             Link.Copy(this, copy_children);
         }
+        
+        /// <inheritdoc />
+        public bool FilterProgram(string filename, out string filterMessage)
+        {
+            Link.check_connection();
+            Link.send_line("FilterProg2");
+            Link.send_item(this);
+            Link.send_line(filename);
+            int result = Link.rec_int();
+            filterMessage = Link.rec_line();
+            Link.check_status();
+            return (result == 0);
+        }
 
 #endregion
 
