@@ -1116,6 +1116,15 @@ namespace RoboDk.API
         /// <param name="pose">Relative position</param>
         void AddGeometry(IItem source, Mat pose);
 
+        /// <summary>
+        /// Adds a list of points to the object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+        /// <param name="addToRef">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projectionType">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <returns>added object/shape (0 if failed)</returns>
+        IItem AddPoints(Mat points, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
+
         #endregion
     }
 }

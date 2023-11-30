@@ -1884,6 +1884,12 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+        /// <inheritdoc />
+        public IItem AddPoints(Mat points, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
+        {
+            return Link.AddPoints(points, this, addToRef, projectionType);
+        }
+
 #endregion
 
     }

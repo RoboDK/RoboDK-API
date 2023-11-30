@@ -7145,7 +7145,17 @@ public class RoboDK
             link._check_status();
         }
 
+        /// <summary>
+        /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+        /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <returns>added object/shape (0 if failed)</returns>
+        public Item AddPoints(Mat points, bool add_to_ref = false, int projection_type = PROJECTION_ALONG_NORMAL_RECALC)
+        {
+            return link.AddPoints(points, this, add_to_ref, projection_type);
+        }
     }
 
 }
-
