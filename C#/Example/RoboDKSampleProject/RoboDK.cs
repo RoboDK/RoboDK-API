@@ -7208,6 +7208,26 @@ public class RoboDK
             link._check_status();
             return result;
         }
+
+        /// <summary>
+        ///     Get an Analog Input (AI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="io_var">Analog Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Analog Input (0-1 or other range depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string getAI(string io_var)
+        {
+            link._check_connection();
+            link._send_Line("getAI");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            string result = link._recv_Line();
+            link._check_status();
+            return result;
+        }
     }
 
 }

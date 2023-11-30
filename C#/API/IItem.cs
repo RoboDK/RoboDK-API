@@ -1148,6 +1148,17 @@ namespace RoboDk.API
         /// <returns>Returns true if the filter succeeded, or false if there are filtering problems.</returns>
         bool FilterProgram(string filename, out string filterMessage);
 
+        /// <summary>
+        ///     Get an Analog Input (AI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="input">Analog Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Analog Input (0-1 or other range depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string GetAnalogInput(string input);
+
         #endregion
     }
 }

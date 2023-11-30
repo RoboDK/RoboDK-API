@@ -1914,6 +1914,18 @@ namespace RoboDk.API
             Link.check_status();
             return (result == 0);
         }
+        
+        /// <inheritdoc />
+        string GetAnalogInput(string input)
+        {
+            Link.check_connection();
+            Link.send_line("getAI");
+            Link.send_item(this);
+            Link.send_line(input);
+            string result = Link.rec_line();
+            Link.check_status();
+            return result;
+        }
 
 #endregion
 
