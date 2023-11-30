@@ -1365,7 +1365,7 @@ namespace SamplePanelRoboDK
 
             //RDK.setFlagsRoboDK(RoboDK.FLAG_ROBODK_MENUEDIT_ACTIVE | RoboDK.FLAG_ROBODK_MENUEDIT_ACTIVE);
             _rdk.SetWindowFlags(WindowFlags.None);
-            _rdk.SetItemFlags(ItemFlags.None);
+            _rdk.SetItemFlags(null, ItemFlags.None);
             if (_robot.Valid()) _robot.SetItemFlags();
         }
 
@@ -1381,7 +1381,7 @@ namespace SamplePanelRoboDK
                 if (code == "1234")
                 {
                     _rdk.SetWindowFlags(WindowFlags.All);
-                    _rdk.SetItemFlags();
+                    _rdk.SetItemFlags(null);
                     _rdk.ShowRoboDK();
                 }
                 else if (code == "0000")
@@ -1391,7 +1391,7 @@ namespace SamplePanelRoboDK
                         WindowFlags.MenuActive |
                         WindowFlags.MenuEditActive |
                         WindowFlags.MenuToolsActive);
-                    _rdk.SetItemFlags(ItemFlags.Editable);
+                    _rdk.SetItemFlags(null, ItemFlags.Editable);
                     _rdk.ShowRoboDK();
                 }
                 else

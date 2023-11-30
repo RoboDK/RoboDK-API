@@ -345,10 +345,11 @@ namespace RoboDk.API
 
         /// <summary>
         /// Update global item flags.
-        /// Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
+        /// Item flags allow defining how much access the user has to item-specific features.
         /// </summary>
-        /// <param name="itemFlags"></param>
-        void SetItemFlags(ItemFlags itemFlags = ItemFlags.All);
+        /// <param name="item">Item to set (use null to apply to all items)</param>
+        /// <param name="itemFlags">Item flags</param>
+        void SetItemFlags(IItem item, ItemFlags itemFlags = ItemFlags.All);
 
         /// <summary>
         /// Show a message in RoboDK (it can be blocking or non blocking in the status bar)
