@@ -7156,6 +7156,16 @@ public class RoboDK
         {
             return link.AddPoints(points, this, add_to_ref, projection_type);
         }
+
+        /// <summary>
+        /// Returns 1 if item1 and item2 collided. Otherwise returns 0.
+        /// </summary>
+        /// <param name="item_check">Item to check for collisions</param>
+        /// <returns></returns>
+        public int Collision(Item item_check)
+        {
+            return link.Collision(this, item_check);
+        }
     }
 
 }

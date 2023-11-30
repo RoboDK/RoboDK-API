@@ -1890,6 +1890,12 @@ namespace RoboDk.API
             return Link.AddPoints(points, this, addToRef, projectionType);
         }
 
+        /// <inheritdoc />
+        public bool Collision(IItem item)
+        {
+            return Link.Collision(this, item);
+        }
+
 #endregion
 
     }

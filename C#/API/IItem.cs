@@ -1125,6 +1125,13 @@ namespace RoboDk.API
         /// <returns>added object/shape (0 if failed)</returns>
         IItem AddPoints(Mat points, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
 
+        /// <summary>
+        /// Check if if this item is in a collision state with another item
+        /// </summary>
+        /// <param name="item">Item to check for collisions</param>
+        /// <returns>Returns true if this item collides with another item; false otherwise.</returns>
+        bool Collision(IItem item);
+
         #endregion
     }
 }
