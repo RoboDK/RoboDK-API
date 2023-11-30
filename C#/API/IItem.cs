@@ -1109,6 +1109,13 @@ namespace RoboDk.API
         /// <returns>Returns loaded object</returns>
         IItem AddFile(string filename);
 
+        /// <summary>
+        /// Makes a copy of the source item geometry adding it at a given position (pose), relative to this item
+        /// </summary>
+        /// <param name="source">Source item</param>
+        /// <param name="pose">Relative position</param>
+        void AddGeometry(IItem source, Mat pose);
+
         #endregion
     }
 }

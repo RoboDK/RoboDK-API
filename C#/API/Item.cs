@@ -1873,6 +1873,17 @@ namespace RoboDk.API
             return Link.AddFile(filename, this);
         }
 
+        /// <inheritdoc />
+        public void AddGeometry(IItem source, Mat pose)
+        {
+            Link.check_connection();
+            Link.send_line("CopyFaces");
+            Link.send_item(source);
+            Link.send_item(this);
+            Link.send_pose(pose);
+            Link.check_status();
+        }
+
 #endregion
 
     }

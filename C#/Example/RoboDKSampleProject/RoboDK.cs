@@ -7130,6 +7130,21 @@ public class RoboDK
             return link.AddFile(filename, this);
         }
 
+        /// <summary>
+        /// Makes a copy of the geometry fromitem adding it at a given position (pose), relative to this item
+        /// </summary>
+        /// <param name="fromitem">Source item</param>
+        /// <param name="pose">Relative position</param>        
+        public void AddGeometry(Item fromitem, Mat pose)
+        {
+            link._check_connection();
+            link._send_Line("CopyFaces");
+            link._send_Item(fromitem);
+            link._send_Item(this);
+            link._send_Pose(pose);
+            link._check_status();
+        }
+
     }
 
 }
