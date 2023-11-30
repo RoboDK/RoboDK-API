@@ -1231,6 +1231,12 @@ namespace RoboDk.API
         /// <returns>Returns ProgramExecutionType (Simulator or Robot).</returns>
         ProgramExecutionType GetRunType();
 
+        /// <summary>
+        /// Sets the linear acceleration of a robot in mm/s2
+        /// </summary>
+        /// <param name="value">Acceleration in mm/s2</param>
+        void SetAcceleration(double value);
+
         #endregion
     }
 }

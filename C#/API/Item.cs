@@ -2025,6 +2025,12 @@ namespace RoboDk.API
             return (ProgramExecutionType)result;
         }
 
+        /// <inheritdoc />
+        public void SetAcceleration(double value)
+        {
+            SetSpeed(-1.0, value, -1.0, -1.0);
+        }
+
 #endregion
 
     }

@@ -7337,6 +7337,15 @@ public class RoboDK
             link._check_status();
             return result;
         }
+
+        /// <summary>
+        /// Sets the linear acceleration of a robot in mm/s2
+        /// </summary>
+        /// <param name="accel_linear">Acceleration in mm/s2</param>
+        void setAcceleration(double accel_linear)
+        {
+            setSpeed(-1.0, -1.0, accel_linear, -1.0);
+        }
     }
 
 }
