@@ -1939,6 +1939,40 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public void SetAnalogOutput(string output, string value)
+        {
+            Link.check_connection();
+            Link.send_line("setAO");
+            Link.send_item(this);
+            Link.send_line(output);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public void SetDigitalOutput(string output, string value)
+        {
+            Link.check_connection();
+            Link.send_line("setDO");
+            Link.send_item(this);
+            Link.send_line(output);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public void WaitDigitalInput(string input, string value, double timeout = -1)
+        {
+            Link.check_connection();
+            Link.send_line("waitDI");
+            Link.send_item(this);
+            Link.send_line(input);
+            Link.send_line(value);
+            Link.send_int((int)(timeout * 1000.0));
+            Link.check_status();
+        }
+
 #endregion
 
     }

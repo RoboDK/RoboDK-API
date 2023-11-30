@@ -7248,6 +7248,21 @@ public class RoboDK
             link._check_status();
             return result;
         }
+
+        /// <summary>
+        /// Set an Analog Output (AO).
+        /// </summary>
+        /// <param name="io_var">Analog Output (string or number)</param>
+        /// <param name="io_value">Desired value</param>
+        public void setAO(string io_var, string io_value)
+        {
+            link._check_connection();
+            link._send_Line("setAO");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            link._send_Line(io_value);
+            link._check_status();
+        }
     }
 
 }

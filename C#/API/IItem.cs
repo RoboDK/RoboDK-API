@@ -1170,6 +1170,30 @@ namespace RoboDk.API
         /// </returns>
         string GetDigitalInput(string input);
 
+        /// <summary>
+        /// Set an Analog Output (AO).
+        /// </summary>
+        /// <param name="output">Analog Output (string or number)</param>
+        /// <param name="value">Desired value</param>
+        void SetAnalogOutput(string output, string value);
+
+        /// <summary>
+        ///     Set a Digital Output (DO).
+        ///     This command can also be used to set any generic variables to a desired value.
+        /// </summary>
+        /// <param name="output">Digital Output (string or number)</param>
+        /// <param name="value">Desired value</param>
+        void SetDigitalOutput(string output, string value);
+
+        /// <summary>
+        ///     Waits for an input to attain a given value.
+        ///     Optionally, a timeout can be provided.
+        /// </summary>
+        /// <param name="input">Digital Input (string or number)</param>
+        /// <param name="value">Expected value</param>
+        /// <param name="timeout">Timeout in miliseconds</param>
+        void WaitDigitalInput(string input, string value, double timeout = -1);
+
         #endregion
     }
 }
