@@ -1985,6 +1985,18 @@ namespace RoboDk.API
             return (result > 0);
         }
 
+        /// <inheritdoc />
+        public int InstructionSelect(int instructionId = -1)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_SelIns");
+            Link.send_item(this);
+            Link.send_int(instructionId);
+            int result = Link.rec_int();
+            Link.check_status();
+            return result;
+        }
+
 #endregion
 
     }

@@ -7279,6 +7279,25 @@ public class RoboDK
             link._check_status();
             return (result > 0);
         }
+
+        /// <summary>
+        ///     Select an instruction in the program as a reference to add new instructions.
+        ///     New instructions will be added after the selected instruction.
+        /// </summary>
+        /// <param name="ins_id">Instruction ID</param>
+        /// <returns>
+        ///     If no Instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
+        /// </returns>
+        public int InstructionSelect(int ins_id = -1)
+        {
+            link._check_connection();
+            link._send_Line("Prog_SelIns");
+            link._send_Item(this);
+            link._send_Int(ins_id);
+            int result = link._recv_Int();
+            link._check_status();
+            return result;
+        }
     }
 
 }

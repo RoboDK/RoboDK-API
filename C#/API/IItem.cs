@@ -1201,6 +1201,16 @@ namespace RoboDk.API
         /// <returns>Returns true if success.</returns>
         bool InstructionDelete(int instructionId = 0);
 
+        /// <summary>
+        ///     Select an instruction in the program as a reference to add new instructions.
+        ///     New instructions will be added after the selected instruction.
+        /// </summary>
+        /// <param name="instructionId">Instruction ID</param>
+        /// <returns>
+        ///     If no Instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
+        /// </returns>
+        int InstructionSelect(int instructionId = -1);
+
         #endregion
     }
 }
