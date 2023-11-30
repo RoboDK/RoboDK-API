@@ -7115,6 +7115,21 @@ public class RoboDK
             return link.Finish();
         }
 
+        /// <summary>
+        /// Adds an object attached to this object
+        /// </summary>
+        /// <param name="filename">
+        ///     Any file to load, supported by RoboDK. 
+        ///     Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... 
+        ///     It is also possible to load supported robot programs, such as SRC (KUKA), 
+        ///     SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        /// </param>
+        /// <returns>Returns loaded object</returns>
+        public Item AddFile(string filename)
+        {
+            return link.AddFile(filename, this);
+        }
+
     }
 
 }

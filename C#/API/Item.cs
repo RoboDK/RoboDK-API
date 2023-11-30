@@ -1867,6 +1867,12 @@ namespace RoboDk.API
             return result != 0;
         }
 
+        /// <inheritdoc />
+        public IItem AddFile(string filename)
+        {
+            return Link.AddFile(filename, this);
+        }
+
 #endregion
 
     }
