@@ -2056,6 +2056,16 @@ namespace RoboDk.API
             SetSpeed(-1.0, -1.0, value, -1.0);
         }
 
+        /// <inheritdoc />
+        public void SetLink(IItem item)
+        {
+            Link.check_connection();
+            Link.send_line("S_Link_ptr");
+            Link.send_item(item);
+            Link.send_item(this);
+            Link.check_status();
+        }
+
 #endregion
 
     }

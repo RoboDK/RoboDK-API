@@ -7380,6 +7380,20 @@ public class RoboDK
         {
             setSpeed(-1.0, speed_joints, -1.0, -1.0);
         }
+
+        /// <summary>
+        ///     Sets a link between this item and the specified item.
+        ///     This is useful to set the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="item">Item to link</param>
+        public void setLink(Item item)
+        {
+            link._check_connection();
+            link._send_Line("S_Link_ptr");
+            link._send_Item(item);
+            link._send_Item(this);
+            link._check_status();
+        }
     }
 
 }

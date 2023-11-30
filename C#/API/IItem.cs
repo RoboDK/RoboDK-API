@@ -1256,6 +1256,12 @@ namespace RoboDk.API
         /// <param name="value">Speed in deg/s for rotary joints and mm/s for linear joints</param>
         void SetSpeedJoints(double value);
 
+        /// <summary>
+        ///     Sets a link between this item and the specified item.
+        ///     This is useful to set the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="item">Item to link</param>
+        void SetLink(IItem item);
 
         #endregion
     }
