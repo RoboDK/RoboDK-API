@@ -1263,6 +1263,11 @@ namespace RoboDk.API
         /// <param name="item">Item to link</param>
         void SetLink(IItem item);
 
+        /// <summary>
+        /// Wait until a program finishes or a robot completes its movement
+        /// </summary>
+        void WaitFinished();
+
         #endregion
     }
 }

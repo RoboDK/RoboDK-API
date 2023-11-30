@@ -2066,6 +2066,15 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+        /// <inheritdoc />
+        public void WaitFinished()
+        {
+            while (Busy())
+            {
+                System.Threading.Thread.Sleep(50);
+            }
+        }
+
 #endregion
 
     }

@@ -7394,6 +7394,17 @@ public class RoboDK
             link._send_Item(this);
             link._check_status();
         }
+
+        /// <summary>
+        /// Wait until a program finishes or a robot completes its movement
+        /// </summary>
+        public void WaitFinished()
+        {
+            while (Busy())
+            {
+                System.Threading.Thread.Sleep(50);
+            }
+        }
     }
 
 }
