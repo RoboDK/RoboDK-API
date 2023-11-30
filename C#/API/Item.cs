@@ -1846,6 +1846,16 @@ namespace RoboDk.API
             Link.Finish();
         }
 
+        /// <inheritdoc />
+        public void SetAccuracyActive(bool accurate = true)
+        {
+            Link.check_connection();
+            Link.send_line("S_AbsAccOn");
+            Link.send_item(this);
+            Link.send_int(accurate ? 1 : 0);
+            Link.check_status();
+        }
+
 #endregion
 
     }

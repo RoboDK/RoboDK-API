@@ -6672,9 +6672,10 @@ public class RoboDK
         // ---- Program item calls -----
 
         /// <summary>
-        /// Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+        ///     Sets the accuracy of the robot active or inactive.
+        ///     A robot must have been calibrated to properly use this option.
         /// </summary>
-        /// <param name="accurate">set to 1 to use the accurate model or 0 to use the nominal model</param>
+        /// <param name="accurate">Set to 1 to use the accurate model or 0 to use the nominal model</param>
         public void setAccuracyActive(int accurate = 1)
         {
             link._check_connection();

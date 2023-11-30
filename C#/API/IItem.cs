@@ -1084,6 +1084,13 @@ namespace RoboDk.API
         /// </summary>
         void Finish();
 
+        /// <summary>
+        ///     Sets the accuracy of the robot active or inactive.
+        ///     A robot must have been calibrated to properly use this option.
+        /// </summary>
+        /// <param name="accurate">Set true to use the accurate model or false to use the nominal model</param>
+        void SetAccuracyActive(bool accurate = true);
+
         #endregion
     }
 }
