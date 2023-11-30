@@ -7323,6 +7323,20 @@ public class RoboDK
             link._check_status();
             return (result > 0);
         }
+
+        /// <summary>
+        /// Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+        /// </summary>
+        /// <returns>Returns one of PROGRAM_RUN_ON_* values.</returns>
+        public int RunType()
+        {
+            link._check_connection();
+            link._send_Line("G_ProgRunType");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return result;
+        }
     }
 
 }

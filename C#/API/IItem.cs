@@ -1225,6 +1225,12 @@ namespace RoboDk.API
         /// <returns>Returns true if the target is a joint target.</returns>        
         bool IsJointTarget();
 
+        /// <summary>
+        /// Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+        /// </summary>
+        /// <returns>Returns ProgramExecutionType (Simulator or Robot).</returns>
+        ProgramExecutionType GetRunType();
+
         #endregion
     }
 }

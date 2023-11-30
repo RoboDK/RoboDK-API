@@ -2014,6 +2014,17 @@ namespace RoboDk.API
             return (result > 0);
         }
 
+        /// <inheritdoc />
+        public ProgramExecutionType GetRunType()
+        {
+            Link.check_connection();
+            Link.send_line("G_ProgRunType");
+            Link.send_item(this);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (ProgramExecutionType)result;
+        }
+
 #endregion
 
     }
