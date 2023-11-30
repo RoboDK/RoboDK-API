@@ -2031,6 +2031,12 @@ namespace RoboDk.API
             SetSpeed(-1.0, value, -1.0, -1.0);
         }
 
+        /// <inheritdoc />
+        public void SetAccelerationJoints(double value)
+        {
+            SetSpeed(-1.0, -1.0, -1.0, value);
+        }
+
 #endregion
 
     }

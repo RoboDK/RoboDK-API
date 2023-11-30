@@ -7346,6 +7346,15 @@ public class RoboDK
         {
             setSpeed(-1.0, -1.0, accel_linear, -1.0);
         }
+
+        /// <summary>
+        /// Sets the joint acceleration of a robot
+        /// </summary>
+        /// <param name="value">Acceleration in deg/s2 for rotary joints and mm/s2 for linear joints</param>
+        void setAccelerationJoints(double accel_joints)
+        {
+            setSpeed(-1.0, -1.0, -1.0, accel_joints);
+        }
     }
 
 }
