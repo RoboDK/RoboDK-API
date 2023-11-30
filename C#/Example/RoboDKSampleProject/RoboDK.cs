@@ -7298,6 +7298,16 @@ public class RoboDK
             link._check_status();
             return result;
         }
+
+        /// <summary>
+        /// Check if the object is inside the provided object.
+        /// </summary>
+        /// <param name="objectParent"></param>
+        /// <returns>Returns true if the object is inside the objectParent</returns>        
+        public bool IsInside(Item objectParent)
+        {
+            return link.IsInside(this, objectParent);
+        }
     }
 
 }

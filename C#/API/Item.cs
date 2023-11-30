@@ -1997,6 +1997,12 @@ namespace RoboDk.API
             return result;
         }
 
+        /// <inheritdoc />
+        public bool IsInside(IItem objectParent)
+        {
+            return Link.IsInside(this, objectParent);
+        }
+
 #endregion
 
     }

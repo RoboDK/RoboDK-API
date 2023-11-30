@@ -1211,6 +1211,13 @@ namespace RoboDk.API
         /// </returns>
         int InstructionSelect(int instructionId = -1);
 
+        /// <summary>
+        /// Check if the object is inside the provided object.
+        /// </summary>
+        /// <param name="objectParent"></param>
+        /// <returns>Returns true if the object is inside the objectParent</returns>
+        bool IsInside(IItem objectParent);
+
         #endregion
     }
 }
