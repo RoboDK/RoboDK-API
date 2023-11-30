@@ -7263,6 +7263,22 @@ public class RoboDK
             link._send_Line(io_value);
             link._check_status();
         }
+
+        /// <summary>
+        /// Delete an instruction of a program
+        /// </summary>
+        /// <param name="ins_id">Instruction ID</param>
+        /// <returns>Returns true if success.</returns>
+        public bool InstructionDelete(int ins_id = 0)
+        {
+            link._check_connection();
+            link._send_Line("Prog_DelIns");
+            link._send_Item(this);
+            link._send_Int(ins_id);
+            int result = link._recv_Int();
+            link._check_status();
+            return (result > 0);
+        }
     }
 
 }

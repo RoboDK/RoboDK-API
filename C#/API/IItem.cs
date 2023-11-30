@@ -1194,6 +1194,13 @@ namespace RoboDk.API
         /// <param name="timeout">Timeout in miliseconds</param>
         void WaitDigitalInput(string input, string value, double timeout = -1);
 
+        /// <summary>
+        /// Delete an instruction of a program
+        /// </summary>
+        /// <param name="instructionId">Instruction ID</param>
+        /// <returns>Returns true if success.</returns>
+        bool InstructionDelete(int instructionId = 0);
+
         #endregion
     }
 }

@@ -1973,6 +1973,18 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+        /// <inheritdoc />
+        public bool InstructionDelete(int instructionId = 0)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_DelIns");
+            Link.send_item(this);
+            Link.send_int(instructionId);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (result > 0);
+        }
+
 #endregion
 
     }
