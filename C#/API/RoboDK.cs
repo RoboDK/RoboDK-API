@@ -926,12 +926,12 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public void SetItemFlags(IItem item, ItemFlags itemFlags = ItemFlags.All)
+        public void SetItemFlags(ItemFlags itemFlags = ItemFlags.All)
         {
             var flags = (int) itemFlags;
             check_connection();
             send_line("S_Item_Rights");
-            send_item(item);
+            send_item(null);
             send_int(flags);
             check_status();
         }
