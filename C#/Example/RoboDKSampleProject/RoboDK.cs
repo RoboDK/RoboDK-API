@@ -3145,8 +3145,8 @@ public class RoboDK
     /// <summary>
     /// Update item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
     /// </summary>
-    /// <param name="item"></param>
-    /// <param name="flags"></param>
+    /// <param name="item">Item to set (use null to apply to all items)</param>
+    /// <param name="flags">Item flags (FLAG_ITEM_*)</param>
     public void setFlagsItem(Item item, int flags = FLAG_ITEM_ALL)
     {
         _check_connection();
