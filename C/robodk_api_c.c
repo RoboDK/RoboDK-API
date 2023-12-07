@@ -1,6 +1,7 @@
 #include "robodk_api_c.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -14,6 +15,12 @@
 
 #pragma comment(lib, "ws2_32.lib")
 #else
+#include <endian.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #endif
 
@@ -30,7 +37,7 @@ static const char ROBODK_API_LF[] = "\n";
 void ThreadSleep(unsigned long nMilliseconds) {
 #if defined(_WIN32)
     Sleep(nMilliseconds);
-#elif defined(POSIX)
+#else
     usleep(nMilliseconds * 1000);
 #endif
 }
@@ -47,24 +54,21 @@ int SocketRead(socket_t sock, void *outBuffer, int bufferSize) {
 //Takes timeout in ms
 void SetSocketTimeout(socket_t sock, int timeout_ms) {
     struct timeval timeout;      
-#if defined(_WIN32)
     timeout.tv_sec = (long) (timeout_ms * 0.001);
     timeout.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,sizeof(struct timeval));
-#elif defined(POSIX)
-    #warning todo
-#endif
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(struct timeval));
 }
 
-int SocketBytesAvailable(socket_t sock) {
+size_t SocketBytesAvailable(socket_t sock) {
+    unsigned long bytes_available = 0;
+
 #if defined(_WIN32)
-    unsigned long bytes_available;
     ioctlsocket(sock, FIONREAD, &bytes_available);
-    return bytes_available;
-#elif defined(POSIX)
-    #warning todo
+#else
+    ioctl(sock, FIONREAD, &bytes_available);
 #endif
 
+    return bytes_available;
 }
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
@@ -1453,19 +1457,19 @@ bool Mat_isHomogeneous(const struct Mat_t *inst) {
     Mat_Get_VX(inst, &vx);
     Mat_Get_VX(inst, &vy);
     Mat_Get_VX(inst, &vz);
-    if (fabs(XYZ_Dot(&vx, &vy) > tol)) {
+    if (fabs(XYZ_Dot(&vx, &vy)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector X and Y are not perpendicular!");
         }
         return false;
     }
-    else if (fabs(XYZ_Dot(&vx, &vz) > tol)) {
+    else if (fabs(XYZ_Dot(&vx, &vz)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector X and Z are not perpendicular!");
         }
         return false;
     }
-    else if (fabs(XYZ_Dot(&vy, &vz) > tol)) {
+    else if (fabs(XYZ_Dot(&vy, &vz)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector Y and Z are not perpendicular!");
         }
@@ -1690,8 +1694,8 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
     if (xyzwprOnly == true) {
         return;
     }
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    for (size_t i = 0; i < 4; i++) {
+        for (size_t j = 0; j < 4; j++) {
             char tempbuffer[20];
             if (inst->arr16[j * 4 + i] < 1e9) {
                 sprintf(tempbuffer, "%12.3f,", inst->arr16[j * 4 + i]);
@@ -1746,7 +1750,10 @@ void Mat_Multiply_out(struct Mat_t *out, const struct Mat_t *inA, const struct M
 
 struct Joints_t Joints_create(int ndofs) {
     struct Joints_t tempJoints2 = { 0, {0} };
-    tempJoints2._nDOFs = min(ndofs, RDK_SIZE_JOINTS_MAX);
+    tempJoints2._nDOFs = ndofs;
+    if (ndofs > RDK_SIZE_JOINTS_MAX) {
+        tempJoints2._nDOFs = RDK_SIZE_JOINTS_MAX;
+    }
     for (int i = 0; i < tempJoints2._nDOFs; i++) {
         tempJoints2._Values[i] = 0.0;
     }
@@ -1922,9 +1929,12 @@ void Matrix2D_Add_Double(struct Matrix2D_t *var, const double *array, int numel)
     oldnumel = size1 * size2;
     var->size[1] = size2 + 1;
     emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
-    numel = min(numel, size1);
+
+    if (numel > size1)
+        numel = size1;
+
     for (int i = 0; i < numel; i++) {
-        var->data[size1*size2 + i] = array[i];
+        var->data[size1 * size2 + i] = array[i];
     }
 }
 
@@ -2033,9 +2043,11 @@ bool _RoboDK_connect_smart(struct RoboDK_t *inst) {
         fprintf(stdout, "The RoboDK API is connected!\n");
         return true;
     }
-    fprintf(stdout, "...Trying to start RoboDK: ");
-    fprintf(stdout, inst->_ROBODK_BIN);
-    fprintf(stdout, " %s\n\0", inst->_ARGUMENTS);
+    fputs("...Trying to start RoboDK: ", stdout);
+    fputs(inst->_ROBODK_BIN, stdout);
+    fputc(' ', stdout);
+    fputs(inst->_ARGUMENTS, stdout);
+    fputc('\n', stdout);
     // Start RoboDK
     StartProcess(inst->_ROBODK_BIN, inst->_ARGUMENTS, &inst->_PROCESS);
     bool is_connected = _RoboDK_connect(inst);
@@ -2051,14 +2063,10 @@ bool _RoboDK_connect_smart(struct RoboDK_t *inst) {
 }
 
 bool _RoboDK_connect(struct RoboDK_t *inst) {
-    //_disconnect();
-    //_COM = new QTcpSocket();
     struct sockaddr_in _COM_PORT;
-    int use_nodelay = 0;
+
     inst->_COM = socket(AF_INET, SOCK_STREAM, 0);
-    if (use_nodelay > 0){
-        setsockopt(inst->_COM, IPPROTO_TCP, TCP_NODELAY, (char*)&use_nodelay, sizeof(use_nodelay));
-    }
+
     _COM_PORT.sin_family = AF_INET;
     _COM_PORT.sin_port = htons((uint16_t)inst->_PORT);
     if (strlen(inst->_IP) == 0) {
@@ -2115,7 +2123,13 @@ bool _RoboDK_disconnect(struct RoboDK_t* inst) {
     if (inst->_isConnected == false) {
         return false;
     }
+
+#if defined(_WIN32)
     closesocket(inst->_COM);
+#else
+    close(inst->_COM);
+#endif
+
     return true;
 }
 
@@ -2131,7 +2145,11 @@ bool _RoboDK_check_connection(struct RoboDK_t *inst) {
 
 
 bool _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number) {
+#ifdef _WIN32
     int32_t networkOrderNumber = htonl(number);
+#else
+    int32_t networkOrderNumber = htobe32(number);
+#endif
     SocketWrite(inst->_COM, &networkOrderNumber, sizeof(int32_t));
     return true;
 }
@@ -2154,17 +2172,17 @@ bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
         if (inputLine[i] == '\n')
         {
             *outputChar = '<';
-            *outputChar++;
+            outputChar++;
             *outputChar = 'b';
-            *outputChar++;
+            outputChar++;
             *outputChar = 'r';
-            *outputChar++;
+            outputChar++;
             *outputChar = '>';
-            *outputChar++;
+            outputChar++;
         }
         else {
             *outputChar = inputLine[i];
-            *outputChar++;
+            outputChar++;
         }
         i++;
     }
@@ -2178,7 +2196,11 @@ bool _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item) {
     if (inst->_isConnected == false) {
         return false;
     }
+#ifdef _WIN32
     uint64_t networkOrderPointer = item ? htonll(item->_PTR) : 0;
+#else
+    uint64_t networkOrderPointer = item ? htobe64(item->_PTR) : 0;
+#endif
     SocketWrite(inst->_COM, &networkOrderPointer, sizeof(uint64_t));
     return true;
 }
@@ -2196,7 +2218,7 @@ bool _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int nvalues
         char valueIBytesSend[sizeof(double)];
         char valueIBytesNative[sizeof(double)];
         memcpy(valueIBytesNative, &iValue, sizeof(double));
-        for (int k = 0; k < sizeof(double); k++) {
+        for (size_t k = 0; k < sizeof(double); k++) {
             valueIBytesSend[k] = valueIBytesNative[sizeof(double) - 1 - k];
         }
         SocketWrite(inst->_COM, &valueIBytesSend, sizeof(double));
@@ -2209,12 +2231,12 @@ bool _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose) {
     if (inst->_isConnected == false) { return false; }
     char bufferBytes[16 * sizeof(double)];
     double valuei;
-    for (int j = 0; j < 4; j++) {
-        for (int i = 0; i < 4; i++) {
+    for (size_t j = 0; j < 4; j++) {
+        for (size_t i = 0; i < 4; i++) {
             valuei = pose.arr16[(j * 4) + i];
             char valueIBytes[sizeof(double)];
             memcpy(&valueIBytes, &valuei, sizeof(double));
-            for (int k = 0; k < sizeof(double); k++) {
+            for (size_t k = 0; k < sizeof(double); k++) {
                 bufferBytes[((i + (j * 4)) * 8) + k] = valueIBytes[sizeof(double) - 1 - k];
             }
         }
@@ -2241,7 +2263,11 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
         return -1;
     }
 
+#ifdef _WIN32
     return ntohl(value);
+#else
+    return be32toh(value);
+#endif
 }
 
 
@@ -2293,8 +2319,13 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
         return item;
     }
 
+#ifdef _WIN32
     item._PTR = ntohll(item._PTR);
     item._TYPE = ntohl(item._TYPE);
+#else
+    item._PTR = be64toh(item._PTR);
+    item._TYPE = be32toh(item._TYPE);
+#endif
     return item;
 }
 
@@ -2302,16 +2333,16 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst) {
     struct Mat_t pose;
     memset(pose.arr16, 0, sizeof(double[16]));
     if (inst->_isConnected == false) { return pose; }
-    int size = 16 * sizeof(double);
+    size_t size = 16 * sizeof(double);
     char bufferBytes[16 * sizeof(double)];
     while (SocketBytesAvailable(inst->_COM) < size){
         // waste time?
     }
-    SocketRead(inst->_COM, bufferBytes, size);
-    for (int j = 0; j < 4; j++) {
-        for (int i = 0; i < 4; i++) {
+    SocketRead(inst->_COM, bufferBytes, (int) size);
+    for (size_t j = 0; j < 4; j++) {
+        for (size_t i = 0; i < 4; i++) {
             char valueIBytes[sizeof(double)];
-            for (int k = 0; k < sizeof(double); k++) {
+            for (size_t k = 0; k < sizeof(double); k++) {
                 valueIBytes[sizeof(double) - 1 - k] = bufferBytes[((i + (j * 4)) * 8) + k];
             }
             double valuei;
@@ -2329,8 +2360,8 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
         *pSize = nvalues;
     }
     if (nvalues < 0 || nvalues > 50) { return false; } //check if the value is not too big
-    int size = nvalues * sizeof(double);
-    //if (SocketBytesAvailable(inst->_COM) <= (size + 4)) {
+    // int size = nvalues * sizeof(double);
+    // if (SocketBytesAvailable(inst->_COM) <= (size + 4)) {
     double valuei;
     for (int i = 0; i < nvalues; i++) {
         char bufferCurValue[sizeof(double)];
@@ -2342,7 +2373,7 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
         if (nread < 0) {
             return false;
         }
-        for (int k = 0; k < sizeof(double); k++) {
+        for (size_t k = 0; k < sizeof(double); k++) {
             valueIBytes[sizeof(double) - 1 - k] = bufferCurValue[k];
         }
         memcpy(&valuei, &valueIBytes, sizeof(double));
