@@ -8,20 +8,102 @@
 
 // Networking includes
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
+#   define WIN32_LEAN_AND_MEAN
+#   include <winsock2.h>
+#   include <ws2tcpip.h>
+#   include <windows.h>
+#   pragma comment(lib, "ws2_32.lib")
+#else //  _WIN32
+#   include <unistd.h>
+#   include <arpa/inet.h>
+#   include <netinet/in.h>
+#   include <sys/ioctl.h>
+#   include <sys/socket.h>
+#endif //  _WIN32
 
-#pragma comment(lib, "ws2_32.lib")
+// Byte order
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__CYGWIN__)
+#   include <endian.h>
+#elif defined(__APPLE__)
+#   include <libkern/OSByteOrder.h>
+
+#   define htobe16(x) OSSwapHostToBigInt16(x)
+#   define htole16(x) OSSwapHostToLittleInt16(x)
+#   define be16toh(x) OSSwapBigToHostInt16(x)
+#   define le16toh(x) OSSwapLittleToHostInt16(x)
+
+#   define htobe32(x) OSSwapHostToBigInt32(x)
+#   define htole32(x) OSSwapHostToLittleInt32(x)
+#   define be32toh(x) OSSwapBigToHostInt32(x)
+#   define le32toh(x) OSSwapLittleToHostInt32(x)
+
+#   define htobe64(x) OSSwapHostToBigInt64(x)
+#   define htole64(x) OSSwapHostToLittleInt64(x)
+#   define be64toh(x) OSSwapBigToHostInt64(x)
+#   define le64toh(x) OSSwapLittleToHostInt64(x)
+
+#   define __BYTE_ORDER    BYTE_ORDER
+#   define __BIG_ENDIAN    BIG_ENDIAN
+#   define __LITTLE_ENDIAN LITTLE_ENDIAN
+#   define __PDP_ENDIAN    PDP_ENDIAN
+#elif defined(__OpenBSD__)
+#   include <sys/endian.h>
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#   include <sys/endian.h>
+
+#   define be16toh(x) betoh16(x)
+#   define le16toh(x) letoh16(x)
+
+#   define be32toh(x) betoh32(x)
+#   define le32toh(x) letoh32(x)
+
+#   define be64toh(x) betoh64(x)
+#   define le64toh(x) letoh64(x)
+#elif defined(_WIN32)
+#   if BYTE_ORDER == LITTLE_ENDIAN
+#       if defined(_MSC_VER)
+#           define htobe16(x) _byteswap_ushort(x)
+#           define htole16(x) (x)
+#           define be16toh(x) _byteswap_ushort(x)
+#           define le16toh(x) (x)
+
+#           define htobe32(x) _byteswap_ulong(x)
+#           define htole32(x) (x)
+#           define be32toh(x) _byteswap_ulong(x)
+#           define le32toh(x) (x)
+
+#           define htobe64(x) _byteswap_uint64(x)
+#           define htole64(x) (x)
+#           define be64toh(x) _byteswap_uint64(x)
+#           define le64toh(x) (x)
+#       elif defined(__GNUC__) || defined(__clang__)
+#           define htobe16(x) __builtin_bswap16(x)
+#           define htole16(x) (x)
+#           define be16toh(x) __builtin_bswap16(x)
+#           define le16toh(x) (x)
+
+#           define htobe32(x) __builtin_bswap32(x)
+#           define htole32(x) (x)
+#           define be32toh(x) __builtin_bswap32(x)
+#           define le32toh(x) (x)
+
+#           define htobe64(x) __builtin_bswap64(x)
+#           define htole64(x) (x)
+#           define be64toh(x) __builtin_bswap64(x)
+#           define le64toh(x) (x)
+#       else
+#           error Compiler is not supported
+#       endif
+#   else
+#       error Byte order is not supported
+#   endif
+
+#   define __BYTE_ORDER    BYTE_ORDER
+#   define __BIG_ENDIAN    BIG_ENDIAN
+#   define __LITTLE_ENDIAN LITTLE_ENDIAN
+#   define __PDP_ENDIAN    PDP_ENDIAN
 #else
-#include <endian.h>
-#include <unistd.h>
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
+#   error Platform is not supported
 #endif
 
 
@@ -2145,11 +2227,7 @@ bool _RoboDK_check_connection(struct RoboDK_t *inst) {
 
 
 bool _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number) {
-#ifdef _WIN32
-    int32_t networkOrderNumber = htonl(number);
-#else
     int32_t networkOrderNumber = htobe32(number);
-#endif
     SocketWrite(inst->_COM, &networkOrderNumber, sizeof(int32_t));
     return true;
 }
@@ -2196,11 +2274,7 @@ bool _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item) {
     if (inst->_isConnected == false) {
         return false;
     }
-#ifdef _WIN32
-    uint64_t networkOrderPointer = item ? htonll(item->_PTR) : 0;
-#else
     uint64_t networkOrderPointer = item ? htobe64(item->_PTR) : 0;
-#endif
     SocketWrite(inst->_COM, &networkOrderPointer, sizeof(uint64_t));
     return true;
 }
@@ -2263,11 +2337,7 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
         return -1;
     }
 
-#ifdef _WIN32
-    return ntohl(value);
-#else
     return be32toh(value);
-#endif
 }
 
 
@@ -2319,13 +2389,8 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
         return item;
     }
 
-#ifdef _WIN32
-    item._PTR = ntohll(item._PTR);
-    item._TYPE = ntohl(item._TYPE);
-#else
     item._PTR = be64toh(item._PTR);
     item._TYPE = be32toh(item._TYPE);
-#endif
     return item;
 }
 
