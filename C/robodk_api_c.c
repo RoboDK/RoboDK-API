@@ -22,6 +22,7 @@
 #   include <netinet/in.h>
 #   include <sys/ioctl.h>
 #   include <sys/socket.h>
+#   include <sys/wait.h>
 #endif //  _WIN32
 
 // Byte order
@@ -157,8 +158,8 @@ size_t SocketBytesAvailable(socket_t sock) {
 }
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
-    char commandLine[MAX_STR_LENGTH];
 #ifdef _WIN32
+    char commandLine[MAX_STR_LENGTH];
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
 
@@ -226,16 +227,6 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
         strcpy(resolvedPath, applicationPath);
     }
 
-    if (strchr(resolvedPath, ' ')) {
-        strcpy(commandLine, "\"");
-        strcat(commandLine, resolvedPath);
-        strcat(commandLine, "\"");
-    } else {
-        strcpy(commandLine, resolvedPath);
-    }
-    strcat(commandLine, " ");
-    strcat(commandLine, arguments);
-
     memset(environment, 0, sizeof(environment));
 
 #ifndef __APPLE__
@@ -252,7 +243,7 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
 
     strcpy(platformPath, "QT_QPA_PLATFORM_PLUGIN_PATH=");
     strcat(platformPath, executableRoot);
-    strcat(platformPath, "/plugins");
+    strcat(platformPath, "/plugins/platforms");
 
     environment[0] = libraryPath;
     environment[1] = pluginPath;
@@ -266,8 +257,20 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
     }
 #endif
 
-    *processID = (int64_t) execle(resolvedPath, arguments, NULL, environment);
-    printf("Exec Error: %d\n", errno);
+    int result = fork();
+    if (result < 0) {
+        return;
+    }
+
+    if (result == 0) {
+        result = execle(resolvedPath, resolvedPath, arguments, NULL, environment);
+        exit(result);
+        return;
+    }
+
+    ThreadSleep(2000);
+
+    *processID = (int64_t) result;
 #endif
 }
 
