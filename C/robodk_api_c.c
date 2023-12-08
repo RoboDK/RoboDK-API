@@ -201,8 +201,10 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
     char libraryPath[MAX_PATH_LENGTH];
     char pluginPath[MAX_PATH_LENGTH];
     char platformPath[MAX_PATH_LENGTH];
-    char* environment[4];
+    char displayEnv[MAX_PATH_LENGTH];
+    char* environment[5];
     char* executableRoot;
+    char* displayNo;
 
     const char* homeFolder = getenv("HOME");
     if (!homeFolder || strlen(homeFolder) == 0) {
@@ -243,27 +245,28 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
     strcpy(libraryPath, "LD_LIBRARY_PATH=");
     strcat(libraryPath, executableRoot);
     strcat(libraryPath, "/lib");
-    //strcat(libraryPath, "\"");
 
     strcpy(pluginPath, "QT_PLUGIN_PATH=");
     strcat(pluginPath, executableRoot);
     strcat(pluginPath, "/plugins");
-    //strcat(pluginPath, "\"");
 
     strcpy(platformPath, "QT_QPA_PLATFORM_PLUGIN_PATH=");
     strcat(platformPath, executableRoot);
     strcat(platformPath, "/plugins");
-    //strcat(platformPath, "\"");
 
     environment[0] = libraryPath;
     environment[1] = pluginPath;
     environment[2] = platformPath;
-    environment[3] = NULL;
 
-    strcat(commandLine, " -platform offscreen");
+    displayNo = getenv("DISPLAY");
+    if (displayNo) {
+        strcpy(displayEnv, "DISPLAY=");
+        strcat(displayEnv, displayNo);
+        environment[3] = displayEnv;
+    }
 #endif
 
-    *processID = (int64_t) execle(resolvedPath, commandLine, NULL, environment, NULL);
+    *processID = (int64_t) execle(resolvedPath, arguments, NULL, environment);
     printf("Exec Error: %d\n", errno);
 #endif
 }
