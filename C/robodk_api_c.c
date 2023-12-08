@@ -14,6 +14,9 @@
 #   include <windows.h>
 #   pragma comment(lib, "ws2_32.lib")
 #else //  _WIN32
+#   include <errno.h>
+#   include <libgen.h>
+#   include <pwd.h>
 #   include <unistd.h>
 #   include <arpa/inet.h>
 #   include <netinet/in.h>
@@ -154,13 +157,15 @@ size_t SocketBytesAvailable(socket_t sock) {
 }
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
-#if defined(_WIN32)
+    char commandLine[MAX_STR_LENGTH];
+#ifdef _WIN32
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
-    char commandLine[MAX_STR_LENGTH];
+
     ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
+
+    si.cb = sizeof(si);
 
     strncpy(commandLine, arguments, MAX_STR_LENGTH - 1);
     commandLine[MAX_STR_LENGTH - 1] = '\0';
@@ -190,8 +195,76 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
     // Close process and thread handles. 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-#elif defined(POSIX)
-    #warning todo
+#else
+    char resolvedPath[MAX_PATH_LENGTH];
+    char executablePath[MAX_PATH_LENGTH];
+    char libraryPath[MAX_PATH_LENGTH];
+    char pluginPath[MAX_PATH_LENGTH];
+    char platformPath[MAX_PATH_LENGTH];
+    char* environment[4];
+    char* executableRoot;
+
+    const char* homeFolder = getenv("HOME");
+    if (!homeFolder || strlen(homeFolder) == 0) {
+        struct passwd* user = getpwuid(getuid());
+        homeFolder = user ? user->pw_dir : "";
+        if (!homeFolder) {
+            homeFolder = "";
+        }
+    }
+
+    if (!applicationPath || strlen(applicationPath) == 0) {
+        return;
+    }
+
+    if (applicationPath[0] == '~') {
+        strcpy(resolvedPath, homeFolder);
+        strcat(resolvedPath, &applicationPath[1]);
+    } else {
+        strcpy(resolvedPath, applicationPath);
+    }
+
+    if (strchr(resolvedPath, ' ')) {
+        strcpy(commandLine, "\"");
+        strcat(commandLine, resolvedPath);
+        strcat(commandLine, "\"");
+    } else {
+        strcpy(commandLine, resolvedPath);
+    }
+    strcat(commandLine, " ");
+    strcat(commandLine, arguments);
+
+    memset(environment, 0, sizeof(environment));
+
+#ifndef __APPLE__
+    strcpy(executablePath, resolvedPath);
+    executableRoot = dirname(executablePath);
+
+    strcpy(libraryPath, "LD_LIBRARY_PATH=");
+    strcat(libraryPath, executableRoot);
+    strcat(libraryPath, "/lib");
+    //strcat(libraryPath, "\"");
+
+    strcpy(pluginPath, "QT_PLUGIN_PATH=");
+    strcat(pluginPath, executableRoot);
+    strcat(pluginPath, "/plugins");
+    //strcat(pluginPath, "\"");
+
+    strcpy(platformPath, "QT_QPA_PLATFORM_PLUGIN_PATH=");
+    strcat(platformPath, executableRoot);
+    strcat(platformPath, "/plugins");
+    //strcat(platformPath, "\"");
+
+    environment[0] = libraryPath;
+    environment[1] = pluginPath;
+    environment[2] = platformPath;
+    environment[3] = NULL;
+
+    strcat(commandLine, " -platform offscreen");
+#endif
+
+    *processID = (int64_t) execle(resolvedPath, commandLine, NULL, environment, NULL);
+    printf("Exec Error: %d\n", errno);
 #endif
 }
 
