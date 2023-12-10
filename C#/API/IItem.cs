@@ -1171,6 +1171,23 @@ namespace RoboDk.API
         void Copy(bool copy_children = true);
 
         /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (optional)</param>
+        /// <returns>Returns the new item created</returns>
+        IItem Paste(IItem paste_to = null);
+
+        /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (can be null)</param>
+        /// <param name="paste_times">Number of times to paste the item</param>
+        /// <returns>Returns the list of new items created</returns>
+        List<IItem> Paste(IItem paste_to, int paste_times);
+
+        /// <summary>
         ///     Filter a program file to improve accuracy for a specific robot.
         ///     The robot must have been previously calibrated.
         /// </summary>

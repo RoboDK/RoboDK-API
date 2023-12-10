@@ -1953,7 +1953,19 @@ namespace RoboDk.API
         {
             Link.Copy(this, copy_children);
         }
-        
+
+        /// <inheritdoc />
+        public IItem Paste(IItem paste_to = null)
+        {
+            return Link.Paste(paste_to);
+        }
+
+        /// <inheritdoc />
+        public List<IItem> Paste(IItem paste_to, int paste_times)
+        {
+            return Link.Paste(paste_to, paste_times);
+        }
+
         /// <inheritdoc />
         public bool FilterProgram(string filename, out string filterMessage)
         {

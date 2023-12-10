@@ -7261,6 +7261,29 @@ public class RoboDK
         }
 
         /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (optional)</param>
+        /// <returns>Returns the new item created</returns>
+        public Item Paste(Item paste_to = null)
+        {
+            return link.Paste(paste_to);
+        }
+
+        /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (can be null)</param>
+        /// <param name="paste_times">Number of times to paste the item</param>
+        /// <returns>Returns the list of new items created</returns>
+        public List<Item> Paste(Item paste_to, int paste_times)
+        {
+            return link.Paste(paste_to, paste_times);
+        }
+
+        /// <summary>
         ///     Filter a program file to improve accuracy for a specific robot.
         ///     The robot must have been previously calibrated.
         /// </summary>
