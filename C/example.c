@@ -26,7 +26,10 @@ int main()
     if (size_out > MAX_ITEMS){
         fprintf(stderr, "Warning! Max size item size exceeded\n");
     }
-    size_out = min(size_out, MAX_ITEMS);
+
+    if (size_out > MAX_ITEMS)
+        size_out = MAX_ITEMS;
+
     printf("Items in the station: %i\n", size_out);
     for (int i=0; i<size_out; i++){
         char item_name[MAX_STR_LENGTH];
@@ -98,9 +101,9 @@ int main()
 
     printf("Target not filtered:\n");
     Mat_ToString(&pose_target, bufferOut, true);
-    printf(bufferOut);
+    fputs(bufferOut, stdout);
     Joints_ToString(&joints, bufferOut);
-    printf(bufferOut);
+    fputs(bufferOut, stdout);
 
     //joints_approx must be within 20 deg
     struct Joints_t joints_approx = joints;
@@ -111,9 +114,9 @@ int main()
 
     printf("Target filtered:\n");
     Mat_ToString(&pose_target_filt, bufferOut, true);
-    printf(bufferOut);
+    fputs(bufferOut, stdout);
     Joints_ToString(&joints_filtered, bufferOut);
-    printf(bufferOut);
+    fputs(bufferOut, stdout);
 
 
     return 0;
@@ -151,7 +154,7 @@ int main()
         printf("\n");
         struct Joints_t curJoints = Item_Joints(&robotItem);
         Joints_ToString(&curJoints, bufferOut);
-        printf(bufferOut);
+        fputs(bufferOut, stdout);
 
         struct Joints_t targetJoints = Joints_create(6);
         for (int i = 0; i < 6; i++) {

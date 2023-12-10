@@ -16,7 +16,7 @@ extern "C" {
 #define ROBODK_DEFAULT_PATH_BIN "C:/RoboDK/bin/RoboDK.exe"
 #elif __APPLE__
 // Default Install Path on Mac
-#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+#define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
 #else
 // Default Install Path on Linux:
 #define ROBODK_DEFAULT_PATH_BIN "~/RoboDK/bin/RoboDK"
@@ -35,7 +35,10 @@ enum { RDK_SIZE_MAX_CONFIG = 4 };
 // IMPORTANT!! Do not change this value
 
 //Maximum string lenth for string based parameters like IP and names
-enum { MAX_STR_LENGTH = 2048 };
+enum {
+    MAX_STR_LENGTH = 2048,
+    MAX_PATH_LENGTH = 260
+};
 
 //Enums
 /// Tree item types

@@ -1,20 +1,113 @@
 #include "robodk_api_c.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 // Networking includes
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
+#   define WIN32_LEAN_AND_MEAN
+#   include <winsock2.h>
+#   include <ws2tcpip.h>
+#   include <windows.h>
+#   pragma comment(lib, "ws2_32.lib")
+#else //  _WIN32
+#   include <errno.h>
+#   include <libgen.h>
+#   include <pwd.h>
+#   include <unistd.h>
+#   include <arpa/inet.h>
+#   include <netinet/in.h>
+#   include <sys/ioctl.h>
+#   include <sys/socket.h>
+#   include <sys/wait.h>
+#endif //  _WIN32
 
-#pragma comment(lib, "ws2_32.lib")
+// Byte order
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__CYGWIN__)
+#   include <endian.h>
+#elif defined(__APPLE__)
+#   include <libkern/OSByteOrder.h>
+
+#   define htobe16(x) OSSwapHostToBigInt16(x)
+#   define htole16(x) OSSwapHostToLittleInt16(x)
+#   define be16toh(x) OSSwapBigToHostInt16(x)
+#   define le16toh(x) OSSwapLittleToHostInt16(x)
+
+#   define htobe32(x) OSSwapHostToBigInt32(x)
+#   define htole32(x) OSSwapHostToLittleInt32(x)
+#   define be32toh(x) OSSwapBigToHostInt32(x)
+#   define le32toh(x) OSSwapLittleToHostInt32(x)
+
+#   define htobe64(x) OSSwapHostToBigInt64(x)
+#   define htole64(x) OSSwapHostToLittleInt64(x)
+#   define be64toh(x) OSSwapBigToHostInt64(x)
+#   define le64toh(x) OSSwapLittleToHostInt64(x)
+
+#   define __BYTE_ORDER    BYTE_ORDER
+#   define __BIG_ENDIAN    BIG_ENDIAN
+#   define __LITTLE_ENDIAN LITTLE_ENDIAN
+#   define __PDP_ENDIAN    PDP_ENDIAN
+#elif defined(__OpenBSD__)
+#   include <sys/endian.h>
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#   include <sys/endian.h>
+
+#   define be16toh(x) betoh16(x)
+#   define le16toh(x) letoh16(x)
+
+#   define be32toh(x) betoh32(x)
+#   define le32toh(x) letoh32(x)
+
+#   define be64toh(x) betoh64(x)
+#   define le64toh(x) letoh64(x)
+#elif defined(_WIN32)
+#   if BYTE_ORDER == LITTLE_ENDIAN
+#       if defined(_MSC_VER)
+#           define htobe16(x) _byteswap_ushort(x)
+#           define htole16(x) (x)
+#           define be16toh(x) _byteswap_ushort(x)
+#           define le16toh(x) (x)
+
+#           define htobe32(x) _byteswap_ulong(x)
+#           define htole32(x) (x)
+#           define be32toh(x) _byteswap_ulong(x)
+#           define le32toh(x) (x)
+
+#           define htobe64(x) _byteswap_uint64(x)
+#           define htole64(x) (x)
+#           define be64toh(x) _byteswap_uint64(x)
+#           define le64toh(x) (x)
+#       elif defined(__GNUC__) || defined(__clang__)
+#           define htobe16(x) __builtin_bswap16(x)
+#           define htole16(x) (x)
+#           define be16toh(x) __builtin_bswap16(x)
+#           define le16toh(x) (x)
+
+#           define htobe32(x) __builtin_bswap32(x)
+#           define htole32(x) (x)
+#           define be32toh(x) __builtin_bswap32(x)
+#           define le32toh(x) (x)
+
+#           define htobe64(x) __builtin_bswap64(x)
+#           define htole64(x) (x)
+#           define be64toh(x) __builtin_bswap64(x)
+#           define le64toh(x) (x)
+#       else
+#           error Compiler is not supported
+#       endif
+#   else
+#       error Byte order is not supported
+#   endif
+
+#   define __BYTE_ORDER    BYTE_ORDER
+#   define __BIG_ENDIAN    BIG_ENDIAN
+#   define __LITTLE_ENDIAN LITTLE_ENDIAN
+#   define __PDP_ENDIAN    PDP_ENDIAN
 #else
-#include <sys/socket.h>
+#   error Platform is not supported
 #endif
 
 
@@ -30,7 +123,7 @@ static const char ROBODK_API_LF[] = "\n";
 void ThreadSleep(unsigned long nMilliseconds) {
 #if defined(_WIN32)
     Sleep(nMilliseconds);
-#elif defined(POSIX)
+#else
     usleep(nMilliseconds * 1000);
 #endif
 }
@@ -47,34 +140,33 @@ int SocketRead(socket_t sock, void *outBuffer, int bufferSize) {
 //Takes timeout in ms
 void SetSocketTimeout(socket_t sock, int timeout_ms) {
     struct timeval timeout;      
-#if defined(_WIN32)
     timeout.tv_sec = (long) (timeout_ms * 0.001);
     timeout.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,sizeof(struct timeval));
-#elif defined(POSIX)
-    #warning todo
-#endif
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(struct timeval));
 }
 
-int SocketBytesAvailable(socket_t sock) {
+size_t SocketBytesAvailable(socket_t sock) {
+    unsigned long bytes_available = 0;
+
 #if defined(_WIN32)
-    unsigned long bytes_available;
     ioctlsocket(sock, FIONREAD, &bytes_available);
-    return bytes_available;
-#elif defined(POSIX)
-    #warning todo
+#else
+    ioctl(sock, FIONREAD, &bytes_available);
 #endif
 
+    return bytes_available;
 }
 
 void StartProcess(const char* applicationPath, const char* arguments, int64_t* processID) {
-#if defined(_WIN32)
+#ifdef _WIN32
+    char commandLine[MAX_STR_LENGTH];
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
-    char commandLine[MAX_STR_LENGTH];
+
     ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
+
+    si.cb = sizeof(si);
 
     strncpy(commandLine, arguments, MAX_STR_LENGTH - 1);
     commandLine[MAX_STR_LENGTH - 1] = '\0';
@@ -104,8 +196,81 @@ void StartProcess(const char* applicationPath, const char* arguments, int64_t* p
     // Close process and thread handles. 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-#elif defined(POSIX)
-    #warning todo
+#else
+    char resolvedPath[MAX_PATH_LENGTH];
+    char executablePath[MAX_PATH_LENGTH];
+    char libraryPath[MAX_PATH_LENGTH];
+    char pluginPath[MAX_PATH_LENGTH];
+    char platformPath[MAX_PATH_LENGTH];
+    char displayEnv[MAX_PATH_LENGTH];
+    char* environment[5];
+    char* executableRoot;
+    char* displayNo;
+
+    const char* homeFolder = getenv("HOME");
+    if (!homeFolder || strlen(homeFolder) == 0) {
+        struct passwd* user = getpwuid(getuid());
+        homeFolder = user ? user->pw_dir : "";
+        if (!homeFolder) {
+            homeFolder = "";
+        }
+    }
+
+    if (!applicationPath || strlen(applicationPath) == 0) {
+        return;
+    }
+
+    if (applicationPath[0] == '~') {
+        strcpy(resolvedPath, homeFolder);
+        strcat(resolvedPath, &applicationPath[1]);
+    } else {
+        strcpy(resolvedPath, applicationPath);
+    }
+
+    memset(environment, 0, sizeof(environment));
+
+#ifndef __APPLE__
+    strcpy(executablePath, resolvedPath);
+    executableRoot = dirname(executablePath);
+
+    strcpy(libraryPath, "LD_LIBRARY_PATH=");
+    strcat(libraryPath, executableRoot);
+    strcat(libraryPath, "/lib");
+
+    strcpy(pluginPath, "QT_PLUGIN_PATH=");
+    strcat(pluginPath, executableRoot);
+    strcat(pluginPath, "/plugins");
+
+    strcpy(platformPath, "QT_QPA_PLATFORM_PLUGIN_PATH=");
+    strcat(platformPath, executableRoot);
+    strcat(platformPath, "/plugins/platforms");
+
+    environment[0] = libraryPath;
+    environment[1] = pluginPath;
+    environment[2] = platformPath;
+
+    displayNo = getenv("DISPLAY");
+    if (displayNo) {
+        strcpy(displayEnv, "DISPLAY=");
+        strcat(displayEnv, displayNo);
+        environment[3] = displayEnv;
+    }
+#endif
+
+    int result = fork();
+    if (result < 0) {
+        return;
+    }
+
+    if (result == 0) {
+        result = execle(resolvedPath, resolvedPath, arguments, NULL, environment);
+        exit(result);
+        return;
+    }
+
+    ThreadSleep(2000);
+
+    *processID = (int64_t) result;
 #endif
 }
 
@@ -1453,19 +1618,19 @@ bool Mat_isHomogeneous(const struct Mat_t *inst) {
     Mat_Get_VX(inst, &vx);
     Mat_Get_VX(inst, &vy);
     Mat_Get_VX(inst, &vz);
-    if (fabs(XYZ_Dot(&vx, &vy) > tol)) {
+    if (fabs(XYZ_Dot(&vx, &vy)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector X and Y are not perpendicular!");
         }
         return false;
     }
-    else if (fabs(XYZ_Dot(&vx, &vz) > tol)) {
+    else if (fabs(XYZ_Dot(&vx, &vz)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector X and Z are not perpendicular!");
         }
         return false;
     }
-    else if (fabs(XYZ_Dot(&vy, &vz) > tol)) {
+    else if (fabs(XYZ_Dot(&vy, &vz)) > tol) {
         if (debug_info) {
             fprintf(stderr, "Vector Y and Z are not perpendicular!");
         }
@@ -1690,8 +1855,8 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
     if (xyzwprOnly == true) {
         return;
     }
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    for (size_t i = 0; i < 4; i++) {
+        for (size_t j = 0; j < 4; j++) {
             char tempbuffer[20];
             if (inst->arr16[j * 4 + i] < 1e9) {
                 sprintf(tempbuffer, "%12.3f,", inst->arr16[j * 4 + i]);
@@ -1746,7 +1911,10 @@ void Mat_Multiply_out(struct Mat_t *out, const struct Mat_t *inA, const struct M
 
 struct Joints_t Joints_create(int ndofs) {
     struct Joints_t tempJoints2 = { 0, {0} };
-    tempJoints2._nDOFs = min(ndofs, RDK_SIZE_JOINTS_MAX);
+    tempJoints2._nDOFs = ndofs;
+    if (ndofs > RDK_SIZE_JOINTS_MAX) {
+        tempJoints2._nDOFs = RDK_SIZE_JOINTS_MAX;
+    }
     for (int i = 0; i < tempJoints2._nDOFs; i++) {
         tempJoints2._Values[i] = 0.0;
     }
@@ -1922,9 +2090,12 @@ void Matrix2D_Add_Double(struct Matrix2D_t *var, const double *array, int numel)
     oldnumel = size1 * size2;
     var->size[1] = size2 + 1;
     emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
-    numel = min(numel, size1);
+
+    if (numel > size1)
+        numel = size1;
+
     for (int i = 0; i < numel; i++) {
-        var->data[size1*size2 + i] = array[i];
+        var->data[size1 * size2 + i] = array[i];
     }
 }
 
@@ -2033,9 +2204,11 @@ bool _RoboDK_connect_smart(struct RoboDK_t *inst) {
         fprintf(stdout, "The RoboDK API is connected!\n");
         return true;
     }
-    fprintf(stdout, "...Trying to start RoboDK: ");
-    fprintf(stdout, inst->_ROBODK_BIN);
-    fprintf(stdout, " %s\n\0", inst->_ARGUMENTS);
+    fputs("...Trying to start RoboDK: ", stdout);
+    fputs(inst->_ROBODK_BIN, stdout);
+    fputc(' ', stdout);
+    fputs(inst->_ARGUMENTS, stdout);
+    fputc('\n', stdout);
     // Start RoboDK
     StartProcess(inst->_ROBODK_BIN, inst->_ARGUMENTS, &inst->_PROCESS);
     bool is_connected = _RoboDK_connect(inst);
@@ -2051,14 +2224,10 @@ bool _RoboDK_connect_smart(struct RoboDK_t *inst) {
 }
 
 bool _RoboDK_connect(struct RoboDK_t *inst) {
-    //_disconnect();
-    //_COM = new QTcpSocket();
     struct sockaddr_in _COM_PORT;
-    int use_nodelay = 0;
+
     inst->_COM = socket(AF_INET, SOCK_STREAM, 0);
-    if (use_nodelay > 0){
-        setsockopt(inst->_COM, IPPROTO_TCP, TCP_NODELAY, (char*)&use_nodelay, sizeof(use_nodelay));
-    }
+
     _COM_PORT.sin_family = AF_INET;
     _COM_PORT.sin_port = htons((uint16_t)inst->_PORT);
     if (strlen(inst->_IP) == 0) {
@@ -2115,7 +2284,13 @@ bool _RoboDK_disconnect(struct RoboDK_t* inst) {
     if (inst->_isConnected == false) {
         return false;
     }
+
+#if defined(_WIN32)
     closesocket(inst->_COM);
+#else
+    close(inst->_COM);
+#endif
+
     return true;
 }
 
@@ -2131,7 +2306,7 @@ bool _RoboDK_check_connection(struct RoboDK_t *inst) {
 
 
 bool _RoboDK_send_Int(struct RoboDK_t *inst, int32_t number) {
-    int32_t networkOrderNumber = htonl(number);
+    int32_t networkOrderNumber = htobe32(number);
     SocketWrite(inst->_COM, &networkOrderNumber, sizeof(int32_t));
     return true;
 }
@@ -2154,17 +2329,17 @@ bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
         if (inputLine[i] == '\n')
         {
             *outputChar = '<';
-            *outputChar++;
+            outputChar++;
             *outputChar = 'b';
-            *outputChar++;
+            outputChar++;
             *outputChar = 'r';
-            *outputChar++;
+            outputChar++;
             *outputChar = '>';
-            *outputChar++;
+            outputChar++;
         }
         else {
             *outputChar = inputLine[i];
-            *outputChar++;
+            outputChar++;
         }
         i++;
     }
@@ -2178,7 +2353,7 @@ bool _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item) {
     if (inst->_isConnected == false) {
         return false;
     }
-    uint64_t networkOrderPointer = item ? htonll(item->_PTR) : 0;
+    uint64_t networkOrderPointer = item ? htobe64(item->_PTR) : 0;
     SocketWrite(inst->_COM, &networkOrderPointer, sizeof(uint64_t));
     return true;
 }
@@ -2196,7 +2371,7 @@ bool _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int nvalues
         char valueIBytesSend[sizeof(double)];
         char valueIBytesNative[sizeof(double)];
         memcpy(valueIBytesNative, &iValue, sizeof(double));
-        for (int k = 0; k < sizeof(double); k++) {
+        for (size_t k = 0; k < sizeof(double); k++) {
             valueIBytesSend[k] = valueIBytesNative[sizeof(double) - 1 - k];
         }
         SocketWrite(inst->_COM, &valueIBytesSend, sizeof(double));
@@ -2209,12 +2384,12 @@ bool _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose) {
     if (inst->_isConnected == false) { return false; }
     char bufferBytes[16 * sizeof(double)];
     double valuei;
-    for (int j = 0; j < 4; j++) {
-        for (int i = 0; i < 4; i++) {
+    for (size_t j = 0; j < 4; j++) {
+        for (size_t i = 0; i < 4; i++) {
             valuei = pose.arr16[(j * 4) + i];
             char valueIBytes[sizeof(double)];
             memcpy(&valueIBytes, &valuei, sizeof(double));
-            for (int k = 0; k < sizeof(double); k++) {
+            for (size_t k = 0; k < sizeof(double); k++) {
                 bufferBytes[((i + (j * 4)) * 8) + k] = valueIBytes[sizeof(double) - 1 - k];
             }
         }
@@ -2241,7 +2416,7 @@ int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
         return -1;
     }
 
-    return ntohl(value);
+    return be32toh(value);
 }
 
 
@@ -2293,8 +2468,8 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst) {
         return item;
     }
 
-    item._PTR = ntohll(item._PTR);
-    item._TYPE = ntohl(item._TYPE);
+    item._PTR = be64toh(item._PTR);
+    item._TYPE = be32toh(item._TYPE);
     return item;
 }
 
@@ -2302,16 +2477,16 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst) {
     struct Mat_t pose;
     memset(pose.arr16, 0, sizeof(double[16]));
     if (inst->_isConnected == false) { return pose; }
-    int size = 16 * sizeof(double);
+    size_t size = 16 * sizeof(double);
     char bufferBytes[16 * sizeof(double)];
     while (SocketBytesAvailable(inst->_COM) < size){
         // waste time?
     }
-    SocketRead(inst->_COM, bufferBytes, size);
-    for (int j = 0; j < 4; j++) {
-        for (int i = 0; i < 4; i++) {
+    SocketRead(inst->_COM, bufferBytes, (int) size);
+    for (size_t j = 0; j < 4; j++) {
+        for (size_t i = 0; i < 4; i++) {
             char valueIBytes[sizeof(double)];
-            for (int k = 0; k < sizeof(double); k++) {
+            for (size_t k = 0; k < sizeof(double); k++) {
                 valueIBytes[sizeof(double) - 1 - k] = bufferBytes[((i + (j * 4)) * 8) + k];
             }
             double valuei;
@@ -2329,8 +2504,8 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
         *pSize = nvalues;
     }
     if (nvalues < 0 || nvalues > 50) { return false; } //check if the value is not too big
-    int size = nvalues * sizeof(double);
-    //if (SocketBytesAvailable(inst->_COM) <= (size + 4)) {
+    // int size = nvalues * sizeof(double);
+    // if (SocketBytesAvailable(inst->_COM) <= (size + 4)) {
     double valuei;
     for (int i = 0; i < nvalues; i++) {
         char bufferCurValue[sizeof(double)];
@@ -2342,7 +2517,7 @@ bool _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize) {
         if (nread < 0) {
             return false;
         }
-        for (int k = 0; k < sizeof(double); k++) {
+        for (size_t k = 0; k < sizeof(double); k++) {
             valueIBytes[sizeof(double) - 1 - k] = bufferCurValue[k];
         }
         memcpy(&valuei, &valueIBytes, sizeof(double));
