@@ -2075,7 +2075,32 @@ namespace RoboDk.API
             }
         }
 
-#endregion
+        /// <inheritdoc />
+        public Mat SetValue(string variableName, Mat value = null)
+        {
+            Link.RequireBuild(22340);
+            Link.check_connection();
+            Link.send_line("S_ValueMat");
+            Link.send_item(this);
+            Link.send_line(variableName);
+            Link.send_matrix(value != null ? value : new Mat(0, 0));
+            Mat result = Link.rec_matrix();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public void SetValue(string variableName, string value)
+        {
+            Link.check_connection();
+            Link.send_line("S_Gen_Str");
+            Link.send_item(this);
+            Link.send_line(variableName);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        #endregion
 
     }
 }

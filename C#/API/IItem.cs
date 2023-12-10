@@ -1268,6 +1268,23 @@ namespace RoboDk.API
         /// </summary>
         void WaitFinished();
 
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="variableName">Property name</param>
+        /// <param name="value">Property value</param>
+        /// <returns></returns>
+        Mat SetValue(string variableName, Mat value = null);
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="variableName">Property name</param>
+        /// <param name="value">Property value</param>
+        void SetValue(string variableName, string value);
+
         #endregion
     }
 }

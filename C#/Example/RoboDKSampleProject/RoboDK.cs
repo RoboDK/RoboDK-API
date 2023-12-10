@@ -7405,6 +7405,42 @@ public class RoboDK
                 System.Threading.Thread.Sleep(50);
             }
         }
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="varname">Property name</param>
+        /// <param name="value">Property value</param>
+        /// <returns></returns>
+        public Mat setValue(string varname, Mat value = null)
+        {
+            link._require_build(22340);
+            link._check_connection();
+            link._send_Line("S_ValueMat");
+            link._send_Item(this);
+            link._send_Line(varname);
+            link._send_Matrix2D(value != null ? value : new Mat(0, 0));
+            Mat result = link._recv_Matrix2D();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="varname">Property name</param>
+        /// <param name="value">Property value</param>
+        public void setValue(string varname, string value)
+        {
+            link._check_connection();
+            link._send_Line("S_Gen_Str");
+            link._send_Item(this);
+            link._send_Line(varname);
+            link._send_Line(value);
+            link._check_status();
+        }
     }
 
 }
