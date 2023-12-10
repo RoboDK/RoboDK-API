@@ -1211,6 +1211,45 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public double[] SearchL(IItem target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(target, null, null, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(target, null, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <inheritdoc />
+        public double[] SearchL(double[] target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(null, target, null, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(null, target, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <inheritdoc />
+        public double[] SearchL(Mat target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(null, null, target, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(null, null, target, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <inheritdoc />
         public void MoveC(IItem itemtarget1, IItem itemtarget2, bool blocking = true)
         {
             Link.moveC_private(itemtarget1, null, null, itemtarget2, null, null, this, blocking);

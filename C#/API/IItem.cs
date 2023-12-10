@@ -747,6 +747,30 @@ namespace RoboDk.API
         void MoveL(Mat target, bool blocking = true);
 
         /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Target to move to as a target item (RoboDK target item)</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(IItem target, bool blocking = true);
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Joint target to move to.</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(double[] target, bool blocking = true);
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(Mat target, bool blocking = true);
+
+        /// <summary>
         ///     Moves a robot to a specific target ("Move Circular" mode). By default, this function blocks until the robot
         ///     finishes its movements.
         /// </summary>
