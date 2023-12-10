@@ -3200,12 +3200,25 @@ public class RoboDK
     /// Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
     /// </summary>
     /// <param name="tocopy">Item to copy</param>
-    public void Copy(Item tocopy)
+    /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+    public void Copy(Item tocopy, bool copy_children = true)
     {
-        _check_connection();
-        _send_Line("Copy");
-        _send_Item(tocopy);
-        _check_status();
+        if (BUILD < 18705)
+        {
+            _check_connection();
+            _send_Line("Copy");
+            _send_Item(tocopy);
+            _check_status();
+        }
+        else
+        {
+            _require_build(18705);
+            _check_connection();
+            _send_Line("Copy2");
+            _send_Item(tocopy);
+            _send_Int(copy_children ? 1 : 0);
+            _check_status();
+        }
     }
 
     /// <summary>
@@ -5710,6 +5723,22 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Set the color of a curve object. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>        
+        /// <param name="curve_id">ID of the curve: the ID is the order in which the shape was added using AddCurve()</param>
+        public void SetColorCurve(List<double> tocolor, int curve_id = -1)
+        {
+            link.check_color(tocolor);
+            link._check_connection();
+            link._send_Line("S_CurveColor");
+            link._send_Item(this);
+            link._send_Int(curve_id);
+            link._send_ArrayList(tocolor);
+            link._check_status();
+        }
+
+        /// <summary>
         /// Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available). 
         /// A color is in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
         /// </summary>
@@ -6672,9 +6701,10 @@ public class RoboDK
         // ---- Program item calls -----
 
         /// <summary>
-        /// Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
+        ///     Sets the accuracy of the robot active or inactive.
+        ///     A robot must have been calibrated to properly use this option.
         /// </summary>
-        /// <param name="accurate">set to 1 to use the accurate model or 0 to use the nominal model</param>
+        /// <param name="accurate">Set to 1 to use the accurate model or 0 to use the nominal model</param>
         public void setAccuracyActive(int accurate = 1)
         {
             link._check_connection();
@@ -6682,6 +6712,20 @@ public class RoboDK
             link._send_Item(this);
             link._send_Int(accurate);
             link._check_status();
+        }
+
+        /// <summary>
+        /// Request accurate kinematics status
+        /// </summary>
+        /// <returns>Returns true if the accurate kinematics are being used</returns>
+        public bool AccuracyActive()
+        {
+            link._check_connection();
+            link._send_Line("G_AbsAccOn");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return result != 0;
         }
 
         /// <summary>
@@ -7100,7 +7144,267 @@ public class RoboDK
             return link.Finish();
         }
 
+        /// <summary>
+        /// Adds an object attached to this object
+        /// </summary>
+        /// <param name="filename">
+        ///     Any file to load, supported by RoboDK. 
+        ///     Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... 
+        ///     It is also possible to load supported robot programs, such as SRC (KUKA), 
+        ///     SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        /// </param>
+        /// <returns>Returns loaded object</returns>
+        public Item AddFile(string filename)
+        {
+            return link.AddFile(filename, this);
+        }
+
+        /// <summary>
+        /// Makes a copy of the geometry fromitem adding it at a given position (pose), relative to this item
+        /// </summary>
+        /// <param name="fromitem">Source item</param>
+        /// <param name="pose">Relative position</param>        
+        public void AddGeometry(Item fromitem, Mat pose)
+        {
+            link._check_connection();
+            link._send_Line("CopyFaces");
+            link._send_Item(fromitem);
+            link._send_Item(this);
+            link._send_Pose(pose);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+        /// <param name="add_to_ref">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projection_type">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <returns>added object/shape (0 if failed)</returns>
+        public Item AddPoints(Mat points, bool add_to_ref = false, int projection_type = PROJECTION_ALONG_NORMAL_RECALC)
+        {
+            return link.AddPoints(points, this, add_to_ref, projection_type);
+        }
+
+        /// <summary>
+        /// Returns 1 if item1 and item2 collided. Otherwise returns 0.
+        /// </summary>
+        /// <param name="item_check">Item to check for collisions</param>
+        /// <returns></returns>
+        public int Collision(Item item_check)
+        {
+            return link.Collision(this, item_check);
+        }
+
+        /// <summary>
+        ///     Copy the item to the clipboard (same as Ctrl+C).
+        ///     Use together with Paste() to duplicate items.
+        /// </summary>        
+        /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+        public void Copy(bool copy_children = true)
+        {
+            link.Copy(this, copy_children);
+        }
+
+        /// <summary>
+        ///     Filter a program file to improve accuracy for a specific robot.
+        ///     The robot must have been previously calibrated.
+        /// </summary>
+        /// <param name="filestr">File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC)</param>
+        /// <param name="filter_msg">The summary of the filtering</param>
+        /// <returns>Returns 0 if the filter succeeded, or a negative value if there are filtering problems.</returns>
+        public int FilterProgram(string filestr, out string filter_msg)
+        {
+            link._check_connection();
+            link._send_Line("FilterProg2");
+            link._send_Item(this);
+            link._send_Line(filestr);
+            int result = link._recv_Int();
+            filter_msg = link._recv_Line();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        ///     Get an Analog Input (AI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="io_var">Analog Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Analog Input (0-1 or other range depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string getAI(string io_var)
+        {
+            link._check_connection();
+            link._send_Line("getAI");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            string result = link._recv_Line();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        ///     Get a Digital Input (DI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="io_var">Digital Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Digital Input (0/1 or other value depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        public string getDI(string io_var)
+        {
+            link._check_connection();
+            link._send_Line("getDI");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            string result = link._recv_Line();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        /// Set an Analog Output (AO).
+        /// </summary>
+        /// <param name="io_var">Analog Output (string or number)</param>
+        /// <param name="io_value">Desired value</param>
+        public void setAO(string io_var, string io_value)
+        {
+            link._check_connection();
+            link._send_Line("setAO");
+            link._send_Item(this);
+            link._send_Line(io_var);
+            link._send_Line(io_value);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Delete an instruction of a program
+        /// </summary>
+        /// <param name="ins_id">Instruction ID</param>
+        /// <returns>Returns true if success.</returns>
+        public bool InstructionDelete(int ins_id = 0)
+        {
+            link._check_connection();
+            link._send_Line("Prog_DelIns");
+            link._send_Item(this);
+            link._send_Int(ins_id);
+            int result = link._recv_Int();
+            link._check_status();
+            return (result > 0);
+        }
+
+        /// <summary>
+        ///     Select an instruction in the program as a reference to add new instructions.
+        ///     New instructions will be added after the selected instruction.
+        /// </summary>
+        /// <param name="ins_id">Instruction ID</param>
+        /// <returns>
+        ///     If no Instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
+        /// </returns>
+        public int InstructionSelect(int ins_id = -1)
+        {
+            link._check_connection();
+            link._send_Line("Prog_SelIns");
+            link._send_Item(this);
+            link._send_Int(ins_id);
+            int result = link._recv_Int();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        /// Check if the object is inside the provided object.
+        /// </summary>
+        /// <param name="objectParent"></param>
+        /// <returns>Returns true if the object is inside the objectParent</returns>        
+        public bool IsInside(Item objectParent)
+        {
+            return link.IsInside(this, objectParent);
+        }
+
+        /// <summary>
+        ///     Check if the target is a joint target.
+        ///     A joint target moves to the joint position without taking into account the cartesian coordinates.
+        /// </summary>
+        /// <returns>Returns true if the target is a joint target.</returns>
+        public bool IsJointTarget()
+        {
+            link._check_connection();
+            link._send_Line("Target_Is_JT");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return (result > 0);
+        }
+
+        /// <summary>
+        /// Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+        /// </summary>
+        /// <returns>Returns one of PROGRAM_RUN_ON_* values.</returns>
+        public int RunType()
+        {
+            link._check_connection();
+            link._send_Line("G_ProgRunType");
+            link._send_Item(this);
+            int result = link._recv_Int();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        /// Sets the linear acceleration of a robot in mm/s2
+        /// </summary>
+        /// <param name="accel_linear">Acceleration in mm/s2</param>
+        public void setAcceleration(double accel_linear)
+        {
+            setSpeed(-1.0, -1.0, accel_linear, -1.0);
+        }
+
+        /// <summary>
+        /// Sets the joint acceleration of a robot
+        /// </summary>
+        /// <param name="value">Acceleration in deg/s2 for rotary joints and mm/s2 for linear joints</param>
+        public void setAccelerationJoints(double accel_joints)
+        {
+            setSpeed(-1.0, -1.0, -1.0, accel_joints);
+        }
+
+        /// <summary>
+        /// Sets the joint speed of a robot
+        /// </summary>
+        /// <param name="value">Speed in deg/s for rotary joints and mm/s for linear joints</param>
+        public void setSpeedJoints(double speed_joints)
+        {
+            setSpeed(-1.0, speed_joints, -1.0, -1.0);
+        }
+
+        /// <summary>
+        ///     Sets a link between this item and the specified item.
+        ///     This is useful to set the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="item">Item to link</param>
+        public void setLink(Item item)
+        {
+            link._check_connection();
+            link._send_Line("S_Link_ptr");
+            link._send_Item(item);
+            link._send_Item(this);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Wait until a program finishes or a robot completes its movement
+        /// </summary>
+        public void WaitFinished()
+        {
+            while (Busy())
+            {
+                System.Threading.Thread.Sleep(50);
+            }
+        }
     }
 
 }
-

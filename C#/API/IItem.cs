@@ -387,6 +387,13 @@ namespace RoboDk.API
         void SetColor(int shapeId, Color tocolor);
 
         /// <summary>
+        /// Set the color of a curve object. It can also be used for tools. A color must in the format COLOR=[R, G, B,(A = 1)] where all values range from 0 to 1.
+        /// </summary>
+        /// <param name="tocolor">color to set</param>        
+        /// <param name="curveId">ID of the curve: the ID is the order in which the shape was added using AddCurve()</param>
+        void SetColorCurve(Color tocolor, int curveId = -1);
+
+        /// <summary>
         /// Set the alpha channel of an object, tool or robot. 
         /// The alpha channel must remain between 0 and 1.
         /// </summary>
@@ -1083,6 +1090,183 @@ namespace RoboDk.API
         ///     Disconnect from the RoboDK API. This flushes any pending program generation.
         /// </summary>
         void Finish();
+
+        /// <summary>
+        ///     Sets the accuracy of the robot active or inactive.
+        ///     A robot must have been calibrated to properly use this option.
+        /// </summary>
+        /// <param name="accurate">Set true to use the accurate model or false to use the nominal model</param>
+        void SetAccuracyActive(bool accurate = true);
+
+        /// <summary>
+        /// Request accurate kinematics status
+        /// </summary>
+        /// <returns>Returns true if the accurate kinematics are being used</returns>
+        bool AccuracyActive();
+
+        /// <summary>
+        /// Adds an object attached to this object
+        /// </summary>
+        /// <param name="filename">
+        ///     Any file to load, supported by RoboDK. 
+        ///     Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... 
+        ///     It is also possible to load supported robot programs, such as SRC (KUKA), 
+        ///     SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        /// </param>
+        /// <returns>Returns loaded object</returns>
+        IItem AddFile(string filename);
+
+        /// <summary>
+        /// Makes a copy of the source item geometry adding it at a given position (pose), relative to this item
+        /// </summary>
+        /// <param name="source">Source item</param>
+        /// <param name="pose">Relative position</param>
+        void AddGeometry(IItem source, Mat pose);
+
+        /// <summary>
+        /// Adds a list of points to the object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="points">list of points as a matrix (3xN matrix, or 6xN to provide point normals as ijk vectors)</param>
+        /// <param name="addToRef">If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)</param>
+        /// <param name="projectionType">Type of projection.Use the PROJECTION_* flags.</param>
+        /// <returns>added object/shape (0 if failed)</returns>
+        IItem AddPoints(Mat points, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc);
+
+        /// <summary>
+        /// Check if if this item is in a collision state with another item
+        /// </summary>
+        /// <param name="item">Item to check for collisions</param>
+        /// <returns>Returns true if this item collides with another item; false otherwise.</returns>
+        bool Collision(IItem item);
+
+        /// <summary>
+        ///     Copy the item to the clipboard (same as Ctrl+C).
+        ///     Use together with Paste() to duplicate items.
+        /// </summary>        
+        /// <param name="copy_children">Set to false to prevent copying all items attached to this item</param>
+        void Copy(bool copy_children = true);
+
+        /// <summary>
+        ///     Filter a program file to improve accuracy for a specific robot.
+        ///     The robot must have been previously calibrated.
+        /// </summary>
+        /// <param name="filename">File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC)</param>
+        /// <param name="filterMessage">The summary of the filtering</param>
+        /// <returns>Returns true if the filter succeeded, or false if there are filtering problems.</returns>
+        bool FilterProgram(string filename, out string filterMessage);
+
+        /// <summary>
+        ///     Get an Analog Input (AI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="input">Analog Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Analog Input (0-1 or other range depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string GetAnalogInput(string input);
+
+        /// <summary>
+        ///     Get a Digital Input (DI).
+        ///     This function is only useful when connected to a real robot using the robot driver.
+        /// </summary>
+        /// <param name="input">Digital Input (string or number)</param>
+        /// <returns>
+        ///     Returns a string related to the state of the Digital Input (0/1 or other value depending on the robot driver).
+        ///     This function returns an empty string if the script is not executed on the robot.
+        /// </returns>
+        string GetDigitalInput(string input);
+
+        /// <summary>
+        /// Set an Analog Output (AO).
+        /// </summary>
+        /// <param name="output">Analog Output (string or number)</param>
+        /// <param name="value">Desired value</param>
+        void SetAnalogOutput(string output, string value);
+
+        /// <summary>
+        ///     Set a Digital Output (DO).
+        ///     This command can also be used to set any generic variables to a desired value.
+        /// </summary>
+        /// <param name="output">Digital Output (string or number)</param>
+        /// <param name="value">Desired value</param>
+        void SetDigitalOutput(string output, string value);
+
+        /// <summary>
+        ///     Waits for an input to attain a given value.
+        ///     Optionally, a timeout can be provided.
+        /// </summary>
+        /// <param name="input">Digital Input (string or number)</param>
+        /// <param name="value">Expected value</param>
+        /// <param name="timeout">Timeout in miliseconds</param>
+        void WaitDigitalInput(string input, string value, double timeout = -1);
+
+        /// <summary>
+        /// Delete an instruction of a program
+        /// </summary>
+        /// <param name="instructionId">Instruction ID</param>
+        /// <returns>Returns true if success.</returns>
+        bool InstructionDelete(int instructionId = 0);
+
+        /// <summary>
+        ///     Select an instruction in the program as a reference to add new instructions.
+        ///     New instructions will be added after the selected instruction.
+        /// </summary>
+        /// <param name="instructionId">Instruction ID</param>
+        /// <returns>
+        ///     If no Instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
+        /// </returns>
+        int InstructionSelect(int instructionId = -1);
+
+        /// <summary>
+        /// Check if the object is inside the provided object.
+        /// </summary>
+        /// <param name="objectParent"></param>
+        /// <returns>Returns true if the object is inside the objectParent.</returns>
+        bool IsInside(IItem objectParent);
+
+        /// <summary>
+        ///     Check if the target is a joint target.
+        ///     A joint target moves to the joint position without taking into account the cartesian coordinates.
+        /// </summary>
+        /// <returns>Returns true if the target is a joint target.</returns>        
+        bool IsJointTarget();
+
+        /// <summary>
+        /// Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
+        /// </summary>
+        /// <returns>Returns ProgramExecutionType (Simulator or Robot).</returns>
+        ProgramExecutionType GetRunType();
+
+        /// <summary>
+        /// Sets the linear acceleration of a robot in mm/s2
+        /// </summary>
+        /// <param name="value">Acceleration in mm/s2</param>
+        void SetAcceleration(double value);
+
+        /// <summary>
+        /// Sets the joint acceleration of a robot
+        /// </summary>
+        /// <param name="value">Acceleration in deg/s2 for rotary joints and mm/s2 for linear joints</param>
+        void SetAccelerationJoints(double value);
+
+        /// <summary>
+        /// Sets the joint speed of a robot
+        /// </summary>
+        /// <param name="value">Speed in deg/s for rotary joints and mm/s for linear joints</param>
+        void SetSpeedJoints(double value);
+
+        /// <summary>
+        ///     Sets a link between this item and the specified item.
+        ///     This is useful to set the relationship between programs, robots, tools and other specific projects.
+        /// </summary>
+        /// <param name="item">Item to link</param>
+        void SetLink(IItem item);
+
+        /// <summary>
+        /// Wait until a program finishes or a robot completes its movement
+        /// </summary>
+        void WaitFinished();
 
         #endregion
     }

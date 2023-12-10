@@ -658,6 +658,19 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public void SetColorCurve(Color tocolor, int curveId = -1)
+        {
+            double[] tocolorArray = tocolor.ToRoboDKColorArray();
+            Link.check_color(tocolorArray);
+            Link.check_connection();
+            Link.send_line("S_CurveColor");
+            Link.send_item(this);
+            Link.send_int(curveId);
+            Link.send_array(tocolorArray);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
         public void SetTransparency(double alpha)
         {
             // saturate the alpha channel so it remains between 0 and 1.
@@ -1844,6 +1857,222 @@ namespace RoboDk.API
         public void Finish()
         {
             Link.Finish();
+        }
+
+        /// <inheritdoc />
+        public void SetAccuracyActive(bool accurate = true)
+        {
+            Link.check_connection();
+            Link.send_line("S_AbsAccOn");
+            Link.send_item(this);
+            Link.send_int(accurate ? 1 : 0);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public bool AccuracyActive()
+        {
+            Link.check_connection();
+            Link.send_line("G_AbsAccOn");
+            Link.send_item(this);
+            int result = Link.rec_int();
+            Link.check_status();
+            return result != 0;
+        }
+
+        /// <inheritdoc />
+        public IItem AddFile(string filename)
+        {
+            return Link.AddFile(filename, this);
+        }
+
+        /// <inheritdoc />
+        public void AddGeometry(IItem source, Mat pose)
+        {
+            Link.check_connection();
+            Link.send_line("CopyFaces");
+            Link.send_item(source);
+            Link.send_item(this);
+            Link.send_pose(pose);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public IItem AddPoints(Mat points, bool addToRef = false, ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
+        {
+            return Link.AddPoints(points, this, addToRef, projectionType);
+        }
+
+        /// <inheritdoc />
+        public bool Collision(IItem item)
+        {
+            return Link.Collision(this, item);
+        }
+        
+        /// <inheritdoc />
+        public void Copy(bool copy_children = true)
+        {
+            Link.Copy(this, copy_children);
+        }
+        
+        /// <inheritdoc />
+        public bool FilterProgram(string filename, out string filterMessage)
+        {
+            Link.check_connection();
+            Link.send_line("FilterProg2");
+            Link.send_item(this);
+            Link.send_line(filename);
+            int result = Link.rec_int();
+            filterMessage = Link.rec_line();
+            Link.check_status();
+            return (result == 0);
+        }
+        
+        /// <inheritdoc />
+        public string GetAnalogInput(string input)
+        {
+            Link.check_connection();
+            Link.send_line("getAI");
+            Link.send_item(this);
+            Link.send_line(input);
+            string result = Link.rec_line();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public string GetDigitalInput(string input)
+        {
+            Link.check_connection();
+            Link.send_line("getDI");
+            Link.send_item(this);
+            Link.send_line(input);
+            string result = Link.rec_line();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public void SetAnalogOutput(string output, string value)
+        {
+            Link.check_connection();
+            Link.send_line("setAO");
+            Link.send_item(this);
+            Link.send_line(output);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public void SetDigitalOutput(string output, string value)
+        {
+            Link.check_connection();
+            Link.send_line("setDO");
+            Link.send_item(this);
+            Link.send_line(output);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public void WaitDigitalInput(string input, string value, double timeout = -1)
+        {
+            Link.check_connection();
+            Link.send_line("waitDI");
+            Link.send_item(this);
+            Link.send_line(input);
+            Link.send_line(value);
+            Link.send_int((int)(timeout * 1000.0));
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public bool InstructionDelete(int instructionId = 0)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_DelIns");
+            Link.send_item(this);
+            Link.send_int(instructionId);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (result > 0);
+        }
+
+        /// <inheritdoc />
+        public int InstructionSelect(int instructionId = -1)
+        {
+            Link.check_connection();
+            Link.send_line("Prog_SelIns");
+            Link.send_item(this);
+            Link.send_int(instructionId);
+            int result = Link.rec_int();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public bool IsInside(IItem objectParent)
+        {
+            return Link.IsInside(this, objectParent);
+        }
+
+        /// <inheritdoc />
+        public bool IsJointTarget()
+        {
+            Link.check_connection();
+            Link.send_line("Target_Is_JT");
+            Link.send_item(this);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (result > 0);
+        }
+
+        /// <inheritdoc />
+        public ProgramExecutionType GetRunType()
+        {
+            Link.check_connection();
+            Link.send_line("G_ProgRunType");
+            Link.send_item(this);
+            int result = Link.rec_int();
+            Link.check_status();
+            return (ProgramExecutionType)result;
+        }
+
+        /// <inheritdoc />
+        public void SetAcceleration(double value)
+        {
+            SetSpeed(-1.0, value, -1.0, -1.0);
+        }
+
+        /// <inheritdoc />
+        public void SetAccelerationJoints(double value)
+        {
+            SetSpeed(-1.0, -1.0, -1.0, value);
+        }
+
+        /// <inheritdoc />
+        public void SetSpeedJoints(double value)
+        {
+            SetSpeed(-1.0, -1.0, value, -1.0);
+        }
+
+        /// <inheritdoc />
+        public void SetLink(IItem item)
+        {
+            Link.check_connection();
+            Link.send_line("S_Link_ptr");
+            Link.send_item(item);
+            Link.send_item(this);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public void WaitFinished()
+        {
+            while (Busy())
+            {
+                System.Threading.Thread.Sleep(50);
+            }
         }
 
 #endregion
