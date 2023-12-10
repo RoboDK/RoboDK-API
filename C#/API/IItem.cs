@@ -1285,6 +1285,21 @@ namespace RoboDk.API
         /// <param name="value">Property value</param>
         void SetValue(string variableName, string value);
 
+        /// <summary>
+        ///     Defines the name of the program when the program is generated. It is also possible to specify the name of the post
+        ///     processor as well as the folder to save the program.
+        ///     This method must be called before any program output is generated (before any robot movement or other instruction).
+        /// </summary>
+        /// <param name="progname">name of the program</param>
+        /// <param name="defaultfolder">folder to save the program, leave empty to use the default program folder</param>
+        /// <param name="postprocessor">
+        ///     name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is
+        ///     possible to provide "Fanuc_post.py" or simply "Fanuc_post")
+        /// </param>
+        /// <returns></returns>
+        int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "");
+
+
         #endregion
     }
 }

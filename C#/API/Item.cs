@@ -2100,6 +2100,12 @@ namespace RoboDk.API
             Link.check_status();
         }
 
+        /// <inheritdoc />
+        public int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "")
+        {
+            return Link.ProgramStart(progname, defaultfolder, postprocessor, this);
+        }
+
         #endregion
 
     }
