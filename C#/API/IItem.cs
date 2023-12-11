@@ -1364,6 +1364,13 @@ namespace RoboDk.API
         /// <returns>Returns an array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).</returns>
         List<Mat> GetJointPoses(double[] joints = null);
 
+        /// <summary>
+        /// Returns the relative pose of this Item with respect to an another Item.
+        /// </summary>
+        /// <param name="item">The other Item</param>
+        /// <returns>Returns the pose from this Item to the other Item</returns>
+        Mat GetPoseWrt(IItem item);
+
         #endregion
     }
 }

@@ -61,7 +61,13 @@ namespace RoboDk.API.Model
         Machining = 11,
         Ballbarvalidation = 12,
         Calibproject = 13,
-        ValidIso9283 = 14
+        ValidIso9283 = 14,
+        Folder = 17,
+        RobotArm = 18,
+        Camera = 19,
+        Generic = 20,
+        RobotAxes = 21,
+        Notes = 22
     }
 }
 
