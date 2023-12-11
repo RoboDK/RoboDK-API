@@ -5989,6 +5989,31 @@ public class RoboDK
         }
 
         /// <summary>
+        /// Get all the items of a specific type for which GetLink returns this item.
+        /// </summary>
+        /// <param name="type_linked">Type of the items to check for a link</param>
+        /// <returns>Returns a list of items for which GetLink return the specified item</returns>
+        public List<Item> getLinks(int type_linked = ITEM_TYPE_ROBOT)
+        {
+            List<Item> result = new List<Item>();
+            Item[] items = link.getItemList(type_linked);
+            foreach (var candidate in items)
+            {
+                if (candidate.item == this.item)
+                {
+                    continue;
+                }
+
+                var link = candidate.getLink(this.type);
+                if (link.Valid() && link.item == this.item)
+                {
+                    result.Add(candidate);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
         /// </summary>
         /// <param name="joints">array of joint values, in degrees or mm for linear axes</param>

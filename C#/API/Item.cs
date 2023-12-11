@@ -869,6 +869,27 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public List<IItem> GetLinks(ItemType typeLinked = ItemType.Robot)
+        {
+            List<IItem> result = new List<IItem>();
+            List<IItem> items = Link.GetItemList(typeLinked);
+            foreach (var candidate in items)
+            {
+                if (candidate.ItemId == this.ItemId)
+                {
+                    continue;
+                }
+
+                var link = candidate.GetLink(this._type);
+                if (link.Valid() && link.ItemId == this.ItemId)
+                {
+                    result.Add(candidate);
+                }
+            }
+            return result;
+        }
+
+        /// <inheritdoc />
         public bool SetJoints(double[] joints, SetJointsType saturate_action = SetJointsType.Default)
         {
             if (saturate_action == SetJointsType.Default)

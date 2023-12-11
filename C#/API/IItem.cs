@@ -529,6 +529,13 @@ namespace RoboDk.API
         IItem GetLink(ItemType typeLinked = ItemType.Robot);
 
         /// <summary>
+        /// Get all the items of a specific type for which GetLink returns this item.
+        /// </summary>
+        /// <param name="typeLinked">Type of the items to check for a link</param>
+        /// <returns>Returns a list of items for which GetLink return the specified item</returns>
+        List<IItem> GetLinks(ItemType typeLinked = ItemType.Robot);
+
+        /// <summary>
         ///     Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the
         ///     preferred joints (configuration) to go to that cartesian position.
         /// </summary>
