@@ -7581,6 +7581,28 @@ public class RoboDK
             link._check_status();
             return Tuple.Create(filteredPose, filteredJoints);
         }
+
+        /// <summary>
+        ///     Get positions of the joint links for a provided robot configuration (joints).
+        ///     If no joints are provided it will return the poses for the current robot position.
+        /// </summary>
+        /// <param name="joints">Robot configuration (joints)</param>
+        /// <returns>Returns an array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).</returns>
+        public List<Mat> JointPoses(double[] joints = null)
+        {
+            link._check_connection();
+            link._send_Line("G_LinkPoses");
+            link._send_Item(this);
+            link._send_Array(joints);
+            List<Mat> result = new List<Mat>();
+            int count = link._recv_Int();
+            for (int i = 0; i < count; i++)
+            {
+                result.Add(link._recv_Pose());
+            }
+            link._check_status();
+            return result;
+        }
     }
 
 }

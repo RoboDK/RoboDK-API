@@ -2196,6 +2196,23 @@ namespace RoboDk.API
             return new FilterTargetResult(filteredPose, filteredJoints);
         }
 
+        /// <inheritdoc />
+        public List<Mat> GetJointPoses(double[] joints = null)
+        {
+            Link.check_connection();
+            Link.send_line("G_LinkPoses");
+            Link.send_item(this);
+            Link.send_array(joints);
+            List<Mat> result = new List<Mat>();
+            int count = Link.rec_int();
+            for (int i = 0; i < count; i++)
+            {
+                result.Add(Link.rec_pose());
+            }
+            Link.check_status();
+            return result;
+        }
+
         #endregion
 
     }
