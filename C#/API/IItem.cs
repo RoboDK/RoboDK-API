@@ -1340,6 +1340,14 @@ namespace RoboDk.API
         /// <returns></returns>
         int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "");
 
+        /// <summary>
+        ///     Filters a target to improve accuracy.
+        ///     This option requires a calibrated robot.
+        /// </summary>
+        /// <param name="pose">Pose of the robot TCP with respect to the robot reference frame</param>
+        /// <param name="approximatedJoints">Approximated desired joints to define the preferred configuration</param>
+        /// <returns>FilterTargetResult with filtered pose and joints</returns>
+        FilterTargetResult FilterTarget(Mat pose, double[] approximatedJoints = null);
 
         #endregion
     }

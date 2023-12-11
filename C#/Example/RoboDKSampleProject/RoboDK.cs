@@ -7533,6 +7533,29 @@ public class RoboDK
             return link.ProgramStart(progname, defaultfolder, postprocessor, this);
         }
 
+        /// <summary>
+        ///     Filters a target to improve accuracy.
+        ///     This option requires a calibrated robot.
+        /// </summary>
+        /// <param name="pose">Pose of the robot TCP with respect to the robot reference frame</param>
+        /// <param name="joints_approx">Approximated desired joints to define the preferred configuration</param>
+        /// <returns>Tuple with filtered pose and joints</returns>
+        public Tuple<Mat, double[]> FilterTarget(Mat pose, double[] joints_approx = null)
+        {
+            link._check_connection();
+            link._send_Line("FilterTarget");
+            link._send_Pose(pose);
+            if (joints_approx == null)
+            {
+                joints_approx = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+            }
+            link._send_Array(joints_approx);
+            link._send_Item(this);
+            var filteredPose = link._recv_Pose();
+            var filteredJoints = link._recv_Array();
+            link._check_status();
+            return Tuple.Create(filteredPose, filteredJoints);
+        }
     }
 
 }

@@ -2157,6 +2157,24 @@ namespace RoboDk.API
             return Link.ProgramStart(progname, defaultfolder, postprocessor, this);
         }
 
+        /// <inheritdoc />
+        public FilterTargetResult FilterTarget(Mat pose, double[] approximatedJoints = null)
+        {
+            Link.check_connection();
+            Link.send_line("FilterTarget");
+            Link.send_pose(pose);
+            if (approximatedJoints == null)
+            {
+                approximatedJoints = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+            }
+            Link.send_array(approximatedJoints);
+            Link.send_item(this);
+            var filteredPose = Link.rec_pose();
+            var filteredJoints = Link.rec_array();
+            Link.check_status();
+            return new FilterTargetResult(filteredPose, filteredJoints);
+        }
+
         #endregion
 
     }
