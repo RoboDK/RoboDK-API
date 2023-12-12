@@ -1508,6 +1508,12 @@ public class Mat // simple matrix class for homogeneous operations
         return catV(this, mat2);
     }
 
+    public Mat translationPose()
+    {
+        double[] pos = Pos();
+        return transl(pos[0], pos[1], pos[2]);
+    }
+
     public Mat rotationPose()
     {
         Mat result = new Mat(this);

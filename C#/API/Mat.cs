@@ -1125,6 +1125,12 @@ namespace RoboDk.API
             return ConcatenateVertical(this, matrix);
         }
 
+        public Mat TranslationPose()
+        {
+            double[] pos = Pos();
+            return transl(pos[0], pos[1], pos[2]);
+        }
+
         public Mat RotationPose()
         {
             Mat result = new Mat(this);
