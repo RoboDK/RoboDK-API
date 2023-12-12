@@ -1508,6 +1508,13 @@ public class Mat // simple matrix class for homogeneous operations
         return catV(this, mat2);
     }
 
+    public Mat rotationPose()
+    {
+        Mat result = new Mat(this);
+        result.setPos(0.0, 0.0, 0.0);
+        return result;
+    }
+
     public static string NormalizeMatrixString(string matStr)	// From Andy - thank you! :)
     {
         // Remove any multiple spaces

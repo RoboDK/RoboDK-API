@@ -1125,6 +1125,13 @@ namespace RoboDk.API
             return ConcatenateVertical(this, matrix);
         }
 
+        public Mat RotationPose()
+        {
+            Mat result = new Mat(this);
+            result.setPos(0.0, 0.0, 0.0);
+            return result;
+        }
+
         #endregion
 
         #region Private Methods
