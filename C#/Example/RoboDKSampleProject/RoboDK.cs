@@ -5900,6 +5900,36 @@ public class RoboDK
         }
 
         /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="triangle_points">
+        ///     List of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        public Item AddShape(Mat triangle_points)
+        {
+            return link.AddShape(triangle_points, this);
+        }
+
+        /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="list_triangle_points">
+        ///     List of Mat objects. Each Mat object is a list of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        public Item AddShape(List<Mat> list_triangle_points)
+        {
+            return link.AddShape(list_triangle_points, this);
+        }
+
+        /// <summary>
         /// Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         /// </summary>
         /// <param name="curve_points">matrix 3xN or 6xN -> N must be multiple of 3</param>

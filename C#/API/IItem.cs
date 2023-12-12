@@ -420,6 +420,30 @@ namespace RoboDk.API
         void Scale(double[] scale);
 
         /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="trianglePoints">
+        ///     List of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        IItem AddShape(Mat trianglePoints);
+
+        /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="listTrianglePoints">
+        ///     List of Mat objects. Each Mat object is a list of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        IItem AddShape(List<Mat> listTrianglePoints);
+
+        /// <summary>
         ///     Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be
         ///     provided optionally.
         /// </summary>

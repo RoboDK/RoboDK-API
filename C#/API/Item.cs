@@ -821,6 +821,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public IItem AddShape(Mat trianglePoints)
+        {
+            return Link.AddShape(trianglePoints, this);
+        }
+
+        /// <inheritdoc />
+        public IItem AddShape(List<Mat> listTrianglePoints)
+        {
+            return Link.AddShape(listTrianglePoints, this);
+        }
+
+        /// <inheritdoc />
         public IItem AddCurve(Mat curvePoints, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
