@@ -42,6 +42,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using RoboDk.API.Exceptions;
 
@@ -1136,6 +1137,26 @@ namespace RoboDk.API
             Mat result = new Mat(this);
             result.setPos(0.0, 0.0, 0.0);
             return result;
+        }
+
+        public void SaveCSV(string filename)
+        {
+            Transpose().SaveMat(filename);
+        }
+
+        public void SaveMat(string filename, string separator = ",")
+        {
+            using (var writer = new StreamWriter(filename))
+            {
+                for (int row = 0; row < _rows; row++)
+                {
+                    for (int col = 0; col < _cols; col++)
+                    {
+                        writer.Write("{0:0.000000}{1}", this[row, col], separator);
+                    }
+                    writer.WriteLine();
+                }
+            }
         }
 
         #endregion

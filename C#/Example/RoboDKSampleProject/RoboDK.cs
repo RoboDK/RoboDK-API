@@ -1521,6 +1521,26 @@ public class Mat // simple matrix class for homogeneous operations
         return result;
     }
 
+    public void SaveCSV(string strfile)
+    {
+        Transpose().SaveMat(strfile);
+    }
+
+    public void SaveMat(string strfile, string separator = ",")
+    {
+        using (var writer = new StreamWriter(strfile))
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                for (int col = 0; col < cols; col++)
+                {
+                    writer.Write("{0:0.000000}{1}", this[row, col], separator);
+                }
+                writer.WriteLine();
+            }
+        }
+    }
+
     public static string NormalizeMatrixString(string matStr)	// From Andy - thank you! :)
     {
         // Remove any multiple spaces
