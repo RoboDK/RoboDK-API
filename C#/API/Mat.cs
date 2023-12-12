@@ -1120,6 +1120,11 @@ namespace RoboDk.API
             return ConcatenateHorizontal(this, matrix);
         }
 
+        public Mat ConcatenateVertical(Mat matrix)
+        {
+            return ConcatenateVertical(this, matrix);
+        }
+
         #endregion
 
         #region Private Methods
@@ -1521,6 +1526,31 @@ namespace RoboDk.API
                 for (int col = 0; col < m2._cols; col++)
                 {
                     result[row, m1._cols + col] = m2[row, col];
+                }
+            }
+
+            return result;
+        }
+
+        private static Mat ConcatenateVertical(Mat m1, Mat m2)
+        {
+            if (m1._cols != m2._cols)
+            {
+                throw new MatException("Horizontal size of matrices does not match");
+            }
+
+            var result = new Mat(m1._rows + m2._rows, m1._cols);
+
+            for (int col = 0; col < m1._cols; col++)
+            {
+                for (int row = 0; row < m1._rows; row++)
+                {
+                    result[row, col] = m1[row, col];
+                }
+
+                for (int row = 0; row < m2._rows; row++)
+                {
+                    result[m1._rows + row, col] = m2[row, col];
                 }
             }
 

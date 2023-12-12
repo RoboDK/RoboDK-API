@@ -1478,6 +1478,36 @@ public class Mat // simple matrix class for homogeneous operations
         return catH(this, mat2);
     }
 
+    public static Mat catV(Mat m1, Mat m2)
+    {
+        if (m1.cols != m2.cols)
+        {
+            throw new MatException("Horizontal size of matrices does not match");
+        }
+
+        var result = new Mat(m1.rows + m2.rows, m1.cols);
+
+        for (int col = 0; col < m1.cols; col++)
+        {
+            for (int row = 0; row < m1.rows; row++)
+            {
+                result[row, col] = m1[row, col];
+            }
+
+            for (int row = 0; row < m2.rows; row++)
+            {
+                result[m1.rows + row, col] = m2[row, col];
+            }
+        }
+
+        return result;
+    }
+
+    public Mat catV(Mat mat2)
+    {
+        return catV(this, mat2);
+    }
+
     public static string NormalizeMatrixString(string matStr)	// From Andy - thank you! :)
     {
         // Remove any multiple spaces
