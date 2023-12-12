@@ -1115,6 +1115,10 @@ namespace RoboDk.API
             return pose;
         }
 
+        public Mat ConcatenateHorizontal(Mat matrix)
+        {
+            return ConcatenateHorizontal(this, matrix);
+        }
 
         #endregion
 
@@ -1496,6 +1500,31 @@ namespace RoboDk.API
             for (var j = 0; j < r._cols; j++)
                 r[i, j] = m1[i, j] + m2[i, j];
             return r;
+        }
+
+        private static Mat ConcatenateHorizontal(Mat m1, Mat m2)
+        {
+            if (m1._rows != m2._rows)
+            {
+                throw new MatException("Vertical size of matrices does not match");
+            }
+
+            var result = new Mat(m1._rows, m1._cols + m2._cols);
+
+            for (int row = 0; row < m1._rows; row++)
+            {
+                for (int col = 0; col < m1._cols; col++)
+                {
+                    result[row, col] = m1[row, col];
+                }
+
+                for (int col = 0; col < m2._cols; col++)
+                {
+                    result[row, m1._cols + col] = m2[row, col];
+                }
+            }
+
+            return result;
         }
 
         #endregion
