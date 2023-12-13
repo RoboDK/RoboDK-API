@@ -1562,6 +1562,22 @@ public class Mat // simple matrix class for homogeneous operations
         return matStr.Trim();
     }
 
+    /// <summary>
+    ///     Calculates a relative target with respect to the tool coordinates.
+    ///     This procedure has exactly the same behavior as ABB's RelTool instruction.
+    /// </summary>
+    /// <param name="target_pose">Reference pose</param>
+    /// <param name="x">Translation along the Tool X axis (mm)</param>
+    /// <param name="y">Translation along the Tool Y axis (mm)</param>
+    /// <param name="z">Translation along the Tool Z axis (mm)</param>
+    /// <param name="rx">Rotation around the Tool X axis (deg) (optional)</param>
+    /// <param name="ry">Rotation around the Tool Y axis (deg) (optional)</param>
+    /// <param name="rz">Rotation around the Tool Z axis (deg) (optional)</param>
+    /// <returns>Returns relative target</returns>
+    public Mat RelTool(Mat target_pose, double x, double y, double z, double rx = 0.0, double ry = 0.0, double rz = 0.0)
+    {
+        return target_pose * transl(x, y, z) * rotx(rx * Math.PI / 180) * roty(ry * Math.PI / 180) * rotz(rz * Math.PI / 180);
+    }
 
     // Operators
     public static Mat operator -(Mat m)
