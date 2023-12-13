@@ -420,6 +420,30 @@ namespace RoboDk.API
         void Scale(double[] scale);
 
         /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="trianglePoints">
+        ///     List of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        IItem AddShape(Mat trianglePoints);
+
+        /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="listTrianglePoints">
+        ///     List of Mat objects. Each Mat object is a list of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        IItem AddShape(List<Mat> listTrianglePoints);
+
+        /// <summary>
         ///     Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be
         ///     provided optionally.
         /// </summary>
@@ -527,6 +551,13 @@ namespace RoboDk.API
         /// <param name="typeLinked">type of linked object to retrieve</param>
         /// <returns></returns>
         IItem GetLink(ItemType typeLinked = ItemType.Robot);
+
+        /// <summary>
+        /// Get all the items of a specific type for which GetLink returns this item.
+        /// </summary>
+        /// <param name="typeLinked">Type of the items to check for a link</param>
+        /// <returns>Returns a list of items for which GetLink return the specified item</returns>
+        List<IItem> GetLinks(ItemType typeLinked = ItemType.Robot);
 
         /// <summary>
         ///     Sets the current joints of a robot or the joints of a target. It the item is a cartesian target, it returns the
@@ -745,6 +776,30 @@ namespace RoboDk.API
         ///     (default=true)
         /// </param>
         void MoveL(Mat target, bool blocking = true);
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Target to move to as a target item (RoboDK target item)</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(IItem target, bool blocking = true);
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Joint target to move to.</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(double[] target, bool blocking = true);
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        double[] SearchL(Mat target, bool blocking = true);
 
         /// <summary>
         ///     Moves a robot to a specific target ("Move Circular" mode). By default, this function blocks until the robot
@@ -1147,6 +1202,23 @@ namespace RoboDk.API
         void Copy(bool copy_children = true);
 
         /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (optional)</param>
+        /// <returns>Returns the new item created</returns>
+        IItem Paste(IItem paste_to = null);
+
+        /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (can be null)</param>
+        /// <param name="paste_times">Number of times to paste the item</param>
+        /// <returns>Returns the list of new items created</returns>
+        List<IItem> Paste(IItem paste_to, int paste_times);
+
+        /// <summary>
         ///     Filter a program file to improve accuracy for a specific robot.
         ///     The robot must have been previously calibrated.
         /// </summary>
@@ -1267,6 +1339,54 @@ namespace RoboDk.API
         /// Wait until a program finishes or a robot completes its movement
         /// </summary>
         void WaitFinished();
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="variableName">Property name</param>
+        /// <param name="value">Property value</param>
+        /// <returns></returns>
+        Mat SetValue(string variableName, Mat value = null);
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="variableName">Property name</param>
+        /// <param name="value">Property value</param>
+        void SetValue(string variableName, string value);
+
+        /// <summary>
+        ///     Defines the name of the program when the program is generated. It is also possible to specify the name of the post
+        ///     processor as well as the folder to save the program.
+        ///     This method must be called before any program output is generated (before any robot movement or other instruction).
+        /// </summary>
+        /// <param name="progname">name of the program</param>
+        /// <param name="defaultfolder">folder to save the program, leave empty to use the default program folder</param>
+        /// <param name="postprocessor">
+        ///     name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is
+        ///     possible to provide "Fanuc_post.py" or simply "Fanuc_post")
+        /// </param>
+        /// <returns></returns>
+        int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "");
+
+        /// <summary>
+        ///     Filters a target to improve accuracy.
+        ///     This option requires a calibrated robot.
+        /// </summary>
+        /// <param name="pose">Pose of the robot TCP with respect to the robot reference frame</param>
+        /// <param name="approximatedJoints">Approximated desired joints to define the preferred configuration</param>
+        /// <returns>FilterTargetResult with filtered pose and joints</returns>
+        FilterTargetResult FilterTarget(Mat pose, double[] approximatedJoints = null);
+
+        /// <summary>
+        ///     Get positions of the joint links for a provided robot configuration (joints).
+        ///     If no joints are provided it will return the poses for the current robot position.
+        /// </summary>
+        /// <param name="joints">Robot configuration (joints)</param>
+        /// <returns>Returns an array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).</returns>
+        List<Mat> GetJointPoses(double[] joints = null);
 
         #endregion
     }

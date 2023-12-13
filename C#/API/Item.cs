@@ -712,6 +712,18 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public IItem AddShape(Mat trianglePoints)
+        {
+            return Link.AddShape(trianglePoints, this);
+        }
+
+        /// <inheritdoc />
+        public IItem AddShape(List<Mat> listTrianglePoints)
+        {
+            return Link.AddShape(listTrianglePoints, this);
+        }
+
+        /// <inheritdoc />
         public IItem AddCurve(Mat curvePoints, bool addToRef = false,
             ProjectionType projectionType = ProjectionType.AlongNormalRecalc)
         {
@@ -866,6 +878,27 @@ namespace RoboDk.API
             IItem item = Link.rec_item();
             Link.check_status();
             return item;
+        }
+
+        /// <inheritdoc />
+        public List<IItem> GetLinks(ItemType typeLinked = ItemType.Robot)
+        {
+            List<IItem> result = new List<IItem>();
+            List<IItem> items = Link.GetItemList(typeLinked);
+            foreach (var candidate in items)
+            {
+                if (candidate.ItemId == this.ItemId)
+                {
+                    continue;
+                }
+
+                var link = candidate.GetLink(this._type);
+                if (link.Valid() && link.ItemId == this.ItemId)
+                {
+                    result.Add(candidate);
+                }
+            }
+            return result;
         }
 
         /// <inheritdoc />
@@ -1208,6 +1241,45 @@ namespace RoboDk.API
         public void MoveL(Mat target, bool blocking = true)
         {
             Link.MoveX(null, null, target, this, 2, blocking);
+        }
+
+        /// <inheritdoc />
+        public double[] SearchL(IItem target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(target, null, null, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(target, null, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <inheritdoc />
+        public double[] SearchL(double[] target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(null, target, null, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(null, target, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <inheritdoc />
+        public double[] SearchL(Mat target, bool blocking = true)
+        {
+            if (this.GetItemType() == ItemType.Program)
+            {
+                Link.MoveX(null, null, target, this, 5, false);
+                return null;
+            }
+
+            Link.MoveX(null, null, target, this, 5, blocking);
+            return this.SimulatorJoints();
         }
 
         /// <inheritdoc />
@@ -1914,7 +1986,19 @@ namespace RoboDk.API
         {
             Link.Copy(this, copy_children);
         }
-        
+
+        /// <inheritdoc />
+        public IItem Paste(IItem paste_to = null)
+        {
+            return Link.Paste(paste_to);
+        }
+
+        /// <inheritdoc />
+        public List<IItem> Paste(IItem paste_to, int paste_times)
+        {
+            return Link.Paste(paste_to, paste_times);
+        }
+
         /// <inheritdoc />
         public bool FilterProgram(string filename, out string filterMessage)
         {
@@ -2075,7 +2159,73 @@ namespace RoboDk.API
             }
         }
 
-#endregion
+        /// <inheritdoc />
+        public Mat SetValue(string variableName, Mat value = null)
+        {
+            Link.RequireBuild(22340);
+            Link.check_connection();
+            Link.send_line("S_ValueMat");
+            Link.send_item(this);
+            Link.send_line(variableName);
+            Link.send_matrix(value != null ? value : new Mat(0, 0));
+            Mat result = Link.rec_matrix();
+            Link.check_status();
+            return result;
+        }
+
+        /// <inheritdoc />
+        public void SetValue(string variableName, string value)
+        {
+            Link.check_connection();
+            Link.send_line("S_Gen_Str");
+            Link.send_item(this);
+            Link.send_line(variableName);
+            Link.send_line(value);
+            Link.check_status();
+        }
+
+        /// <inheritdoc />
+        public int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "")
+        {
+            return Link.ProgramStart(progname, defaultfolder, postprocessor, this);
+        }
+
+        /// <inheritdoc />
+        public FilterTargetResult FilterTarget(Mat pose, double[] approximatedJoints = null)
+        {
+            Link.check_connection();
+            Link.send_line("FilterTarget");
+            Link.send_pose(pose);
+            if (approximatedJoints == null)
+            {
+                approximatedJoints = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+            }
+            Link.send_array(approximatedJoints);
+            Link.send_item(this);
+            var filteredPose = Link.rec_pose();
+            var filteredJoints = Link.rec_array();
+            Link.check_status();
+            return new FilterTargetResult(filteredPose, filteredJoints);
+        }
+
+        /// <inheritdoc />
+        public List<Mat> GetJointPoses(double[] joints = null)
+        {
+            Link.check_connection();
+            Link.send_line("G_LinkPoses");
+            Link.send_item(this);
+            Link.send_array(joints);
+            List<Mat> result = new List<Mat>();
+            int count = Link.rec_int();
+            for (int i = 0; i < count; i++)
+            {
+                result.Add(Link.rec_pose());
+            }
+            Link.check_status();
+            return result;
+        }
+
+        #endregion
 
     }
 }

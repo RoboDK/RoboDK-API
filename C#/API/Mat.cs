@@ -42,6 +42,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using RoboDk.API.Exceptions;
 
@@ -1115,6 +1116,86 @@ namespace RoboDk.API
             return pose;
         }
 
+        public Mat ConcatenateHorizontal(Mat matrix)
+        {
+            return ConcatenateHorizontal(this, matrix);
+        }
+
+        public Mat ConcatenateVertical(Mat matrix)
+        {
+            return ConcatenateVertical(this, matrix);
+        }
+
+        public Mat TranslationPose()
+        {
+            double[] pos = Pos();
+            return transl(pos[0], pos[1], pos[2]);
+        }
+
+        public Mat RotationPose()
+        {
+            Mat result = new Mat(this);
+            result.setPos(0.0, 0.0, 0.0);
+            return result;
+        }
+
+        public void SaveCSV(string filename)
+        {
+            Transpose().SaveMat(filename);
+        }
+
+        public void SaveMat(string filename, string separator = ",")
+        {
+            using (var writer = new StreamWriter(filename))
+            {
+                for (int row = 0; row < _rows; row++)
+                {
+                    for (int col = 0; col < _cols; col++)
+                    {
+                        writer.Write("{0:0.000000}{1}", this[row, col], separator);
+                    }
+                    writer.WriteLine();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Calculates a relative target with respect to the tool coordinates.
+        ///     This procedure has exactly the same behavior as ABB's RelTool instruction.
+        /// </summary>
+        /// <param name="targetPose">Reference pose</param>
+        /// <param name="x">Translation along the Tool X axis (mm)</param>
+        /// <param name="y">Translation along the Tool Y axis (mm)</param>
+        /// <param name="z">Translation along the Tool Z axis (mm)</param>
+        /// <param name="rx">Rotation around the Tool X axis (deg) (optional)</param>
+        /// <param name="ry">Rotation around the Tool Y axis (deg) (optional)</param>
+        /// <param name="rz">Rotation around the Tool Z axis (deg) (optional)</param>
+        /// <returns>Returns relative target</returns>
+        public Mat RelTool(Mat targetPose, double x, double y, double z, double rx = 0.0, double ry = 0.0, double rz = 0.0)
+        {
+            return targetPose * transl(x, y, z) * rotx(rx * Math.PI / 180) * roty(ry * Math.PI / 180) * rotz(rz * Math.PI / 180);
+        }
+
+        /// <summary>
+        ///     Calculates a relative target with respect to the reference frame coordinates.
+        /// </summary>
+        /// <param name="targetPose">Reference pose</param>
+        /// <param name="x">Translation along the Tool X axis (mm)</param>
+        /// <param name="y">Translation along the Tool Y axis (mm)</param>
+        /// <param name="z">Translation along the Tool Z axis (mm)</param>
+        /// <param name="rx">Rotation around the Tool X axis (deg) (optional)</param>
+        /// <param name="ry">Rotation around the Tool Y axis (deg) (optional)</param>
+        /// <param name="rz">Rotation around the Tool Z axis (deg) (optional)</param>
+        /// <returns>Returns relative target</returns>
+        public Mat Offset(Mat targetPose, double x, double y, double z, double rx = 0.0, double ry = 0.0, double rz = 0.0)
+        {
+            if (!targetPose.IsHomogeneous())
+            {
+                throw new MatException("Pose matrix is not homogeneous");
+            }
+
+            return transl(x, y, z) * rotx(rx * Math.PI / 180.0) * roty(ry * Math.PI / 180.0) * rotz(rz * Math.PI / 180.0) * targetPose;
+        }
 
         #endregion
 
@@ -1496,6 +1577,56 @@ namespace RoboDk.API
             for (var j = 0; j < r._cols; j++)
                 r[i, j] = m1[i, j] + m2[i, j];
             return r;
+        }
+
+        private static Mat ConcatenateHorizontal(Mat m1, Mat m2)
+        {
+            if (m1._rows != m2._rows)
+            {
+                throw new MatException("Vertical size of matrices does not match");
+            }
+
+            var result = new Mat(m1._rows, m1._cols + m2._cols);
+
+            for (int row = 0; row < m1._rows; row++)
+            {
+                for (int col = 0; col < m1._cols; col++)
+                {
+                    result[row, col] = m1[row, col];
+                }
+
+                for (int col = 0; col < m2._cols; col++)
+                {
+                    result[row, m1._cols + col] = m2[row, col];
+                }
+            }
+
+            return result;
+        }
+
+        private static Mat ConcatenateVertical(Mat m1, Mat m2)
+        {
+            if (m1._cols != m2._cols)
+            {
+                throw new MatException("Horizontal size of matrices does not match");
+            }
+
+            var result = new Mat(m1._rows + m2._rows, m1._cols);
+
+            for (int col = 0; col < m1._cols; col++)
+            {
+                for (int row = 0; row < m1._rows; row++)
+                {
+                    result[row, col] = m1[row, col];
+                }
+
+                for (int row = 0; row < m2._rows; row++)
+                {
+                    result[m1._rows + row, col] = m2[row, col];
+                }
+            }
+
+            return result;
         }
 
         #endregion

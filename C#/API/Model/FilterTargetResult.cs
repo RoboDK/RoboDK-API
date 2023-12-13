@@ -1,5 +1,5 @@
 ﻿// ----------------------------------------------------------------------------------------------------------
-// Copyright 2018 - RoboDK Inc. - https://robodk.com/
+// Copyright 2023 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -38,36 +38,23 @@
 // This library includes the mathematics to operate with homogeneous matrices for robotics.
 // ----------------------------------------------------------------------------------------------------------
 
-
-
 namespace RoboDk.API.Model
 {
-
-    /// <summary>
-    /// Type of an item(robot, object, target, reference frame, ...)
-    /// </summary>
-    public enum ItemType
+    public class FilterTargetResult
     {
-        Any = -1,
-        Station = 1,
-        Robot = 2,
-        Frame = 3,
-        Tool = 4,
-        Object = 5,
-        Target = 6,
-        Program = 8,
-        Instruction = 9,
-        ProgramPython = 10,
-        Machining = 11,
-        Ballbarvalidation = 12,
-        Calibproject = 13,
-        ValidIso9283 = 14,
-        Folder = 17,
-        RobotArm = 18,
-        Camera = 19,
-        Generic = 20,
-        RobotAxes = 21,
-        Notes = 22
+        public FilterTargetResult(Mat pose, double[] joints)
+        {
+            Pose = pose;
+            Joints = joints;
+        }
+
+        /// <summary>
+        /// Filtered Pose
+        /// </summary>
+        public Mat Pose { get; private set; }
+        /// <summary>
+        /// Filtered Joints
+        /// </summary>
+        public double[] Joints { get; private set; }
     }
 }
-

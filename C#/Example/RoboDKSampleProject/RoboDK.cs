@@ -1448,6 +1448,99 @@ public class Mat // simple matrix class for homogeneous operations
         return r;
     }
 
+    public static Mat catH(Mat m1, Mat m2)
+    {
+        if (m1.rows != m2.rows)
+        {
+            throw new MatException("Vertical size of matrices does not match");
+        }
+
+        var result = new Mat(m1.rows, m1.cols + m2.cols);
+
+        for (int row = 0; row < m1.rows; row++)
+        {
+            for (int col = 0; col < m1.cols; col++)
+            {
+                result[row, col] = m1[row, col];
+            }
+
+            for (int col = 0; col < m2.cols; col++)
+            {
+                result[row, m1.cols + col] = m2[row, col];
+            }
+        }
+
+        return result;
+    }
+
+    public Mat catH(Mat mat2)
+    {
+        return catH(this, mat2);
+    }
+
+    public static Mat catV(Mat m1, Mat m2)
+    {
+        if (m1.cols != m2.cols)
+        {
+            throw new MatException("Horizontal size of matrices does not match");
+        }
+
+        var result = new Mat(m1.rows + m2.rows, m1.cols);
+
+        for (int col = 0; col < m1.cols; col++)
+        {
+            for (int row = 0; row < m1.rows; row++)
+            {
+                result[row, col] = m1[row, col];
+            }
+
+            for (int row = 0; row < m2.rows; row++)
+            {
+                result[m1.rows + row, col] = m2[row, col];
+            }
+        }
+
+        return result;
+    }
+
+    public Mat catV(Mat mat2)
+    {
+        return catV(this, mat2);
+    }
+
+    public Mat translationPose()
+    {
+        double[] pos = Pos();
+        return transl(pos[0], pos[1], pos[2]);
+    }
+
+    public Mat rotationPose()
+    {
+        Mat result = new Mat(this);
+        result.setPos(0.0, 0.0, 0.0);
+        return result;
+    }
+
+    public void SaveCSV(string strfile)
+    {
+        Transpose().SaveMat(strfile);
+    }
+
+    public void SaveMat(string strfile, string separator = ",")
+    {
+        using (var writer = new StreamWriter(strfile))
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                for (int col = 0; col < cols; col++)
+                {
+                    writer.Write("{0:0.000000}{1}", this[row, col], separator);
+                }
+                writer.WriteLine();
+            }
+        }
+    }
+
     public static string NormalizeMatrixString(string matStr)	// From Andy - thank you! :)
     {
         // Remove any multiple spaces
@@ -1469,6 +1562,43 @@ public class Mat // simple matrix class for homogeneous operations
         return matStr.Trim();
     }
 
+    /// <summary>
+    ///     Calculates a relative target with respect to the tool coordinates.
+    ///     This procedure has exactly the same behavior as ABB's RelTool instruction.
+    /// </summary>
+    /// <param name="target_pose">Reference pose</param>
+    /// <param name="x">Translation along the Tool X axis (mm)</param>
+    /// <param name="y">Translation along the Tool Y axis (mm)</param>
+    /// <param name="z">Translation along the Tool Z axis (mm)</param>
+    /// <param name="rx">Rotation around the Tool X axis (deg) (optional)</param>
+    /// <param name="ry">Rotation around the Tool Y axis (deg) (optional)</param>
+    /// <param name="rz">Rotation around the Tool Z axis (deg) (optional)</param>
+    /// <returns>Returns relative target</returns>
+    public Mat RelTool(Mat target_pose, double x, double y, double z, double rx = 0.0, double ry = 0.0, double rz = 0.0)
+    {
+        return target_pose * transl(x, y, z) * rotx(rx * Math.PI / 180) * roty(ry * Math.PI / 180) * rotz(rz * Math.PI / 180);
+    }
+
+    /// <summary>
+    ///     Calculates a relative target with respect to the reference frame coordinates.
+    /// </summary>
+    /// <param name="target_pose">Reference pose</param>
+    /// <param name="x">Translation along the Tool X axis (mm)</param>
+    /// <param name="y">Translation along the Tool Y axis (mm)</param>
+    /// <param name="z">Translation along the Tool Z axis (mm)</param>
+    /// <param name="rx">Rotation around the Tool X axis (deg) (optional)</param>
+    /// <param name="ry">Rotation around the Tool Y axis (deg) (optional)</param>
+    /// <param name="rz">Rotation around the Tool Z axis (deg) (optional)</param>
+    /// <returns>Returns relative target</returns>
+    public Mat Offset(Mat target_pose, double x, double y, double z, double rx = 0.0, double ry = 0.0, double rz = 0.0)
+    {
+        if (!target_pose.IsHomogeneous())
+        {
+            throw new MatException("Pose matrix is not homogeneous");
+        }
+
+        return transl(x, y, z) * rotx(rx * Math.PI / 180.0) * roty(ry * Math.PI / 180.0) * rotz(rz * Math.PI / 180.0) * target_pose;
+    }
 
     // Operators
     public static Mat operator -(Mat m)
@@ -1525,6 +1655,10 @@ public class RoboDK
     public const int ITEM_TYPE_VALID_ISO9283 = 14;
     public const int ITEM_TYPE_FOLDER=17;
     public const int ITEM_TYPE_ROBOT_ARM=18;
+    public const int ITEM_TYPE_CAMERA = 19;
+    public const int ITEM_TYPE_GENERIC = 20;
+    public const int ITEM_TYPE_ROBOT_AXES = 21;
+    public const int ITEM_TYPE_NOTES = 22;
 
     // Instruction types
     public const int INS_TYPE_INVALID = -1;
@@ -5786,6 +5920,36 @@ public class RoboDK
         }
 
         /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="triangle_points">
+        ///     List of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        public Item AddShape(Mat triangle_points)
+        {
+            return link.AddShape(triangle_points, this);
+        }
+
+        /// <summary>
+        ///     Adds a shape to the object provided some triangle coordinates.
+        ///     Triangles must be provided as a list of vertices.
+        ///     A vertex normal can be provided optionally.
+        /// </summary>
+        /// <param name="list_triangle_points">
+        ///     List of Mat objects. Each Mat object is a list of vertices grouped by triangles (3xN or 6xN matrix,
+        ///     N must be multiple of 3 because vertices must be stacked by groups of 3)
+        /// </param>
+        /// <returns>Added object/shape</returns>
+        public Item AddShape(List<Mat> list_triangle_points)
+        {
+            return link.AddShape(list_triangle_points, this);
+        }
+
+        /// <summary>
         /// Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
         /// </summary>
         /// <param name="curve_points">matrix 3xN or 6xN -> N must be multiple of 3</param>
@@ -5986,6 +6150,31 @@ public class RoboDK
             Item item = link._recv_Item();
             link._check_status();
             return item;
+        }
+
+        /// <summary>
+        /// Get all the items of a specific type for which GetLink returns this item.
+        /// </summary>
+        /// <param name="type_linked">Type of the items to check for a link</param>
+        /// <returns>Returns a list of items for which GetLink return the specified item</returns>
+        public List<Item> getLinks(int type_linked = ITEM_TYPE_ROBOT)
+        {
+            List<Item> result = new List<Item>();
+            Item[] items = link.getItemList(type_linked);
+            foreach (var candidate in items)
+            {
+                if (candidate.item == this.item)
+                {
+                    continue;
+                }
+
+                var link = candidate.getLink(this.type);
+                if (link.Valid() && link.item == this.item)
+                {
+                    result.Add(candidate);
+                }
+            }
+            return result;
         }
 
         /// <summary>
@@ -6433,6 +6622,60 @@ public class RoboDK
         public void MoveL(Mat target, bool blocking = true)
         {
             link.moveX(null, null, target, this, 2, blocking);
+        }
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Target to move to as a target item (RoboDK target item)</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        public double[] SearchL(Item target, bool blocking = true)
+        {
+            if (type == ITEM_TYPE_PROGRAM)
+            {
+                link.moveX(target, null, null, this, 5, false);
+                return null;
+            }
+
+            link.moveX(target, null, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Joint target to move to.</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        public double[] SearchL(double[] target, bool blocking = true)
+        {
+            if (type == ITEM_TYPE_PROGRAM)
+            {
+                link.moveX(null, target, null, this, 5, false);
+                return null;
+            }
+
+            link.moveX(null, target, null, this, 5, blocking);
+            return this.SimulatorJoints();
+        }
+
+        /// <summary>
+        ///     Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode).
+        ///     This function waits (blocks) until the robot finishes its movements.
+        /// </summary>
+        /// <param name="target">Pose target to move to. It must be a 4x4 Homogeneous matrix</param>
+        /// <param name="blocking">Set to true to wait until the robot finished the movement (default=true)</param>
+        public double[] SearchL(Mat target, bool blocking = true)
+        {
+            if (type == ITEM_TYPE_PROGRAM)
+            {
+                link.moveX(null, null, target, this, 5, false);
+                return null;
+            }
+
+            link.moveX(null, null, target, this, 5, blocking);
+            return this.SimulatorJoints();
         }
 
         /// <summary>
@@ -7207,6 +7450,29 @@ public class RoboDK
         }
 
         /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (optional)</param>
+        /// <returns>Returns the new item created</returns>
+        public Item Paste(Item paste_to = null)
+        {
+            return link.Paste(paste_to);
+        }
+
+        /// <summary>
+        ///     Paste the copied item as a dependency of another item (same as Ctrl+V).
+        ///     Paste should be used after Copy().
+        /// </summary>
+        /// <param name="paste_to">Item to attach the copied item (can be null)</param>
+        /// <param name="paste_times">Number of times to paste the item</param>
+        /// <returns>Returns the list of new items created</returns>
+        public List<Item> Paste(Item paste_to, int paste_times)
+        {
+            return link.Paste(paste_to, paste_times);
+        }
+
+        /// <summary>
         ///     Filter a program file to improve accuracy for a specific robot.
         ///     The robot must have been previously calibrated.
         /// </summary>
@@ -7404,6 +7670,102 @@ public class RoboDK
             {
                 System.Threading.Thread.Sleep(50);
             }
+        }
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="varname">Property name</param>
+        /// <param name="value">Property value</param>
+        /// <returns></returns>
+        public Mat setValue(string varname, Mat value = null)
+        {
+            link._require_build(22340);
+            link._check_connection();
+            link._send_Line("S_ValueMat");
+            link._send_Item(this);
+            link._send_Line(varname);
+            link._send_Matrix2D(value != null ? value : new Mat(0, 0));
+            Mat result = link._recv_Matrix2D();
+            link._check_status();
+            return result;
+        }
+
+        /// <summary>
+        ///     Set a specific property name to a given value.
+        ///     This is reserved for internal purposes and future compatibility.
+        /// </summary>
+        /// <param name="varname">Property name</param>
+        /// <param name="value">Property value</param>
+        public void setValue(string varname, string value)
+        {
+            link._check_connection();
+            link._send_Line("S_Gen_Str");
+            link._send_Item(this);
+            link._send_Line(varname);
+            link._send_Line(value);
+            link._check_status();
+        }
+
+        /// <summary>
+        /// Defines the name of the program when the program is generated. It is also possible to specify the name of the post processor as well as the folder to save the program. 
+        /// This method must be called before any program output is generated (before any robot movement or other instruction).
+        /// </summary>
+        /// <param name="progname">name of the program</param>
+        /// <param name="defaultfolder">folder to save the program, leave empty to use the default program folder</param>
+        /// <param name="postprocessor">name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")</param>
+        /// <param name="robot">Robot to link</param>
+        /// <returns></returns>
+        public int ProgramStart(string progname, string defaultfolder = "", string postprocessor = "")
+        {
+            return link.ProgramStart(progname, defaultfolder, postprocessor, this);
+        }
+
+        /// <summary>
+        ///     Filters a target to improve accuracy.
+        ///     This option requires a calibrated robot.
+        /// </summary>
+        /// <param name="pose">Pose of the robot TCP with respect to the robot reference frame</param>
+        /// <param name="joints_approx">Approximated desired joints to define the preferred configuration</param>
+        /// <returns>Tuple with filtered pose and joints</returns>
+        public Tuple<Mat, double[]> FilterTarget(Mat pose, double[] joints_approx = null)
+        {
+            link._check_connection();
+            link._send_Line("FilterTarget");
+            link._send_Pose(pose);
+            if (joints_approx == null)
+            {
+                joints_approx = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+            }
+            link._send_Array(joints_approx);
+            link._send_Item(this);
+            var filteredPose = link._recv_Pose();
+            var filteredJoints = link._recv_Array();
+            link._check_status();
+            return Tuple.Create(filteredPose, filteredJoints);
+        }
+
+        /// <summary>
+        ///     Get positions of the joint links for a provided robot configuration (joints).
+        ///     If no joints are provided it will return the poses for the current robot position.
+        /// </summary>
+        /// <param name="joints">Robot configuration (joints)</param>
+        /// <returns>Returns an array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).</returns>
+        public List<Mat> JointPoses(double[] joints = null)
+        {
+            link._check_connection();
+            link._send_Line("G_LinkPoses");
+            link._send_Item(this);
+            link._send_Array(joints);
+            List<Mat> result = new List<Mat>();
+            int count = link._recv_Int();
+            for (int i = 0; i < count; i++)
+            {
+                result.Add(link._recv_Pose());
+            }
+            link._check_status();
+            return result;
         }
     }
 
