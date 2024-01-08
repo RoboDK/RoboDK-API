@@ -463,7 +463,7 @@ void RoboDK_getItemListFilter(struct RoboDK_t *inst, const int32_t filter, struc
     _RoboDK_check_status(inst);
 }
 
-size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t items_count) {
+size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t items_maxsize) {
     int32_t total_items = 0;
     int32_t i = 0;
     struct Item_t item;
@@ -476,7 +476,7 @@ size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t item
 
     for (i = 0; i < total_items; ++i) {
         item = _RoboDK_recv_Item(inst);
-        if (items && i < items_count)
+        if (items && i < items_maxsize)
             items[i] = item;
     }
 
