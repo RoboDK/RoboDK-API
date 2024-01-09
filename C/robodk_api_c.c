@@ -463,6 +463,38 @@ void RoboDK_getItemListFilter(struct RoboDK_t *inst, const int32_t filter, struc
     _RoboDK_check_status(inst);
 }
 
+size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t items_maxsize) {
+    int32_t total_items = 0;
+    int32_t i = 0;
+    struct Item_t item;
+
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "G_Selection");
+    total_items = _RoboDK_recv_Int(inst);
+    if (total_items < 0)
+        total_items = 0;
+
+    for (i = 0; i < total_items; ++i) {
+        item = _RoboDK_recv_Item(inst);
+        if (items && i < items_maxsize)
+            items[i] = item;
+    }
+
+    _RoboDK_check_status(inst);
+    return (size_t)total_items;
+}
+
+void RoboDK_setSelection(struct RoboDK_t* inst, struct Item_t* items, size_t items_count) {
+    size_t i = 0;
+
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "S_Selection");
+    _RoboDK_send_Int(inst, (int32_t)items_count);
+    for (i = 0; i < items_count; ++i) {
+        _RoboDK_send_Item(inst, &items[i]);
+    }
+    _RoboDK_check_status(inst);
+}
 
 void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value) {
     _RoboDK_check_connection(inst);

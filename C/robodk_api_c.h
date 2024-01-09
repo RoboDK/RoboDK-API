@@ -278,6 +278,10 @@ struct Item_t RoboDK_getItem(struct RoboDK_t *inst, const char *name, enum eITEM
 void RoboDK_getItemList(struct RoboDK_t *inst, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout);
 void RoboDK_getItemListFilter(struct RoboDK_t *inst, const int32_t filter, struct Item_t *itemlist, int32_t itemlist_maxsize, int32_t *itemlist_sizeout);
 
+size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t items_maxsize);
+void RoboDK_setSelection(struct RoboDK_t* inst, struct Item_t* items, size_t items_count);
+
+
 void RoboDK_SetRunMode(struct RoboDK_t *inst, enum eRobotRunMode run_mode); //Complete
 enum eRobotRunMode RoboDK_RunMode(struct RoboDK_t* inst);
 void RoboDK_SetParam(struct RoboDK_t* inst, const char* param, const char* value);
