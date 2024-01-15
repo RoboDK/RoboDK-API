@@ -7,6 +7,7 @@
     <authors>RoboDK</authors>
     <projectUrl>https://robodk.com/</projectUrl>
     <icon>RoboDK.png</icon>
+	<readme>README.MD</readme>
     <repository type="git" url="https://github.com/RoboDK/RoboDK-API" />
     <license type="file">license.txt</license>
     <dependencies>
@@ -25,6 +26,7 @@
     <file src="bin\Release\netcoreapp3.1\*.*" target="lib/netcoreapp3.1" />
     <file src="bin\Release\net6.0-windows\*.*" target="lib/net6.0" />
     <file src="license.txt" target="" />
+    <file src="README.MD" target="" />
     <file src="RoboDK.png" target="" />
     <file src="RoboDK.ico" target="" />
     <file src="RoboDK-API-Documentation.url" target="" />
