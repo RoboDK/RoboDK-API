@@ -251,7 +251,7 @@ def SolveIK_Conf(robot, pose, toolpose=None, framepose=None, joint_config=[0, 1,
     :type joint_config: list of int
     """
 
-    desired_rear, desired_lower, desired_flip = joint_config
+    desired_rear, desired_lower, desired_flip = joint_config[:3]
     joint_solutions = []
 
     for joint_solution in robot.SolveIK_All(pose, toolpose, framepose):
