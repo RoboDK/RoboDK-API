@@ -721,7 +721,7 @@ if robodialogs.ENABLE_QT:
         if value_type is float:
             widget = QtWidgets.QDoubleSpinBox(parent)
             import decimal
-            decimals = min(4, max(2, abs(decimal.Decimal(str(value)).as_tuple().exponent)))  # Default to 2, up to 4
+            decimals = min(6, max(3, abs(decimal.Decimal(str(value)).as_tuple().exponent)))
             widget.setDecimals(decimals)
             widget.setRange(-9999999., 9999999.)
             widget.setValue(value)
@@ -871,7 +871,7 @@ if robodialogs.ENABLE_TK:
             tkvar = tkinter.DoubleVar(value=value)
             func = [tkvar.get]
             import decimal
-            decimals = min(4, max(2, abs(decimal.Decimal(str(value)).as_tuple().exponent)))  # Default to 2, up to 4
+            decimals = min(6, max(3, abs(decimal.Decimal(str(value)).as_tuple().exponent)))
             widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format=f"%.{decimals}f")
 
         elif value_type is int:

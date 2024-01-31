@@ -170,9 +170,9 @@ def FilterNumber(number, fixed_points=6, strip_zeros=True, round_number=True):
     """
     fixed_points = max(0, fixed_points)
     if round_number:
-        s = format(number, f'.{fixed_points}f')  # format automatically rounds
+        s = format(number, '.%if' % fixed_points)  # format automatically rounds
     else:
-        s = format(number, f'.{fixed_points+1}f')
+        s = format(number, '.%if' % (fixed_points + 1))
         s = s[:-1]
     if strip_zeros:
         s = s.rstrip('0').rstrip('.')
