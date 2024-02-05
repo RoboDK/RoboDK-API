@@ -20,19 +20,22 @@
 #     https://robodk.com/doc/en/PythonAPI/index.html
 #
 # --------------------------------------------
-
 import sys
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union
+
 import time
 import os.path
 import time
-
+import ftplib
 from robodk import robomath
 
 #----------------------------------------------------
 #--------      Generic file usage     ---------------
 
 
-def searchfiles(pattern='C:\\RoboDK\\Library\\*.rdk'):
+def searchfiles(pattern: str = 'C:\\RoboDK\\Library\\*.rdk') -> List[str]:
     """List the files in a directory with a given extension"""
     import glob
     return glob.glob(pattern)
@@ -43,22 +46,22 @@ def searchfiles(pattern='C:\\RoboDK\\Library\\*.rdk'):
 #    return os.path.realpath(file)
 
 
-def getFileDir(filepath):
+def getFileDir(filepath: str) -> str:
     """Returns the directory of a file path"""
     return os.path.dirname(filepath)
 
 
-def getBaseName(filepath):
+def getBaseName(filepath: str) -> str:
     """Returns the file name and extension of a file path"""
     return os.path.basename(filepath)
 
 
-def getFileName(filepath):
+def getFileName(filepath: str) -> str:
     """Returns the file name (with no extension) of a file path"""
     return os.path.splitext(os.path.basename(filepath))[0]
 
 
-def DateModified(filepath, stringformat=False):
+def DateModified(filepath: str, stringformat: bool = False) -> Union[float, str]:
     """Returns the time that a file was modified"""
     time_in_s = os.path.getmtime(filepath)
     if stringformat:
@@ -67,7 +70,7 @@ def DateModified(filepath, stringformat=False):
         return time_in_s
 
 
-def DateCreated(filepath, stringformat=False):
+def DateCreated(filepath: str, stringformat: bool = False) -> Union[float, str]:
     """Returns the time that a file was created"""
     time_in_s = os.path.getctime(filepath)
     if stringformat:
@@ -76,17 +79,17 @@ def DateCreated(filepath, stringformat=False):
         return time_in_s
 
 
-def DirExists(folder):
+def DirExists(folder: str) -> bool:
     """Returns true if the folder exists"""
     return os.path.isdir(folder)
 
 
-def FileExists(file):
+def FileExists(file: str) -> bool:
     """Returns true if the file exists"""
     return os.path.exists(file)
 
 
-def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1, space_to_underscore=False, invalid_chars=r' .-[]/\;,><&*:%=+@!#^|?^'):
+def FilterName(namefilter: str, safechar: str = 'P', reserved_names: List[str] = None, max_len: int = -1, space_to_underscore: bool = False, invalid_chars: str = r' .-[]/\;,><&*:%=+@!#^|?^') -> str:
     """
     Get a safe program or variable name that can be used for robot programming.
     Removes invalid characters ( .-[]/\;,><&*:%=+@!#^|?), remove non-english characters, etc.
@@ -152,7 +155,7 @@ def FilterName(namefilter, safechar='P', reserved_names=None, max_len=-1, space_
     return namefilter
 
 
-def FilterNumber(number, fixed_points=6, strip_zeros=True, round_number=True):
+def FilterNumber(number: float, fixed_points: int = 6, strip_zeros: bool = True, round_number: bool = True) -> str:
     """
     Get a formatted numerical number (float or int) as a string.
 
@@ -181,7 +184,7 @@ def FilterNumber(number, fixed_points=6, strip_zeros=True, round_number=True):
 
 #-------------------------------------------------------
 # CSV tools
-def LoadList(strfile, separator=',', codec='utf-8'):
+def LoadList(strfile: str, separator: str = ',', codec: str = 'utf-8') -> List:
     """Load data from a CSV file or a TXT file to a Python list (list of list of numbers)
 
     .. seealso:: :func:`~robodk.robofileio.SaveList`, :func:`~robodk.robofileio.LoadMat`
@@ -220,7 +223,7 @@ def LoadList(strfile, separator=',', codec='utf-8'):
     return csvdata
 
 
-def SaveList(list_variable, strfile, separator=','):
+def SaveList(list_variable: List, strfile: str, separator: str = ','):
     """Save a list or a list of lists as a CSV or TXT file.
 
     .. seealso:: :func:`~robodk.robofileio.LoadList`, :func:`~robodk.robofileio.LoadMat`"""
@@ -228,7 +231,7 @@ def SaveList(list_variable, strfile, separator=','):
     robomath.Mat(list_variable).tr().SaveMat(strfile, separator)
 
 
-def LoadMat(strfile, separator=','):
+def LoadMat(strfile: str, separator: str = ',') -> robomath.Mat:
     """Load data from a CSV file or a TXT file to a :class:`.Mat` Matrix
 
     .. seealso:: :func:`~robodk.robofileio.LoadList`
@@ -239,9 +242,8 @@ def LoadMat(strfile, separator=','):
 
 #-------------------------------------------------------
 # FTP TRANSFER Tools
-def RemoveFileFTP(ftp, filepath):
+def RemoveFileFTP(ftp: ftplib.FTP, filepath: str):
     """Delete a file on a remote server."""
-    import ftplib
     try:
         ftp.delete(filepath)
     except ftplib.all_errors as e:
@@ -250,9 +252,8 @@ def RemoveFileFTP(ftp, filepath):
         sys.stdout.flush()
 
 
-def RemoveDirFTP(ftp, path):
+def RemoveDirFTP(ftp: ftplib.FTP, path: str):
     """Recursively delete a directory tree on a remote server."""
-    import ftplib
     wd = ftp.pwd()
     try:
         names = ftp.nlst(path)
@@ -279,9 +280,8 @@ def RemoveDirFTP(ftp, path):
         print('RemoveDirFTP: Could not remove {0}: {1}'.format(path, e))
 
 
-def UploadDirFTP(localpath, server_ip, remote_path, username, password):
+def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
     """Upload a folder to a robot through FTP recursively"""
-    import ftplib
     import os
     import sys
     main_folder = os.path.basename(os.path.normpath(localpath))
@@ -342,12 +342,10 @@ def UploadDirFTP(localpath, server_ip, remote_path, username, password):
     return True
 
 
-def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
+def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
     """Upload a file to a robot through FTP"""
     filepath = getFileDir(file_path_name)
     filename = getBaseName(file_path_name)
-    import ftplib
-    import os
     import sys
     print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (server_ip, username))
     sys.stdout.flush()
@@ -391,7 +389,7 @@ def UploadFileFTP(file_path_name, server_ip, remote_path, username, password):
     return True
 
 
-def UploadFTP(program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec=2):
+def UploadFTP(program: Union[str, List[str]], robot_ip: str, remote_path: str, ftp_user: str, ftp_pass: str, pause_sec: float = 2):
     """Upload a program or a list of programs to the robot through FTP provided the connection parameters"""
     # Iterate through program list if it is a list of files
     if isinstance(program, list):

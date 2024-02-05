@@ -21,15 +21,31 @@ CD ..
 if exist "build"           rmdir /S /Q "build"
 if exist "dist"            rmdir /S /Q "dist"
 if exist "robodk.egg-info" rmdir /S /Q "robodk.egg-info"
+if exist "build_python2"   rmdir /S /Q "build_python2"
 
+::----------------------------------
+:: Strip type hints for Python 2
+@echo ---------------
+@echo Stripping type hints for Python 2 compatibility...
+pause
+cd tools
+%VIRTUAL_ENV%\Scripts\python.exe python2.py
+if errorlevel 1 (
+   goto end
+)
+cd ..
 
-@REM ::----------------------------------
-@REM :: Test the install on python env
+cd build_python2
+
+::----------------------------------
+:: Test the install on Python 2
+:: pip install . -I is not supported for Python 2 anymore
 @REM @echo ---------------
-@REM @echo Press a key to TEST the local Python files
+@REM @echo Press a key to TEST the Python package
 @REM pause
-@REM %VIRTUAL_ENV%\Scripts\pip uninstall robodk
-@REM %VIRTUAL_ENV%\Scripts\pip install . -I
+@REM C:\Python27\Scripts\pip install --upgrade pip
+@REM C:\Python27\Scripts\pip uninstall robodk
+@REM C:\Python27\Scripts\pip install . -I
 @REM if errorlevel 1 (
 @REM    goto end
 @REM )
@@ -47,13 +63,13 @@ if errorlevel 1 (
 
 
 ::----------------------------------
-:: Test the install on Python 3
+:: Test the install on Python 2
 @echo ---------------
-@echo Press a key to TEST the Python package
+@echo Press a key to TEST the Python package (Python 2.7)
 pause
 FOR /R %%F IN (*.whl) DO (
-   %VIRTUAL_ENV%\Scripts\pip uninstall robodk
-   %VIRTUAL_ENV%\Scripts\pip install %%F
+   C:\Python27\Scripts\pip uninstall robodk
+   C:\Python27\Scripts\pip install %%F
 )
 if errorlevel 1 (
    goto end
@@ -67,6 +83,8 @@ if errorlevel 1 (
 pause
 %VIRTUAL_ENV%\Scripts\twine upload dist/*
 
+cd ..
+
 
 ::----------------------------------
 :: Clean the build
@@ -76,6 +94,7 @@ pause
 if exist "build"           rmdir /S /Q "build"
 if exist "dist"            rmdir /S /Q "dist"
 if exist "robodk.egg-info" rmdir /S /Q "robodk.egg-info"
+if exist "build_python2"   rmdir /S /Q "build_python2"
 
 
 ::----------------------------------
