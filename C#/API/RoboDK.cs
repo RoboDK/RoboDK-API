@@ -1534,6 +1534,25 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
+        public CollisionLineResult CollisionLine(double[] p1, double[] p2, Mat reference = null)
+        {
+            if (reference == null)
+            {
+                reference = Mat.Identity4x4();
+            }
+
+            check_connection();
+            send_line("CollisionLine");
+            send_xyz(reference * p1);
+            send_xyz(reference * p2);
+            var item = rec_item();
+            var xyz = new double[3];
+            rec_xyz(xyz);
+            check_status();
+            return new CollisionLineResult(item, xyz);
+        }
+
+        /// <inheritdoc />
         public List<Mat> SolveFK(List<IItem> robotList, List<double[]> jointsList, List<bool> solutionOkList = null)
         {
             RequireBuild(6535);
