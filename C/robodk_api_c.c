@@ -1855,20 +1855,23 @@ void Mat_Get_VZ(const struct Mat_t *inst, struct XYZ_t *out) {
 
 
 void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
-    strcpy(output, "");
-
-    strcat(output, "Mat(XYZRPW_2_Mat(");
     double x = inst->arr16[12];
     double y = inst->arr16[13];
     double z = inst->arr16[14];
-    double w, p, r;
+    double w = 0.0;
+    double p = 0.0;
+    double r = 0.0;
+    double* xyzwpr[6] = { &x, &y, &z, &w, &p, &r };
+    double dvalue;
+    char svalue[20];
+
     if (inst->arr16[2] > (1.0 - 1e-6)) {
         p = -M_PI * 0.5;
         r = 0;
         w = atan2(-inst->arr16[9], inst->arr16[5]);
     }
-    else if (inst->arr16[2] < -1.0 + 1e-6) {
-        p = 0.5*M_PI;
+    else if (inst->arr16[2] < (-1.0 + 1e-6)) {
+        p = M_PI * 0.5;
         r = 0;
         w = atan2(inst->arr16[9], inst->arr16[5]);
     }
@@ -1880,23 +1883,40 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly) {
     r = r * 180.0 / M_PI;
     p = p * 180.0 / M_PI;
     w = w * 180.0 / M_PI;
-    char bufferTemp[128];
-    sprintf(bufferTemp, "%12.3f,%12.3f,%12.3f,%12.3f,%12.3f,%12.3f))\n", x, y, z, w, p, r);
-    strcat(output, bufferTemp);
 
-    if (xyzwprOnly == true) {
+    strcpy(output, "Mat(XYZRPW_2_Mat(");
+
+    for (size_t i = 0; i < 6; ++i) {
+        if (i > 0) {
+            strcat(output, ",");
+        }
+
+        dvalue = *xyzwpr[i];
+        if (fabs(dvalue) < 1e7 && fabs(dvalue) >= 1e-3) {
+            sprintf(svalue, "%12.3f", dvalue);
+        }
+        else {
+            sprintf(svalue, "%12.3g", dvalue);
+        }
+        strcat(output, svalue);
+    }
+
+    strcat(output, "))\n");
+
+    if (xyzwprOnly) {
         return;
     }
+
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
-            char tempbuffer[20];
-            if (inst->arr16[j * 4 + i] < 1e9) {
-                sprintf(tempbuffer, "%12.3f,", inst->arr16[j * 4 + i]);
+            dvalue = inst->arr16[j * 4 + i];
+            if (fabs(dvalue) < 1e7 && fabs(dvalue) >= 1e-3) {
+                sprintf(svalue, "%12.3f,", dvalue);
             }
             else {
-                sprintf(tempbuffer, "%12.3g,", inst->arr16[j * 4 + i]);
+                sprintf(svalue, "%12.3g,", dvalue);
             }
-            strcat(output, tempbuffer);
+            strcat(output, svalue);
         }
         strcat(output, "\n");
     }
