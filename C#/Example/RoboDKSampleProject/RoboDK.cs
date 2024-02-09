@@ -5347,13 +5347,25 @@ public class RoboDK
         /// <summary>
         /// Checks if the item is valid. An invalid item will be returned by an unsuccessful function call.
         /// </summary>
+        /// <param name="check_deleted">Check if the item was deleted in RoboDK</param>
         /// <returns>true if valid, false if invalid</returns>
-        public bool Valid()
+        public bool Valid(bool check_deleted = false)
         {
             if (item == 0)
             {
                 return false;
             }
+
+            if (check_deleted)
+            {
+                link._check_connection();
+                link._send_Line("G_Item_Type");
+                link._send_Item(this);
+                int type = link._recv_Int();
+                link._check_status();
+                return (type >= 0);
+            }
+
             return true;
         }
 
