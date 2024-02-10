@@ -707,6 +707,15 @@ namespace RoboDk.API
         bool CollisionLine(double[] p1, double[] p2);
 
         /// <summary>
+        /// Checks the collision between a line and any objects in the station. The line is composed by 2 points.
+        /// </summary>
+        /// <param name="p1">Start point [x,y,z] of the line</param>
+        /// <param name="p2">End point [x,y,z] of the line</param>
+        /// <param name="reference">Reference of the two points with respect to the absolute station reference</param>
+        /// <returns>Return CollisionLineResult with collision object and point of collision</returns>
+        CollisionLineResult CollisionLine(double[] p1, double[] p2, Mat reference = null);
+
+        /// <summary>
         /// Calculate the forward kinematics solution for multiple robots at the same time (faster)
         /// </summary>
         /// <param name="robotList">list of items</param>
