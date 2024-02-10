@@ -210,11 +210,21 @@ namespace RoboDk.API
         }
 
         /// <inheritdoc />
-        public bool Valid()
+        public bool Valid(bool checkDeleted = false)
         {
             if (ItemId == 0)
             {
                 return false;
+            }
+
+            if (checkDeleted)
+            {
+                Link.check_connection();
+                Link.send_line("G_Item_Type");
+                Link.send_item(this);
+                int type = Link.rec_int();
+                Link.check_status();
+                return (type >= 0);
             }
 
             return true;

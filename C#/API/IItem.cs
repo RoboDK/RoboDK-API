@@ -136,8 +136,9 @@ namespace RoboDk.API
         /// <summary>
         ///     Checks if the item is valid. An invalid item will be returned by an unsuccessful function call.
         /// </summary>
+        /// <param name="checkDeleted">Check if the item was deleted in RoboDK</param>
         /// <returns>true if valid, false if invalid</returns>
-        bool Valid();
+        bool Valid(bool checkDeleted = false);
 
         /// <summary>
         /// Attaches the item to a new parent while maintaining the relative position with its parent. The absolute position is changed.
