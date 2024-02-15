@@ -20,8 +20,10 @@
 #     https://robodk.com/doc/en/PythonAPI/index.html
 #
 # --------------------------------------------
-
 import sys
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union, Any, Tuple
 
 # robodialogs is compatible with PySide2 and tkinter. At least one must be present.
 ENABLE_QT = False
@@ -63,7 +65,7 @@ DEFAULT_FILE_EXT = '.*'  # Default file extension of dialogs
 DEFAULT_FILE_TYPES = [FILE_TYPES_ALL, FILE_TYPES_ROBODK, FILE_TYPES_3D_OBJECT, FILE_TYPES_TEXT, FILE_TYPES_IMG, FILE_TYPES_CAM, FILE_TYPES_ROBOT]  # Default file type filter for dialogs
 
 
-def getOpenFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
+def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> Any:
     """
     .. deprecated:: 5.5
         Obsolete. Use :func:`~robodk.robodialogs.getOpenFileName` instead.
@@ -72,10 +74,14 @@ def getOpenFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File'
     Returns a file object opened in read-only mode.
     Use returned value.name to retrieve the file path.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strfile: The initial file name (with extension), optional
-    :param str strtitle: The dialog title, optional
-    :param str defaultextension: The initial file extension filter, e.g. '.*'
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strfile: The initial file name (with extension), optional
+    :type strfile: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
+    :param defaultextension: The initial file extension filter, e.g. '.*'
+    :type defaultextension: str
     :param filetypes: The available file type filters, e.g. '[('All Files', '.*'), ('Text Files', '.txt .csv')]'
     :type filetypes: list of tuples of str
 
@@ -93,7 +99,7 @@ def getOpenFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File'
         return DialogsTk.getOpenFile(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getSaveFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save As', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
+def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES):
     """
     .. deprecated:: 5.5
         Obsolete. Use :func:`~robodk.robodialogs.getSaveFileName` instead.
@@ -102,10 +108,14 @@ def getSaveFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save As', 
     Returns a file object opened in write-only mode.
     Use returned value.name to retrieve the file path.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strfile: The initial file name (with extension), optional
-    :param str strtitle: The dialog title, optional
-    :param str defaultextension: The initial file extension filter, e.g. '.*'
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strfile: The initial file name (with extension), optional
+    :type strfile: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
+    :param defaultextension: The initial file extension filter, e.g. '.*'
+    :type defaultextension: str
     :param filetypes: The available file type filters, e.g. '[('All Files', '.*'), ('Text Files', '.txt .csv')]'
     :type filetypes: list of tuples of str
 
@@ -123,15 +133,19 @@ def getSaveFile(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save As', 
         return DialogsTk.getSaveFile(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getOpenFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
+def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
     """
     Pop up a file dialog window to select a file to open.
     Returns the file path as a string.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strfile: The initial file name (with extension), optional
-    :param str strtitle: The dialog title, optional
-    :param str defaultextension: The initial file extension filter, e.g. '.*'
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strfile: The initial file name (with extension), optional
+    :type strfile: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
+    :param defaultextension: The initial file extension filter, e.g. '.*'
+    :type defaultextension: str
     :param filetypes: The available file type filters, e.g. '[('All Files', '.*'), ('Text Files', '.txt .csv')]'
     :type filetypes: list of tuples of str
 
@@ -146,15 +160,19 @@ def getOpenFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open F
         return DialogsTk.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getOpenFileNames(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open File(s)', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
+def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File(s)', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> List[str]:
     """
     Pop up a file dialog window to select one or more file to open.
     Returns the file path as a list of string.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strfile: The initial file name (with extension), optional
-    :param str strtitle: The dialog title, optional
-    :param str defaultextension: The initial file extension filter, e.g. '.*'
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strfile: The initial file name (with extension), optional
+    :type strfile: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
+    :param defaultextension: The initial file extension filter, e.g. '.*'
+    :type defaultextension: str
     :param filetypes: The available file type filters, e.g. '[('All Files', '.*'), ('Text Files', '.txt .csv')]'
     :type filetypes: list of tuples of str
 
@@ -169,15 +187,19 @@ def getOpenFileNames(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Open 
         return DialogsTk.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getSaveFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save As', defaultextension=DEFAULT_FILE_EXT, filetypes=DEFAULT_FILE_TYPES):
+def getSaveFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
     """
     Pop up a file dialog window to select a file to save.
     Returns the file path as a string.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strfile: The initial file name (with extension), optional
-    :param str strtitle: The dialog title, optional
-    :param str defaultextension: The initial file extension filter, e.g. '.*'
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strfile: The initial file name (with extension), optional
+    :type strfile: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
+    :param defaultextension: The initial file extension filter, e.g. '.*'
+    :type defaultextension: str
     :param filetypes: The available file type filters, e.g. '[('All Files', '.*'), ('Text Files', '.txt .csv')]'
     :type filetypes: list of tuples of str
 
@@ -192,13 +214,15 @@ def getSaveFileName(path_preference=DEFAULT_FOLDER, strfile='', strtitle='Save A
         return DialogsTk.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
+def getOpenFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Open Folder') -> str:
     """
     Pop up a folder dialog window to select a folder to open.
     Returns the path of the folder as a string.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strtitle: The dialog title, optional
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
 
     :return: The folder path, or None if the user cancels
     :rtype: str
@@ -211,13 +235,15 @@ def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
         return DialogsTk.getOpenFolder(path_preference, strtitle)
 
 
-def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder', **kwargs):
+def getSaveFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Save to Folder', **kwargs) -> str:
     """
     Pop up a folder dialog window to select a folder to save into.
     Returns the path of the folder as a string.
 
-    :param str path_preference: The initial folder path, optional
-    :param str strtitle: The dialog title, optional
+    :param path_preference: The initial folder path, optional
+    :type path_preference: str
+    :param strtitle: The dialog title, optional
+    :type strtitle: str
 
     :return: The folder path, or None if the user cancels
     :rtype: str
@@ -236,12 +262,14 @@ def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder', **k
         return DialogsTk.getSaveFolder(path_preference, strtitle)
 
 
-def ShowMessage(msg, title=None):
+def ShowMessage(msg: str, title: str = None) -> bool:
     """
     Show a blocking message, with an 'OK' button.
 
-    :param str msg: The message to be displayed
-    :param str title: The window title, optional
+    :param msg: The message to be displayed
+    :type msg: str
+    :param title: The window title, optional
+    :type title: str
 
     :return: True
     :rtype: bool
@@ -254,12 +282,14 @@ def ShowMessage(msg, title=None):
         return DialogsTk.ShowMessage(msg, title)
 
 
-def ShowMessageOkCancel(msg, title=None):
+def ShowMessageOkCancel(msg: str, title: str = None) -> bool:
     """
     Show a blocking message, with 'OK' and 'Cancel' buttons.
 
-    :param str msg: The message to be displayed
-    :param str title: The window title, optional
+    :param msg: The message to be displayed
+    :type msg: str
+    :param title: The window title, optional
+    :type title: str
 
     :return: True if the user clicked 'OK', false for everything else
     :rtype: bool
@@ -272,12 +302,14 @@ def ShowMessageOkCancel(msg, title=None):
         return DialogsTk.ShowMessageOkCancel(msg, title)
 
 
-def ShowMessageYesNo(msg, title=None):
+def ShowMessageYesNo(msg: str, title: str = None) -> bool:
     """
     Show a blocking message, with 'Yes' and 'No' buttons.
 
-    :param str msg: The message to be displayed
-    :param str title: The window title, optional
+    :param msg: The message to be displayed
+    :type msg: str
+    :param title: The window title, optional
+    :type title: str
 
     :return: True if the user clicked 'Yes', false for everything else
     :rtype: bool
@@ -290,12 +322,14 @@ def ShowMessageYesNo(msg, title=None):
         return DialogsTk.ShowMessageYesNo(msg, title)
 
 
-def ShowMessageYesNoCancel(msg, title=None):
+def ShowMessageYesNoCancel(msg: str, title: str = None) -> bool:
     """
     Show a blocking message, with 'Yes', 'No' and 'Cancel' buttons.
 
-    :param str msg: The message to be displayed
-    :param str title: The window title, optional
+    :param msg: The message to be displayed
+    :type msg: str
+    :param title: The window title, optional
+    :type title: str
 
     :return: True for 'Yes', false for 'No', and None for 'Cancel'
     :rtype: bool
@@ -308,7 +342,7 @@ def ShowMessageYesNoCancel(msg, title=None):
         return DialogsTk.ShowMessageYesNoCancel(msg, title)
 
 
-def mbox(msg, b1='OK', b2='Cancel', frame=True, t=False, entry=None, *args, **kwargs):
+def mbox(msg: str, b1: str = 'OK', b2: str = 'Cancel', frame: bool = True, t: float = False, entry: Any = None, *args, **kwargs) -> Any:
     """
     .. deprecated:: 5.5
         Obsolete. Use :func:`~robodk.robodialogs.InputDialog` instead.
@@ -336,7 +370,7 @@ def mbox(msg, b1='OK', b2='Cancel', frame=True, t=False, entry=None, *args, **kw
         return DialogsTk.mbox(msg, b1, b2, frame, t, entry)
 
 
-def InputDialog(msg, value, title=None, default_button=False, default_value=None, embed=False, actions=None, *args, **kwargs):
+def InputDialog(msg: str, value: Any, title: str = None, default_button: bool = False, default_value: Any = None, embed: bool = False, actions: List[Tuple[str, Any]] = None, *args, **kwargs) -> Any:
     """
     Show a blocking input dialog, with 'OK' and 'Cancel' buttons.
 
@@ -346,12 +380,15 @@ def InputDialog(msg, value, title=None, default_button=False, default_value=None
         - dropdown formatted as [int, [str, str, ...]]. e.g. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
         - dictionary of supported types, where the key is the field's label. e.g. {'This is a bool!' : True}.
 
-    :param str msg: Message to the user (describes what to enter)
+    :param msg: Message to the user (describes what to enter)
+    :type msg: str
     :param value: Initial value of the input (see supported types)
-    :param str title: Window title, optional
+    :param title: Window title, optional
+    :type title: str
     :param default_button: Show a button to reinitialize the input to default, defaults to false
     :param default_value: Default values to restore. If not provided, the original values will be used
-    :param embed title: Embed the window inside RoboDK, defaults to false
+    :param title: Embed the window inside RoboDK, defaults to false
+    :type title: embed
     :param actions: List of optional action callbacks to add as buttons, formatted as [(str, callable), ...]. e.g. [("Button #1", action_1), ("Button #2", action_2)]
     :type actions: list of tuples of str, callable
 
@@ -384,7 +421,7 @@ def InputDialog(msg, value, title=None, default_button=False, default_value=None
         return DialogsTk.InputDialog(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, embed=embed, actions=actions, *args, **kwargs)
 
 
-def _message_to_window_title(message):
+def _message_to_window_title(message: str) -> str:
     return message.split('\n', 1)[0].split('.', 1)[0].split(':', 1)[0]
 
 

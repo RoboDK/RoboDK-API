@@ -23,10 +23,13 @@
 #     https://robodk.com/doc/en/PythonAPI/index.html
 #
 # --------------------------------------------
+import sys
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union, Tuple, Tuple, Dict
 
-import struct
 from robodk import robomath
-import sys  # Only used to detect python version using sys.version_info
+import struct
 import os
 import time
 import threading
@@ -429,13 +432,13 @@ class LicenseError(Exception):
     pass
 
 
-def RoboDKInstallFound():
+def RoboDKInstallFound() -> bool:
     """Check if RoboDK is installed"""
     path_install = getPathRoboDK()
     return os.path.exists(path_install)
 
 
-def getPathRoboDK():
+def getPathRoboDK() -> str:
     """RoboDK's executable/binary file"""
     from sys import platform as _platform
     if _platform == "linux" or _platform == "linux2":
@@ -478,7 +481,7 @@ def getPathRoboDK():
         return "C:/RoboDK/bin/RoboDK.exe"
 
 
-def getPathIcon():
+def getPathIcon() -> str:
     iconpath = getPathRoboDK()
     if iconpath.endswith(".exe"):
         iconpath = iconpath[:-4]
@@ -486,7 +489,7 @@ def getPathIcon():
     return iconpath
 
 
-def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
+def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = None, upgrade_pip: bool = False):
     """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
 
@@ -506,7 +509,7 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
 
     """
     try:
-        exec ('import ' + module_name, globals())
+        exec('import ' + module_name, globals())
         return
 
     except ModuleNotFoundError:
@@ -549,7 +552,7 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
                 execute(cmd)
             cmd = sys.executable + ' -m pip install ' + pip_name
             execute(cmd)
-            exec ('import ' + module_name, globals())
+            exec('import ' + module_name, globals())
             msg = "Python module installed successfully: " + module_name + "."
             if rdk:
                 rdk.ShowMessage(msg, True)
@@ -571,15 +574,21 @@ def import_install(module_name, pip_name=None, rdk=None, upgrade_pip=False):
             raise ImportError(msg)
 
 
-def EmbedWindow(window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500, port=None, args=[]):
+def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500, port: int = None, args=[]):
     """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
 
-    :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
-    :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
-    :param int pid: Process ID (optional)
-    :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
-    :param int area_allowed: Areas allowed (default is 15:no constrain)
-    :param int timeout: Timeout to abort attempting to embed the window
+    :param window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
+    :type window_name: str
+    :param docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
+    :type docked_name: str
+    :param pid: Process ID (optional)
+    :type pid: int
+    :param area_add: Set to 1 (right) or 2 (left) (default is 1)
+    :type area_add: int
+    :param area_allowed: Areas allowed (default is 15:no constrain)
+    :type area_allowed: int
+    :param timeout: Timeout to abort attempting to embed the window
+    :type timeout: int
 
     .. code-block:: python
         :caption: Example to embed a window as a docked RoboDK window
@@ -646,15 +655,22 @@ class Robolink:
     The Robolink class is the link to RoboDK and allows creating macros for Robodk, simulate applications and generate programs offline.
     Any interaction is made through \"items\" (Item() objects). An item is an object in the robodk tree (it can be either a robot, an object, a tool, a frame, a program, ...).
 
-    :param str robodk_ip: IP of the RoboDK API server (default='localhost')
-    :param int port: Port of the RoboDK API server (default=None, it will use the default value)
-    :param list args: Command line arguments to pass to RoboDK on startup (for example: '/NOSPLASH /NOSHOW' should be passed as args=['/NOSPLASH','/NOSHOW'] to not display RoboDK). Arguments have no effect if RoboDK is already running.\n
+    :param robodk_ip: IP of the RoboDK API server (default='localhost')
+    :type robodk_ip: str
+    :param port: Port of the RoboDK API server (default=None, it will use the default value)
+    :type port: int
+    :param args: Command line arguments to pass to RoboDK on startup (for example: '/NOSPLASH /NOSHOW' should be passed as args=['/NOSPLASH','/NOSHOW'] to not display RoboDK). Arguments have no effect if RoboDK is already running.\n
         For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
-    :param str robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
-    :param bool close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
-    :param bool quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
+    :type args: list
+    :param robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
+    :type robodk_path: str
+    :param close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
+    :type close_std_out: bool
+    :param quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
+    :type quit_on_close: bool
     :param com_object: Custom communication class (allows using WebSockets or other custom implementations). It defaults to socket communication.
-    :param bool skipstatus: Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
+    :param skipstatus: Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
+    :type skipstatus: bool
 
 
     .. code-block:: python
@@ -711,65 +727,65 @@ class Robolink:
     """
 
     # checks that provided items exist in memory and poses are homogeneous
-    SAFE_MODE = 1
+    SAFE_MODE: int = 1
 
     # if AUTO_UPDATE is 1, updating and rendering objects the 3D the scene will be delayed until 100 ms after the last call (this value can be changed in Tools-Options-Other-API Render delay, or also using the RoboDK.Command('AutoRenderDelay', value) and RoboDK.Command('AutoRenderDelayMax', value)
-    AUTO_UPDATE = 0
+    AUTO_UPDATE: int = 0
 
     # If _SkipStatus flag is True, we are skipping the status flag for operations that only wait for the status and do not return anything
     # We assume the command always completes successfully
-    _SkipStatus = False
+    _SkipStatus: bool = False
 
     # IP address of the simulator (localhost if it is the same computer), otherwise, use RL = Robolink('yourip') to set to a different IP
-    IP = 'localhost'
+    IP: str = 'localhost'
 
     # port to start looking for the RoboDK API connection (Tools-Options-Other-RoboDK API)
-    PORT_START = 20500
+    PORT_START: int = 20500
 
     # port to stop looking for the RoboDK API connection
-    PORT_END = 20500
+    PORT_END: int = 20500
 
     # timeout for communication, in seconds
-    TIMEOUT = 10
+    TIMEOUT: int = 10
 
     # Add Cameras as items (added option to use cameras as items at version v5.0.0)
-    CAMERA_AS_ITEM = True
+    CAMERA_AS_ITEM: bool = True
 
     # activate nodelay option (faster, requires more resources)
-    NODELAY = False
+    NODELAY: bool = False
 
     # file path to the robodk program (executable). As an example, on Windows it should be: C:/RoboDK/bin/RoboDK.exe
-    APPLICATION_DIR = ''
+    APPLICATION_DIR: str = ''
 
     # Add shapes using files (faster but it uses the hard drive)
-    _ADDSHAPE_VIA_FILE = False
+    _ADDSHAPE_VIA_FILE: bool = False
 
     # Raise an exception when a warning message is provided by RoboDK
-    _RAISE_EXCEPTION_ON_WARNING = False
+    _RAISE_EXCEPTION_ON_WARNING: bool = False
 
-    DEBUG = False  # Debug output through console
+    DEBUG: bool = False  # Debug output through console
     COM = None  # tcpip com
     _lock = None
-    ARGUMENTS = []  # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
-    CLOSE_STD_OUT = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
-    PORT = -1  # current port
-    BUILD = 0  # This variable holds the build id and is used for version checking
+    ARGUMENTS: List[str] = []  # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
+    CLOSE_STD_OUT: bool = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
+    PORT: int = -1  # current port
+    BUILD: int = 0  # This variable holds the build id and is used for version checking
 
     NEW_INSTANCE = None  # If not None, a new RoboDK instance was spawned when initiating connection
-    QUIT_ON_CLOSE = False  # If true, new instances of RoboDK will be closed when this object is deleted
+    QUIT_ON_CLOSE: bool = False  # If true, new instances of RoboDK will be closed when this object is deleted
 
     # Remember last status message
-    LAST_STATUS_MESSAGE = ''
+    LAST_STATUS_MESSAGE: str = ''
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def _setTimeout(self, timeout_sec=30):
+    def _setTimeout(self, timeout_sec: float = 30):
         """Set the communication timeout (in seconds)."""
         # Change the default timeout here, in seconds:
         with self._lock:
             self.TIMEOUT = timeout_sec  # in seconds
             self.COM.settimeout(self.TIMEOUT)
 
-    def _is_connected(self):
+    def _is_connected(self) -> int:
         """Returns 1 if connection is valid, returns 0 if connection is invalid"""
         if not self.COM:
             return 0
@@ -789,7 +805,7 @@ class Robolink:
             raise Exception('Unable to connect')
         #To do: Clear input buffer.
 
-    def _check_status(self):
+    def _check_status(self) -> int:
         """This procedure checks the status of the connection"""
         status = self._rec_int()
         if status == 0:
@@ -841,7 +857,7 @@ class Robolink:
 
         return status
 
-    def _check_color(self, color):
+    def _check_color(self, color: List[float]) -> List[float]:
         """Formats the color in a vector of size 4x1 and ranges [0,1]"""
         if not isinstance(color, list) or len(color) < 3 or len(color) > 4:
             raise Exception('The color vector must be a list of 3 or 4 values')
@@ -851,7 +867,7 @@ class Robolink:
             print("WARNING: Color provided is not in the range [0,1] ([r,g,b,a])")
         return color
 
-    def _send_line(self, string=None):
+    def _send_line(self, string: str = None):
         """Sends a string of characters with a \\n"""
         string = string.replace('\n', '<br>')
         if sys.version_info[0] < 3:
@@ -859,7 +875,7 @@ class Robolink:
         else:
             self.COM.send(bytes(string + '\n', 'utf-8'))  # Python 3.x only
 
-    def _rec_line(self):
+    def _rec_line(self) -> str:
         """Receives a string. It reads until if finds LF (\\n)"""
         bytes_list = []  # this method is significantly faster than a byte string
         chari = self.COM.recv(1)
@@ -868,7 +884,7 @@ class Robolink:
             chari = self.COM.recv(1)
         return str(b''.join(bytes_list).decode('utf-8'))  # python 2 and python 3 compatible
 
-    def _send_item(self, item):
+    def _send_item(self, item: Union[int, 'Item']):
         """Sends an item pointer"""
         if isinstance(item, Item):
             self.COM.send(struct.pack('>Q', item.item))  #q=unsigned long long (64 bits), d=float64
@@ -877,7 +893,7 @@ class Robolink:
             item = 0
         self.COM.send(struct.pack('>Q', item))  #q=unsigned long long (64 bits), d=float64
 
-    def _rec_item(self):
+    def _rec_item(self) -> 'Item':
         """Receives an item pointer"""
         buffer = self.COM.recv(8)
         item = struct.unpack('>Q', buffer)  #q=unsigned long long (64 bits), d=float64
@@ -885,7 +901,7 @@ class Robolink:
         itemtype = struct.unpack('>i', buffer2)
         return Item(self, item[0], itemtype[0])
 
-    def _send_bytes(self, data):
+    def _send_bytes(self, data: Union[bytes, str]):
         """Sends a byte array"""
         if isinstance(data, str):
             data = bytes(data, 'utf-8')
@@ -895,7 +911,7 @@ class Robolink:
         self.COM.send(struct.pack('>I', len(data)))  #q=unsigned long long (64 bits), d=float64
         self.COM.send(data)
 
-    def _rec_bytes(self):
+    def _rec_bytes(self) -> bytes:
         """Receives a byte array"""
         buffer = self.COM.recv(4)
         bytes_len = struct.unpack('>I', buffer)[0]  #q=unsigned long long (64 bits), d=float64
@@ -909,17 +925,17 @@ class Robolink:
             bytes_remaining = bytes_len - bytes_count
         return b''.join(bytes_list)
 
-    def _send_ptr(self, ptr_h):
+    def _send_ptr(self, ptr_h: int):
         """Sends a generic pointer"""
         self.COM.send(struct.pack('>Q', ptr_h))  #q=unsigned long long (64 bits), d=float64
 
-    def _rec_ptr(self):
+    def _rec_ptr(self) -> int:
         """Receives a generic pointer"""
         buffer = self.COM.recv(8)
         ptr_h = struct.unpack('>Q', buffer)  #q=unsigned long long (64 bits), d=float64
         return ptr_h[0]  #return ptr_h
 
-    def _send_pose(self, pose):
+    def _send_pose(self, pose: robomath.Mat):
         """Sends a pose (4x4 matrix)"""
         #if not pose.isHomogeneous(): # this check is expansive!
         #    print("Warning: pose is not homogeneous!")
@@ -929,7 +945,7 @@ class Robolink:
         data_all = b''.join(data)
         self.COM.send(data_all)
 
-    def _rec_pose(self):
+    def _rec_pose(self) -> robomath.Mat:
         """Receives a pose (4x4 matrix)"""
         posebytes = self.COM.recv(16 * 8)
         posenums = struct.unpack('>16d', posebytes)
@@ -941,14 +957,14 @@ class Robolink:
                 cnt = cnt + 1
         return pose
 
-    def _send_xyz(self, pos):
+    def _send_xyz(self, pos: List[float]):
         """Sends an xyz vector"""
         posbytes = b''
         for i in range(3):
             posbytes = posbytes + struct.pack('>d', pos[i])
         self.COM.send(posbytes)
 
-    def _rec_xyz(self):
+    def _rec_xyz(self) -> List[float]:
         """Receives an xyz vector"""
         posbytes = self.COM.recv(3 * 8)
         posnums = struct.unpack('>3d', posbytes)
@@ -957,7 +973,7 @@ class Robolink:
             pos[i] = posnums[i]
         return pos
 
-    def _send_int(self, num):
+    def _send_int(self, num: int):
         """Sends an int (32 bits)"""
         if isinstance(num, float):
             num = round(num)
@@ -965,13 +981,13 @@ class Robolink:
             num = num[0]
         self.COM.send(struct.pack('>i', num))
 
-    def _rec_int(self):
+    def _rec_int(self) -> int:
         """Receives an int (32 bits)"""
         buffer = self.COM.recv(4)
         num = struct.unpack('>i', buffer)
         return num[0]
 
-    def _send_array(self, values):
+    def _send_array(self, values: Union[List, robomath.Mat]):
         """Sends an array of doubles"""
         if not isinstance(values, list):  #if it is a Mat() with joints
             values = (values.tr()).rows[0]
@@ -981,11 +997,11 @@ class Robolink:
             data = struct.pack('>' + str(nval) + 'd', *values)
             self.COM.send(data)
 
-    def _send_array_float_data(self, values):
+    def _send_array_float_data(self, values: List[float]):
         nval = len(values)
         return struct.pack('>i', nval) + struct.pack('>' + str(nval) + 'f', *values)
 
-    def _rec_array(self):
+    def _rec_array(self) -> robomath.Mat:
         """Receives an array of doubles"""
         nvalues = self._rec_int()
         if nvalues > 0:
@@ -996,7 +1012,7 @@ class Robolink:
             values = [0]
         return robomath.Mat(values)
 
-    def _send_matrix(self, mat):
+    def _send_matrix(self, mat: robomath.Mat):
         """Sends a 2 dimensional matrix (nxm)"""
         if mat is None:
             self._send_int(0)
@@ -1021,7 +1037,7 @@ class Robolink:
         while w < data_size:
             w += self.COM.send(data_all[w:min(w + b_sz, data_size)])
 
-    def _send_matrix_float_data(self, mat):
+    def _send_matrix_float_data(self, mat: robomath.Mat):
         """Sends a 2 dimensional matrix (nxm)"""
         sz1 = len(mat.rows)
         sz2 = len(mat.rows[0])
@@ -1029,7 +1045,7 @@ class Robolink:
         data = [struct.pack('>' + str(sz1) + 'f', *(lst2[i])) for i in range(sz2)]
         return struct.pack('>i', sz1) + struct.pack('>i', sz2) + b''.join(data)
 
-    def _rec_matrix(self):
+    def _rec_matrix(self) -> robomath.Mat:
         """Receives a 2 dimensional matrix (nxm)"""
         size1 = self._rec_int()
         size2 = self._rec_int()
@@ -1055,7 +1071,7 @@ class Robolink:
             mat = robomath.Mat(0, 0)
         return mat
 
-    def _moveX(self, target, itemrobot, movetype, blocking=True):
+    def _moveX(self, target: Union['Item', List[float], robomath.Mat], itemrobot: 'Item', movetype: int, blocking: bool = True):
         """Performs a linear or joint movement. Use MoveJ or MoveL instead."""
         with self._lock:
             #self._check_connection();
@@ -1090,8 +1106,12 @@ class Robolink:
                 self._check_status()  #will wait here
                 self.COM.settimeout(self.TIMEOUT)
 
-    def MoveC(self, target1, target2, itemrobot, blocking=True):
-        """Performs a circular movement. Use robot.MoveC instead."""
+    def MoveC(self, target1: Union['Item', List[float], robomath.Mat], target2: Union['Item', List[float], robomath.Mat], itemrobot: 'Item', blocking: bool = True):
+        """
+        Performs a circular movement. Use :func:`Item.MoveC() <robodk.robolink.Item.MoveC>` instead.
+
+        .. seealso:: :func:`Item.MoveC() <robodk.robolink.Item.MoveC>`
+        """
         with self._lock:
             #self._check_connection();
             itemrobot.WaitMove()  # checks connection
@@ -1141,16 +1161,25 @@ class Robolink:
                 self.COM.settimeout(self.TIMEOUT)
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def __init__(self, robodk_ip='localhost', port=None, args=[], robodk_path=None, close_std_out=False, quit_on_close=False, com_object=None, skipstatus=False):
-        """A connection is attempted upon creation of the object
-        In  1 (optional) : robodk_ip -> IP of the RoboDK API server (default='localhost')
-        In  2 (optional) : port -> Port of the RoboDK API server (default=None)
-        In  3 (optional) : args -> Command line arguments, as a list, to pass to RoboDK on startup (such as ['/NOSPLASH','/NOSHOW']), to not display RoboDK. It has no effect if RoboDK is already running.
-        In  4 (optional) : robodk_path -> RoboDK path. Leave it to the default None for the default path (C:/RoboDK/bin/RoboDK.exe).
-        In  5 (optional) : close_std_out -> Close RoboDK standard output path. No RoboDK console output will be shown.
-        In  6 (optional) : quit_on_close -> Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
-        In  7 (optional) : com_object -> Custom communication class (allows using WebSockets or other custom implementations).
-        In  8 (optional) : skipstatus -> Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
+    def __init__(self, robodk_ip: str = 'localhost', port: int = None, args: List[str] = [], robodk_path: str = None, close_std_out: bool = False, quit_on_close: bool = False, com_object=None, skipstatus: bool = False):
+        """A connection is attempted upon creation of the object.
+
+        :param robodk_ip: IP of the RoboDK API server (default='localhost')
+        :type robodk_ip: str
+        :param port: Port of the RoboDK API server (default=None, it will use the default value)
+        :type port: int
+        :param args: Command line arguments to pass to RoboDK on startup (for example: '/NOSPLASH /NOSHOW' should be passed as args=['/NOSPLASH','/NOSHOW'] to not display RoboDK). Arguments have no effect if RoboDK is already running.\n
+            For more information: `RoboDK list of arguments on startup <https://robodk.com/doc/en/RoboDK-API.html#CommandLine>`_.
+        :type args: list
+        :param robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
+        :type robodk_path: str
+        :param close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
+        :type close_std_out: bool
+        :param quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
+        :type quit_on_close: bool
+        :param com_object: Custom communication class (allows using WebSockets or other custom implementations). It defaults to socket communication.
+        :param skipstatus: Skip the status flag for operations that only wait for the command response status and do not return anything (assumes the command always completes successfully).
+        :type skipstatus: bool
         """
         self._SkipStatus = skipstatus
         self._customCOM = com_object
@@ -1217,7 +1246,7 @@ class Robolink:
     def __del__(self):
         self.Disconnect()
 
-    def _verify_connection(self):
+    def _verify_connection(self) -> bool:
         """Verify that we are connected to the RoboDK API server"""
         # Imortant! this should not thread locked
         use_new_version = True
@@ -1260,7 +1289,7 @@ class Robolink:
                 ok = 0
             return ok
 
-    def _require_build(self, build_required):
+    def _require_build(self, build_required: int) -> bool:
         if self.BUILD == 0:
             # unknown build number. Use new API hello command
             return True
@@ -1316,10 +1345,10 @@ class Robolink:
         except:
             print("Failed to reconnect (2)")
 
-    def isNewInstance(self):
+    def isNewInstance(self) -> bool:
         return self.NEW_INSTANCE is not None
 
-    def Connect(self):
+    def Connect(self) -> int:
         """Establish a connection with RoboDK. If RoboDK is not running it will attempt to start RoboDK from the default installation path (otherwise APPLICATION_DIR must be set properly).
         If the connection succeeds it returns 1, otherwise it returns 0"""
 
@@ -1461,13 +1490,15 @@ class Robolink:
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     # public methods
-    def Item(self, name, itemtype=None):
+    def Item(self, name: str, itemtype: int = None) -> 'Item':
         """Returns an item by its name. If there is no exact match it will return the last closest match.
         Specify what type of item you are looking for with itemtype. This is useful if 2 items have the same name but different type.
         (check variables ITEM_TYPE_*)
 
-        :param str name: name of the item (name of the item shown in the RoboDK station tree)
-        :param int itemtype: type of the item to be retrieved (avoids confusion if there are similar name matches). Use ITEM_TYPE_*.
+        :param name: name of the item (name of the item shown in the RoboDK station tree)
+        :type name: str
+        :param itemtype: type of the item to be retrieved (avoids confusion if there are similar name matches). Use ITEM_TYPE_*.
+        :type itemtype: int
 
         .. code-block:: python
             :caption: Available Item types
@@ -1513,11 +1544,13 @@ class Robolink:
             self._check_status()
             return item
 
-    def ItemList(self, filter=None, list_names=False):
+    def ItemList(self, filter: int = None, list_names: bool = False) -> Union[List['Item'], List[str]]:
         """Returns a list of items (list of name or pointers) of all available items in the currently open station of RoboDK.
 
-        :param int filter: (optional) Filter the list by a specific item type (ITEM_TYPE_*). For example: RDK.ItemList(filter = ITEM_TYPE_ROBOT)
-        :param int list_names: (optional) Set to True to return a list of names instead of a list of :class:`.Item`
+        :param filter: (optional) Filter the list by a specific item type (ITEM_TYPE_*). For example: RDK.ItemList(filter = ITEM_TYPE_ROBOT)
+        :type filter: int
+        :param list_names: (optional) Set to True to return a list of names instead of a list of :class:`.Item`
+        :type list_names: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Item`, :func:`~robodk.robolink.Robolink.ItemUserPick`
         """
@@ -1551,7 +1584,7 @@ class Robolink:
             self._check_status()
             return retlist
 
-    def ItemUserPick(self, message="Pick one item", itemtype_or_list=None):
+    def ItemUserPick(self, message: str = "Pick one item", itemtype_or_list: Union[int, List['Item']] = None) -> 'Item':
         """Shows a RoboDK popup to select one Item from the open station.
         An item type (ITEM_TYPE_*) can be specified to filter desired items. If no type is specified, all items are selectable.
 
@@ -1565,8 +1598,10 @@ class Robolink:
             RDK.ItemUserPick("Pick a robot", ITEM_TYPE_ROBOT)
             RDK.ItemUserPick("Pick a from a list", [item1, item2, item3])
 
-        :param str message: message to display
-        :param int itemtype_or_list: filter choices by a specific item type (ITEM_TYPE_*) or provide a list of items to choose from
+        :param message: message to display
+        :type message: str
+        :param itemtype_or_list: filter choices by a specific item type (ITEM_TYPE_*) or provide a list of items to choose from
+        :type itemtype_or_list: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Item`, :func:`~robodk.robolink.Robolink.ItemList`
         """
@@ -1625,7 +1660,7 @@ class Robolink:
             self._send_line(command)
             self._check_status()
 
-    def Version(self):
+    def Version(self) -> str:
         """Return RoboDK's version as a string"""
         with self._lock:
             self._check_connection()
@@ -1638,10 +1673,11 @@ class Robolink:
             self._check_status()
             return ver4
 
-    def setWindowState(self, windowstate=WINDOWSTATE_NORMAL):
+    def setWindowState(self, windowstate: int = WINDOWSTATE_NORMAL):
         """Set the state of the RoboDK window
 
-        :param int windowstate: state of the window (WINDOWSTATE_*)
+        :param windowstate: state of the window (WINDOWSTATE_*)
+        :type windowstate: int
 
         .. code-block:: python
             :caption: Allowed window states
@@ -1664,10 +1700,11 @@ class Robolink:
             self._send_int(windowstate)
             self._check_status()
 
-    def setFlagsRoboDK(self, flags=FLAG_ROBODK_ALL):
+    def setFlagsRoboDK(self, flags: int = FLAG_ROBODK_ALL):
         """Update the RoboDK flags. RoboDK flags allow defining how much access the user has to RoboDK features. Use a FLAG_ROBODK_* variables to set one or more flags.
 
-        :param int flags: state of the window (FLAG_ROBODK_*)
+        :param flags: state of the window (FLAG_ROBODK_*)
+        :type flags: int
 
         .. code-block:: python
             :caption: Allowed RoboDK flags
@@ -1701,7 +1738,7 @@ class Robolink:
             self._send_int(flags)
             self._check_status()
 
-    def setFlagsItem(self, item, flags=FLAG_ITEM_ALL):
+    def setFlagsItem(self, item: 'Item', flags: int = FLAG_ITEM_ALL):
         """Update item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
 
         :param item: item to set (set to 0 to apply to all items)
@@ -1718,7 +1755,7 @@ class Robolink:
             self._send_int(flags)
             self._check_status()
 
-    def getFlagsItem(self, item):
+    def getFlagsItem(self, item: 'Item') -> int:
         """Retrieve current item flags. Item flags allow defining how much access the user has to item-specific features. Use FLAG_ITEM_* flags to set one or more flags.
 
         :param item: item to get flags
@@ -1746,11 +1783,13 @@ class Robolink:
             self._check_status()
             return flags
 
-    def ShowMessage(self, message, popup=True):
+    def ShowMessage(self, message: str, popup: bool = True):
         """Show a message from the RoboDK window. By default, the message will be a blocking popup. Alternatively, it can be a message displayed at the bottom of RoboDK's main window.
 
-        :param str message: message to display
-        :param bool popup: Set to False to display the message in the RoboDK's status bar (not blocking)
+        :param message: message to display
+        :type message: str
+        :param popup: Set to False to display the message in the RoboDK's status bar (not blocking)
+        :type popup: bool
         """
         with self._lock:
             print(message)
@@ -1769,7 +1808,7 @@ class Robolink:
                 self._check_status()
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def Copy(self, item, copy_childs=True):
+    def Copy(self, item: 'Item', copy_childs: bool = True):
         """Makes a copy of an item (same as Ctrl+C), which can be pasted (Ctrl+V) using Paste().
 
         :param item: Item to copy to the clipboard
@@ -1802,12 +1841,13 @@ class Robolink:
 
             self._check_status()
 
-    def Paste(self, paste_to=0, paste_times=1):
+    def Paste(self, paste_to: 'Item' = 0, paste_times: int = 1) -> Union['Item', List['Item']]:
         """Paste the copied item as a dependency of another item (same as Ctrl+V). Paste should be used after Copy(). It returns the newly created item.
 
         :param paste_to: Item to attach the copied item (optional)
         :type paste_to: :class:`.Item`
-        :param int paste_times: number of times to paste the item (returns a list if greater than 1)
+        :param paste_times: number of times to paste the item (returns a list if greater than 1)
+        :type paste_times: int
         :return: New item created
         :rtype: :class:`.Item`
 
@@ -1840,10 +1880,11 @@ class Robolink:
                 self._check_status()
                 return newitem
 
-    def AddFile(self, filename, parent=0):
+    def AddFile(self, filename: str, parent: 'Item' = 0) -> 'Item':
         """Load a file and attach it to parent (if provided). The call returns the newly added :class:`.Item`. If the new file is an object and it is attached to a robot it will be automatically converted to a tool.
 
-        :param str filename: any file to load, supported by RoboDK. Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... It is also possible to load supported robot programs, such as SRC (KUKA), SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        :param filename: any file to load, supported by RoboDK. Supported formats include STL, STEP, IGES, ROBOT, TOOL, RDK,... It is also possible to load supported robot programs, such as SRC (KUKA), SCRIPT (Universal Robots), LS (Fanuc), JBI (Motoman), MOD (ABB), PRG (ABB), ...
+        :type filename: str
         :param parent: item to attach the newly added object (optional)
         :type parent: :class:`.Item`
 
@@ -1879,7 +1920,7 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddShape(self, triangle_points, add_to=0, override_shapes=False):
+    def AddShape(self, triangle_points: Union[List[list], List[robomath.Mat], robomath.Mat], add_to: 'Item' = 0, override_shapes: False = False) -> 'Item':
         """Adds a shape provided triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be provided optionally.
 
         :param triangle_points: List of vertices grouped by triangles.
@@ -1995,15 +2036,17 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddCurve(self, curve_points, reference_object=0, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def AddCurve(self, curve_points: Union[List[list], List[robomath.Mat], robomath.Mat], reference_object: 'Item' = 0, add_to_ref: bool = False, projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> 'Item':
         """Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         :param curve_points: List of points defining the curve
         :type curve_points: :class:`~robodk.robomath.Mat` (3xN matrix, or 6xN to provide curve normals as ijk vectors)
         :param reference_object: item to attach the newly added geometry (optional)
         :type reference_object: :class:`.Item`
-        :param bool add_to_ref: If True, the curve will be added as part of the object in the RoboDK item tree (a reference object must be provided)
-        :param int projection_type: type of projection. Use the PROJECTION_* flags.
+        :param add_to_ref: If True, the curve will be added as part of the object in the RoboDK item tree (a reference object must be provided)
+        :type add_to_ref: bool
+        :param projection_type: type of projection. Use the PROJECTION_* flags.
+        :type projection_type: int
         :return: added object/shape (0 if failed)
         :rtype: :class:`.Item`
 
@@ -2055,15 +2098,17 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddPoints(self, points, reference_object=0, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def AddPoints(self, points: Union[List[float], robomath.Mat], reference_object: 'Item' = 0, add_to_ref: bool = False, projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> 'Item':
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         :param points: list of points or matrix
         :type points: :class:`~robodk.robomath.Mat` (3xN matrix, or 6xN to provide point normals as ijk vectors)
         :param reference_object: item to attach the newly added geometry (optional)
         :type reference_object: :class:`.Item`
-        :param bool add_to_ref: If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)
-        :param int projection_type: type of projection. Use the PROJECTION_* flags.
+        :param add_to_ref: If True, the points will be added as part of the object in the RoboDK item tree (a reference object must be provided)
+        :type add_to_ref: bool
+        :param projection_type: type of projection. Use the PROJECTION_* flags.
+        :type projection_type: int
         :return: added object/shape (0 if failed)
         :rtype: :class:`.Item`
 
@@ -2088,7 +2133,7 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def ProjectPoints(self, points, object_project, projection_type=PROJECTION_ALONG_NORMAL_RECALC, timeout=30):
+    def ProjectPoints(self, points: Union[List[float], robomath.Mat], object_project: 'Item', projection_type: int = PROJECTION_ALONG_NORMAL_RECALC, timeout: float = 30) -> Union[List[float], robomath.Mat]:
         """Project a point or a list of points given its coordinates.
         The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
         It returns the projected points as a list of points (empty matrix if failed).
@@ -2141,7 +2186,7 @@ class Robolink:
 
             self._check_status()
 
-    def Delete(self, item_list):
+    def Delete(self, item_list: Union['Item', List['Item']]):
         """Remove a list of items.
 
         .. seealso:: :func:`~robodk.robolink.Item.Delete`, :func:`~robodk.robolink.Robolink.CloseStation`
@@ -2161,10 +2206,11 @@ class Robolink:
 
             self._check_status()
 
-    def Save(self, filename, itemsave=0):
+    def Save(self, filename: str, itemsave: 'Item' = 0):
         """Save an item or a station to a file (formats supported include RDK, STL, ROBOT, TOOL, ...). If no item is provided, the open station is saved.
 
-        :param str filename: File path to save
+        :param filename: File path to save
+        :type filename: str
         :param itemsave: Item to save (leave at 0 to save the current RoboDK station as an RDK file
         :type itemsave: :class:`.Item`
 
@@ -2180,10 +2226,11 @@ class Robolink:
             self._check_status()
             self.COM.settimeout(self.TIMEOUT)
 
-    def AddStation(self, name='New Station'):
+    def AddStation(self, name: str = 'New Station') -> 'Item':
         """Add a new empty station. It returns the station :class:`.Item` created.
 
-        :param str name: name of the station
+        :param name: name of the station
+        :type name: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddFile`
         """
@@ -2196,10 +2243,11 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddTarget(self, name, itemparent=0, itemrobot=0):
+    def AddTarget(self, name: str, itemparent: 'Item' = 0, itemrobot: 'Item' = 0):
         """Add a new target that can be reached with a robot.
 
-        :param str name: Target name
+        :param name: Target name
+        :type name: str
         :param itemparent: Reference frame to attach the target
         :type itemparent: :class:`.Item`
         :param itemrobot: Robot that will be used to go to self target (optional)
@@ -2220,10 +2268,11 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddFrame(self, name, itemparent=0):
+    def AddFrame(self, name: str, itemparent: 'Item' = 0) -> 'Item':
         """Adds a new reference Frame. It returns the new :class:`.Item` created.
 
-        :param str name: name of the new reference frame
+        :param name: name of the new reference frame
+        :type name: str
         :param itemparent: Item to attach the new reference frame (such as another reference frame)
         :type itemparent: :class:`.Item`
 
@@ -2238,7 +2287,7 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddProgram(self, name, itemrobot=0):
+    def AddProgram(self, name: str, itemrobot: 'Item' = 0) -> 'Item':
         """Add a new program to the RoboDK station. Programs can be used to simulate a specific sequence, to generate vendor specific programs (Offline Programming) or to run programs on the robot (Online Programming).
         It returns the new :class:`.Item` created.
         Tip: Use the MoveRobotThroughLine.py macro to create programs in the RoboDK station (Option 2).
@@ -2405,19 +2454,20 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def AddMillingProject(self, name='Milling settings', itemrobot=0):
+    def AddMillingProject(self, name: str = 'Milling settings', itemrobot: 'Item' = 0) -> 'Item':
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Robolink.AddMachiningProject` instead.
         """
         return self.AddMachiningProject(name, itemrobot)
 
-    def AddMachiningProject(self, name='Milling settings', itemrobot=0):
+    def AddMachiningProject(self, name: str = 'Milling settings', itemrobot: 'Item' = 0) -> 'Item':
         """Add a new robot machining project. Machining projects can also be used for 3D printing, following curves and following points.
         It returns the newly created :class:`.Item` containing the project settings.
         Tip: Use the MoveRobotThroughLine.py macro to see an example that creates a new "curve follow project" given a list of points to follow (Option 4).
 
-        :param str name: Name of the project settings
+        :param name: Name of the project settings
+        :type name: str
         :param itemrobot: Robot to use for the project settings (optional). It is not required to specify the robot if only one robot or mechanism is available in the RoboDK station.
         :type itemrobot: :class:`.Item`
 
@@ -2433,13 +2483,14 @@ class Robolink:
             return newitem
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def RunProgram(self, fcn_param, wait_for_finished=False):
+    def RunProgram(self, fcn_param: str, wait_for_finished: bool = False) -> int:
         """Run a program (start a program). If the program exists in the RoboDK station it has the same behavior as right clicking a and selecting Run (or Run Python script for Python programs).
         When generating a program offline (Offline Programming), the program call will be generated in the program output (RoboDK will handle the syntax when the code is generated for a specific robot using the post processor).
 
         :param fcn_param: program name and parameters. Parameters can be provided for Python programs available in the RoboDK station as well.
         :type fcn_param: str
-        :param bool wait_for_finished: Set to True to block execution during a simulation until the program finishes (skipped if the program does not exist or when the program is generated)
+        :param wait_for_finished: Set to True to block execution during a simulation until the program finishes (skipped if the program does not exist or when the program is generated)
+        :type wait_for_finished: bool
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Item`, :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.Busy`
         """
@@ -2453,7 +2504,7 @@ class Robolink:
             prog_status = self.RunCode(fcn_param, True)
         return prog_status
 
-    def RunCode(self, code, code_is_fcn_call=False):
+    def RunCode(self, code: str, code_is_fcn_call: bool = False) -> int:
         """Generate a program call or a customized instruction output in a program.
         If code_is_fcn_call is set to True it has the same behavior as RDK.RunProgram(). In this case, when generating a program offline (offline programming), a function/procedure call will be generated in the program output (RoboDK will handle the syntax when the code is generated for a specific robot using the post processor).
         If the program exists it will also run the program in simulate mode.
@@ -2482,11 +2533,13 @@ class Robolink:
             self._check_status()
             return prog_status
 
-    def RunMessage(self, message, message_is_comment=False):
+    def RunMessage(self, message: str, message_is_comment: bool = False):
         """Show a message or a comment in the program generated offline (program generation). The message (or code) is displayed on the teach pendant of the robot.
 
-        :param str message: message or comment to display.
-        :param bool message_is_comment: Set to True to generate a comment in the generated code instead of displaying a message on the teach pendant of the robot.
+        :param message: message or comment to display.
+        :type message: str
+        :param message_is_comment: Set to True to generate a comment in the generated code instead of displaying a message on the teach pendant of the robot.
+        :type message_is_comment: bool
 
         """
         print('Message: ' + message)
@@ -2498,11 +2551,12 @@ class Robolink:
             self._send_line(message.replace('\r\n', '<<br>>').replace('\n', '<<br>>'))
             self._check_status()
 
-    def Render(self, always_render=False):
+    def Render(self, always_render: Union[bool, int] = False):
         """Display/render the scene: update the display. This function turns default rendering (rendering after any modification of the station unless always_render is set to true).
         Use Update to update the internal links of the complete station without rendering (when a robot or item has been moved).
 
-        :param bool always_render: Set to True to update the screen every time the station is modified (default behavior when Render() is not used).
+        :param always_render: Set to True to update the screen every time the station is modified (default behavior when Render() is not used).
+        :type always_render: bool
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Update`
         """
@@ -2536,7 +2590,7 @@ class Robolink:
             self._send_int(0)
             self._check_status()
 
-    def IsInside(self, object_inside, object):
+    def IsInside(self, object_inside: 'Item', object: 'Item') -> bool:
         """Return 1 (True) if object_inside is inside the object, otherwise, it returns 0 (False). Both objects must be of type :class:`.Item`"""
         with self._lock:
             self._check_connection()
@@ -2547,7 +2601,7 @@ class Robolink:
             self._check_status()
             return inside
 
-    def setCollisionActive(self, check_state=COLLISION_ON):
+    def setCollisionActive(self, check_state: int = COLLISION_ON) -> int:
         """Set global collision checking ON or OFF (COLLISION_ON/COLLISION_OFF).
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setCollisionActivePair`, :func:`~robodk.robolink.Item.Visible`
@@ -2561,7 +2615,7 @@ class Robolink:
             self._check_status()
             return ncollisions
 
-    def setCollisionActivePair(self, check_state, item1, item2, id1=0, id2=0):
+    def setCollisionActivePair(self, check_state: int, item1: 'Item', item2: 'Item', id1: int = 0, id2: int = 0) -> int:
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific pair of objects (:class:`.Item`).
         This allows altering the collision map for Collision checking.
         Specify the link id for robots or moving mechanisms (id 0 is the base)
@@ -2582,7 +2636,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def setCollisionActivePairList(self, list_check_state, list_item1, list_item2, list_id1=None, list_id2=None):
+    def setCollisionActivePairList(self, list_check_state: List[int], list_item1: List['Item'], list_item2: List['Item'], list_id1: List[int] = None, list_id2: List[int] = None) -> int:
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking.
         Specify the link id for robots or moving mechanisms (id 0 is the base).
 
@@ -2612,7 +2666,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def Collisions(self):
+    def Collisions(self) -> int:
         """Return the number of pairs of objects that are currently in a collision state.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Robolink.CollisionItems`, :func:`~robodk.robolink.Item.Visible`
@@ -2625,7 +2679,7 @@ class Robolink:
             self._check_status()
             return ncollisions
 
-    def Collision(self, item1, item2):
+    def Collision(self, item1: 'Item', item2: 'Item') -> int:
         """Returns 1 if item1 and item2 collided. Otherwise returns 0.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Robolink.CollisionItems`, :func:`~robodk.robolink.Item.Visible`
@@ -2640,7 +2694,7 @@ class Robolink:
             self._check_status()
             return ncollisions
 
-    def CollisionItems(self):
+    def CollisionItems(self) -> List['Item']:
         """Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.Visible`
@@ -2659,7 +2713,7 @@ class Robolink:
             self._check_status()
             return item_list
 
-    def CollisionPairs(self):
+    def CollisionPairs(self) -> List[Tuple['Item', 'Item', int, int]]:
         """Return the list of pairs of items that are in a collision state.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.Visible`
@@ -2680,7 +2734,7 @@ class Robolink:
             self._check_status()
             return item_list
 
-    def setSimulationSpeed(self, speed):
+    def setSimulationSpeed(self, speed: float):
         """Set the simulation speed.
         A simulation speed of 5 (default) means that 1 second of simulation time equals to 5 seconds in a real application.
         The slowest speed ratio allowed is 0.001. Set a large simmulation ratio (>100) for fast simulation results.
@@ -2711,7 +2765,7 @@ class Robolink:
             self._check_status()
             return speed
 
-    def SimulationTime(self):
+    def SimulationTime(self) -> float:
         """Retrieve the simulation time (in seconds). Time of 0 seconds starts with the first time this function is called.
         The simulation time changes depending on the simulation speed. The simulation time is usually faster than the real time (5 times by default).
 
@@ -2725,7 +2779,7 @@ class Robolink:
             self._check_status()
             return speed
 
-    def setRunMode(self, run_mode=1):
+    def setRunMode(self, run_mode: int = 1):
         """Set the run mode (behavior) of the script, for either simulation, offline programming or online programming.
         By default, robodk shows the path simulation for movement instructions (run_mode=RUNMODE_SIMULATE).
 
@@ -2754,7 +2808,7 @@ class Robolink:
             self._send_int(run_mode)
             self._check_status()
 
-    def RunMode(self):
+    def RunMode(self) -> int:
         """Return the current run mode (behavior) of the script.
         By default, robodk simulates any movements requested from the API (such as prog.MoveL) simulation for movement instructions (run_mode=RUNMODE_SIMULATE).
 
@@ -2768,7 +2822,7 @@ class Robolink:
             self._check_status()
             return runmode
 
-    def getParams(self):
+    def getParams(self) -> List[Tuple[str, str]]:
         """Get all the user parameters from the open RoboDK station.
         Station parameters can also be modified manually by right clicking the station item and selecting "Station parameters"
         :return: list of pairs of strings
@@ -2792,12 +2846,14 @@ class Robolink:
             self._check_status()
             return params
 
-    def getParam(self, param='PATH_OPENSTATION', str_type=True):
+    def getParam(self, param: str = 'PATH_OPENSTATION', str_type: bool = True) -> Union[str, bytes]:
         """Get a global or a station parameter from the open RoboDK station.
         Station parameters can also be modified manually by right clicking the station item and selecting "Station parameters"
 
-        :param str param: name of the parameter
-        :param bool str_type: True to retrieve a string parameter (False for binary/bytes type)
+        :param param: name of the parameter
+        :type param: str
+        :param str_type: True to retrieve a string parameter (False for binary/bytes type)
+        :type str_type: bool
         :return: value of the parameter.
         :rtype: str, float or None if the parameter is unknown
 
@@ -2834,11 +2890,13 @@ class Robolink:
                 self._check_status()
                 return value
 
-    def setParam(self, param, value):
+    def setParam(self, param: str, value: Union[str, bytes, 'Item']):
         """Set a station parameter. If the parameters exists, it will be updated. Otherwise, it will be added to the station.
 
-        :param str param: name of the parameter
-        :param str value: value of the parameter (value type can be str or bytes)
+        :param param: name of the parameter
+        :type param: str
+        :param value: value of the parameter (value type can be str or bytes)
+        :type value: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.getParam`
         """
@@ -2859,11 +2917,13 @@ class Robolink:
 
             self._check_status()
 
-    def Command(self, cmd, value='', skip_result=False):
+    def Command(self, cmd: str, value: Union[str, Dict, robomath.Mat, 'Item'] = '', skip_result: bool = False) -> Union[str, List[robomath.Mat]]:
         """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
 
-        :param str command: Command Name, such as Trace, Threads or Window.
-        :param str value: Comand value (optional, not all commands require a value)
+        :param command: Command Name, such as Trace, Threads or Window.
+        :type command: str
+        :param value: Comand value (optional, not all commands require a value)
+        :type value: str
 
         Select **Tools-Run Script-Show Commands** to see all available commands.
 
@@ -2957,7 +3017,7 @@ class Robolink:
                 self._check_status()
                 return line
 
-    def getOpenStations(self):
+    def getOpenStations(self) -> List['Item']:
         """Returns the list of open stations in RoboDK
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setActiveStation`, :func:`~robodk.robolink.Robolink.getParam`, :func:`~robodk.robolink.Item.Childs`, :func:`~robodk.robolink.Item.Save`, :func:`~robodk.robolink.Robolink.AddStation`
@@ -2973,7 +3033,7 @@ class Robolink:
             self._check_status()
             return list_stn
 
-    def ActiveStation(self):
+    def ActiveStation(self) -> 'Item':
         """Returns the active station item (station currently visible)
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setActiveStation`, :func:`~robodk.robolink.Robolink.getParam`, :func:`~robodk.robolink.Item.Childs`, :func:`~robodk.robolink.Item.Save`, :func:`~robodk.robolink.Robolink.AddStation`
@@ -2986,7 +3046,7 @@ class Robolink:
             self._check_status()
             return stn
 
-    def setActiveStation(self, stn):
+    def setActiveStation(self, stn: 'Item'):
         """Set the active station (project currently visible)
 
         :param stn: station item, it can be previously loaded as an RDK file
@@ -3001,7 +3061,7 @@ class Robolink:
             self._send_item(stn)
             self._check_status()
 
-    def ShowSequence(self, matrix, display_type=SEQUENCE_DISPLAY_DEFAULT, timeout=-1):
+    def ShowSequence(self, matrix: Union[robomath.Mat, List[robomath.Mat]], display_type: int = SEQUENCE_DISPLAY_DEFAULT, timeout: float = -1):
         """Displays a sequence of joints or poses in RoboDK.
 
         :param matrix: list of joints as a matrix or as a list of joint arrays, a list of poses, or a sequence of instructions (same sequence that was supported with RoKiSim).
@@ -3017,7 +3077,7 @@ class Robolink:
         """
         Item(self, 0).ShowSequence(matrix, display_type, timeout)
 
-    def LaserTracker_Measure(self, estimate=[0, 0, 0], search=False):
+    def LaserTracker_Measure(self, estimate: List[float] = [0, 0, 0], search: bool = False) -> List[float]:
         """Takes a measurement using the laser tracker with respect to the tracker reference frame. If an estimate point is provided, the laser tracker will first move to those coordinates. If search is True, the tracker will search for a target.
         Returns the XYZ coordinates of target if it was found. Othewise it retuns None. For trackers that support a 6D measurement, the returned value with be an array of 6 values (list) to include the Euler angles."""
         with self._lock:
@@ -3037,11 +3097,11 @@ class Robolink:
 
             return xyz
 
-    def MeasurePose(self, target=-1, time_avg_ms=0, tip_xyz=None):
+    def MeasurePose(self, target: int = -1, time_avg_ms: float = 0, tip_xyz: List[float] = None) -> Tuple[robomath.Mat, List]:
         """Takes a measurement with a 6D measurement device. It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose.
 
         :param time_avg: Take the measurement for a period of time and average the result.
-        :param tip_xyz: Offet the measurement to the tip.
+        :param tip_xyz: Offset the measurement to the tip.
         """
         with self._lock:
             array_send = [target, time_avg_ms]
@@ -3059,17 +3119,17 @@ class Robolink:
             self._check_status()
             return pose1, data
 
-    def Collision_Line(self, p1, p2, ref=robomath.eye(4)):
+    def Collision_Line(self, p1: List[float], p2: List[float], ref=robomath.eye(4)) -> Tuple[bool, 'Item', List[float]]:
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
 
-        :param p1: start point of the line
-        :type p1: list of float [x,y,z]
-        :param p2: end point of the line
-        :type p2: list of float [x,y,z]
+        :param p1: start point of the line [x,y,z]
+        :type p1: list of float
+        :param p2: end point of the line [x,y,z]
+        :type p2: list of float
         :param ref: Reference of the two points with respect to the absolute station reference.
         :type ref: :class:`~robodk.robomath.Mat`
         :return: [collision (True or False), item (collided), point (point of collision with respect to the station)]
-        :rtype: [bool, :class:`.Item`, list of float as xyz]
+        :rtype: [bool, :class:`.Item`, list of float]
         """
         with self._lock:
             p1abs = ref * p1
@@ -3090,7 +3150,7 @@ class Robolink:
 
             return collision, itempicked, xyz
 
-    def setPoses(self, items, poses):
+    def setPoses(self, items: List['Item'], poses: List[robomath.Mat]):
         """Sets the relative positions (poses) of a list of items with respect to their parent. For example, the position of an object/frame/target with respect to its parent.
         Use this function instead of setPose() for faster speed.
 
@@ -3112,7 +3172,7 @@ class Robolink:
                 self._send_pose(poses[i])
             self._check_status()
 
-    def setPosesAbs(self, items, poses):
+    def setPosesAbs(self, items: List['Item'], poses: List[robomath.Mat]):
         """Set the absolute positions (poses) of a list of items with respect to the station reference. For example, the position of an object/frame/target with respect to its parent.
         Use this function instead of setPose() for faster speed.
 
@@ -3134,7 +3194,7 @@ class Robolink:
                 self._send_pose(poses[i])
             self._check_status()
 
-    def Joints(self, robot_item_list):
+    def Joints(self, robot_item_list: List['Item']) -> List[robomath.Mat]:
         """Return the current joints of a list of robots.
 
         .. seealso:: :func:`Item.setJoints() <robodk.robolink.Item.setJoints>`, :func:`Item.Joints() ~robodk.robolink.Item.Joints`, :func:`~robodk.robolink.Robolink.setJoints`
@@ -3153,7 +3213,7 @@ class Robolink:
             self._check_status()
             return joints_list
 
-    def setJoints(self, robot_item_list, joints_list):
+    def setJoints(self, robot_item_list: List['Item'], joints_list: List[robomath.Mat]):
         """Sets the current robot joints for a list of robot items and a list joints.
 
         .. seealso:: :func:`Item.setJoints() <robodk.robolink.Item.setJoints>`, :func:`Item.Joints <robodk.robolink.Item.Joints>`, :func:`~robodk.robolink.Robolink.Joints`
@@ -3173,14 +3233,16 @@ class Robolink:
 
             self._check_status()
 
-    def CalibrateTool(self, poses_xyzwpr, input_format=EULER_RX_RY_RZ, algorithm=CALIBRATE_TCP_BY_POINT, robot=None, tool=None):
+    def CalibrateTool(self, poses_xyzwpr: Union[List[robomath.Mat], List[List[float]]], input_format: int = EULER_RX_RY_RZ, algorithm: int = CALIBRATE_TCP_BY_POINT, robot: 'Item' = None, tool: 'Item' = None) -> Tuple[List[float], List[float], List[float]]:
         """Calibrate a TCP given a list of poses/joints and following a specific algorithm/method.
         Tip: Provide the list of joints instead of poses to maximize accuracy for calibrated robots.
 
         :param poses_xyzwpr: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
         :type poses_xyzwpr: :class:`~robodk.robomath.Mat` or a list of list of float
-        :param int input_format: Euler format. Optionally, use JOINT_FORMAT and provide the robot.
-        :param int algorithm: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_TCP ...
+        :param input_format: Euler format. Optionally, use JOINT_FORMAT and provide the robot.
+        :type input_format: int
+        :param algorithm: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_TCP ...
+        :type algorithm: int
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
         :param tool: provide a tool item to store the calibration data with that tool (the TCP is not updated, only the calibration joints)
@@ -3233,14 +3295,16 @@ class Robolink:
                 errors = []
             return TCPxyz.list(), errorstats.list(), errors
 
-    def CalibrateReference(self, joints_points, method=CALIBRATE_FRAME_3P_P1_ON_X, use_joints=False, robot=None):
+    def CalibrateReference(self, joints_points: robomath.Mat, method: int = CALIBRATE_FRAME_3P_P1_ON_X, use_joints: bool = False, robot: 'Item' = None) -> Union[robomath.Mat, Tuple[robomath.Mat, List]]:
         """Calibrate a reference frame given a number of points and following a specific algorithm/method.
         Important: Provide the list of joints to maximize accuracy for calibrated robots.
 
         :param joints_points: List of points or a list of robot joints (matrix 3xN or nDOFsxN)
         :type joints_points: :class:`~robodk.robomath.Mat` or a list of list of float
-        :param int method: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_FRAME ...
-        :param bool use_joints: use points or joint values (bool): Set to True if joints_points is a list of joints
+        :param method: method/algorithm to use to calculate the new TCP. Tip: use CALIBRATE_FRAME ...
+        :type method: int
+        :param use_joints: use points or joint values (bool): Set to True if joints_points is a list of joints
+        :type use_joints: bool
         :param robot: the robot must be provided to calculate the reference frame by joints
         :type robot: :class:`.Item`
         :return: The pose of the reference frame with respect to the robot base frame
@@ -3276,14 +3340,17 @@ class Robolink:
 
             return reference_pose
 
-    def ProgramStart(self, programname, folder='', postprocessor='', robot=None):
+    def ProgramStart(self, programname: str, folder: str = '', postprocessor: str = '', robot: 'Item' = None) -> int:
         """Defines the name of the program when the program is generated (offline programming).
         It is also possible to specify the name of the post processor as well as the folder to save the program.
         This method must be called before any program output is generated (before any robot movement or other instruction).
 
-        :param str progname: Name of the program
-        :param str folder: Folder to save the program, leave empty to use the default program folder (usually Desktop)
-        :param str postprocessor: Name of the post processor. For example, to select the post processor C:/RoboDK/Posts/Fanuc_RJ3.py, specify "Fanuc_RJ3.py" or simply "Fanuc_RJ3".
+        :param progname: Name of the program
+        :type progname: str
+        :param folder: Folder to save the program, leave empty to use the default program folder (usually Desktop)
+        :type folder: str
+        :param postprocessor: Name of the post processor. For example, to select the post processor C:/RoboDK/Posts/Fanuc_RJ3.py, specify "Fanuc_RJ3.py" or simply "Fanuc_RJ3".
+        :type postprocessor: str
         :param robot: Robot used for program generation
         :type robot: :class:`.Item`
 
@@ -3317,7 +3384,7 @@ class Robolink:
             self._check_status()
             return errors
 
-    def setViewPose(self, pose):
+    def setViewPose(self, pose: robomath.Mat):
         """Set the pose of the world reference frame with respect to the view (camera/screen)
 
         :param pose: pose of the item with respect to its parent
@@ -3330,7 +3397,7 @@ class Robolink:
             self._send_pose(pose)
             self._check_status()
 
-    def ViewPose(self):
+    def ViewPose(self) -> robomath.Mat:
         """Get the pose of the world reference frame with respect to the view (camera/screen)"""
         with self._lock:
             self._check_connection()
@@ -3340,17 +3407,22 @@ class Robolink:
             self._check_status()
             return pose
 
-    def BuildMechanism(self, type, list_obj, parameters, joints_build, joints_home, joints_senses, joints_lim_low, joints_lim_high, base=robomath.eye(4), tool=robomath.eye(4), name="New robot", robot=None):
+    def BuildMechanism(self, type: int, list_obj: List['Item'], parameters: List[float], joints_build: List[float], joints_home: List[float], joints_senses: List[int], joints_lim_low: List[float], joints_lim_high: List[float], base=robomath.eye(4), tool=robomath.eye(4), name: str = "New robot", robot: 'Item' = None) -> 'Item':
         """Create a new robot or mechanism.
 
-        :param int type: Type of the mechanism
-        :param list list_obj: list of object items that build the robot
-        :param list parameters: robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot
+        :param type: Type of the mechanism
+        :type type: int
+        :param list_obj: list of object items that build the robot
+        :type list_obj: list
+        :param parameters: robot parameters in the same order as shown in the RoboDK menu: Utilities-Build Mechanism or robot
+        :type parameters: list
         :param list_joints_build: current state of the robot (joint axes) to build the robot
-        :param list joints_home: joints for the home position (it can be changed later)
+        :param joints_home: joints for the home position (it can be changed later)
+        :type joints_home: list
         :param robot: existing robot in the station to replace it (optional)
         :type robot: :class:`.Item`
-        :param str name: robot name
+        :param name: robot name
+        :type name: str
 
         Example:
 
@@ -3441,12 +3513,13 @@ class Robolink:
 
     #------------------------------------------------------------------
     #----------------------- CAMERA VIEWS ----------------------------
-    def Cam2D_Add(self, item_object=None, cam_params="", camera_item=None):
+    def Cam2D_Add(self, item_object: 'Item' = None, cam_params: str = "", camera_item: 'Item' = None) -> 'Item':
         """Open a simulated 2D camera view. Returns a handle pointer that can be used in case more than one simulated view is used.
 
         :param item_object: object to attach the camera
         :type item_object: :class:`.Item`
-        :param str cam_params: Camera parameters as a string. Add one or more commands as shown in the following example.
+        :param cam_params: Camera parameters as a string. Add one or more commands as shown in the following example.
+        :type cam_params: str
         :param camera_item: Use an existing camera item to modify settings and open the view (supported on RoboDK v5.0 and later)
         :type camera_item: :class:`.Item`
 
@@ -3558,12 +3631,15 @@ class Robolink:
             self._check_status()
             return cam_handle
 
-    def Cam2D_Snapshot(self, file_save_img="", cam_handle=0, params=""):
+    def Cam2D_Snapshot(self, file_save_img: str = "", cam_handle: 'Item' = 0, params: str = "") -> Union[bool, bytes]:
         """Take a snapshot from a simulated camera view and save it to a file. Returns 1 if success, 0 otherwise.
 
-        :param str file_save_img: file path to save. Formats supported include PNG, JPEG, TIFF, ...
-        :param int cam_handle: camera handle (item returned by Cam2D_Add). If the camera handle is set to None it will take a snapshot of the full 3D views.
-        :param str params: additional options (use, "Grayscale", "Depth" or "Color" to modify the camera snapshot)
+        :param file_save_img: file path to save. Formats supported include PNG, JPEG, TIFF, ...
+        :type file_save_img: str
+        :param cam_handle: camera handle (item returned by Cam2D_Add). If the camera handle is set to None it will take a snapshot of the full 3D views.
+        :type cam_handle: int
+        :param params: additional options (use, "Grayscale", "Depth" or "Color" to modify the camera snapshot)
+        :type params: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Cam2D_Add`, :func:`~robodk.robolink.Robolink.Cam2D_Close`
         """
@@ -3598,7 +3674,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def Cam2D_Close(self, cam_handle=0):
+    def Cam2D_Close(self, cam_handle: 'Item' = 0) -> bool:
         """Closes all camera windows or one specific camera if the camera handle is provided. Returns True if success, False otherwise.
 
         :param cam_handle: camera handle (pointer returned by Cam2D_Add). Leave to 0 to close all simulated views.
@@ -3625,11 +3701,12 @@ class Robolink:
             self._check_status()
             return success
 
-    def Cam2D_SetParams(self, params, cam_handle=0):
+    def Cam2D_SetParams(self, params: str, cam_handle: 'Item' = 0) -> int:
         """Set the parameters of the simulated camera.
         Returns 1 if success, 0 otherwise.
 
-        :param str params: parameter settings according to the parameters supported by Cam2D_Add
+        :param params: parameter settings according to the parameters supported by Cam2D_Add
+        :type params: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Cam2D_Add`
         """
@@ -3653,7 +3730,7 @@ class Robolink:
 
     #------------------------------------------------------------------
     #----------------------- SPRAY GUN SIMULATION ----------------------------
-    def Spray_Add(self, item_tool=0, item_object=0, params="", points=None, geometry=None):
+    def Spray_Add(self, item_tool: 'Item' = 0, item_object: 'Item' = 0, params: str = "", points: robomath.Mat = None, geometry: robomath.Mat = None) -> int:
         """Add a simulated spray gun that allows projecting particles to a part. This is useful to simulate applications such as:
         arc welding, spot welding, 3D printing, painting, inspection or robot machining to verify the trace.
 
@@ -3678,7 +3755,8 @@ class Robolink:
 
         .. image:: TraceOn.png
 
-        :param str params: A string specifying the behavior of the simulated particles. The string can contain one or more of the following commands (separated by a space). See the allowed parameter options.
+        :param params: A string specifying the behavior of the simulated particles. The string can contain one or more of the following commands (separated by a space). See the allowed parameter options.
+        :type params: str
         :param points: provide the volume as a list of points as described in the sample macro SprayOn.py
         :type points: :class:`~robodk.robomath.Mat`
         :param geometry: (optional) provide a list of points describing triangles to define a specific particle geometry. Use this option instead of the PARTICLE command.
@@ -3741,11 +3819,13 @@ class Robolink:
             self._check_status()
             return id_spray
 
-    def Spray_SetState(self, state=SPRAY_ON, id_spray=-1):
+    def Spray_SetState(self, state: int = SPRAY_ON, id_spray: int = -1) -> int:
         """Sets the state of a simulated spray gun (ON or OFF)
 
-        :param int state: Set to ON or OFF. Use the defined constants: SPRAY_*
-        :param int id_spray: spray handle (pointer returned by Spray_Add). Leave to -1 to apply to all simulated sprays.
+        :param state: Set to ON or OFF. Use the defined constants: SPRAY_*
+        :type state: int
+        :param id_spray: spray handle (pointer returned by Spray_Add). Leave to -1 to apply to all simulated sprays.
+        :type id_spray: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Spray_Add`, :func:`~robodk.robolink.Robolink.Spray_GetStats`, :func:`~robodk.robolink.Robolink.Spray_Clear`
         """
@@ -3759,10 +3839,11 @@ class Robolink:
             self._check_status()
             return success
 
-    def Spray_GetStats(self, id_spray=-1):
+    def Spray_GetStats(self, id_spray: int = -1) -> Tuple[str, robomath.Mat]:
         """Gets statistics from all simulated spray guns or a specific spray gun.
 
-        :param int id_spray: spray handle (pointer returned by Spray_Add). Leave to -1 to apply to all simulated sprays.
+        :param id_spray: spray handle (pointer returned by Spray_Add). Leave to -1 to apply to all simulated sprays.
+        :type id_spray: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Spray_Add`, :func:`~robodk.robolink.Robolink.Spray_SetState`, :func:`~robodk.robolink.Robolink.Spray_Clear`
         """
@@ -3776,10 +3857,11 @@ class Robolink:
             self._check_status()
             return info, data
 
-    def Spray_Clear(self, id_spray=-1):
+    def Spray_Clear(self, id_spray: int = -1) -> int:
         """Stops simulating a spray gun. This will clear the simulated particles.
 
-        :param int id_spray: spray handle (pointer returned by Spray_Add). Leave the default -1 to apply to all simulated sprays.
+        :param id_spray: spray handle (pointer returned by Spray_Add). Leave the default -1 to apply to all simulated sprays.
+        :type id_spray: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Spray_Add`, :func:`~robodk.robolink.Robolink.Spray_SetState`, :func:`~robodk.robolink.Robolink.Spray_GetStats`
         """
@@ -3792,7 +3874,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def License(self):
+    def License(self) -> Tuple[str, str]:
         """Get the license string"""
         with self._lock:
             self._check_connection()
@@ -3803,7 +3885,7 @@ class Robolink:
             self._check_status()
             return lic_name, lic_cid
 
-    def Selection(self):
+    def Selection(self) -> List['Item']:
         """Return the list of currently selected items
 
         :return: List of items
@@ -3819,10 +3901,12 @@ class Robolink:
             self._check_status()
             return item_list
 
-    def setSelection(self, list_items=[]):
+    def setSelection(self, list_items: List['Item'] = []):
         """Set the selection in the tree
 
-        :param list list_items: List of items to set as selected"""
+        :param list_items: List of items to set as selected
+        :type list_items: list
+        """
         with self._lock:
             self._require_build(8896)
             self._check_connection()
@@ -3838,10 +3922,11 @@ class Robolink:
 
             self._check_status()
 
-    def MergeItems(self, list_items=[]):
+    def MergeItems(self, list_items: List['Item'] = []) -> 'Item':
         """Merge multiple object items as one. A new object is created and returned. Provided objects are deleted.
 
-        :param list list_items: List of items to set as selected
+        :param list_items: List of items to set as selected
+        :type list_items: list
         :return: New object created
         :rtype: :class:`.Item`"""
         with self._lock:
@@ -3856,7 +3941,7 @@ class Robolink:
             self._check_status()
             return newitem
 
-    def Popup_ISO9283_CubeProgram(self, robot=0):
+    def Popup_ISO9283_CubeProgram(self, robot: 'Item' = 0) -> 'Item':
         """Popup the menu to create the ISO9283 cube program (Utilities-Create Cube ISO)
 
         :return: Created program. The program is invalid.
@@ -3873,13 +3958,17 @@ class Robolink:
             self._check_status()
             return iso_program
 
-    def setInteractiveMode(self, mode_type=SELECT_MOVE, default_ref_flags=DISPLAY_REF_DEFAULT, custom_objects=None, custom_ref_flags=None):
+    def setInteractiveMode(self, mode_type: int = SELECT_MOVE, default_ref_flags: int = DISPLAY_REF_DEFAULT, custom_objects: List['Item'] = None, custom_ref_flags: List[int] = None):
         """Set the interactive mode to define the behavior when navigating and selecting items in RoboDK's 3D view.
 
-        :param int mode_type: The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)
-        :param int default_ref_flags: When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)
-        :param list custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the length of custom_ref_flags must match)
-        :param list custom_ref_flags: Provide a matching list of flags to customize the movement behavior for specific items
+        :param mode_type: The mode type defines what accion occurs when the 3D view is selected (Select object, Pan, Rotate, Zoom, Move Objects, ...)
+        :type mode_type: int
+        :param default_ref_flags: When a movement is specified, we can provide what motion we allow by default with respect to the coordinate system (set apropriate flags)
+        :type default_ref_flags: int
+        :param custom_objects: Provide a list of optional items to customize the move behavior for these specific items (important: the length of custom_ref_flags must match)
+        :type custom_objects: list
+        :param custom_ref_flags: Provide a matching list of flags to customize the movement behavior for specific items
+        :type custom_ref_flags: list
         """
         with self._lock:
             self._check_connection()
@@ -3898,13 +3987,15 @@ class Robolink:
 
             self._check_status()
 
-    def CursorXYZ(self, x_coord=-1, y_coord=-1):
+    def CursorXYZ(self, x_coord: int = -1, y_coord: int = -1) -> Tuple[List[float], 'Item']:
         """Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
         The XYZ coordinates returned are given with respect to the RoboDK station (absolute reference).
         If no coordinates are provided, the current position of the cursor is retrieved.
 
-        :param int x_coord: X coordinate in pixels
-        :param int y_coord: Y coordinate in pixels
+        :param x_coord: X coordinate in pixels
+        :type x_coord: int
+        :param y_coord: Y coordinate in pixels
+        :type y_coord: int
 
         .. code-block:: python
             :caption: Example to retrieve the 3D point under the mouse cursor
@@ -3927,10 +4018,11 @@ class Robolink:
             self._check_status()
             return xyz, item
 
-    def GetPoints(self, feature_type=FEATURE_HOVER_OBJECT_MESH):
+    def GetPoints(self, feature_type: int = FEATURE_HOVER_OBJECT_MESH) -> Tuple['Item', int, int, str, List[List[float]]]:
         """Retrieves the object under the mouse cursor.
 
-        :param int feature_type: set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster).
+        :param feature_type: set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster).
+        :type feature_type: int
 
         :return: Object under the mouse cursor, selected feature, feature id, list of points and description
 
@@ -3980,11 +4072,13 @@ class Robolink:
             self._check_status()
             return object, feature_type, feature_id, feature_name, points
 
-    def PluginLoad(self, plugin_name="", load=1):
+    def PluginLoad(self, plugin_name: str = "", load: int = 1) -> bool:
         """Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
 
-        :param str plugin_name: name of the plugin or path (if it is not in the default directory.
-        :param int load: load the plugin (1/default) or unload (0)
+        :param plugin_name: name of the plugin or path (if it is not in the default directory.
+        :type plugin_name: str
+        :param load: load the plugin (1/default) or unload (0)
+        :type load: int
 
         .. code-block:: python
             :caption: Example to load a plugin
@@ -4021,12 +4115,15 @@ class Robolink:
         #    self._send_int(load)
         #    self._check_status()
 
-    def PluginCommand(self, plugin_name, plugin_command="", value=""):
+    def PluginCommand(self, plugin_name: str, plugin_command: str = "", value: str = "") -> str:
         """Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
 
-        :param str plugin_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
-        :param str command: Specific command handled by your plugin
-        :param str value: Specific value (optional) handled by your plugin
+        :param plugin_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
+        :type plugin_name: str
+        :param command: Specific command handled by your plugin
+        :type command: str
+        :param value: Specific value (optional) handled by your plugin
+        :type value: str
         """
         with self._lock:
             self._check_connection()
@@ -4041,17 +4138,23 @@ class Robolink:
             self._check_status()
             return result
 
-    def EmbedWindow(self, window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500):
+    def EmbedWindow(self, window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500) -> bool:
         """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
 
         Note: This function should be called on a seperate thread. Use the static function: :func:`~robodk.robolink.EmbedWindow` instead.
 
-        :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
-        :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
-        :param int pid: Process ID (optional)
-        :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
-        :param int area_allowed: Areas allowed (default is 15:no constrain)
-        :param int timeout: Timeout to abort attempting to embed the window
+        :param window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
+        :type window_name: str
+        :param docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
+        :type docked_name: str
+        :param pid: Process ID (optional)
+        :type pid: int
+        :param area_add: Set to 1 (right) or 2 (left) (default is 1)
+        :type area_add: int
+        :param area_allowed: Areas allowed (default is 15:no constrain)
+        :type area_allowed: int
+        :param timeout: Timeout to abort attempting to embed the window
+        :type timeout: int
 
         .. seealso:: :func:`~robodk.robolink.EmbedWindow`
 
@@ -4098,7 +4201,7 @@ class Item:
             robot.MoveJ(target)             # Move the robot to the target using the selected reference frame
     """
 
-    def __init__(self, link, ptr_item=0, itemtype=-1):
+    def __init__(self, link: 'Robolink', ptr_item: Union[int, str] = 0, itemtype: int = -1):
 
         self.link = link  # it is recommended to keep the link as a reference and not a duplicate (otherwise it will establish a new connection at every call)
         self.type = itemtype
@@ -4109,26 +4212,26 @@ class Item:
         else:
             self.item = ptr_item
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.Valid():
             return ("RoboDK item (%i) of type %i" % (self.item, int(self.type)))
         else:
             return "RoboDK item (INVALID)"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return int(self.item)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Item') -> bool:
         if other is None:
             return False
         return self.item == other.item
 
-    def __ne__(self, other):
+    def __ne__(self, other: 'Item') -> bool:
         if other is None:
             return True
         return self.item != other.item
 
-    def equals(self, item2):
+    def equals(self, item2: 'Item') -> bool:
         """Returns True if an item is the same as this item :class:`.Item`
 
         :param item2: item to compare
@@ -4136,7 +4239,7 @@ class Item:
         """
         return self.item == item2.item
 
-    def RDK(self):
+    def RDK(self) -> 'Robolink':
         """Returns the RoboDK link Robolink(). It is important to have different links (Robolink) for multithreaded applications.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Finish`
@@ -4144,7 +4247,7 @@ class Item:
         return self.link
 
     #"""Generic item calls"""
-    def Type(self):
+    def Type(self) -> int:
         """Return the type of the item (robot, object, tool, frame, ...).
         Tip: Compare the returned value against ITEM_TYPE_* variables
 
@@ -4159,16 +4262,17 @@ class Item:
             self.link._check_status()
             return itemtype
 
-    def Copy(self, copy_children=True):
+    def Copy(self, copy_children: bool = True):
         """Copy the item to the clipboard (same as Ctrl+C). Use together with Paste() to duplicate items.
 
-        :param bool copy_children: Set to false to prevent copying all items attached to this item.
+        :param copy_children: Set to false to prevent copying all items attached to this item.
+        :type copy_children: bool
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Copy`, :func:`~robodk.robolink.Item.Paste`
         """
         self.link.Copy(self.item, copy_children)
 
-    def Paste(self):
+    def Paste(self) -> 'Item':
         """Paste the copied :class:`.Item` from the clipboard as a child of this item (same as Ctrl+V)
         Returns the new item created (pasted)
 
@@ -4176,25 +4280,27 @@ class Item:
         """
         return self.link.Paste(self.item)
 
-    def AddFile(self, filename):
+    def AddFile(self, filename: str) -> 'Item':
         """Adds an object attached to this object
 
-        :param str filename: file path
+        :param filename: file path
+        :type filename: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddFile`, :func:`~robodk.robolink.Item.Save`
         """
         return self.link.AddFile(filename, self.item)
 
-    def Save(self, filename):
+    def Save(self, filename: str):
         """Save a station or object to a file
 
-        :param str filename: file to save. Use \\*.rdk name for RoboDK stations, \\*.stl file for objects, \\*.robot file for robots, etc.
+        :param filename: file to save. Use \\*.rdk name for RoboDK stations, \\*.stl file for objects, \\*.robot file for robots, etc.
+        :type filename: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddFile`, :func:`~robodk.robolink.Item.AddFile`
         """
         self.link.Save(filename, self.item)
 
-    def Collision(self, item_check):
+    def Collision(self, item_check: 'Item') -> bool:
         """Returns True if this item is in a collision state with another :class:`.Item`, otherwise it returns False.
 
         :param item_check: item to check for collisions
@@ -4204,7 +4310,7 @@ class Item:
         """
         return self.link.Collision(self.item, item_check)
 
-    def IsInside(self, object):
+    def IsInside(self, object: 'Item') -> bool:
         """Return True if the object is inside the provided object
 
         :param object: object to check
@@ -4214,7 +4320,7 @@ class Item:
         """
         return self.link.IsInside(self.item, object)
 
-    def AddGeometry(self, fromitem, pose):
+    def AddGeometry(self, fromitem: 'Item', pose: robomath.Mat):
         """Makes a copy of the geometry fromitem adding it at a given position (pose), relative to this item."""
         with self.link._lock:
             self.link._check_connection()
@@ -4245,12 +4351,13 @@ class Item:
 
             self.link._check_status()
 
-    def Valid(self, check_deleted=False):
+    def Valid(self, check_deleted: bool = False) -> bool:
         """Checks if the item is valid.
         Returns True if the item is valid or False if the item is not valid.
         An invalid item will be returned by an unsuccessful function call (wrong name or because an item was deleted)
 
-        :param bool check_deleted: Check if the item was deleted in RoboDK.
+        :param check_deleted: Check if the item was deleted in RoboDK.
+        :type check_deleted: bool
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Item`
 
@@ -4271,7 +4378,7 @@ class Item:
             return self.Type() >= 0
         return True
 
-    def setParent(self, parent):
+    def setParent(self, parent: 'Item') -> 'Item':
         """Attaches the item to a new parent while maintaining the relative position with its parent.
         The absolute position is changed.
 
@@ -4293,7 +4400,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def setParentStatic(self, parent):
+    def setParentStatic(self, parent: 'Item') -> 'Item':
         """Attaches the item to another parent while maintaining the current absolute position in the station.
         The relationship between this item and its parent is changed to maintain the abosolute position.
 
@@ -4315,13 +4422,16 @@ class Item:
             self.link._check_status()
             return self
 
-    def AttachClosest(self, keyword='', tolerance_mm=-1, list_objects=[]):
+    def AttachClosest(self, keyword: str = '', tolerance_mm: float = -1, list_objects: List['Item'] = []) -> 'Item':
         """Attach the closest object to the tool.
         Returns the item that was attached. Use item.Valid() to check if an object was attached to the tool.
 
-        :param str keyword: Keyword needed for an object to be grabbable (leave empty to consider all objects)
-        :param float tolerance_mm: Distance tolerance to use (at most) to consider grabbing objects. The closest object will be attached. In Tools-Options-General tab you can choose to check object distance between TCP and object shape (instead of the default TCP vs. Object position).
-        :param list list_objects: List of candidate objects to consider to grab (providing a keyword constrains the choices even more)
+        :param keyword: Keyword needed for an object to be grabbable (leave empty to consider all objects)
+        :type keyword: str
+        :param tolerance_mm: Distance tolerance to use (at most) to consider grabbing objects. The closest object will be attached. In Tools-Options-General tab you can choose to check object distance between TCP and object shape (instead of the default TCP vs. Object position).
+        :type tolerance_mm: float
+        :param list_objects: List of candidate objects to consider to grab (providing a keyword constrains the choices even more)
+        :type list_objects: list
 
         .. seealso:: :func:`~robodk.robolink.Item.setParentStatic`
         """
@@ -4340,7 +4450,7 @@ class Item:
             self.link._check_status()
             return item_attached
 
-    def DetachClosest(self, parent=0):
+    def DetachClosest(self, parent: 'Item' = 0) -> 'Item':
         """Detach the closest object attached to the tool (see also: setParentStatic).
 
         :param parent: New parent item to attach, such as a reference frame (optional). If not provided, the items held by the tool will be placed at the station root.
@@ -4358,7 +4468,7 @@ class Item:
             self.link._check_status()
             return item_detached
 
-    def DetachAll(self, parent=0):
+    def DetachAll(self, parent: 'Item' = 0):
         """Detaches any object attached to a tool.
 
         :param parent: New parent item to attach, such as a reference frame (optional). If not provided, the items held by the tool will be placed at the station root.
@@ -4374,7 +4484,7 @@ class Item:
             self.link._send_item(parent)
             self.link._check_status()
 
-    def Parent(self):
+    def Parent(self) -> 'Item':
         """Return the parent item of this item (:class:`.Item`)
 
         .. seealso:: :func:`~robodk.robolink.Item.Childs`
@@ -4388,7 +4498,7 @@ class Item:
             self.link._check_status()
             return parent
 
-    def Childs(self):
+    def Childs(self) -> List['Item']:
         """Return a list of the childs items (list of :class:`.Item`) that are attached to this item.
         Exceptionally, if Childs is called on a program it will return the list of subprograms called by this program.
 
@@ -4407,7 +4517,7 @@ class Item:
             return itemlist
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def Visible(self):
+    def Visible(self) -> bool:
         """Returns 1 if the item is visible, otherwise it returns 0.
 
         .. seealso:: :func:`~robodk.robolink.Item.setVisible`
@@ -4421,11 +4531,13 @@ class Item:
             self.link._check_status()
             return visible
 
-    def setVisible(self, visible, visible_frame=None):
+    def setVisible(self, visible: int, visible_frame: Union[bool, int] = None) -> 'Item':
         """Sets the item visiblity.
 
-        :param bool visible: Set the object as visible (1/True) or invisible (0/False)
-        :param bool visible_frame: Set the object reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items). When the item is a robot, this variable can specify robot visibility using suitable flags (as shown in the example).
+        :param visible: Set the object as visible (1/True) or invisible (0/False)
+        :type visible: bool
+        :param visible_frame: Set the object reference frame as visible (1/True) or invisible (0/False). It is also possible to provide flags to control the visibility of each robot link (only for robot items). When the item is a robot, this variable can specify robot visibility using suitable flags (as shown in the example).
+        :type visible_frame: bool
 
         Note: Use setVisible on a programs to set the \"Display path\" setting.
 
@@ -4501,7 +4613,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def Name(self):
+    def Name(self) -> str:
         """Returns the item name. The name of the item is always displayed in the RoboDK station tree.
         Returns the name as a string (str)
 
@@ -4519,10 +4631,11 @@ class Item:
             self.link._check_status()
             return name
 
-    def setName(self, name):
+    def setName(self, name: str) -> 'Item':
         """Set the name of the item. The name of the item will be displayed in the station tree.
 
-        :param str name: New item name
+        :param name: New item name
+        :type name: str
 
         .. seealso:: :func:`~robodk.robolink.Item.Name`
         """
@@ -4539,11 +4652,13 @@ class Item:
             self.link._check_status()
             return self
 
-    def setValue(self, varname, value=None):
+    def setValue(self, varname: str, value: Union[str, robomath.Mat] = None):
         """Set a specific property name to a given value. This is reserved for internal purposes and future compatibility.
 
-        :param str varname: property name
-        :param str value: property value
+        :param varname: property name
+        :type varname: str
+        :param value: property value
+        :type value: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Command`, :func:`~robodk.robolink.Item.setParam`
 
@@ -4582,7 +4697,7 @@ class Item:
             self.link._check_status()
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    def setPose(self, pose):
+    def setPose(self, pose: robomath.Mat) -> 'Item':
         """Set the position (pose) of the item with respect to its parent (item it is attached to), for example, the position of an object, frame or target with respect to its parent reference frame.
 
         For robot items, setPose will move the robot joints to reach the pose target using the active tool with respect to the active reference. setPose has no effect on tool items, however, it will modify the pose of the related object with respect to its parent (this is only visible when the tool is converted to an object).
@@ -4605,7 +4720,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def Pose(self):
+    def Pose(self) -> robomath.Mat:
         """Returns the relative pose of an object, target or reference frame. For example, the position of an object, target or reference frame with respect to its parent (the item it is attached to in the tree).
         For robot items, this function returns the pose of the active tool with respect to the active reference frame.
 
@@ -4626,7 +4741,7 @@ class Item:
             self.link._check_status()
             return pose
 
-    def PoseWrt(self, item):
+    def PoseWrt(self, item: 'Item') -> robomath.Mat:
         """Returns the relative pose of this Item with respect to an another Item.
 
         :param item: The other Item
@@ -4640,7 +4755,7 @@ class Item:
         from robodk import robolinkutils
         return robolinkutils.getPoseWrt(self, item)
 
-    def setGeometryPose(self, pose, apply=False):
+    def setGeometryPose(self, pose: robomath.Mat, apply: bool = False):
         """Set the position (pose) the object geometry with respect to its own reference frame. This can be applied to tools and objects.
         The pose must be a :class:`~robodk.robomath.Mat`"""
         with self.link._lock:
@@ -4652,7 +4767,7 @@ class Item:
             self.link._send_int(1 if apply else 0)
             self.link._check_status()
 
-    def GeometryPose(self):
+    def GeometryPose(self) -> robomath.Mat:
         """Returns the position (pose as :class:`~robodk.robomath.Mat`) the object geometry with respect to its own reference frame. This procedure works for tools and objects.
         """
         self.link._check_connection()
@@ -4663,7 +4778,7 @@ class Item:
         self.link._check_status()
         return pose
 
-    def setPoseAbs(self, pose):
+    def setPoseAbs(self, pose: robomath.Mat) -> 'Item':
         """Set the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-). For example, the position of an object/frame/target with respect to the origin of the station. If the item is a tool, the joints of the associated robot will be updated to match the absolute pose with the tool (the TCP is not changed). setPoseAbs has no effect on robots.
 
         :param pose: pose of the item with respect to the station reference
@@ -4684,7 +4799,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def PoseAbs(self):
+    def PoseAbs(self) -> robomath.Mat:
         """Return the pose (:class:`~robodk.robomath.Mat`) of this item with respect to the absolute reference frame (also know as the station reference or world coordinate system -WCS-).
         For example, the position of an object/frame/target with respect to the origin of the station.
 
@@ -4728,7 +4843,7 @@ class Item:
             self.link._check_status()
             return pose
 
-    def Recolor(self, tocolor, fromcolor=None, tolerance=None):
+    def Recolor(self, tocolor: List[float], fromcolor: List[float] = None, tolerance: float = None):
         """Changes the color of an :class:`.Item` (object, tool or robot).
         Colors must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
         Alpha (A) defaults to 1 (100% opaque). Set A to 0 to make an object transparent.
@@ -4760,7 +4875,7 @@ class Item:
             self.link._send_array([tolerance] + fromcolor + tocolor)
             self.link._check_status()
 
-    def setColor(self, tocolor):
+    def setColor(self, tocolor: List[float]):
         """Set the color of an object, tool or robot.
         A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
 
@@ -4778,13 +4893,14 @@ class Item:
             self.link._send_array(tocolor)
             self.link._check_status()
 
-    def setColorShape(self, tocolor, shape_id):
+    def setColorShape(self, tocolor: List[float], shape_id: int):
         """Set the color of an object shape. It can also be used for tools.
         A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
 
         :param tocolor: color to set
         :type tocolor: list of float
-        :param int shape_id: ID of the shape: the ID is the order in which the shape was added using AddShape()
+        :param shape_id: ID of the shape: the ID is the order in which the shape was added using AddShape()
+        :type shape_id: int
 
         .. seealso:: :func:`~robodk.robolink.Item.Color`, :func:`~robodk.robolink.Item.Recolor`
         """
@@ -4798,13 +4914,14 @@ class Item:
             self.link._send_array(tocolor)
             self.link._check_status()
 
-    def setColorCurve(self, tocolor, curve_id=-1):
+    def setColorCurve(self, tocolor: List[float], curve_id: int = -1):
         """Set the color of a curve object. It can also be used for tools.
         A color must in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
 
         :param tocolor: color to set
         :type tocolor: list of float
-        :param int curve_id: ID of the curve: the ID is the order in which the shape was added using AddCurve()
+        :param curve_id: ID of the curve: the ID is the order in which the shape was added using AddCurve()
+        :type curve_id: int
 
         .. seealso:: :func:`~robodk.robolink.Item.Color`, :func:`~robodk.robolink.Item.Recolor`
         """
@@ -4818,7 +4935,7 @@ class Item:
             self.link._send_array(tocolor)
             self.link._check_status()
 
-    def Color(self):
+    def Color(self) -> List[float]:
         """Return the color of an :class:`.Item` (object, tool or robot). If the item has multiple colors it returns the first color available).
         A color is in the format COLOR=[R,G,B,(A=1)] where all values range from 0 to 1.
 
@@ -4833,7 +4950,7 @@ class Item:
             self.link._check_status()
             return color.tolist()
 
-    def Scale(self, scale, pre_mult=None, post_mult=None):
+    def Scale(self, scale: Union[float, List[float]], pre_mult: robomath.Mat = None, post_mult: robomath.Mat = None):
         """Apply a scale to an object to make it bigger or smaller.
         The scale can be uniform (if scale is a float value) or per axis (if scale is an array/list [scale_x, scale_y, scale_z]).
 
@@ -4882,35 +4999,35 @@ class Item:
                 return None
 
     #"""Object specific calls"""
-    def AddShape(self, triangle_points):
+    def AddShape(self, triangle_points: Union[List[list], List[robomath.Mat], robomath.Mat]) -> 'Item':
         """Adds a shape to the object provided some triangle coordinates. Triangles must be provided as a list of vertices. A vertex normal can be optionally provided.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddShape`
         """
         return self.link.AddShape(triangle_points, self)
 
-    def AddCurve(self, curve_points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def AddCurve(self, curve_points: Union[List[list], List[robomath.Mat], robomath.Mat], add_to_ref: bool = False, projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> 'Item':
         """Adds a curve provided point coordinates. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddCurve`
         """
         return self.link.AddCurve(curve_points, self, add_to_ref, projection_type)
 
-    def AddPoints(self, points, add_to_ref=False, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def AddPoints(self, points: Union[List[float], robomath.Mat], add_to_ref: bool = False, projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> 'Item':
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddPoints`
         """
         return self.link.AddPoints(points, self, add_to_ref, projection_type)
 
-    def ProjectPoints(self, points, projection_type=PROJECTION_ALONG_NORMAL_RECALC):
+    def ProjectPoints(self, points: Union[List[float], robomath.Mat], projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> Union[List[float], robomath.Mat]:
         """Projects a point or a list of points to the object given its coordinates. The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
 
         .. seealso:: :func:`~robodk.robolink.Robolink.ProjectPoints`
         """
         return self.link.ProjectPoints(points, self, projection_type)
 
-    def SelectedFeature(self):
+    def SelectedFeature(self) -> Tuple[int, int, int]:
         """Retrieve the currently selected feature for this object.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.GetPoints`
@@ -4944,11 +5061,13 @@ class Item:
             self.link._check_status()
             return is_selected, feature_type, feature_id
 
-    def GetPoints(self, feature_type=FEATURE_SURFACE, feature_id=0):
+    def GetPoints(self, feature_type: int = FEATURE_SURFACE, feature_id: int = 0) -> Tuple[List[List[float]], str]:
         """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
 
-        :param int feature_type: set to FEATURE_SURFACE to retrieve the point under the mouse cursor, FEATURE_CURVE to retrieve the list of points for that wire, or FEATURE_POINT to retrieve the list of points.
-        :param int feature_id:  used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
+        :param feature_type: set to FEATURE_SURFACE to retrieve the point under the mouse cursor, FEATURE_CURVE to retrieve the list of points for that wire, or FEATURE_POINT to retrieve the list of points.
+        :type feature_type: int
+        :param feature_id: used only if FEATURE_CURVE is specified, it allows retrieving the appropriate curve id of an object
+        :type feature_id: int
 
         :return: List of points
 
@@ -5031,7 +5150,7 @@ class Item:
             self.link._check_status()
             return list(points), feature_name
 
-    def setMillingParameters(self, ncfile='', part=0, params=''):
+    def setMillingParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.setMachiningParameters` instead.
@@ -5039,12 +5158,13 @@ class Item:
         newprog, status = self.setMachiningParameters(ncfile, part, params)
         return newprog, status
 
-    def setMachiningParameters(self, ncfile='', part=0, params=''):
+    def setMachiningParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
         Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
 
-        :param str ncfile: path to the NC file (G-code or APT) to be loaded (optional)
+        :param ncfile: path to the NC file (G-code or APT) to be loaded (optional)
+        :type ncfile: str
         :param part: object holding curves or points to automatically set up a curve/point follow project (optional)
         :type part: :class:`.Item`
         :param params: Additional options
@@ -5111,7 +5231,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def isJointTarget(self):
+    def isJointTarget(self) -> bool:
         """Returns True if a target is a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.setPose`, :func:`~robodk.robolink.Item.setAsCartesianTarget`, :func:`~robodk.robolink.Item.setAsJointTarget`
@@ -5126,7 +5246,7 @@ class Item:
             return isjt > 0
 
     #"""Robot item calls"""
-    def Joints(self):
+    def Joints(self) -> robomath.Mat:
         """Return the current joint position as a :class:`~robodk.robomath.Mat` of a robot or the joints of a target.
         If the item is a cartesian target, it returns the preferred joints (configuration) to go to that cartesian position.
 
@@ -5153,7 +5273,7 @@ class Item:
             self.link._check_status()
             return joints
 
-    def SimulatorJoints(self):
+    def SimulatorJoints(self) -> List[float]:
         """Return the current joint position of a robot (only from the simulator, never from the real robot).
         This should be used only when RoboDK is connected to the real robot and only the simulated robot needs to be retrieved (for example, if we want to move the robot using a spacemouse).
 
@@ -5170,7 +5290,7 @@ class Item:
             self.link._check_status()
             return joints.list()
 
-    def JointPoses(self, joints=None):
+    def JointPoses(self, joints: robomath.Mat = None) -> List[robomath.Mat]:
         """Returns the positions of the joint links for a provided robot configuration (joints). If no joints are provided it will return the poses for the current robot position.
         Out 1 : 4x4 x n -> array of 4x4 homogeneous matrices. Index 0 is the base frame reference (it never moves when the joints move).
         """
@@ -5192,7 +5312,7 @@ class Item:
             self.link._check_status()
             return poses
 
-    def JointsHome(self):
+    def JointsHome(self) -> robomath.Mat:
         """Return the home joints of a robot.
         The home joints can be manually set in the robot "Parameters" menu of the robot panel in RoboDK, then select "Set home position".
 
@@ -5207,7 +5327,7 @@ class Item:
             self.link._check_status()
             return joints
 
-    def setJointsHome(self, joints):
+    def setJointsHome(self, joints: robomath.Mat):
         """Set the home position of the robot in the joint space.
 
         :param joints: robot joints
@@ -5224,10 +5344,11 @@ class Item:
             self.link._check_status()
             return self
 
-    def ObjectLink(self, link_id=0):
+    def ObjectLink(self, link_id: int = 0) -> 'Item':
         """Returns an item pointer (:class:`.Item`) to a robot link. This is useful to show/hide certain robot links or alter their geometry.
 
-        :param int link_id: link index (0 for the robot base, 1 for the first link, ...)
+        :param link_id: link index (0 for the robot base, 1 for the first link, ...)
+        :type link_id: int
         """
         with self.link._lock:
             self.link._check_connection()
@@ -5239,13 +5360,14 @@ class Item:
             self.link._check_status()
             return item
 
-    def getLink(self, type_linked=ITEM_TYPE_ROBOT):
+    def getLink(self, type_linked: int = ITEM_TYPE_ROBOT) -> 'Item':
         """
         Returns an item pointer (:class:`.Item`) to a robot, object, tool or program that is linked to this item.
         This is useful to retrieve the relationship between programs, robots, tools and other specific projects.
         This returns the first link found.
 
-        :param int type_linked: type of the linked item to retrieve (ITEM_TYPE_*)
+        :param type_linked: type of the linked item to retrieve (ITEM_TYPE_*)
+        :type type_linked: int
         :return: An item that is invalid if no link is found, else the item
         :rtype: :class:`.Item`
 
@@ -5269,11 +5391,12 @@ class Item:
             self.link._check_status()
             return item
 
-    def getLinks(self, type_linked=ITEM_TYPE_ROBOT):
+    def getLinks(self, type_linked: int = ITEM_TYPE_ROBOT) -> List['Item']:
         """
         Get all the items of a specific type for which `~robodk.robolink.Item.getLink` returns this item.
 
-        :param int type_linked: type of the items to check for a link (ITEM_TYPE_*). None means any type.
+        :param type_linked: type of the items to check for a link (ITEM_TYPE_*). None means any type.
+        :type type_linked: int
         :return: A list of items for which `~robodk.robolink.Item.getLink` return the specified item
         :rtype: list of :class:`.Item`
 
@@ -5282,7 +5405,7 @@ class Item:
         from robodk import robolinkutils
         return robolinkutils.getLinks(self, type_linked)
 
-    def setLink(self, item):
+    def setLink(self, item: 'Item'):
         """
         Sets a link between this item and the specified item.
         This is useful to set the relationship between programs, robots, tools and other specific projects.
@@ -5304,7 +5427,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def setJoints(self, joints):
+    def setJoints(self, joints: robomath.Mat):
         """Set the current joints of a robot or a target. If robot joints are set, the robot position will be updated on the screen.
 
         :param joints: robot joints
@@ -5325,7 +5448,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def JointLimits(self):
+    def JointLimits(self) -> Tuple[robomath.Mat, robomath.Mat, float]:
         """Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type).
 
         .. seealso:: :func:`~robodk.robolink.Item.setJointLimits`
@@ -5341,7 +5464,7 @@ class Item:
             self.link._check_status()
             return lim_inf, lim_sup, joints_type
 
-    def setJointLimits(self, lower_limit, upper_limit):
+    def setJointLimits(self, lower_limit: robomath.Mat, upper_limit: robomath.Mat):
         """Update the robot joint limits
 
         :param lower_limit: lower joint limits
@@ -5360,7 +5483,7 @@ class Item:
             self.link._send_array(upper_limit)
             self.link._check_status()
 
-    def setRobot(self, robot=None):
+    def setRobot(self, robot: 'Item' = None):
         """Assigns a specific robot to a program, target or robot machining project.
 
         :param robot: robot to link
@@ -5384,7 +5507,7 @@ class Item:
                 self.link._check_status()
                 return self
 
-    def setPoseFrame(self, frame):
+    def setPoseFrame(self, frame: Union['Item', robomath.Mat]):
         """Sets the reference frame of a robot (user frame). The frame can be an item or a 4x4 Matrix
 
         :param frame: robot reference frame as an item, or a pose
@@ -5406,7 +5529,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def setPoseTool(self, tool):
+    def setPoseTool(self, tool: Union['Item', robomath.Mat]):
         """Set the robot tool pose (TCP) with respect to the robot flange. The tool pose can be an item or a 4x4 Matrix
 
         :param tool: robot tool as an item, or a pose
@@ -5427,7 +5550,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def PoseTool(self):
+    def PoseTool(self) -> robomath.Mat:
         """Returns the pose (:class:`~robodk.robomath.Mat`) of the robot tool (TCP) with respect to the robot flange
 
         .. seealso:: :func:`~robodk.robolink.Item.setPoseTool`, :func:`~robodk.robolink.Item.Pose`, :func:`~robodk.robolink.Item.PoseFrame`
@@ -5441,7 +5564,7 @@ class Item:
             self.link._check_status()
             return pose
 
-    def PoseFrame(self):
+    def PoseFrame(self) -> robomath.Mat:
         """Returns the pose (:class:`~robodk.robomath.Mat`) of the robot reference frame with respect to the robot base
 
         .. seealso:: :func:`~robodk.robolink.Item.setPoseFrame`, :func:`~robodk.robolink.Item.Pose`, :func:`~robodk.robolink.Item.PoseTool`
@@ -5456,7 +5579,7 @@ class Item:
             return pose
 
     # Obsolete methods -----------------------
-    def Htool(self):
+    def Htool(self) -> robomath.Mat:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead.
@@ -5465,7 +5588,7 @@ class Item:
         """
         return self.PoseTool()
 
-    def Tool(self):
+    def Tool(self) -> robomath.Mat:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.PoseTool` instead.
@@ -5474,7 +5597,7 @@ class Item:
         """
         return self.PoseTool()
 
-    def Frame(self):
+    def Frame(self) -> robomath.Mat:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.PoseFrame` instead.
@@ -5483,7 +5606,7 @@ class Item:
         """
         return self.PoseFrame()
 
-    def setHtool(self, tool):
+    def setHtool(self, tool: Union['Item', robomath.Mat]):
         """
         .. deprecated:: 4.0
             Obsolete. :func:`~robodk.robolink.Item.setPoseTool` instead.
@@ -5492,7 +5615,7 @@ class Item:
         """
         self.setPoseTool(tool)
 
-    def setTool(self, tool):
+    def setTool(self, tool: Union['Item', robomath.Mat]):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.setPoseTool` instead.
@@ -5501,7 +5624,7 @@ class Item:
         """
         self.setPoseTool(tool)
 
-    def setFrame(self, frame):
+    def setFrame(self, frame: Union['Item', robomath.Mat]):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.setPoseFrame` instead.
@@ -5512,12 +5635,13 @@ class Item:
 
     # -----------------------
 
-    def AddTool(self, tool_pose, tool_name='New TCP'):
+    def AddTool(self, tool_pose: robomath.Mat, tool_name: str = 'New TCP') -> 'Item':
         """Add a tool to a robot given the tool pose and the tool name. It returns the tool as an :class:`.Item`.
 
         :param tool_pose: Tool pose (TCP) of the tool with respect to the robot flange
         :type tool_pose: :class:`~robodk.robomath.Mat`
-        :param str tool_name: name of the tool
+        :param tool_name: name of the tool
+        :type tool_name: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddFrame`, :func:`~robodk.robolink.Item.PoseTool`, :func:`~robodk.robolink.Item.setPoseTool`, :func:`~robodk.robolink.Robolink.AddFile`
         """
@@ -5532,7 +5656,7 @@ class Item:
             self.link._check_status()
             return newtool
 
-    def SolveFK(self, joints, tool=None, reference=None):
+    def SolveFK(self, joints: Union[robomath.Mat, List[float]], tool: 'Item' = None, reference: 'Item' = None) -> robomath.Mat:
         """Calculate the forward kinematics of the robot for the provided joints.
         Returns the pose of the robot flange with respect to the robot base reference (:class:`~robodk.robomath.Mat`).
 
@@ -5597,7 +5721,7 @@ class Item:
                 pose = robomath.invH(reference) * pose
             return pose
 
-    def JointsConfig(self, joints):
+    def JointsConfig(self, joints: Union[robomath.Mat, List[float]]) -> robomath.Mat:
         """Returns the robot configuration state for a set of robot joints.
         The configuration state is defined as: [REAR, LOWERARM, FLIP, turns]. The turns are reserved for future use.
 
@@ -5642,7 +5766,7 @@ class Item:
             self.link._check_status()
             return config
 
-    def SolveIK(self, pose, joints_approx=None, tool=None, reference=None):
+    def SolveIK(self, pose: robomath.Mat, joints_approx: Union[robomath.Mat, List[float]] = None, tool: robomath.Mat = None, reference: robomath.Mat = None) -> robomath.Mat:
         """Calculates the inverse kinematics for a given specified pose. The pose must be robot flange with respect to the robot base unless you provide the tool and/or reference.
         SolveIK returns the joints solution as a Mat object (size 1xnDOFs). Use list() on a Mat to convert to a list. If there is no solution it returns an array of size 0.
         If there is no solution it returns an empty matrix.
@@ -5683,7 +5807,7 @@ class Item:
             self.link._check_status()
             return joints
 
-    def SolveIK_All(self, pose, tool=None, reference=None):
+    def SolveIK_All(self, pose: robomath.Mat, tool: robomath.Mat = None, reference: robomath.Mat = None) -> robomath.Mat:
         """Calculates the inverse kinematics for the specified robot and pose. The function returns all available joint solutions as a 2D matrix.
         Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedom (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
@@ -5706,7 +5830,7 @@ class Item:
             self.link._check_status()
             return joints_list
 
-    def FilterTarget(self, pose, joints_approx=None):
+    def FilterTarget(self, pose: robomath.Mat, joints_approx: Union[robomath.Mat, List[float]] = None) -> Tuple[robomath.Mat, robomath.Mat]:
         """Filters a target to improve accuracy. This option requires a calibrated robot.
         :param pose: pose of the robot TCP with respect to the robot reference frame
         :type pose: :class:`~robodk.robomath.Mat`
@@ -5726,7 +5850,7 @@ class Item:
             self.link._check_status()
             return pose_filtered, joints_filtered
 
-    def Connect(self, robot_ip='', blocking=True):
+    def Connect(self, robot_ip: str = '', blocking: bool = True) -> int:
         """Connect to a real robot and wait for a connection to succeed. Returns 1 if connection succeeded, or 0 if it failed.
 
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -5745,7 +5869,7 @@ class Item:
             self.link._check_status()
             return status
 
-    def ConnectSafe(self, robot_ip='', max_attempts=5, wait_connection=4, callback_abort=None):
+    def ConnectSafe(self, robot_ip: str = '', max_attempts: int = 5, wait_connection: float = 4, callback_abort=None) -> int:
         """Connect to a real robot and wait for a connection to succeed. Returns the connected state returned by ConnectedState() (0 if connection succeeded and the robot is ready).
 
         :param robot_ip: Robot IP. Leave blank to use the IP selected in the connection panel of the robot.
@@ -5791,7 +5915,7 @@ class Item:
                 return con_status
 
             time.sleep(refresh_rate)
-            self.Connect()
+            self.Connect(robot_ip)
 
             if robomath.toc() - timer1 > wait_connection:
                 timer1 = robomath.toc()
@@ -5807,7 +5931,7 @@ class Item:
 
         return con_status
 
-    def ConnectionParams(self):
+    def ConnectionParams(self) -> Tuple[str, int, str, str, str]:
         """Returns the robot connection parameters
         :return: [robotIP (str), port (int), remote_path (str), FTP_user (str), FTP_pass (str)]
 
@@ -5826,7 +5950,7 @@ class Item:
             self.link._check_status()
             return robot_ip, port, remote_path, ftp_user, ftp_pass
 
-    def setConnectionParams(self, robot_ip, port, remote_path, ftp_user, ftp_pass):
+    def setConnectionParams(self, robot_ip: str, port: int, remote_path: str, ftp_user: str, ftp_pass: str):
         """Set the robot connection parameters
 
         :param robot_ip: robot IP
@@ -5855,7 +5979,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def ConnectedState(self):
+    def ConnectedState(self) -> Tuple[int, str]:
         """Check connection status with a real robobt
         Out 1 : status code -> (int) ROBOTCOM_READY if the robot is ready to move, otherwise, status message will provide more information about the issue
         Out 2 : status message -> Message description of the robot status
@@ -5893,7 +6017,7 @@ class Item:
             self.link._check_status()
             return robotcom_status, status_msg
 
-    def Disconnect(self):
+    def Disconnect(self) -> int:
         """Disconnect from a real robot (when the robot driver is used)
         Returns 1 if it disconnected successfully, 0 if it failed. It can fail if it was previously disconnected manually for example.
 
@@ -5908,7 +6032,7 @@ class Item:
             self.link._check_status()
             return status
 
-    def MoveJ(self, target, blocking=True):
+    def MoveJ(self, target: Union['Item', List[float], robomath.Mat], blocking: bool = True):
         """Move a robot to a specific target ("Move Joint" mode). This function waits (blocks) until the robot finishes its movements.
         If this is used with a program item, a new joint movement instruction will be added to the program.
         Important note when adding new movement instructions to programs: only target items supported, not poses.
@@ -5928,7 +6052,7 @@ class Item:
 
         self.link._moveX(target, self, MOVE_TYPE_JOINT, blocking)
 
-    def MoveL(self, target, blocking=True):
+    def MoveL(self, target: Union['Item', List[float], robomath.Mat], blocking: bool = True):
         """Moves a robot to a specific target ("Move Linear" mode). This function waits (blocks) until the robot finishes its movements. This function can also be called on Programs and a new movement instruction will be added at the end of the program.
         If this is used with a program item, a new linear movement instruction will be added to the program.
         Important note when adding new movement instructions to programs: only target items supported, not poses.
@@ -5948,7 +6072,7 @@ class Item:
 
         self.link._moveX(target, self, MOVE_TYPE_LINEAR, blocking)
 
-    def SearchL(self, target, blocking=True):
+    def SearchL(self, target: Union['Item', List[float], robomath.Mat], blocking: bool = True) -> List[float]:
         """Moves a robot to a specific target and stops when a specific input switch is detected ("Search Linear" mode). This function waits (blocks) until the robot finishes its movements.
 
         :param target: Target to move to. It can be the robot joints (Nx1 or 1xN), the pose (4x4) or a target (item pointer)
@@ -6004,7 +6128,7 @@ class Item:
         self.link._moveX(target, self, MOVE_TYPE_LINEARSEARCH, blocking)
         return self.SimulatorJoints()
 
-    def MoveC(self, target1, target2, blocking=True):
+    def MoveC(self, target1: Union['Item', List[float], robomath.Mat], target2: Union['Item', List[float], robomath.Mat], blocking: bool = True):
         """Move a robot to a specific target ("Move Circular" mode). By default, this procedure waits (blocks) until the robot finishes the movement.
 
         :param target1: pose along the cicle movement
@@ -6024,14 +6148,15 @@ class Item:
         else:
             self.link.MoveC(target1, target2, self, blocking)
 
-    def MoveJ_Test(self, j1, j2, minstep_deg=-1):
+    def MoveJ_Test(self, j1: Union[List[float], robomath.Mat], j2: Union[List[float], robomath.Mat], minstep_deg: float = -1) -> int:
         """Checks if a joint movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.
 
         :param j1: start joints
         :type j1: list of float
         :param j2: end joints
         :type j2: list of float
-        :param float minstep_deg: joint step in degrees
+        :param minstep_deg: joint step in degrees
+        :type minstep_deg: float
         :return: returns 0 if the movement is free of collision or any other issues. Otherwise it returns the number of pairs of objects that collided if there was a collision.
         :rtype: int
 
@@ -6051,7 +6176,7 @@ class Item:
             self.link._check_status()
             return collision
 
-    def MoveJ_Test_Blend(self, j1, j2, j3, blend_deg=5, minstep_deg=-1):
+    def MoveJ_Test_Blend(self, j1: Union[List[float], robomath.Mat], j2: Union[List[float], robomath.Mat], j3: Union[List[float], robomath.Mat], blend_deg: float = 5, minstep_deg: float = -1) -> int:
         """Checks if a joint movement with blending is feasible and free of collisions (if collision checking is activated). The robot will move to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination joints if a collision is not detected.
 
         :param j1: start joints
@@ -6085,14 +6210,15 @@ class Item:
             self.link._check_status()
             return collision
 
-    def MoveL_Test(self, j1, pose, minstep_mm=-1):
+    def MoveL_Test(self, j1: Union[List[float], robomath.Mat], pose: robomath.Mat, minstep_mm: float = -1) -> int:
         """Checks if a linear movement is feasible and free of collisions (if collision checking is activated). The robot will moved to the collision point if a collision is detected (use Joints to collect the collision joints) or it will be placed at the destination pose if a collision is not detected.
 
         :param j1: start joints
         :type j1: list of float
         :param pose: end pose (position of the active tool with respect to the active reference frame)
         :type pose: :class:`~robodk.robomath.Mat`
-        :param float minstep_mm: linear step in mm
+        :param minstep_mm: linear step in mm
+        :type minstep_mm: float
         :return: returns 0 if the movement is free of collision or any other issues.
         :rtype: int
 
@@ -6114,13 +6240,17 @@ class Item:
             self.link._check_status()
             return collision
 
-    def setSpeed(self, speed_linear, speed_joints=-1, accel_linear=-1, accel_joints=-1):
+    def setSpeed(self, speed_linear: float, speed_joints: float = -1, accel_linear: float = -1, accel_joints: float = -1):
         """Sets the linear speed of a robot. Additional arguments can be provided to set linear acceleration or joint speed and acceleration.
 
-        :param float speed_linear: linear speed -> speed in mm/s (-1 = no change)
-        :param float speed_joints: joint speed (optional) -> speed in deg/s (-1 = no change)
-        :param float accel_linear: linear acceleration (optional) -> acceleration in mm/s^2 (-1 = no change)
-        :param float accel_joints: joint acceleration (optional) -> acceleration in deg/s^2 (-1 = no change)
+        :param speed_linear: linear speed -> speed in mm/s (-1 = no change)
+        :type speed_linear: float
+        :param speed_joints: joint speed (optional) -> speed in deg/s (-1 = no change)
+        :type speed_joints: float
+        :param accel_linear: linear acceleration (optional) -> acceleration in mm/s^2 (-1 = no change)
+        :type accel_linear: float
+        :param accel_joints: joint acceleration (optional) -> acceleration in deg/s^2 (-1 = no change)
+        :type accel_joints: float
 
         .. seealso:: :func:`~robodk.robolink.Item.setAcceleration`, :func:`~robodk.robolink.Item.setSpeedJoints`, :func:`~robodk.robolink.Item.setAccelerationJoints`
         """
@@ -6133,41 +6263,45 @@ class Item:
             self.link._check_status()
             return self
 
-    def setAcceleration(self, accel_linear):
+    def setAcceleration(self, accel_linear: float):
         """Sets the linear acceleration of a robot in mm/s2
 
-        :param float accel_linear: acceleration in mm/s2
+        :param accel_linear: acceleration in mm/s2
+        :type accel_linear: float
 
         .. seealso:: :func:`~robodk.robolink.Item.setSpeed`, :func:`~robodk.robolink.Item.setSpeedJoints`, :func:`~robodk.robolink.Item.setAccelerationJoints`
         """
         self.setSpeed(-1, -1, accel_linear, -1)
         return self
 
-    def setSpeedJoints(self, speed_joints):
+    def setSpeedJoints(self, speed_joints: float):
         """Sets the joint speed of a robot in deg/s for rotary joints and mm/s for linear joints
 
-        :param float speed_joints: speed in deg/s for rotary joints and mm/s for linear joints
+        :param speed_joints: speed in deg/s for rotary joints and mm/s for linear joints
+        :type speed_joints: float
 
         .. seealso:: :func:`~robodk.robolink.Item.setSpeed`, :func:`~robodk.robolink.Item.setAcceleration`, :func:`~robodk.robolink.Item.setAccelerationJoints`
         """
         self.setSpeed(-1, speed_joints, -1, -1)
         return self
 
-    def setAccelerationJoints(self, accel_joints):
+    def setAccelerationJoints(self, accel_joints: float):
         """Sets the joint acceleration of a robot
 
-        :param float accel_joints: acceleration in deg/s2 for rotary joints and mm/s2 for linear joints
+        :param accel_joints: acceleration in deg/s2 for rotary joints and mm/s2 for linear joints
+        :type accel_joints: float
 
         .. seealso:: :func:`~robodk.robolink.Item.setSpeed`, :func:`~robodk.robolink.Item.setAcceleration`, :func:`~robodk.robolink.Item.setSpeedJoints`
         """
         self.setSpeed(-1, -1, -1, accel_joints)
         return self
 
-    def setRounding(self, rounding_mm):
+    def setRounding(self, rounding_mm: float):
         """Sets the rounding accuracy to smooth the edges of corners. In general, it is recommended to allow a small approximation near the corners to maintain a constant speed.
         Setting a rounding values greater than 0 helps avoiding jerky movements caused by constant acceleration and decelerations.
 
-        :param float rounding_mm: rounding accuracy in mm. Set to -1 (default) for best accuracy and to have point to point movements (might have a jerky behavior)
+        :param rounding_mm: rounding accuracy in mm. Set to -1 (default) for best accuracy and to have point to point movements (might have a jerky behavior)
+        :type rounding_mm: float
 
         This rounding parameter is also known as ZoneData (ABB), CNT (Fanuc), C_DIS/ADVANCE (KUKA), cornering (Mecademic) or blending (Universal Robots)
 
@@ -6182,14 +6316,14 @@ class Item:
             self.link._check_status()
             return self
 
-    def setZoneData(self, zonedata):
+    def setZoneData(self, zonedata: float):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.setRounding` instead.
         """
         return self.setRounding(zonedata)
 
-    def ShowSequence(self, matrix, display_type=SEQUENCE_DISPLAY_DEFAULT, timeout=-1):
+    def ShowSequence(self, matrix: Union[robomath.Mat, List[robomath.Mat]], display_type: int = SEQUENCE_DISPLAY_DEFAULT, timeout: float = -1):
         """Displays a sequence of joints or poses in RoboDK.
 
         :param matrix: list of joints as a matrix or as a list of joint arrays, a list of poses, or a sequence of instructions (same sequence that was supported with RoKiSim).
@@ -6270,7 +6404,7 @@ class Item:
                 self.link._send_item(self)
                 self.link._check_status()
 
-    def Busy(self):
+    def Busy(self) -> int:
         """Checks if a robot or program is currently running (busy or moving).
         Returns a busy status (1=moving, 0=stopped)
 
@@ -6312,10 +6446,11 @@ class Item:
             self.link._send_item(self)
             self.link._check_status()
 
-    def WaitMove(self, timeout=360000):
+    def WaitMove(self, timeout: float = 360000):
         """Waits (blocks) until the robot finishes its movement.
 
-        :param float timeout: Maximum time to wait for robot to finish its movement (in seconds)
+        :param timeout: Maximum time to wait for robot to finish its movement (in seconds)
+        :type timeout: float
 
         .. seealso:: :func:`~robodk.robolink.Item.Busy`, :func:`~robodk.robolink.Item.MoveJ`
         """
@@ -6339,23 +6474,27 @@ class Item:
         while self.Busy():
             time.sleep(0.05)
 
-    def ProgramStart(self, programname, folder='', postprocessor=''):
+    def ProgramStart(self, programname: str, folder: str = '', postprocessor: str = '') -> int:
         """Defines the name of the program when a program must be generated.
         It is possible to specify the name of the post processor as well as the folder to save the program.
         This method must be called before any program output is generated (before any robot movement or other program instructions).
 
-        :param str progname: name of the program
-        :param str folder: folder to save the program, leave empty to use the default program folder
-        :param str postprocessor: name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")
+        :param progname: name of the program
+        :type progname: str
+        :param folder: folder to save the program, leave empty to use the default program folder
+        :type folder: str
+        :param postprocessor: name of the post processor (for a post processor in C:/RoboDK/Posts/Fanuc_post.py it is possible to provide "Fanuc_post.py" or simply "Fanuc_post")
+        :type postprocessor: str
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setRunMode`
         """
         return self.link.ProgramStart(programname, folder, postprocessor, self)
 
-    def setAccuracyActive(self, accurate=1):
+    def setAccuracyActive(self, accurate: int = 1):
         """Sets the accuracy of the robot active or inactive. A robot must have been calibrated to properly use this option.
 
-        :param int accurate: set to 1 to use the accurate model or 0 to use the nominal model
+        :param accurate: set to 1 to use the accurate model or 0 to use the nominal model
+        :type accurate: int
 
         .. seealso:: :func:`~robodk.robolink.Item.AccuracyActive`
         """
@@ -6367,7 +6506,7 @@ class Item:
             self.link._send_int(accurate)
             self.link._check_status()
 
-    def AccuracyActive(self):
+    def AccuracyActive(self) -> bool:
         """Returns True if the accurate kinematics are being used. Accurate kinematics are available after a robot calibration.
 
         .. seealso:: :func:`~robodk.robolink.Item.setAccuracyActive`
@@ -6381,11 +6520,13 @@ class Item:
             self.link._check_status()
             return isaccurate > 0
 
-    def setParamRobotTool(self, tool_mass=5, tool_cog=None):
+    def setParamRobotTool(self, tool_mass: float = 5, tool_cog: List[float] = None):
         """Sets the tool mass and center of gravity. This is only used with accurate robots to improve accuracy.
 
-        :param float tool_mass: tool weigth in Kg
-        :param list tool_cog: tool center of gravity as [x,y,z] with respect to the robot flange
+        :param tool_mass: tool weigth in Kg
+        :type tool_mass: float
+        :param tool_cog: tool center of gravity as [x,y,z] with respect to the robot flange
+        :type tool_cog: list
 
         """
         with self.link._lock:
@@ -6400,11 +6541,12 @@ class Item:
             self.link._send_array(values)
             self.link._check_status()
 
-    def FilterProgram(self, filestr):
+    def FilterProgram(self, filestr: str) -> Tuple[int, str]:
         """Filter a program file to improve accuracy for a specific robot. The robot must have been previously calibrated.
         It returns 0 if the filter succeeded, or a negative value if there are filtering problems. It also returns a summary of the filtering.
 
-        :param str filestr: File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC).
+        :param filestr: File path of the program. Formats supported include: JBI (Motoman), SRC (KUKA), MOD (ABB), PRG (ABB), LS (FANUC).
+        :type filestr: str
         """
         with self.link._lock:
             self.link._check_connection()
@@ -6418,10 +6560,11 @@ class Item:
             return filter_status, filter_msg
 
     #"""Program item calls"""
-    def MakeProgram(self, folder_path='', run_mode=RUNMODE_MAKE_ROBOTPROG):
+    def MakeProgram(self, folder_path: str = '', run_mode: int = RUNMODE_MAKE_ROBOTPROG) -> Tuple[bool, str, bool]:
         """Generate the program file. Returns True if the program was successfully generated.
 
-        :param str pathstr: Folder to save the program (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
+        :param pathstr: Folder to save the program (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
+        :type pathstr: str
         :param run_mode: RUNMODE_MAKE_ROBOTPROG to generate the program file. Alternatively, Use RUNMODE_MAKE_ROBOTPROG_AND_UPLOAD or RUNMODE_MAKE_ROBOTPROG_AND_START to transfer the program through FTP and execute the program.
         :return: [success (True or False), log (str), transfer_succeeded (True/False)]
 
@@ -6454,10 +6597,11 @@ class Item:
 
             return success, prog_log_str, transfer_ok
 
-    def setRunType(self, program_run_type):
+    def setRunType(self, program_run_type: int):
         """Set the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
 
-        :param int program_run_type: Use "PROGRAM_RUN_ON_SIMULATOR" to set the program to run on the simulator only or "PROGRAM_RUN_ON_ROBOT" to force the program to run on the robot
+        :param program_run_type: Use "PROGRAM_RUN_ON_SIMULATOR" to set the program to run on the simulator only or "PROGRAM_RUN_ON_ROBOT" to force the program to run on the robot
+        :type program_run_type: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setRunMode` :func:`~robodk.robolink.Item.RunType`
         """
@@ -6469,7 +6613,7 @@ class Item:
             self.link._send_int(program_run_type)
             self.link._check_status()
 
-    def RunType(self):
+    def RunType(self) -> int:
         """Get the Run Type of a program to specify if a program made using the GUI will be run in simulation mode or on the real robot ("Run on robot" option).
 
         .. seealso:: :func:`~robodk.robolink.Robolink.setRunMode` :func:`~robodk.robolink.Item.setRunType`
@@ -6483,14 +6627,14 @@ class Item:
             self.link._check_status()
             return program_run_type
 
-    def RunProgram(self, prog_parameters=None):
+    def RunProgram(self, prog_parameters: List[str] = None) -> int:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.RunCode` instead. RunProgram is available for backwards compatibility.
         """
         return self.RunCode(prog_parameters)
 
-    def RunCode(self, prog_parameters=None):
+    def RunCode(self, prog_parameters: List[str] = None) -> int:
         """Run a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
         This is a non-blocking call. Use program.Busy() to check if the program execution finished, or program.WaitFinished() to wait until the program finishes.
 
@@ -6526,7 +6670,7 @@ class Item:
             self.link._check_status()
             return prog_status
 
-    def RunCodeCustom(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
+    def RunCodeCustom(self, code: str, run_type: int = INSTRUCTION_CALL_PROGRAM) -> int:
         """
         .. deprecated:: 4.0
             Obsolete, use RunInstruction instead.
@@ -6537,11 +6681,13 @@ class Item:
         """
         return self.RunInstruction(code, run_type)
 
-    def RunInstruction(self, code, run_type=INSTRUCTION_CALL_PROGRAM):
+    def RunInstruction(self, code: str, run_type: int = INSTRUCTION_CALL_PROGRAM) -> int:
         """Adds a program call, code, message or comment to the program. Returns 0 if succeeded.
 
-        :param str code: The code to insert, program to run, or comment to add.
-        :param int run_type: Use INSTRUCTION_* variable to specify if the code is a program call or just a raw code insert. For example, to add a line of customized code use:
+        :param code: The code to insert, program to run, or comment to add.
+        :type code: str
+        :param run_type: Use INSTRUCTION_* variable to specify if the code is a program call or just a raw code insert. For example, to add a line of customized code use:
+        :type run_type: int
 
         .. code-block:: python
             :caption: Available Instruction Types
@@ -6575,10 +6721,11 @@ class Item:
             self.link._check_status()
             return prog_status
 
-    def Pause(self, time_ms=-1):
+    def Pause(self, time_ms: float = -1):
         """Pause instruction for a robot or insert a pause instruction to a program (when generating code offline -offline programming- or when connected to the robot -online programming-).
 
-        :param float time_ms: time in miliseconds. Do not provide a value (leave the default -1) to pause until the user desires to resume the execution of a program.
+        :param time_ms: time in miliseconds. Do not provide a value (leave the default -1) to pause until the user desires to resume the execution of a program.
+        :type time_ms: float
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`
         """
@@ -6590,7 +6737,7 @@ class Item:
             self.link._send_int(time_ms * 1000.0)
             self.link._check_status()
 
-    def setDO(self, io_var, io_value):
+    def setDO(self, io_var: Union[int, str], io_value: Union[int, float, str]):
         """Set a Digital Output (DO). This command can also be used to set any generic variables to a desired value.
 
         :param io_var: Digital Output (string or number)
@@ -6609,7 +6756,7 @@ class Item:
             self.link._send_line(str(io_value))
             self.link._check_status()
 
-    def setAO(self, io_var, io_value):
+    def setAO(self, io_var: Union[int, str], io_value: Union[int, float, str]):
         """Set an Analog Output (AO).
 
         :param io_var: Analog Output (string or number)
@@ -6628,7 +6775,7 @@ class Item:
             self.link._send_line(str(io_value))
             self.link._check_status()
 
-    def getDI(self, io_var):
+    def getDI(self, io_var: Union[int, str]) -> str:
         """Get a Digital Input (DI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (1=True, 0=False). This function returns an empty string if the script is not executed on the robot.
 
         :param io_var: Digital Input (string or number)
@@ -6646,7 +6793,7 @@ class Item:
             self.link._check_status()
             return io_value
 
-    def getAI(self, io_var):
+    def getAI(self, io_var: Union[int, str]) -> str:
         """Get an Analog Input (AI). This function is only useful when connected to a real robot using the robot driver. It returns a string related to the state of the Digital Input (0-1 or other range depending on the robot driver). This function returns an empty string if the script is not executed on the robot.
 
         :param io_var: Analog Input (string or number)
@@ -6664,7 +6811,7 @@ class Item:
             self.link._check_status()
             return io_value
 
-    def waitDI(self, io_var, io_value, timeout_ms=-1):
+    def waitDI(self, io_var: Union[int, str], io_value: Union[int, float, str], timeout_ms: float = -1):
         """Wait for an digital input io_var to attain a given value io_value. Optionally, a timeout can be provided.
 
         :param io_var: digital input (string or number)
@@ -6688,7 +6835,7 @@ class Item:
             self.link._check_status()
             self.link.COM.settimeout(self.link.TIMEOUT)
 
-    def customInstruction(self, name, path_run, path_icon="", blocking=1, cmd_run_on_robot=""):
+    def customInstruction(self, name: str, path_run: str, path_icon: str = "", blocking: int = 1, cmd_run_on_robot: str = ""):
         """Add a custom instruction. This instruction will execute a Python file or an executable file.
 
         :param name: Name of the instruction
@@ -6716,7 +6863,7 @@ class Item:
             self.link._send_int(blocking)
             self.link._check_status()
 
-    def addMoveJ(self, itemtarget):
+    def addMoveJ(self, itemtarget: 'Item'):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.MoveJ` instead.
@@ -6737,7 +6884,7 @@ class Item:
             self.link._send_int(1)
             self.link._check_status()
 
-    def addMoveL(self, itemtarget):
+    def addMoveL(self, itemtarget: 'Item'):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.MoveL` instead.
@@ -6758,7 +6905,7 @@ class Item:
             self.link._send_int(2)
             self.link._check_status()
 
-    def addMoveSearch(self, itemtarget):
+    def addMoveSearch(self, itemtarget: 'Item'):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.SearchL` instead.
@@ -6779,7 +6926,7 @@ class Item:
             self.link._send_int(5)
             self.link._check_status()
 
-    def addMoveC(self, itemtarget1, itemtarget2):
+    def addMoveC(self, itemtarget1: 'Item', itemtarget2: 'Item'):
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.MoveC` instead.
@@ -6800,7 +6947,7 @@ class Item:
             self.link._send_item(self)
             self.link._check_status()
 
-    def ShowInstructions(self, show=True):
+    def ShowInstructions(self, show: bool = True):
         """Show or hide instruction items of a program in the RoboDK tree
 
         :param show: Set to True to show the instruction nodes, otherwise, set to False
@@ -6816,7 +6963,7 @@ class Item:
             self.link._send_int(1 if show else 0)
             self.link._check_status()
 
-    def ShowTargets(self, show=True):
+    def ShowTargets(self, show: bool = True):
         """Show or hide targets of a program in the RoboDK tree
 
         :param show: Set to False to remove the target item (the target is not deleted as it remains inside the program), otherwise, set to True to show the targets
@@ -6832,7 +6979,7 @@ class Item:
             self.link._send_int(1 if show else 0)
             self.link._check_status()
 
-    def InstructionCount(self):
+    def InstructionCount(self) -> int:
         """Return the number of instructions of a program.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`
@@ -6846,7 +6993,7 @@ class Item:
             self.link._check_status()
             return nins
 
-    def InstructionSelect(self, ins_id=-1):
+    def InstructionSelect(self, ins_id: int = -1) -> int:
         """Select an instruction in the program as a reference to add new instructions. New instructions will be added after the selected instruction.
         If no instruction ID is specified, the active instruction will be selected and returned (if the program is running), otherwise it returns -1.
 
@@ -6862,7 +7009,7 @@ class Item:
             self.link._check_status()
             return ins_id
 
-    def InstructionDelete(self, ins_id=0):
+    def InstructionDelete(self, ins_id: int = 0) -> int:
         """Delete an instruction of a program
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddProgram`
@@ -6877,7 +7024,7 @@ class Item:
             self.link._check_status()
             return success
 
-    def Instruction(self, ins_id=-1):
+    def Instruction(self, ins_id: int = -1) -> Tuple[str, int, int, int, robomath.Mat, robomath.Mat]:
         """Return the current program instruction or the instruction given the instruction id (if provided).
         It returns the following information about an instruction:
 
@@ -6913,7 +7060,7 @@ class Item:
             self.link._check_status()
             return name, instype, movetype, isjointtarget, target, joints
 
-    def setInstruction(self, ins_id, name, instype, movetype, isjointtarget, target, joints):
+    def setInstruction(self, ins_id: int, name: str, instype: int, movetype: int, isjointtarget: int, target: robomath.Mat, joints: robomath.Mat):
         """Update a program instruction.
 
         :param ins_id: index of the instruction (0 for the first instruction, 1 for the second, and so on)
@@ -6948,14 +7095,18 @@ class Item:
                 self.link._send_array(joints)
             self.link._check_status()
 
-    def Update(self, check_collisions=COLLISION_OFF, timeout_sec=3600, mm_step=-1, deg_step=-1):
+    def Update(self, check_collisions: int = COLLISION_OFF, timeout_sec: float = 3600, mm_step: float = -1, deg_step: float = -1) -> Tuple[float, float, float, float, str]:
         """Updates a program and returns the estimated time and the number of valid instructions.
         An update can also be applied to a robot machining project. The update is performed on the generated program.
 
-        :param int check_collisions: Check collisions (COLLISION_ON -yes- or COLLISION_OFF -no-)
-        :param int timeout_sec: Maximum time to wait for the update to complete (in seconds)
-        :param float mm_step: Step in mm to split the program (-1 means default, as specified in Tools-Options-Motion)
-        :param float deg_step: Step in deg to split the program (-1 means default, as specified in Tools-Options-Motion)
+        :param check_collisions: Check collisions (COLLISION_ON -yes- or COLLISION_OFF -no-)
+        :type check_collisions: int
+        :param timeout_sec: Maximum time to wait for the update to complete (in seconds)
+        :type timeout_sec: int
+        :param mm_step: Step in mm to split the program (-1 means default, as specified in Tools-Options-Motion)
+        :type mm_step: float
+        :param deg_step: Step in deg to split the program (-1 means default, as specified in Tools-Options-Motion)
+        :type deg_step: float
 
         :return: [valid_instructions, program_time, program_distance, valid_ratio, readable_msg]
 
@@ -6991,7 +7142,7 @@ class Item:
             valid_ratio = values[3]
             return valid_instructions, program_time, program_distance, valid_ratio, readable_msg
 
-    def InstructionList(self):
+    def InstructionList(self) -> Tuple[robomath.Mat, int]:
         """Returns the list of program instructions as an MxN matrix, where N is the number of instructions and M equals to 1 plus the number of robot axes. This is the equivalent sequence that used to be supported by RoKiSim.
         Tip: Use RDK.ShowSequence(matrix) to dipslay a joint list or a RoKiSim sequence of instructions.
 
@@ -7011,15 +7162,21 @@ class Item:
             self.link._check_status()
             return insmat, errors
 
-    def InstructionListJoints(self, mm_step=10, deg_step=5, save_to_file=None, collision_check=COLLISION_OFF, flags=0, time_step=0.1):
+    def InstructionListJoints(self, mm_step: float = 10, deg_step: float = 5, save_to_file: str = None, collision_check: int = COLLISION_OFF, flags: int = 0, time_step: float = 0.1) -> Tuple[str, robomath.Mat, int]:
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
 
-        :param float mm_step: step in mm to split the linear movements
-        :param float deg_step: step in deg to split the joint movements
-        :param str save_to_file: (optional) save the result to a file as Comma Separated Values (CSV). If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.
-        :param int collision_check: (optional) check for collisions
-        :param int flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and make the splitting time-based.
-        :param float time_step: (optional) set the time step in seconds for time based calculation
+        :param mm_step: step in mm to split the linear movements
+        :type mm_step: float
+        :param deg_step: step in deg to split the joint movements
+        :type deg_step: float
+        :param save_to_file: (optional) save the result to a file as Comma Separated Values (CSV). If the file name is not provided it will return the matrix. If step values are very small, the returned matrix can be very large.
+        :type save_to_file: str
+        :param collision_check: (optional) check for collisions
+        :type collision_check: int
+        :param flags: (optional) set to 1 to include the timings between movements, set to 2 to also include the joint speeds (deg/s), set to 3 to also include the accelerations, set to 4 to include all previous information and make the splitting time-based.
+        :type flags: int
+        :param time_step: (optional) set the time step in seconds for time based calculation
+        :type time_step: float
         :return: [message (str), joint_list (:class:`~robodk.robomath.Mat`), status (int)]
 
         Outputs:
@@ -7064,10 +7221,11 @@ class Item:
             self.link._check_status()
             return error_msg, joint_list, error_code
 
-    def getParam(self, param):
+    def getParam(self, param: str):
         """Get custom binary data from this item. Use setParam to set the data.
 
-        :param str param: Parameter name
+        :param param: Parameter name
+        :type param: str
 
         .. seealso:: :func:`~robodk.robolink.Item.setParam`
         """
@@ -7082,15 +7240,17 @@ class Item:
             self.link._check_status()
             return data
 
-    def setParam(self, param, value='', skip_result=False):
+    def setParam(self, param: str, value: Union[str, Dict, bytes, 'Item', bool, robomath.Mat] = '', skip_result: bool = False) -> str:
         """Set a specific item parameter.
 
         Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.
 
         Note: For parameters (commands) that require a JSON string value you can also provide a dict.
 
-        :param str param: Parameter/command name
-        :param str value: Parameter value (optional, not all commands require a value). If value is bytes it will store customized data to an item given the param name.
+        :param param: Parameter/command name
+        :type param: str
+        :param value: Parameter value (optional, not all commands require a value). If value is bytes it will store customized data to an item given the param name.
+        :type value: str
 
         .. code-block:: python
             :caption: Example to expand or collapse an item in the tree

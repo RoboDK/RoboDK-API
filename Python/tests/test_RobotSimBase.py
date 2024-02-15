@@ -229,7 +229,8 @@ class TestRobotSimBase(unittest.TestCase):
     def _test_program(self, verbose=False):
         """Loads and simulates program and then asserts various properties on result
 
-        :param bool verbose:
+        :param verbose:
+        :type verbose: bool
             Print details of simulation result and load it to RoboDK
         """
 

@@ -83,7 +83,7 @@ while count < PROCESS_COUNT or PROCESS_COUNT < 0:
             n_bar = len(decoded_info_list)
             for i in range(n_bar):
 
-                def barcodeType(decoded_type: int) -> str:
+                def barcodeType(decoded_type: int):
                     if decoded_type == cv.barcode.EAN_8:
                         return "EAN8"
                     elif decoded_type == cv.barcode.EAN_13:

@@ -1,8 +1,8 @@
-#RoboDK API for Python module
-#https://robodk.com/doc/en/PythonAPI/index.html
-#https://robodk.com/doc/en/RoboDK-API.html#PythonAPI
-#https://robodk.com/offline-programming
-#https://robodk.com/doc/en/Post-Processors.html
+# RoboDK API for Python
+# https://robodk.com/doc/en/PythonAPI/index.html
+# https://robodk.com/doc/en/RoboDK-API.html#PythonAPI
+# https://robodk.com/offline-programming
+# https://robodk.com/doc/en/Post-Processors.html
 
 from __future__ import print_function  # (Must be always at the top)
 from setuptools import setup  # Always prefer setuptools over distutils
@@ -15,6 +15,7 @@ LONG_DESCRIPTION = (this_directory / "README.md").read_text()
 
 setup(
     name='robodk',
+    python_requires='>=3.5',  # Separate version for Python 2, without type hints
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -46,8 +47,11 @@ setup(
         'Intended Audience :: Information Technology',
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
+        'Topic :: Software Development',
         'Topic :: Software Development :: Build Tools',
+        'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Visualization',
+        'Topic :: Scientific/Engineering :: Mathematics',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
@@ -61,11 +65,7 @@ setup(
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -77,6 +77,8 @@ setup(
         'Programming Language :: C#',
         'Programming Language :: C++',
         'Programming Language :: Visual Basic',
+
+        'Typing :: Typed'
     ],
 
     # What does your project relate to?

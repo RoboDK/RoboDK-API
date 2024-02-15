@@ -19,11 +19,13 @@
 #     https://robodk.com/doc/en/RoboDK-API.html
 #     https://robodk.com/doc/en/PythonAPI/index.html
 # --------------------------------------------
-
 import sys
-import time
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union, Any, Tuple, Dict
 
-from robodk import robodialogs
+from robodk import robodialogs, robolink
+import time
 
 if robodialogs.ENABLE_QT:
     from PySide2 import QtWidgets, QtCore, QtGui
@@ -60,7 +62,7 @@ class RunApplication:
     param_name = None
     RDK = None
 
-    def __init__(self, rdk=None):
+    def __init__(self, rdk: robolink.Robolink = None):
         if rdk is None:
             from robodk.robolink import Robolink
             self.RDK = Robolink()
@@ -81,7 +83,7 @@ class RunApplication:
             self.param_name = file + "_" + folder
             self.RDK.setParam(self.param_name, "1")  # makes sure we can run the file separately in debug mode
 
-    def Run(self):
+    def Run(self) -> bool:
         """
         Run callback.
 
@@ -100,7 +102,7 @@ class RunApplication:
         return keep_running
 
 
-def Unchecked():
+def Unchecked() -> bool:
     """
     Verify if the command "Unchecked" is present. In this case it means the action was just unchecked from RoboDK (applicable to checkable actions only).
 
@@ -124,7 +126,7 @@ def Unchecked():
     return False
 
 
-def Checked():
+def Checked() -> bool:
     """
     Verify if the command "Checked" is present. In this case it means the action was just checked from RoboDK (applicable to checkable actions only).
 
@@ -191,7 +193,7 @@ def SkipKill():
     sys.stdout.flush()
 
 
-def Exit(exit_code=0):
+def Exit(exit_code: int = 0):
     """
     Exit/close the action gracefully. If an error code is provided, RoboDK will display a trace to the user.
     """
@@ -203,7 +205,7 @@ General utilities
 """
 
 
-def Str2FloatList(str_values, expected_nvalues=3):
+def Str2FloatList(str_values: str, expected_nvalues: int = 3) -> List[float]:
     """
     Convert a string into a list of floats. It returns None if the array is smaller than the expected size.
 
@@ -234,7 +236,7 @@ def Str2FloatList(str_values, expected_nvalues=3):
     return valuesok
 
 
-def Registry(varname, setvalue=None):
+def Registry(varname: str, setvalue: str = None):
     """
     Read value from the registry or set a value. It will do so at HKEY_CURRENT_USER so no admin rights required.
     """
@@ -306,7 +308,7 @@ Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt 
 """
 
 
-def value_to_widget(value, parent):
+def value_to_widget(value: Any, parent: Any) -> Any:
     """
     Convert a value to a widget (Tkinter or Qt).
 
@@ -331,7 +333,7 @@ def value_to_widget(value, parent):
         return value_to_tk_widget(value, parent)
 
 
-def widget_to_value(funcs, original_value):
+def widget_to_value(funcs: List, original_value: Any) -> Any:
     """
     Retrieve the value from a widget's list of get functions.
     The original value is required to recreate the original format.
@@ -420,7 +422,7 @@ def widget_to_value(funcs, original_value):
     return value_list
 
 
-def get_robodk_theme(RDK=None):
+def get_robodk_theme(RDK: robolink.Robolink = None) -> str:
     """
     Get RoboDK's active theme (Options->General->Theme)
     """
@@ -451,15 +453,18 @@ PySide2 / Qt utilities
 
 if robodialogs.ENABLE_QT:
 
-    def get_qt_app(robodk_icon=True, robodk_theme=True, RDK=None):
+    def get_qt_app(robodk_icon: bool = True, robodk_theme: bool = True, RDK: robolink.Robolink = None) -> QtWidgets.QApplication:
         """
         Get the QApplication instance.
 
         Note: If RoboDK is not running, The RoboDK theme is not applied.
 
-        :param bool robodk_icon: Applies the RoboDK logo, defaults to True
-        :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
-        :param robolink.Robolink RDK: Link to the running RoboDK instance for the theme, defaults to None
+        :param robodk_icon: Applies the RoboDK logo, defaults to True
+        :type robodk_icon: bool
+        :param robodk_theme: Applies the current RoboDK theme, defaults to True
+        :type robodk_theme: bool
+        :param RDK: Link to the running RoboDK instance for the theme, defaults to None
+        :type RDK: robolink.Robolink
 
         :return: The QApplication instance
         :rtype: :class:`PySide2.QtWidgets.QApplication`
@@ -493,7 +498,7 @@ if robodialogs.ENABLE_QT:
 
         return app
 
-    def set_qt_theme(app, RDK=None):
+    def set_qt_theme(app: QtWidgets.QApplication, RDK: robolink.Robolink = None):
         """Set a Qt application theme to match RoboDK's theme.
 
         :param app: The QApplication
@@ -546,11 +551,12 @@ if robodialogs.ENABLE_QT:
 
             app.setPalette(darkPalette)
 
-    def get_qt_robodk_icon(icon_name, RDK=None):
+    def get_qt_robodk_icon(icon_name: str, RDK: robolink.Robolink = None) -> QtGui.QImage:
         """
         Retrieve a RoboDK icon by name, such as robot, tool and frame icons (requires Qt module).
 
-        :param str icon_name: The name of the icon
+        :param icon_name: The name of the icon
+        :type icon_name: str
         :return: a QImage of the icon if it succeeds, else None
         :rtype: :class:`PySide2.QtGui.QImage`
 
@@ -573,7 +579,7 @@ if robodialogs.ENABLE_QT:
             return None
         return image
 
-    def get_qt_robodk_icons(RDK=None):
+    def get_qt_robodk_icons(RDK: robolink.Robolink = None) -> QtGui.QImage:
         """
         Retrieve a dictionary of available RoboDK icons, such as robot, tool and frame icons (requires Qt module).
 
@@ -702,7 +708,7 @@ if robodialogs.ENABLE_QT:
             icons[name] = icon
         return icons
 
-    def value_to_qt_widget(value, parent=None):
+    def value_to_qt_widget(value: Any, parent: QtWidgets.QWidget = None) -> Tuple[QtWidgets.QWidget, List]:
         """
         Convert a value to a widget. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
 
@@ -814,13 +820,16 @@ Tkinter utilities
 
 if robodialogs.ENABLE_TK:
 
-    def get_tk_app(robodk_icon=True, robodk_theme=True, RDK=None):
+    def get_tk_app(robodk_icon: bool = True, robodk_theme: bool = True, RDK: robolink.Robolink = None) -> tkinter.Tk:
         """
         Get the QApplication instance.
 
-        :param bool robodk_icon: Applies the RoboDK logo, defaults to True
-        :param bool robodk_theme: Applies the current RoboDK theme, defaults to True
-        :param robolink.Robolink RDK: Link to the running RoboDK instance for the theme, defaults to None
+        :param robodk_icon: Applies the RoboDK logo, defaults to True
+        :type robodk_icon: bool
+        :param robodk_theme: Applies the current RoboDK theme, defaults to True
+        :type robodk_theme: bool
+        :param RDK: Link to the running RoboDK instance for the theme, defaults to None
+        :type RDK: robolink.Robolink
 
         :return: The QApplication instance
         :rtype: :class:`PySide2.QtWidgets.QApplication`
@@ -851,7 +860,7 @@ if robodialogs.ENABLE_TK:
 
         return app
 
-    def value_to_tk_widget(value, frame):
+    def value_to_tk_widget(value: Any, frame: tkinter.Widget) -> tkinter.Widget:
         """
         Convert a value to a widget. For instance, a float into a Spinbox, a bool into a Checkbutton.
 
@@ -942,7 +951,8 @@ class AppSettings:
     """
     Generic application settings class to save and load settings to a RoboDK station with a built-in UI.
 
-    :param str settings_param: RoboDK parameter used to store this app settings. It should be unique if you have more than one App setting.
+    :param settings_param: RoboDK parameter used to store this app settings. It should be unique if you have more than one App setting.
+    :type settings_param: str
 
     Example:
 
@@ -995,17 +1005,18 @@ class AppSettings:
 
     """
 
-    def __init__(self, settings_param='App-Settings'):
+    def __init__(self, settings_param: str = 'App-Settings'):
         self._ATTRIBS_SAVE = None  #: Optional, specific list of attributes names to save (default use all attributes that does not start with "_")
         self._FIELDS_UI = None  #: Optional, specific list of attributes description for the UI (default use attribute names)
         self._SETTINGS_PARAM = settings_param  #: Optional, settings name (any settings with the same name will override the other on save)
         self._ATTRIBS_SKIP_DEFAULT = []  #: Optional, specific list of attributes not to restore when restoring defaults (default use all attributes that does not start with "_")
 
-    def CopyFrom(self, other):
+    def CopyFrom(self, other: 'AppSettings'):
         """
         Copy settings from another AppSettings instance.
 
-        :param robodk.roboapps.AppSettings other: The other AppSettings instance
+        :param other: The other AppSettings instance
+        :type other: robodk.roboapps.AppSettings
         """
         attr = self.getAttribs()
         for a in attr:
@@ -1028,7 +1039,7 @@ class AppSettings:
         for var in self._ATTRIBS_SKIP_DEFAULT:
             exec('self.%s=%s' % (var, var))
 
-    def GetDefaults(self):
+    def GetDefaults(self) -> Dict:
         """Get the default settings."""
         base = type(self)()
         defaults = {}
@@ -1037,7 +1048,7 @@ class AppSettings:
                 defaults[a] = getattr(base, a)
         return defaults
 
-    def getAttribs(self):
+    def getAttribs(self) -> List[str]:
         """
         Get the list of all attributes (settings).
         Attributes that starts with '_' are ignored.
@@ -1047,7 +1058,7 @@ class AppSettings:
         """
         return [a for a in dir(self) if (not callable(getattr(self, a)) and not a.startswith("_"))]
 
-    def _getAttribsSave(self):
+    def _getAttribsSave(self) -> List[str]:
         """
         Get the list of savable attributes (savable settings).
         Attributes not in 'AppSettings._ATTRIBS_SAVE', if defined, are ignored.
@@ -1059,7 +1070,7 @@ class AppSettings:
             return [a for a in self._ATTRIBS_SAVE if hasattr(self, a)]
         return self.getAttribs()
 
-    def _getFieldsUI(self):
+    def _getFieldsUI(self) -> Dict:
         """
         Get dictionary fields to be displayed in the UI.
         Fields in 'AppSettings._FIELDS_UI', if defined, are used in priority.
@@ -1084,13 +1095,13 @@ class AppSettings:
 
         return fields
 
-    def get(self, attrib, default_value=None):
+    def get(self, attrib: str, default_value: Any = None) -> Any:
         """Get attribute value by key, otherwise it returns None"""
         if hasattr(self, attrib):
             return getattr(self, attrib)
         return default_value
 
-    def Save(self, rdk=None, autorecover=False):
+    def Save(self, rdk: robolink.Robolink = None, autorecover: bool = False):
         """
         Save the class attributes as a RoboDK binary parameter in the specified station.
         If the station is not provided, it uses the active station.
@@ -1131,7 +1142,7 @@ class AppSettings:
             rdk.setParam(param_val, bytes_data)
             rdk.setParam(param_backup, b'')
 
-    def Load(self, rdk=None):
+    def Load(self, rdk: robolink.Robolink = None) -> bool:
         """
         Load the class attributes from a RoboDK binary parameter.
         If the station is not provided, it uses the active station.
@@ -1191,7 +1202,7 @@ class AppSettings:
 
         return True
 
-    def Erase(self, rdk=None):
+    def Erase(self, rdk: robolink.Robolink = None):
         """Completely erase the stored settings and its backup from RoboDK."""
 
         print("Erasing data from RoboDK station...")
@@ -1204,13 +1215,16 @@ class AppSettings:
         rdk.setParam(param_val, b'')
         rdk.setParam(param_backup, b'')
 
-    def ShowUI(self, windowtitle=None, embed=False, show_default_button=True, actions=None, *args, **kwargs):
+    def ShowUI(self, windowtitle: str = None, embed: bool = False, show_default_button: bool = True, actions: List[Tuple[str, Any]] = None, *args, **kwargs):
         """
         Show the Apps Settings in a GUI.
 
-        :param str windowtitle: Window title, defaults to the Settings name
-        :param bool embed: Embed the settings window in RoboDK, defaults to False
-        :param bool show_default_button: Set to true to add a Default button to reset the fields, defaults to True
+        :param windowtitle: Window title, defaults to the Settings name
+        :type windowtitle: str
+        :param embed: Embed the settings window in RoboDK, defaults to False
+        :type embed: bool
+        :param show_default_button: Set to true to add a Default button to reset the fields, defaults to True
+        :type show_default_button: bool
         :param actions: List of optional action callbacks to add as buttons, formatted as [(str, callable), ...]. e.g. [("Button #1", action_1), ("Button #2", action_2)]
         :type actions: list of tuples of str, callable
 

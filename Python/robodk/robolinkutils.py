@@ -18,17 +18,22 @@
 #     https://robodk.com/doc/en/PythonAPI/index.html
 #
 # --------------------------------------------
+import sys
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union, Any, Tuple
 
 from robodk import robolink, robomath
 
 
-def getLinks(item, type_linked=robolink.ITEM_TYPE_ROBOT):
+def getLinks(item: robolink.Item, type_linked: int = robolink.ITEM_TYPE_ROBOT) -> List[robolink.Item]:
     """
     Get all the items of a specific type for which getLink() returns the specified item.
 
     :param item: The source Item
     :type item: :class:`.Item`
-    :param int type_linked: type of items to check for a link. None means any type.
+    :param type_linked: type of items to check for a link. None means any type.
+    :type type_linked: int
 
     :return: A list of Items for which item.getLink return the specified item
     :rtype: list of :class:`.Item`
@@ -45,7 +50,7 @@ def getLinks(item, type_linked=robolink.ITEM_TYPE_ROBOT):
     return links
 
 
-def getAncestors(item, parent_types=None):
+def getAncestors(item: robolink.Item, parent_types: List[int] = None) -> List[robolink.Item]:
     """
     Get the list of parents of an Item up to the Station, with type filtering (i.e. [ITEM_TYPE_FRAME, ITEM_TYPE_ROBOT, ..]).
     By default, it will return all parents of an Item with no regard to their type, ordered from the Item's parent to the Station.
@@ -79,7 +84,7 @@ def getAncestors(item, parent_types=None):
     return parents
 
 
-def getLowestCommonAncestor(item1, item2):
+def getLowestCommonAncestor(item1: robolink.Item, item2: robolink.Item) -> robolink.Item:
     """
     Finds the lowest common ancestor (LCA) between two Items in the Station's tree.
 
@@ -109,7 +114,7 @@ def getLowestCommonAncestor(item1, item2):
     return lca
 
 
-def getAncestorPose(item_child, item_parent):
+def getAncestorPose(item_child: robolink.Item, item_parent: robolink.Item) -> robomath.Mat:
     """
     Gets the pose between two Items that have a hierarchical relationship in the Station's tree.
     There can be N Items between the two.
@@ -158,7 +163,7 @@ def getAncestorPose(item_child, item_parent):
     return pose_wrt
 
 
-def getPoseWrt(item1, item2):
+def getPoseWrt(item1: robolink.Item, item2: robolink.Item) -> robomath.Mat:
     """
     Gets the pose of an Item (item1) with respect to an another Item (item2).
 
@@ -193,7 +198,7 @@ def getPoseWrt(item1, item2):
     return pose2.inv() * pose1
 
 
-def setPoseAbsIK(item, pose_abs):
+def setPoseAbsIK(item: robolink.Item, pose_abs: robomath.Mat):
     """
     Set the pose of the item with respect to the absolute reference frame, accounting for inverse kinematics.
     For instance, you can set the absolute pose of a ITEM_TYPE_TOOL directly without accounting for the robot kinematics.
@@ -235,7 +240,7 @@ def setPoseAbsIK(item, pose_abs):
         item.setPose(pose)
 
 
-def SolveIK_Conf(robot, pose, toolpose=None, framepose=None, joint_config=[0, 1, 0]):
+def SolveIK_Conf(robot: robolink.Item, pose: robomath.Mat, toolpose: robomath.Mat = None, framepose: robomath.Mat = None, joint_config: List[int] = [0, 1, 0]) -> List[robomath.Mat]:
     """Calculates the inverse kinematics for the specified robot and pose. The function returns only the preferred solutions from the joint configuration as a 2D matrix.
     Returns a list of joints as a 2D matrix [N x M], where N is the number of degrees of freedom (robot joints) and M is the number of solutions. For some 6-axis robots, SolveIK returns 2 additional values that can be ignored.
 
