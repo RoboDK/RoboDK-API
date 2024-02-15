@@ -23,7 +23,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union, Any
+    from typing import List, Union, Any, Tuple
 
 # robodialogs is compatible with PySide2 and tkinter. At least one must be present.
 ENABLE_QT = False
@@ -65,7 +65,7 @@ DEFAULT_FILE_EXT = '.*'  # Default file extension of dialogs
 DEFAULT_FILE_TYPES = [FILE_TYPES_ALL, FILE_TYPES_ROBODK, FILE_TYPES_3D_OBJECT, FILE_TYPES_TEXT, FILE_TYPES_IMG, FILE_TYPES_CAM, FILE_TYPES_ROBOT]  # Default file type filter for dialogs
 
 
-def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[tuple[str, str]] = DEFAULT_FILE_TYPES) -> Any:
+def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> Any:
     """
     .. deprecated:: 5.5
         Obsolete. Use :func:`~robodk.robodialogs.getOpenFileName` instead.
@@ -99,7 +99,7 @@ def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
         return DialogsTk.getOpenFile(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[tuple[str, str]] = DEFAULT_FILE_TYPES):
+def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES):
     """
     .. deprecated:: 5.5
         Obsolete. Use :func:`~robodk.robodialogs.getSaveFileName` instead.
@@ -133,7 +133,7 @@ def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
         return DialogsTk.getSaveFile(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
+def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
     """
     Pop up a file dialog window to select a file to open.
     Returns the file path as a string.
@@ -160,7 +160,7 @@ def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', st
         return DialogsTk.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File(s)', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[tuple[str, str]] = DEFAULT_FILE_TYPES) -> List[str]:
+def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Open File(s)', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> List[str]:
     """
     Pop up a file dialog window to select one or more file to open.
     Returns the file path as a list of string.
@@ -187,7 +187,7 @@ def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', s
         return DialogsTk.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
 
 
-def getSaveFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
+def getSaveFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtitle: str = 'Save As', defaultextension: str = DEFAULT_FILE_EXT, filetypes: List[Tuple[str, str]] = DEFAULT_FILE_TYPES) -> str:
     """
     Pop up a file dialog window to select a file to save.
     Returns the file path as a string.
@@ -370,7 +370,7 @@ def mbox(msg: str, b1: str = 'OK', b2: str = 'Cancel', frame: bool = True, t: fl
         return DialogsTk.mbox(msg, b1, b2, frame, t, entry)
 
 
-def InputDialog(msg: str, value: Any, title: str = None, default_button: bool = False, default_value: Any = None, embed: bool = False, actions: List[tuple[str, Any]] = None, *args, **kwargs) -> Any:
+def InputDialog(msg: str, value: Any, title: str = None, default_button: bool = False, default_value: Any = None, embed: bool = False, actions: List[Tuple[str, Any]] = None, *args, **kwargs) -> Any:
     """
     Show a blocking input dialog, with 'OK' and 'Cancel' buttons.
 

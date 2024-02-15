@@ -22,7 +22,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union, Any
+    from typing import List, Union, Any, Tuple, Dict
 
 from robodk import robodialogs, robolink
 import time
@@ -708,7 +708,7 @@ if robodialogs.ENABLE_QT:
             icons[name] = icon
         return icons
 
-    def value_to_qt_widget(value: Any, parent: QtWidgets.QWidget = None) -> tuple[QtWidgets.QWidget, List]:
+    def value_to_qt_widget(value: Any, parent: QtWidgets.QWidget = None) -> Tuple[QtWidgets.QWidget, List]:
         """
         Convert a value to a widget. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
 
@@ -1039,7 +1039,7 @@ class AppSettings:
         for var in self._ATTRIBS_SKIP_DEFAULT:
             exec('self.%s=%s' % (var, var))
 
-    def GetDefaults(self) -> dict:
+    def GetDefaults(self) -> Dict:
         """Get the default settings."""
         base = type(self)()
         defaults = {}
@@ -1070,7 +1070,7 @@ class AppSettings:
             return [a for a in self._ATTRIBS_SAVE if hasattr(self, a)]
         return self.getAttribs()
 
-    def _getFieldsUI(self) -> dict:
+    def _getFieldsUI(self) -> Dict:
         """
         Get dictionary fields to be displayed in the UI.
         Fields in 'AppSettings._FIELDS_UI', if defined, are used in priority.
@@ -1215,7 +1215,7 @@ class AppSettings:
         rdk.setParam(param_val, b'')
         rdk.setParam(param_backup, b'')
 
-    def ShowUI(self, windowtitle: str = None, embed: bool = False, show_default_button: bool = True, actions: List[tuple[str, Any]] = None, *args, **kwargs):
+    def ShowUI(self, windowtitle: str = None, embed: bool = False, show_default_button: bool = True, actions: List[Tuple[str, Any]] = None, *args, **kwargs):
         """
         Show the Apps Settings in a GUI.
 

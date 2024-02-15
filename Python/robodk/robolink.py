@@ -26,7 +26,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union
+    from typing import List, Union, Tuple, Tuple, Dict
 
 from robodk import robomath
 import struct
@@ -2713,7 +2713,7 @@ class Robolink:
             self._check_status()
             return item_list
 
-    def CollisionPairs(self) -> List[tuple['Item', 'Item', int, int]]:
+    def CollisionPairs(self) -> List[Tuple['Item', 'Item', int, int]]:
         """Return the list of pairs of items that are in a collision state.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.Visible`
@@ -2822,7 +2822,7 @@ class Robolink:
             self._check_status()
             return runmode
 
-    def getParams(self) -> List[tuple[str, str]]:
+    def getParams(self) -> List[Tuple[str, str]]:
         """Get all the user parameters from the open RoboDK station.
         Station parameters can also be modified manually by right clicking the station item and selecting "Station parameters"
         :return: list of pairs of strings
@@ -2917,7 +2917,7 @@ class Robolink:
 
             self._check_status()
 
-    def Command(self, cmd: str, value: Union[str, dict, robomath.Mat, 'Item'] = '', skip_result: bool = False) -> Union[str, List[robomath.Mat]]:
+    def Command(self, cmd: str, value: Union[str, Dict, robomath.Mat, 'Item'] = '', skip_result: bool = False) -> Union[str, List[robomath.Mat]]:
         """Send a special command. These commands are meant to have a specific effect in RoboDK, such as changing a specific setting or provoke specific events.
 
         :param command: Command Name, such as Trace, Threads or Window.
@@ -3097,7 +3097,7 @@ class Robolink:
 
             return xyz
 
-    def MeasurePose(self, target: int = -1, time_avg_ms: float = 0, tip_xyz: List[float] = None) -> tuple[robomath.Mat, List]:
+    def MeasurePose(self, target: int = -1, time_avg_ms: float = 0, tip_xyz: List[float] = None) -> Tuple[robomath.Mat, List]:
         """Takes a measurement with a 6D measurement device. It returns two poses, the base reference frame and the measured object reference frame. Status is negative if the measurement failed. extra data is [error_avg, error_max] in mm, if we are averaging a pose.
 
         :param time_avg: Take the measurement for a period of time and average the result.
@@ -3119,7 +3119,7 @@ class Robolink:
             self._check_status()
             return pose1, data
 
-    def Collision_Line(self, p1: List[float], p2: List[float], ref=robomath.eye(4)) -> tuple[bool, 'Item', List[float]]:
+    def Collision_Line(self, p1: List[float], p2: List[float], ref=robomath.eye(4)) -> Tuple[bool, 'Item', List[float]]:
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
 
         :param p1: start point of the line [x,y,z]
@@ -3233,7 +3233,7 @@ class Robolink:
 
             self._check_status()
 
-    def CalibrateTool(self, poses_xyzwpr: Union[List[robomath.Mat], List[List[float]]], input_format: int = EULER_RX_RY_RZ, algorithm: int = CALIBRATE_TCP_BY_POINT, robot: 'Item' = None, tool: 'Item' = None) -> tuple[List[float], List[float], List[float]]:
+    def CalibrateTool(self, poses_xyzwpr: Union[List[robomath.Mat], List[List[float]]], input_format: int = EULER_RX_RY_RZ, algorithm: int = CALIBRATE_TCP_BY_POINT, robot: 'Item' = None, tool: 'Item' = None) -> Tuple[List[float], List[float], List[float]]:
         """Calibrate a TCP given a list of poses/joints and following a specific algorithm/method.
         Tip: Provide the list of joints instead of poses to maximize accuracy for calibrated robots.
 
@@ -3295,7 +3295,7 @@ class Robolink:
                 errors = []
             return TCPxyz.list(), errorstats.list(), errors
 
-    def CalibrateReference(self, joints_points: robomath.Mat, method: int = CALIBRATE_FRAME_3P_P1_ON_X, use_joints: bool = False, robot: 'Item' = None) -> Union[robomath.Mat, tuple[robomath.Mat, List]]:
+    def CalibrateReference(self, joints_points: robomath.Mat, method: int = CALIBRATE_FRAME_3P_P1_ON_X, use_joints: bool = False, robot: 'Item' = None) -> Union[robomath.Mat, Tuple[robomath.Mat, List]]:
         """Calibrate a reference frame given a number of points and following a specific algorithm/method.
         Important: Provide the list of joints to maximize accuracy for calibrated robots.
 
@@ -3839,7 +3839,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def Spray_GetStats(self, id_spray: int = -1) -> tuple[str, robomath.Mat]:
+    def Spray_GetStats(self, id_spray: int = -1) -> Tuple[str, robomath.Mat]:
         """Gets statistics from all simulated spray guns or a specific spray gun.
 
         :param id_spray: spray handle (pointer returned by Spray_Add). Leave to -1 to apply to all simulated sprays.
@@ -3874,7 +3874,7 @@ class Robolink:
             self._check_status()
             return success
 
-    def License(self) -> tuple[str, str]:
+    def License(self) -> Tuple[str, str]:
         """Get the license string"""
         with self._lock:
             self._check_connection()
@@ -3987,7 +3987,7 @@ class Robolink:
 
             self._check_status()
 
-    def CursorXYZ(self, x_coord: int = -1, y_coord: int = -1) -> tuple[List[float], 'Item']:
+    def CursorXYZ(self, x_coord: int = -1, y_coord: int = -1) -> Tuple[List[float], 'Item']:
         """Returns the position of the cursor as XYZ coordinates (by default), or the 3D position of a given set of 2D coordinates of the window (x & y coordinates in pixels from the top left corner)
         The XYZ coordinates returned are given with respect to the RoboDK station (absolute reference).
         If no coordinates are provided, the current position of the cursor is retrieved.
@@ -4018,7 +4018,7 @@ class Robolink:
             self._check_status()
             return xyz, item
 
-    def GetPoints(self, feature_type: int = FEATURE_HOVER_OBJECT_MESH) -> tuple['Item', int, int, str, List[List[float]]]:
+    def GetPoints(self, feature_type: int = FEATURE_HOVER_OBJECT_MESH) -> Tuple['Item', int, int, str, List[List[float]]]:
         """Retrieves the object under the mouse cursor.
 
         :param feature_type: set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster).
@@ -5027,7 +5027,7 @@ class Item:
         """
         return self.link.ProjectPoints(points, self, projection_type)
 
-    def SelectedFeature(self) -> tuple[int, int, int]:
+    def SelectedFeature(self) -> Tuple[int, int, int]:
         """Retrieve the currently selected feature for this object.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.GetPoints`
@@ -5061,7 +5061,7 @@ class Item:
             self.link._check_status()
             return is_selected, feature_type, feature_id
 
-    def GetPoints(self, feature_type: int = FEATURE_SURFACE, feature_id: int = 0) -> tuple[List[List[float]], str]:
+    def GetPoints(self, feature_type: int = FEATURE_SURFACE, feature_id: int = 0) -> Tuple[List[List[float]], str]:
         """Retrieves the point under the mouse cursor, a curve or the 3D points of an object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
 
         :param feature_type: set to FEATURE_SURFACE to retrieve the point under the mouse cursor, FEATURE_CURVE to retrieve the list of points for that wire, or FEATURE_POINT to retrieve the list of points.
@@ -5150,7 +5150,7 @@ class Item:
             self.link._check_status()
             return list(points), feature_name
 
-    def setMillingParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> tuple['Item', float]:
+    def setMillingParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """
         .. deprecated:: 4.0
             Obsolete. Use :func:`~robodk.robolink.Item.setMachiningParameters` instead.
@@ -5158,7 +5158,7 @@ class Item:
         newprog, status = self.setMachiningParameters(ncfile, part, params)
         return newprog, status
 
-    def setMachiningParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> tuple['Item', float]:
+    def setMachiningParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
         Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
         Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
@@ -5448,7 +5448,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def JointLimits(self) -> tuple[robomath.Mat, robomath.Mat, float]:
+    def JointLimits(self) -> Tuple[robomath.Mat, robomath.Mat, float]:
         """Retrieve the joint limits of a robot. Returns (lower limits, upper limits, joint type).
 
         .. seealso:: :func:`~robodk.robolink.Item.setJointLimits`
@@ -5830,7 +5830,7 @@ class Item:
             self.link._check_status()
             return joints_list
 
-    def FilterTarget(self, pose: robomath.Mat, joints_approx: Union[robomath.Mat, List[float]] = None) -> tuple[robomath.Mat, robomath.Mat]:
+    def FilterTarget(self, pose: robomath.Mat, joints_approx: Union[robomath.Mat, List[float]] = None) -> Tuple[robomath.Mat, robomath.Mat]:
         """Filters a target to improve accuracy. This option requires a calibrated robot.
         :param pose: pose of the robot TCP with respect to the robot reference frame
         :type pose: :class:`~robodk.robomath.Mat`
@@ -5931,7 +5931,7 @@ class Item:
 
         return con_status
 
-    def ConnectionParams(self) -> tuple[str, int, str, str, str]:
+    def ConnectionParams(self) -> Tuple[str, int, str, str, str]:
         """Returns the robot connection parameters
         :return: [robotIP (str), port (int), remote_path (str), FTP_user (str), FTP_pass (str)]
 
@@ -5979,7 +5979,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def ConnectedState(self) -> tuple[int, str]:
+    def ConnectedState(self) -> Tuple[int, str]:
         """Check connection status with a real robobt
         Out 1 : status code -> (int) ROBOTCOM_READY if the robot is ready to move, otherwise, status message will provide more information about the issue
         Out 2 : status message -> Message description of the robot status
@@ -6541,7 +6541,7 @@ class Item:
             self.link._send_array(values)
             self.link._check_status()
 
-    def FilterProgram(self, filestr: str) -> tuple[int, str]:
+    def FilterProgram(self, filestr: str) -> Tuple[int, str]:
         """Filter a program file to improve accuracy for a specific robot. The robot must have been previously calibrated.
         It returns 0 if the filter succeeded, or a negative value if there are filtering problems. It also returns a summary of the filtering.
 
@@ -6560,7 +6560,7 @@ class Item:
             return filter_status, filter_msg
 
     #"""Program item calls"""
-    def MakeProgram(self, folder_path: str = '', run_mode: int = RUNMODE_MAKE_ROBOTPROG) -> tuple[bool, str, bool]:
+    def MakeProgram(self, folder_path: str = '', run_mode: int = RUNMODE_MAKE_ROBOTPROG) -> Tuple[bool, str, bool]:
         """Generate the program file. Returns True if the program was successfully generated.
 
         :param pathstr: Folder to save the program (not including the file name and extension). Make sure the folder ends with a slash. You can use backslashes or forward slashes to define the path. In most cases, the file name is defined by the program name (visible in the RoboDK tree) and the extension is defined by the Post Processor (the file extension must match the extension supported by your robot controller). It can be left empty to use the default action (save to the default programs location)
@@ -7024,7 +7024,7 @@ class Item:
             self.link._check_status()
             return success
 
-    def Instruction(self, ins_id: int = -1) -> tuple[str, int, int, int, robomath.Mat, robomath.Mat]:
+    def Instruction(self, ins_id: int = -1) -> Tuple[str, int, int, int, robomath.Mat, robomath.Mat]:
         """Return the current program instruction or the instruction given the instruction id (if provided).
         It returns the following information about an instruction:
 
@@ -7095,7 +7095,7 @@ class Item:
                 self.link._send_array(joints)
             self.link._check_status()
 
-    def Update(self, check_collisions: int = COLLISION_OFF, timeout_sec: float = 3600, mm_step: float = -1, deg_step: float = -1) -> tuple[float, float, float, float, str]:
+    def Update(self, check_collisions: int = COLLISION_OFF, timeout_sec: float = 3600, mm_step: float = -1, deg_step: float = -1) -> Tuple[float, float, float, float, str]:
         """Updates a program and returns the estimated time and the number of valid instructions.
         An update can also be applied to a robot machining project. The update is performed on the generated program.
 
@@ -7142,7 +7142,7 @@ class Item:
             valid_ratio = values[3]
             return valid_instructions, program_time, program_distance, valid_ratio, readable_msg
 
-    def InstructionList(self) -> tuple[robomath.Mat, int]:
+    def InstructionList(self) -> Tuple[robomath.Mat, int]:
         """Returns the list of program instructions as an MxN matrix, where N is the number of instructions and M equals to 1 plus the number of robot axes. This is the equivalent sequence that used to be supported by RoKiSim.
         Tip: Use RDK.ShowSequence(matrix) to dipslay a joint list or a RoKiSim sequence of instructions.
 
@@ -7162,7 +7162,7 @@ class Item:
             self.link._check_status()
             return insmat, errors
 
-    def InstructionListJoints(self, mm_step: float = 10, deg_step: float = 5, save_to_file: str = None, collision_check: int = COLLISION_OFF, flags: int = 0, time_step: float = 0.1) -> tuple[str, robomath.Mat, int]:
+    def InstructionListJoints(self, mm_step: float = 10, deg_step: float = 5, save_to_file: str = None, collision_check: int = COLLISION_OFF, flags: int = 0, time_step: float = 0.1) -> Tuple[str, robomath.Mat, int]:
         """Returns a list of joints an MxN matrix, where M is the number of robot axes plus 4 columns. Linear moves are rounded according to the smoothing parameter set inside the program.
 
         :param mm_step: step in mm to split the linear movements
@@ -7240,7 +7240,7 @@ class Item:
             self.link._check_status()
             return data
 
-    def setParam(self, param: str, value: Union[str, dict, bytes, 'Item', bool, robomath.Mat] = '', skip_result: bool = False) -> str:
+    def setParam(self, param: str, value: Union[str, Dict, bytes, 'Item', bool, robomath.Mat] = '', skip_result: bool = False) -> str:
         """Set a specific item parameter.
 
         Select **Tools-Run Script-Show Commands** to see all available commands for items and the station.

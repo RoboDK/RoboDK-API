@@ -29,7 +29,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union
+    from typing import List, Union, Tuple
 
 import math
 import time
@@ -433,7 +433,7 @@ def eye(size: int = 4) -> 'Mat':
         return newmat
 
 
-def size(matrix: 'Mat', dim: int = None) -> Union[tuple[int, int], int]:
+def size(matrix: 'Mat', dim: int = None) -> Union[Tuple[int, int], int]:
     """Returns the size of a matrix (m,n).
     Dim can be set to 0 to return m (rows) or 1 to return n (columns)
 
@@ -1299,7 +1299,7 @@ def proj_pt_2_line(point: List[float], paxe: List[float], vaxe: List[float]) -> 
     return add3(paxe, mult3(vaxe, dist))
 
 
-def fitPlane(points: List[List[float]]) -> tuple[List[float], List[float]]:
+def fitPlane(points: List[List[float]]) -> Tuple[List[float], List[float]]:
     """Returns the equation and normal for a best fit plane to a cloud of points.
 
     Uses singular value decomposition to produce a least squares fit to a plane. Points must have centroid at [0, 0, 0]. Must provide at least 4 points.
@@ -1512,7 +1512,7 @@ class Mat(object):
         """"Get the Row n from the matrix"""
         return self.rows[n]
 
-    def __getitem__(self, idx: Union[int, slice, tuple[slice, slice]]) -> 'Mat':
+    def __getitem__(self, idx: Union[int, slice, Tuple[slice, slice]]) -> 'Mat':
         if isinstance(idx, int):  #integer A[1]
             return tr(Mat(self.rows[idx]))
         elif isinstance(idx, slice):  #one slice: A[1:3]
@@ -1618,7 +1618,7 @@ class Mat(object):
         mat = Mat(list(map(list, zip(*self.rows))))
         return mat
 
-    def size(self, dim: int = None) -> Union[int, tuple[int, int]]:
+    def size(self, dim: int = None) -> Union[int, Tuple[int, int]]:
         """
         Returns the size of the matrix.
 

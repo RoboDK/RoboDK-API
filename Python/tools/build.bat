@@ -21,6 +21,7 @@ CD ..
 if exist "build"           rmdir /S /Q "build"
 if exist "dist"            rmdir /S /Q "dist"
 if exist "robodk.egg-info" rmdir /S /Q "robodk.egg-info"
+if exist "build_python2"   rmdir /S /Q "build_python2"
 
 
 @REM ::----------------------------------
@@ -76,6 +77,7 @@ pause
 if exist "build"           rmdir /S /Q "build"
 if exist "dist"            rmdir /S /Q "dist"
 if exist "robodk.egg-info" rmdir /S /Q "robodk.egg-info"
+if exist "build_python2"   rmdir /S /Q "build_python2"
 
 
 ::----------------------------------

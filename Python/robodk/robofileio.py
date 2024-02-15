@@ -23,7 +23,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union
+    from typing import List, Union, Tuple
 
 import time
 import os.path

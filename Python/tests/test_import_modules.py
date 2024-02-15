@@ -7,7 +7,7 @@ class TestImport(unittest.TestCase):
     modules = ['robodk.robolink', 'robodk.robomath','robodk.robodialogs','robodk.robofileio','robodk.roboapps']
     legacy = ['robodk', 'robolink']
 
-    def setUp(self) -> None:
+    def setUp(self):
         import sys
 
         for m in self.legacy + self.modules:

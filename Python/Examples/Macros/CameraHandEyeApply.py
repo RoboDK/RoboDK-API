@@ -119,7 +119,7 @@ def find_chessboard(img, mtx, dist, chess_size, squares_edge, refine=True, draw_
     return corners, R_target2cam, t_target2cam
 
 
-def find_charucoboard(img, mtx, dist, chess_size, squares_edge, markers_edge, predefined_dict=cv.aruco.DICT_6X6_100, draw_img=None) -> dict:
+def find_charucoboard(img, mtx, dist, chess_size, squares_edge, markers_edge, predefined_dict=cv.aruco.DICT_6X6_100, draw_img=None):
     """
     Detects a charuco board pattern in an image.
     """
