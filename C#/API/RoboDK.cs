@@ -2793,7 +2793,7 @@ namespace RoboDk.API
             _bufferedSocket.ReceiveData(bytes, bytes.Length);
             for (var i = 0; i < 3; i++)
             {
-                xyzpos[i] = BitConverter.ToDouble(bytes, i * sizeof(double));
+                xyzpos[i] = _bitConverter.ToDouble(bytes, i * sizeof(double));
             }
         }
 
