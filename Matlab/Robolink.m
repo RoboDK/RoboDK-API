@@ -1,4 +1,4 @@
-% Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+% Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
@@ -286,31 +286,39 @@ classdef Robolink < handle
         SEQUENCE_DISPLAY_COLOR_GOOD = 3;
         SEQUENCE_DISPLAY_COLOR_BAD = 4;
         SEQUENCE_DISPLAY_OPTION_RESET = 1024;
-
-        % Other public variables
-        TIMEOUT = 5; % timeout for communication, in seconds
     end
 
     properties
         APPLICATION_DIR = 'C:\RoboDK\bin\RoboDK.exe'; % file path to the Robodk program (executable)
         COM = 0; % tcpip com
+        TIMEOUT = 5; % timeout for communication, in seconds
     end
 
     properties (GetAccess = 'private', SetAccess = 'private')
         SAFE_MODE = 1; % checks that provided items exist in memory
         AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
         PORT_START = 20500; % port to start looking for app connection
-        PORT_END = 20500; % port to stop looking for app connection
+        PORT_END = 20502; % port to stop looking for app connection
         PORT = -1;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    methods % (Access = 'private')
+    methods % (Access ='private')
 
         function connected = is_connected(this)
             % This is a private function.
             % Returns 1 if connection is valid, returns 0 if connection is invalid
-            connected = 1;
+            if this.COM == 0 || strcmp(this.COM, 'tcpip') ~= 0
+                connected = 0;
+                return
+            end
+
+            status = get(this.COM, 'status');
+
+            if status(1) == 'o'
+                connected = 1;
+            end
+
         end
 
         function check_connection(this)
@@ -402,7 +410,7 @@ classdef Robolink < handle
             % This is a private function.
             % Receives an item pointer
             itemnum = read(this.COM, 1, 'uint64');
-            itemtype = rec_int(this); %read(this.COM, 1, 'int32');
+            itemtype = rec_int(this); %read(this.COM, 1,'int32');
             item = RobolinkItem(this, itemnum, itemtype);
         end
 
@@ -427,7 +435,7 @@ classdef Robolink < handle
 
         function num = rec_double(this)
             % This is a private function.
-            % Receives an int (32 bits)
+            % Receives a double (64 bits)
             bytes = read(this.COM, 8, 'uint8');
             num = typecast(flip(bytes), 'double');
         end

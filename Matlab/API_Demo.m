@@ -28,8 +28,13 @@ robot_path = [library_path, 'Mecademic-Meca500-R3.robot'];
 robot = RDK.AddFile(robot_path);
 
 if ~robot.Valid()
-    RDK.ShowMessage(sprintf('This example requires a Mecademic Meca500 in your library folder:<br>%s.<br><br>You can download this robot at https://robodk.com/robot/Mecademic/Meca500-R3.', library_path))
-    return
+    robot_path = ['C:/RoboDK/Library/', 'Mecademic-Meca500-R3.robot'];
+    robot = RDK.AddFile(robot_path);
+
+    if ~robot.Valid()
+        RDK.ShowMessage(sprintf('This example requires a Mecademic Meca500 in your library folder:<br>%s.<br><br>You can download this robot at https://robodk.com/robot/Mecademic/Meca500-R3.', library_path))
+        return
+    end
 end
 
 robot_frame = robot.Parent();
@@ -104,6 +109,11 @@ for i = 1:length(curve_list)
         end
 
     else
+        % Turn off render for the remaining instructions
+        if i == 10
+            RDK.Render(false) % Set the render off, so that intermediary objects are never shown
+        end
+
         % Add to program using poses
         prog_targets.MoveJ(pose)
     end
@@ -111,6 +121,7 @@ for i = 1:length(curve_list)
     RDK.Command('ProgressBar', num2str(100 * (i - 1) / 100, 2)); % Show a progress bar in the status bar of RoboDK
 end
 
+RDK.Render(true)
 RDK.Command('ProgressBar', '-1'); % Hide the progress bar once we are done
 
 % Create machining programs from curves and points
