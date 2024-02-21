@@ -21,7 +21,17 @@ RDK = Robolink;
 path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 4
-RDK.AddFile([path, 'Example-04.a-Robot Drilling - KUKA.rdk']);
+station = RDK.AddFile([path, 'Example-04.a-Robot Drilling - KUKA.rdk']);
+
+if ~station.Valid()
+    path = ['C:/RoboDK/Library/'];
+    station = RDK.AddFile([path, 'Example-04.a-Robot Drilling - KUKA.rdk']);
+
+    if ~station.Valid()
+        RDK.ShowMessage(sprintf('This example requires Example-04.a-Robot Drilling - KUKA.rdk library folder:<br>%s.', library_path))
+        return
+    end
+end
 
 % Display a list of all items
 fprintf('Available items in the station:\n');
@@ -48,7 +58,7 @@ for i = 1:nins
     [name, instype, movetype, isjointtarget, pose, joints] = prog.Instruction(i);
     fprintf('Instruction %i: %s\t', i, name);
 
-    if instype == RobolinkItem.INS_TYPE_MOVE && movetype == RDK.MOVE_TYPE_LINEAR && isjointtarget == 0
+    if instype == RDK.INS_TYPE_MOVE && movetype == RDK.MOVE_TYPE_LINEAR && isjointtarget == 0
         % Shift/rotate the current pose
         fprintf('(modifying instruction)');
         pose2 = transl(1.1, -2.1, 10) * rotz(-2 * pi / 180) * pose;

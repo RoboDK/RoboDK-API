@@ -29,7 +29,17 @@ path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 1
 % RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
-RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+
+if ~station.Valid()
+    path = ['C:/RoboDK/Library/'];
+    station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+
+    if ~station.Valid()
+        RDK.ShowMessage(sprintf('This example requires Example-06.b-Pick and place 2 tables.rdk library folder:<br>%s.', library_path))
+        return
+    end
+end
 
 % Display a list of all items
 fprintf('Available items in the station:\n');

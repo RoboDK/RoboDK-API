@@ -82,7 +82,8 @@ MOVE_TYPE_LINEARSEARCH = 5  #: Linear search move (SearchL) type of a :class:`.I
 # Station parameters request
 PATH_OPENSTATION = 'PATH_OPENSTATION'  #: Full path of the current station (.rdk file) request flag
 FILE_OPENSTATION = 'FILE_OPENSTATION'  #: File name of the current station (name of the .rdk file) request flag
-PATH_DESKTOP = 'PATH_DESKTOP'  # Full path to the desktop folder request flag
+PATH_DESKTOP = 'PATH_DESKTOP'  #: Full path to the desktop folder request flag
+PATH_LIBRARY = 'PATH_LIBRARY'  #: Full path to the RoboDK local library folder request flag
 
 # Script execution types
 RUNMODE_SIMULATE = 1  #: Performs the simulation moving the robot (default)
@@ -1007,7 +1008,6 @@ class Robolink:
         if nvalues > 0:
             buffer = self.COM.recv(8 * nvalues)
             values = list(struct.unpack('>' + str(nvalues) + 'd', buffer))
-            #values = fread(self.COM, nvalues, 'double')
         else:
             values = [0]
         return robomath.Mat(values)

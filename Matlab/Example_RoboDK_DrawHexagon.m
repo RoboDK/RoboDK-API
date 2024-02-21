@@ -7,6 +7,9 @@ RDK = Robolink();
 
 % Get the robot item:
 robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
+if ~robot.Valid()
+    return
+end
 
 % Get the robot position (simulated or real if we are connected to
 % the robot)
