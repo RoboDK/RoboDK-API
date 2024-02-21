@@ -23,7 +23,7 @@
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union, Tuple
+    from typing import List, Union, Tuple, Dict
 
 import time
 import os.path
@@ -180,6 +180,40 @@ def FilterNumber(number: float, fixed_points: int = 6, strip_zeros: bool = True,
     if strip_zeros:
         s = s.rstrip('0').rstrip('.')
     return s
+
+
+def RobotPostFunction(r, data_json: Union[Dict, str], err_msg: str = "Unable to process this function. Please contact us at info@robodk.com."):
+    """
+    Post processor callback for custom functions.
+
+    :param r: The robot post processor instance
+    :type r: RobotPost
+    :param data_json: The function callback name is specified by the 'fcn' key. The dictionary is passed as an argument to the callback function.
+    :type data_json: dict
+    :param err_msg: The error message to display to the user, defaults to "Unable to process this function. Please contact us at info@robodk.com."
+    :type err_msg: str, optional
+    """
+    data_dict = data_json
+    if isinstance(data_json, str):
+        import json
+        data_dict = json.loads(data_json)
+
+    if not "fcn" in data_dict.keys():
+        raise Exception(err_msg)
+    fcn = data_dict["fcn"]
+
+    if isinstance(fcn, str):
+        try:
+            fcn_ptr = getattr(r, fcn)
+            fcn_ptr(data_dict)
+
+        except Exception as e:
+            try:
+                r.RunMessage(err_msg, True)
+                r.addlog(err_msg)
+
+            except Exception:
+                raise Exception(err_msg + "\n" + str(e))
 
 
 #-------------------------------------------------------
