@@ -1,20 +1,24 @@
-% This is an example that uses the RoboDK API for Matlab.
-% This example is not meant to show a specific application, just how to
-% interact with the API
+%% RoboDK API for MATLAB
 %
-% This is a .m file (Matlab file).
-% The RoboDK API for Matlab requires the files in this folder.
-% This example requires RoboDK to be running
-% (otherwise, RoboDK will be started if it was installed in the default location)
-% This example automatically loads the Example 01 installed by default in the "Library" folder
+% This example script demonstrates the integration of RoboDK's API with MATLAB.
+% It is designed to provide a basic understanding of how to interact with RoboDK's API within the MATLAB environment.
+% The example does not aim to fulfill any specific application needs but rather to showcase the API's capabilities and usage in MATLAB.
+%
+% All necessary API dependencies are included in the current directory.
+%
+% The script automatically loads "Example 06b", which is part of the default installation in RoboDK's "Library" folder.
+% This example is intended solely for educational purposes to illustrate the usage of the RoboDK API within MATLAB.
+% It is not designed to achieve a particular task.
+%
+% Additional Resources:
+%
+% * For detailed documentation on the Robolink class, type "doc Robolink" in the MATLAB Command Window.
+% * For information on the RobolinkItem class, type "doc RobolinkItem".
+% * To view more examples demonstrating the use of the RoboDK API, type "showdemo Example_RoboDK".
+% * For the RoboDK MATLAB API documentation, visit: https://robodk.com/doc/en/RoboDK-API.html#MatlabAPI.
+%
 
-% Note: This program is not meant to accomplish a specific goal, only to
-% show how to use the Matlab API
-%
-% RoboDK api Help:
-% ->Type "doc Robolink"            for more help on the Robolink class
-% ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
-% ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
+%% How to load a station from disk
 
 clc
 clear
@@ -59,7 +63,7 @@ program.RunProgram();
 
 % return;
 
-%% Retrieving objects from the station and modifying them
+%% How to retrieve objects from the station and modify them
 
 % Get some items in the station by their name. Each item is visible in the
 % current project tree
@@ -308,7 +312,7 @@ for i = 1:2
     robot.MoveL(H2);
 end
 
-%% Calculate forward and inverse kinematics of a robot
+%% How to calculate forward and inverse kinematics of a robot
 
 % Get the current robot joints
 fprintf('Current robot joints:\n');
@@ -339,7 +343,7 @@ joints4 = robot.SolveIK(H_tcp_wrt_frame * transl(0, 0, -100));
 % Set the robot at the new position calculated
 robot.setJoints(joints4);
 
-%% Example to add targets to a program and use circular motion
+%% How to add targets to a program and use circular motion
 RDK = Robolink();
 robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
 
@@ -373,7 +377,7 @@ target2.setPose(pose2);
 % Add the circular move instruction:
 prog.MoveC(target1, target2)
 
-%% Rail tests:
+%% How to calculate inverse kinematics of a robot with a synchronized linear rail
 
 % Start the API
 RDK = Robolink();

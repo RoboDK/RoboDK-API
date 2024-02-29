@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Example_RoboDK</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-11-25"><meta name="DC.source" content="Example_RoboDK.m"><style type="text/css">
+      --><title>RoboDK API for MATLAB</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2024-02-29"><meta name="DC.source" content="Example_RoboDK.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -67,25 +67,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Retrieving objects from the station and modifying them</a></li><li><a href="#3">How to generate a robot program</a></li><li><a href="#4">How to change the parent that an item is attached to</a></li><li><a href="#5">How to Attach/Detach an object to the robot tool</a></li><li><a href="#6">How to scale an object and how to detect collisions</a></li><li><a href="#7">How to move the robot programmaticall without creating a program</a></li><li><a href="#8">Calculate forward and inverse kinematics of a robot</a></li><li><a href="#9">Example to add targets to a program and use circular motion</a></li><li><a href="#10">Rail tests:</a></li></ul></div><pre class="codeinput"><span class="comment">% This is an example that uses the RoboDK API for Matlab.</span>
-<span class="comment">% This example is not meant to show a specific application, just how to</span>
-<span class="comment">% interact with the API</span>
-<span class="comment">%</span>
-<span class="comment">% This is a .m file (Matlab file).</span>
-<span class="comment">% The RoboDK API for Matlab requires the files in this folder.</span>
-<span class="comment">% This example requires RoboDK to be running</span>
-<span class="comment">% (otherwise, RoboDK will be started if it was installed in the default location)</span>
-<span class="comment">% This example automatically loads the Example 01 installed by default in the "Library" folder</span>
-
-<span class="comment">% Note: This program is not meant to accomplish a specific goal, only to</span>
-<span class="comment">% show how to use the Matlab API</span>
-<span class="comment">%</span>
-<span class="comment">% RoboDK api Help:</span>
-<span class="comment">% -&gt;Type "doc Robolink"            for more help on the Robolink class</span>
-<span class="comment">% -&gt;Type "doc RobolinkItem"        for more help on the RobolinkItem item class</span>
-<span class="comment">% -&gt;Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes</span>
-
-clc
+  </style></head><body><div class="content"><h1>RoboDK API for MATLAB</h1><!--introduction--><p>This example script demonstrates the integration of RoboDK's API with MATLAB. It is designed to provide a basic understanding of how to interact with RoboDK's API within the MATLAB environment. The example does not aim to fulfill any specific application needs but rather to showcase the API's capabilities and usage in MATLAB.</p><p>All necessary API dependencies are included in the current directory.</p><p>The script automatically loads "Example 06b", which is part of the default installation in RoboDK's "Library" folder. This example is intended solely for educational purposes to illustrate the usage of the RoboDK API within MATLAB. It is not designed to achieve a particular task.</p><p>Additional Resources:</p><div><ul><li>For detailed documentation on the Robolink class, type "doc Robolink" in the MATLAB Command Window.</li><li>For information on the RobolinkItem class, type "doc RobolinkItem".</li><li>To view more examples demonstrating the use of the RoboDK API, type "showdemo Example_RoboDK".</li><li>For the RoboDK MATLAB API documentation, visit: <a href="https://robodk.com/doc/en/RoboDK-API.html#MatlabAPI">https://robodk.com/doc/en/RoboDK-API.html#MatlabAPI</a>.</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">How to load a station from disk</a></li><li><a href="#2">How to retrieve objects from the station and modify them</a></li><li><a href="#3">How to generate a robot program</a></li><li><a href="#4">How to change the parent that an item is attached to</a></li><li><a href="#5">How to Attach/Detach an object to the robot tool</a></li><li><a href="#6">How to scale an object and how to detect collisions</a></li><li><a href="#7">How to move the robot programmaticall without creating a program</a></li><li><a href="#8">How to calculate forward and inverse kinematics of a robot</a></li><li><a href="#9">How to add targets to a program and use circular motion</a></li><li><a href="#10">How to calculate inverse kinematics of a robot with a synchronized linear rail</a></li></ul></div><h2 id="1">How to load a station from disk</h2><pre class="codeinput">clc
 clear
 close <span class="string">all</span>
 
@@ -98,7 +80,17 @@ path = RDK.getParam(<span class="string">'PATH_LIBRARY'</span>);
 
 <span class="comment">% Open example 1</span>
 <span class="comment">% RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0</span>
-RDK.AddFile([path, <span class="string">'Example-06.b-Pick and place 2 tables.rdk'</span>]);
+station = RDK.AddFile([path, <span class="string">'Example-06.b-Pick and place 2 tables.rdk'</span>]);
+
+<span class="keyword">if</span> ~station.Valid()
+    path = [<span class="string">'C:/RoboDK/Library/'</span>];
+    station = RDK.AddFile([path, <span class="string">'Example-06.b-Pick and place 2 tables.rdk'</span>]);
+
+    <span class="keyword">if</span> ~station.Valid()
+        RDK.ShowMessage(sprintf(<span class="string">'This example requires Example-06.b-Pick and place 2 tables.rdk library folder:&lt;br&gt;%s.'</span>, library_path))
+        <span class="keyword">return</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
 
 <span class="comment">% Display a list of all items</span>
 fprintf(<span class="string">'Available items in the station:\n'</span>);
@@ -117,7 +109,9 @@ program.RunProgram();
 <span class="comment">% RDK.RunProgram('Pick and place');</span>
 
 <span class="comment">% return;</span>
-</pre><pre class="codeoutput">Available items in the station:
+</pre><pre class="codeoutput">Warning: File doesn't exist: C:/Users/RoboDK/Documents/RoboDK/Example-06.b-Pick
+and place 2 tables.rdk 
+Available items in the station:
   Columns 1 through 3
 
     {'Example 1 - Pic&#8230;'}    {'ABB IRB 1600-8/&#8230;'}    {'ABB IRB 1600-8/&#8230;'}
@@ -138,7 +132,7 @@ program.RunProgram();
 
     {'base'}    {'Pick and place'}    {'Replace objects'}
 
-</pre><h2 id="2">Retrieving objects from the station and modifying them</h2><pre class="codeinput"><span class="comment">% Get some items in the station by their name. Each item is visible in the</span>
+</pre><h2 id="2">How to retrieve objects from the station and modify them</h2><pre class="codeinput"><span class="comment">% Get some items in the station by their name. Each item is visible in the</span>
 <span class="comment">% current project tree</span>
 
 robot = RDK.Item(<span class="string">'ABB IRB 1600-8/1.45'</span>, RDK.ITEM_TYPE_ROBOT);
@@ -292,6 +286,7 @@ base modified 1
 ball 1 modified 1
 ball 2 modified 1
 ball 3 modified 1
+ball 4 modified 1
 </pre><h2 id="5">How to Attach/Detach an object to the robot tool</h2><pre class="codeinput"><span class="comment">% Attach the closest object to the tool</span>
 attached = tool.AttachClosest();
 <span class="comment">% If we know what object we want to attach, we can use this function</span>
@@ -397,7 +392,7 @@ H2 = [-0.759717, -0.280123, -0.586823, -323.957442;
 </pre><pre class="codeoutput">Moving by target item...
 Moving by joints...
 Moving by pose...
-</pre><h2 id="8">Calculate forward and inverse kinematics of a robot</h2><pre class="codeinput"><span class="comment">% Get the current robot joints</span>
+</pre><h2 id="8">How to calculate forward and inverse kinematics of a robot</h2><pre class="codeinput"><span class="comment">% Get the current robot joints</span>
 fprintf(<span class="string">'Current robot joints:\n'</span>);
 joints = robot.Joints();
 disp(joints);
@@ -460,7 +455,7 @@ All solutions available for the selected position:
          0
   226.2628
 
-</pre><h2 id="9">Example to add targets to a program and use circular motion</h2><pre class="codeinput">RDK = Robolink();
+</pre><h2 id="9">How to add targets to a program and use circular motion</h2><pre class="codeinput">RDK = Robolink();
 robot = RDK.Item(<span class="string">''</span>, RDK.ITEM_TYPE_ROBOT);
 
 <span class="comment">% Get the current robot pose:</span>
@@ -492,7 +487,7 @@ target2.setPose(pose2);
 
 <span class="comment">% Add the circular move instruction:</span>
 prog.MoveC(target1, target2)
-</pre><h2 id="10">Rail tests:</h2><pre class="codeinput"><span class="comment">% Start the API</span>
+</pre><h2 id="10">How to calculate inverse kinematics of a robot with a synchronized linear rail</h2><pre class="codeinput"><span class="comment">% Start the API</span>
 RDK = Robolink();
 
 <span class="comment">% Retrieve the robot</span>
@@ -558,23 +553,27 @@ disp(all_solutions)
 
 </pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-% This is an example that uses the RoboDK API for Matlab.
-% This example is not meant to show a specific application, just how to
-% interact with the API
+%% RoboDK API for MATLAB
 %
-% This is a .m file (Matlab file).
-% The RoboDK API for Matlab requires the files in this folder.
-% This example requires RoboDK to be running
-% (otherwise, RoboDK will be started if it was installed in the default location)
-% This example automatically loads the Example 01 installed by default in the "Library" folder
+% This example script demonstrates the integration of RoboDK's API with MATLAB.
+% It is designed to provide a basic understanding of how to interact with RoboDK's API within the MATLAB environment.
+% The example does not aim to fulfill any specific application needs but rather to showcase the API's capabilities and usage in MATLAB.
+%
+% All necessary API dependencies are included in the current directory.
+%
+% The script automatically loads "Example 06b", which is part of the default installation in RoboDK's "Library" folder.
+% This example is intended solely for educational purposes to illustrate the usage of the RoboDK API within MATLAB.
+% It is not designed to achieve a particular task.
+%
+% Additional Resources:
+%
+% * For detailed documentation on the Robolink class, type "doc Robolink" in the MATLAB Command Window.
+% * For information on the RobolinkItem class, type "doc RobolinkItem".
+% * To view more examples demonstrating the use of the RoboDK API, type "showdemo Example_RoboDK".
+% * For the RoboDK MATLAB API documentation, visit: https://robodk.com/doc/en/RoboDK-API.html#MatlabAPI.
+%
 
-% Note: This program is not meant to accomplish a specific goal, only to
-% show how to use the Matlab API
-%
-% RoboDK api Help:
-% ->Type "doc Robolink"            for more help on the Robolink class
-% ->Type "doc RobolinkItem"        for more help on the RobolinkItem item class
-% ->Type "showdemo Example_RoboDK" for examples on how to use RoboDK's API using the last two classes
+%% How to load a station from disk
 
 clc
 clear
@@ -589,7 +588,17 @@ path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 1
 % RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
-RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+
+if ~station.Valid()
+    path = ['C:/RoboDK/Library/'];
+    station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+
+    if ~station.Valid()
+        RDK.ShowMessage(sprintf('This example requires Example-06.b-Pick and place 2 tables.rdk library folder:<br>%s.', library_path))
+        return
+    end
+end
 
 % Display a list of all items
 fprintf('Available items in the station:\n');
@@ -609,7 +618,7 @@ program.RunProgram();
 
 % return;
 
-%% Retrieving objects from the station and modifying them
+%% How to retrieve objects from the station and modify them
 
 % Get some items in the station by their name. Each item is visible in the
 % current project tree
@@ -858,7 +867,7 @@ for i = 1:2
     robot.MoveL(H2);
 end
 
-%% Calculate forward and inverse kinematics of a robot
+%% How to calculate forward and inverse kinematics of a robot
 
 % Get the current robot joints
 fprintf('Current robot joints:\n');
@@ -889,7 +898,7 @@ joints4 = robot.SolveIK(H_tcp_wrt_frame * transl(0, 0, -100));
 % Set the robot at the new position calculated
 robot.setJoints(joints4);
 
-%% Example to add targets to a program and use circular motion
+%% How to add targets to a program and use circular motion
 RDK = Robolink();
 robot = RDK.Item('', RDK.ITEM_TYPE_ROBOT);
 
@@ -923,7 +932,7 @@ target2.setPose(pose2);
 % Add the circular move instruction:
 prog.MoveC(target1, target2)
 
-%% Rail tests:
+%% How to calculate inverse kinematics of a robot with a synchronized linear rail
 
 % Start the API
 RDK = Robolink();
