@@ -764,10 +764,8 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
-    /// Calculates the equivalent position and euler angles ([x,y,z,r,p,w] vector) of the given pose in Universal Robots format
-    /// Note: The difference between ToUR and ToXYZWPR is that the first one uses radians for the orientation and the second one uses degres
-    /// Note: transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
-    /// See also: FromXYZRPW()
+    /// Calculates the equivalent position and euler angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
+    /// The uvw values are the rotation vector
     /// </summary>
     /// <returns>XYZWPR translation and rotation in mm and radians</returns>
     public double[] ToUR()
@@ -776,22 +774,43 @@ public class Mat // simple matrix class for homogeneous operations
         double x = mat[0, 3];
         double y = mat[1, 3];
         double z = mat[2, 3];
-        double angle = Math.Acos(Math.Min(Math.Max((mat[0, 0] + mat[1, 1] + mat[2, 2] - 1) / 2, -1), 1));
-        double rx = mat[2, 1] - mat[1, 2];
-        double ry = mat[0, 2] - mat[2, 0];
-        double rz = mat[1, 0] - mat[0, 1];
-        if (angle == 0)
-        {
-            rx = 0;
-            ry = 0;
-            rz = 0;
-        }
-        else
-        {
-            rx = rx * angle / (2 * Math.Sin(angle));
-            ry = ry * angle / (2 * Math.Sin(angle));
-            rz = rz * angle / (2 * Math.Sin(angle));
-        }
+		double rx = mat[2, 1] - mat[1, 2];
+		double ry = mat[0, 2] - mat[2, 0];
+		double rz = mat[1, 0] - mat[0, 1];
+		double angle = Math.Acos(Math.Min(Math.Max(  (mat[0, 0] + mat[1, 1] + mat[2, 2] - 1) * 0.5, -1.0), 1.0));
+		if (angle < 1e-8){
+			rx = 0;
+			ry = 0;
+			rz = 0;		
+		} else {
+			double sin_angle = Math.Sin(angle);
+			double rxyz_norm_sq = rx*rx + ry*ry + rz*rz;
+			if (Math.Abs(sin_angle) < 1e-8 || rxyz_norm_sq < 1e-4){
+				double mx = 0;
+				if (mat[0, 0] > mat[1, 1] && mat[0, 0] > mat[2, 2]){
+					rx = mat[0, 0] + 1;
+					ry = mat[1, 0];
+					rz = mat[2, 0];
+					mx = mat[0, 0];
+				} else if (mat[1, 1] > mat[2, 2]) {
+					rx = mat[0, 1];
+					ry = mat[1, 1] + 1;
+					rz = mat[2, 1];
+					mx = mat[1, 1];
+				} else {
+					rx = mat[0, 2];
+					ry = mat[1, 2];
+					rz = mat[2, 2] + 1;
+					mx = mat[2, 2];
+				}
+				double mult_factor = angle / (Math.Sqrt(Math.Max(0, 2 * (1 + mx))));				
+			} else {
+				double mult_factor = angle / Math.Sqrt(rxyz_norm_sq);
+				rx = rx * mult_factor;
+				ry = ry * mult_factor;
+				rz = rz * mult_factor;				
+			}
+		}
         xyzwpr[0] = x;
         xyzwpr[1] = y;
         xyzwpr[2] = z;
@@ -802,9 +821,7 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
-    /// Calculates the pose from the position and euler angles ([x,y,z,r,p,w] vector)
-    /// Note: The difference between FromUR and FromXYZWPR is that the first one uses radians for the orientation and the second one uses degres
-    /// The result is the same as calling: H = transl(x,y,z)*rotx(rx)*roty(ry)*rotz(rz)
+    /// Calculates the pose from the position and uvw rotation angles ([x,y,z,u,v,w] vector)
     /// </summary>
     /// <param name="xyzwpr">The position and euler angles array</param>
     /// <returns>Homogeneous matrix (4x4)</returns>
@@ -817,16 +834,20 @@ public class Mat // simple matrix class for homogeneous operations
         double p = xyzwpr[4];
         double r = xyzwpr[5];
         double angle = Math.Sqrt(w * w + p * p + r * r);
-        if (angle < 1e-6)
-        {
-            return Identity4x4();
-        }
-        double c = Math.Cos(angle);
-        double s = Math.Sin(angle);
-        double ux = w / angle;
-        double uy = p / angle;
-        double uz = r / angle;
-        return new Mat(ux * ux + c * (1 - ux * ux), ux * uy * (1 - c) - uz * s, ux * uz * (1 - c) + uy * s, x, ux * uy * (1 - c) + uz * s, uy * uy + (1 - uy * uy) * c, uy * uz * (1 - c) - ux * s, y, ux * uz * (1 - c) - uy * s, uy * uz * (1 - c) + ux * s, uz * uz + (1 - uz * uz) * c, z);
+		Mat pose = Mat.Identity4x4(); // Mat.IdentityMatrix(4, 4);
+        if (angle < 1e-6) {
+            // no rotation
+        } else {
+			double cosang = Math.Cos(0.5 * angle);			
+			double ratio = Math.Sin(0.5 * angle) / angle;
+			double q2 = w * ratio;
+			double q3 = p * ratio;
+			double q4 = r * ratio;
+			double[] q1234 = new double[] { cosang, q2, q3, q4 };
+			pose = Mat.FromQuaternion(q1234);
+		}
+		pose.setPos(x, y, z);
+		return pose;
     }
 
     /// <summary>
