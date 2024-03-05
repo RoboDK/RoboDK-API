@@ -1,34 +1,44 @@
-RoboDK API for Matlab
+RoboDK API for MATLAB
 ======================
 
-The Robolink class (Robolink.m) is the implementation of the RoboDK API for Matlab.
-This class allows creating macros for RoboDK and program industrial robots offline.
+MATLAB is a proprietary programming language developed by [MathWorks](https://www.mathworks.com/). Among other things, MATLAB allows matrix manipulations, plotting of functions and data and implementation of algorithms. RoboDK is an official [MathWorks Connections Program Partner](https://www.mathworks.com/products/connections/product_detail/robodk.html).
 
-The RoboDK API for Matlab is implemented with the following classes (files):
- * Robolink.m
- * RobolinkItem.m
- 
-Any interaction with RoboDK is made through "items" (RobolinkItem.m). An item is an object in the
-Robodk tree (it can be either a robot, an object, a tool, a frame, a 
-program, ...). An item is a unique number (pointer) that represents one object.
+The [RoboDK API description](https://robodk.com/doc/en/RoboDK-API.html) explains the advantages of using the RoboDK API with a widely used programming language such as MATLAB for robot programming.
 
-RoboDK API Help:
- * Type "doc Robolink" in Matlab for more help about the Robolink class
- * Type "doc RobolinkItem" for more help about the RobolinkItem item class
- * Type "showdemo Example_RoboDK" for examples to use RoboDK's API using the last two classes
+The RoboDK API for MATLAB is provided as a group of script files (m-files), available here:
+* In the installation folder of RoboDK, typically `C:/RoboDK/Matlab/`
+* On MathWorks [MATLAB Central](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
+* On the RoboDK API [GitHub](https://github.com/RoboDK/RoboDK-API/tree/master/Matlab)
 
-More information:
- * RoboDK documentation: https://robodk.com/doc/en/RoboDK-API.html
- * Robolink class: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink
- * Item class: https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Item
- 
+The RoboDK API for MATLAB includes:
+* `Robolink.m` is a class that interfaces with RoboDK. Any object in the RoboDK Station Tree can be retrieved using the Robolink object and it is represented by the RobolinkItem object (same as Python’s [Robolink](https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Robolink) class).
+* `RobolinkItem.m` is a class that represents a RoboDK item in the Station Tree. It is possible to perform different operations on that item (same as Python’s [Item](https://robodk.com/doc/en/PythonAPI/robodk.html#robodk.robolink.Item) class).
+* `transl.m`, `rotx.m`, `roty.m` and `rotz.m` are functions that create pose matrices given an XYZ translation vector or rotations along a specific axis.
+* `Pose_2_XYZRPW.m` and `XYZRPW_2_Pose.m` allow converting poses to XYZ position and RPW Euler angles and vice versa.
+
+The following page presents multiple examples of the RoboDK MATLAB API, such as manipulating items, generating robot programs and controlling the robot:
+* RoboDK MATLAB example: https://robodk.com/Matlab-API.
+
+Additional Resources:
+* For detailed documentation on the Robolink class, type "`doc Robolink`" in the MATLAB Command Window.
+* For information on the RobolinkItem class, type "`doc RobolinkItem`".
+* To view more examples demonstrating the use of the RoboDK API, type "`showdemo Example_RoboDK`".
+* For the RoboDK MATLAB API documentation, visit: https://robodk.com/doc/en/RoboDK-API.html#MatlabAPI.
+
+
+Simulink
+-----------------
+A Simulink project is available as an example. In the simulation, the robot is moved along a set of XYZ coordinates generated arbitrarily.
+[![RoboDK Simulink](https://img.youtube.com/vi/7DDBMwa0-Oc/0.jpg)](https://www.youtube.com/watch?v=7DDBMwa0-Oc)
+
+
 Requirements
 ------------
-- [Matlab](https://www.mathworks.com/products/matlab.html)
+- [MATLAB](https://www.mathworks.com/products/matlab.html)
 - [RoboDK](https://robodk.com/download)
 
-No specific toolbox is required for Matlab 2014b or later. 
-For Matlab versions prior to 2014b it is required to have the Instrument Control Toolbox (use the Robolink.m file in the Robolink-ICT-tcpip folder).
+No specific toolbox is required for MATLAB 2014b or later.
+For MATLAB versions prior to 2014b, it is required to have the Instrument Control Toolbox (use the Robolink.m file in the Robolink-ICT-tcpip folder).
 
 
 Examples
@@ -41,8 +51,8 @@ The following files are used by the Simulink model:
  * RoboDK_getRobot.m
  * RoboDK_Pose2Joints.m
  * RoboDK_ShowPose.mdl
- 
- 
+
+
 ```Matlab
 clc
 clear
@@ -56,8 +66,8 @@ RDK = Robolink;
 % second of real time.
 RDK.setSimulationSpeed(5);
 
-% Optionally, change the run mode and generate the program (ignores simulation to 
-% generate the robot program). This will generate a program file suitable for 
+% Optionally, change the run mode and generate the program (ignores simulation to
+% generate the robot program). This will generate a program file suitable for
 % your robot
 % RDK.setRunMode(RDK.RUNMODE_MAKE_ROBOTPROG)
 % RDK.ProgramStart('MatlabProgram');
@@ -86,25 +96,19 @@ for i = 1:numel(ref_object_items)
     end
     fprintf('Moving to: %s ...\n', item_i.Name());
     robot.MoveJ(item_i)
-    
+
     % Alternatively, we can move the robot given a 4x4 pose:
 %     robot.MoveL(item_i.Pose())
-    
+
     % Alternatively, we can also move the robot given the joint values:
 %     robot.MoveJ(item_i.Joints())
-    
+
 end
 fprintf('Done!\n');
 
 % Signal the end of generated program (when program generation is used it will display the file)
 RDK.Finish()
 ```
- 
-Other
-------
-   
-Read the full [RoboDK API description](../README.md) for more information.
 
-More information in [Matlab Central](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab).
 
 
