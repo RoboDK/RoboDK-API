@@ -1192,7 +1192,7 @@ class Robolink:
                     args = []
 
             self.IP = robodk_ip
-            self.ARGUMENTS = args
+            self.ARGUMENTS = list(args)
             self.CLOSE_STD_OUT = close_std_out
             self.QUIT_ON_CLOSE = quit_on_close
 
