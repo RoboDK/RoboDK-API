@@ -6,7 +6,7 @@ import re
 from strip_hints import strip_file_to_string
 
 
-def prepare_python2_folder(base_dir, python2_dir_name='python2'):
+def prepare_python2_folder(base_dir, python2_dir_name):
     python2_dir = base_dir / python2_dir_name
 
     # Check if the python2 directory already exists
@@ -33,7 +33,7 @@ def copy_source_to_temp(src_dirs, temp_dir):
     print("Copied source files to temporary directory.")
 
 
-def update_setup_py(temp_dir, python_requires='<3.5'):
+def update_setup_py(temp_dir, python_requires):
     setup_path = os.path.join(temp_dir, 'setup.py')
     with open(setup_path, 'r') as file:
         content = file.read()
@@ -123,7 +123,7 @@ def main():
     try:
         python2_path = prepare_python2_folder(curr_dir.parent, 'build_python2')
         copy_source_to_temp(src_dirs, python2_path)
-        update_setup_py(python2_path, '<3.5')  # Update version for Python 2
+        update_setup_py(python2_path, '>=2.7')  # Update version for Python 2
         update_setup_cfg(python2_path)  # make universal (for wheels)
         strip_type_hints(python2_path)
         normalize_line_endings(python2_path)  # stripe-hints breaks the line endings..
