@@ -1,4 +1,4 @@
-# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,20 +11,21 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-# This file defines general utility functions for Robolink and Items.
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
-#
+"""This module defines general utility functions for Robolink and Items.
+These functions help create RoboDK add-ins.
+
+More information about the RoboDK API for Python and RoboDK Add-ins here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/robodk.html#robolinkutils-py
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
+from robodk import robolink, robomath
+
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple
-
-from robodk import robolink, robomath
-
 
 def getLinks(item: robolink.Item, type_linked: int = robolink.ITEM_TYPE_ROBOT) -> List[robolink.Item]:
     """

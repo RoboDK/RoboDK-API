@@ -1,4 +1,4 @@
-# Copyright 2015-2023 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,28 +11,35 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-# This file defines the following two classes:
-#     Robolink()
-#     Item()
-# These classes are the objects used to interact with RoboDK and create macros.
-# An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
-# Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method)
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
-#
+"""The robolink module is the bridge between RoboDK and Python. 
+Every object in the RoboDK item tree can be retrieved using a 
+Robolink() object and it is represented by the Item object. 
+
+An item can be a robot, a reference frame, a tool, an object or a specific project.
+
+Among others, this module defines the following two classes:
+    Robolink()
+    Item()
+
+An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
+Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method)
+
+More information about the RoboDK API for Python here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/index.html
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
-if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
-    # Python 3.5+ type hints. Type hints are stripped for <3.5
-    from typing import List, Union, Tuple, Tuple, Dict
-
 from robodk import robomath
 import struct
 import os
 import time
 import threading
+
+if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
+    # Python 3.5+ type hints. Type hints are stripped for <3.5
+    from typing import List, Union, Tuple, Dict
 
 # Tree item types
 ITEM_TYPE_STATION = 1  #: Station :class:`.Item` (.rdk files)

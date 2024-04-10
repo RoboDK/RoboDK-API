@@ -1,4 +1,4 @@
-# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,14 +11,14 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-#
-# This is a dialog toolbox for RoboDK API for Python
-# This toolbox includes user prompts, open file dialogs, messages, etc.
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
-#
+"""This is a dialog toolbox for RoboDK API for Python and RoboDK Add-ins
+This module includes user prompts, open file dialogs, messages, etc.
+
+More information about the RoboDK API for Python here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/robodk.html#robodialogs-py
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
@@ -1061,4 +1061,4 @@ if __name__ == "__main__":
             'Edit float list:': [0., 0.],
         }))
 
-    ShowDialogs()
+    #ShowDialogs()

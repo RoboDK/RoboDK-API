@@ -1,4 +1,4 @@
-# Copyright 2015-2022 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,21 +11,23 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-#
-# This is a RoboDK Apps toolbox for RoboDK API for Python.
-# This toolbox includes checkable apps, app settings, etc.
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
+"""This module includes a toolbox for RoboDK Add-ins and the RoboDK API for Python.
+This toolbox helps create checkable actions in RoboDK Add-ins, automatic Add-in settings UI, etc.
+
+More information about the RoboDK API for Python here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/index.html
+https://robodk.com/doc/en/PythonAPI/robodk.html#roboapps-py
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
+import time
+from robodk import robodialogs, robolink
+
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple, Dict
-
-from robodk import robodialogs, robolink
-import time
 
 if robodialogs.ENABLE_QT:
     from PySide2 import QtWidgets, QtCore, QtGui
@@ -1364,14 +1366,15 @@ def ShowExample():
     S.Erase()  # Remove all data from the station
 
 
-def runmain():
 
-    ShowExample()
-
-    if robodialogs.ENABLE_QT:
-        robodialogs.ENABLE_QT = False
-        ShowExample()
 
 
 if __name__ == "__main__":
-    runmain()
+    def RunExample():
+        ShowExample()
+
+        if robodialogs.ENABLE_QT:
+            robodialogs.ENABLE_QT = False
+            ShowExample()
+    
+    # RunExample()
