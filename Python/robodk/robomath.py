@@ -13,7 +13,7 @@
 # --------------- DESCRIPTION ----------------
 """This is a robotics toolbox to facilitate operations with the RoboDK API 
 and matrix (pose) operations. This toolbox includes a simple matrix class 
-for pose transformations (Mat class)
+for pose transformations (Mat class).
 
 This toolbox has been inspired from Peter Corke's Robotics Toolbox:
 http://petercorke.com/wordpress/toolboxes/robotics-toolbox

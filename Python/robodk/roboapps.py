@@ -11,7 +11,7 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-"""This module includes a toolbox for RoboDK Add-ins and the RoboDK API for Python.
+"""This module is a toolbox for RoboDK Add-ins and the RoboDK API for Python.
 This toolbox helps create checkable actions in RoboDK Add-ins, automatic Add-in settings UI, etc.
 
 More information about the RoboDK API for Python here:

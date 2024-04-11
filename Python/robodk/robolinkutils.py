@@ -12,7 +12,8 @@
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
 """This module defines general utility functions for Robolink and Items.
-These functions help create RoboDK add-ins.
+These functions facilitate the usage of some RoboDK API functions 
+and create RoboDK add-ins.
 
 More information about the RoboDK API for Python and RoboDK Add-ins here:
 https://robodk.com/doc/en/RoboDK-API.html

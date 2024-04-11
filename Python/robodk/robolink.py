@@ -15,11 +15,9 @@
 Every object in the RoboDK item tree can be retrieved using a 
 Robolink() object and it is represented by the Item object. 
 
-An item can be a robot, a reference frame, a tool, an object or a specific project.
-
 Among others, this module defines the following two classes:
-    Robolink()
-    Item()
+  Robolink()
+  Item()
 
 An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
 Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method)

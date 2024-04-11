@@ -11,8 +11,8 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-"""This is a dialog toolbox for RoboDK API for Python and RoboDK Add-ins
-This module includes user prompts, open file dialogs, messages, etc.
+"""This module is a dialog toolbox for the RoboDK API and RoboDK Add-ins.
+This toolbox includes user prompts, open file dialogs, messages, etc.
 
 More information about the RoboDK API for Python here:
 https://robodk.com/doc/en/RoboDK-API.html

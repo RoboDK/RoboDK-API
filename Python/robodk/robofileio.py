@@ -11,7 +11,7 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-"""This module provides file operations utilities for the RoboDK API
+"""This module provides file operations utilities for the RoboDK API.
 This toolbox includes FTP transfer functions, CSV import/export,
 file operations, etc.
 
