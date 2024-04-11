@@ -1,4 +1,4 @@
-# Copyright 2015-2021 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,28 +11,29 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-#
-# This is a robotics toolbox for RoboDK robot post processors and RoboDK API for Python
-# This toolbox includes a simple matrix class for pose transofmrations (Mat)
-# This toolbox has been inspired from Peter Corke's Robotics Toolbox:
-# http://petercorke.com/wordpress/toolboxes/robotics-toolbox
-#
-# In this document: pose = transformation matrix = homogeneous matrix = 4x4 matrix
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
-#
-# Visit the Matrix and Quaternions FAQ for more information about pose/homogeneous transformations
-#     http://www.j3d.org/matrix_faq/matrfaq_latest.html
+"""This is a robotics toolbox to facilitate operations with the RoboDK API 
+and matrix (pose) operations. This toolbox includes a simple matrix class 
+for pose transformations (Mat class).
+
+This toolbox has been inspired from Peter Corke's Robotics Toolbox:
+http://petercorke.com/wordpress/toolboxes/robotics-toolbox
+
+In this module: 
+pose = transformation matrix = homogeneous matrix = 4x4 matrix = Mat class
+
+More information about the RoboDK API for Python here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/robodk.html#robomath-py
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
+import math
+import time
+
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Tuple
-
-import math
-import time
 
 #----------------------------------------------------
 #--------      Generic math usage     ---------------

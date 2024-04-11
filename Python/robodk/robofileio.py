@@ -11,25 +11,25 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-#
-# This is a file operations toolbox for RoboDK API for Python
-# This toolbox includes FTP functions, file operations, etc.
-#
-# More information about the RoboDK API for Python here:
-#     https://robodk.com/doc/en/RoboDK-API.html
-#     https://robodk.com/doc/en/PythonAPI/index.html
-#
+"""This module provides file operations utilities for the RoboDK API.
+This toolbox includes FTP transfer functions, CSV import/export,
+file operations, etc.
+
+More information about the RoboDK API for Python here:
+https://robodk.com/doc/en/RoboDK-API.html
+https://robodk.com/doc/en/PythonAPI/robodk.html#robofileio-py
+https://robodk.com/doc/en/Add-ins.html
+"""
 # --------------------------------------------
 import sys
+import time
+import os.path
+import ftplib
+from robodk import robomath
+
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Tuple, Dict
-
-import time
-import os.path
-import time
-import ftplib
-from robodk import robomath
 
 #----------------------------------------------------
 #--------      Generic file usage     ---------------
