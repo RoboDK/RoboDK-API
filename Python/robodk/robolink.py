@@ -1941,7 +1941,7 @@ class Robolink:
         """
 
         if isinstance(triangle_points, list):
-            if isinstance(triangle_points[0], robomath.Mat):
+            if len(triangle_points) > 0 and isinstance(triangle_points[0], robomath.Mat):
                 # Check special case where we send multiple shapes in one shot
                 list_shapes = []
                 list_colours = []
