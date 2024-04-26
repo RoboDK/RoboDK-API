@@ -315,6 +315,7 @@ struct Item_t RoboDK_AddProgram(struct RoboDK_t* inst, const char* name, struct 
 struct Item_t RoboDK_AddMachiningProject(struct RoboDK_t* inst, const char* name, const struct Item_t* itemrobot);
 struct Item_t RoboDK_GetActiveStation(struct RoboDK_t* inst);
 void RoboDK_SetActiveStation(struct RoboDK_t* inst, struct Item_t* station);
+bool RoboDK_Collision_Line(struct RoboDK_t* inst, const double* p1XYZ, const double* p2XYZ, struct Mat_t *ref, struct Item_t* item, double *outXYZ);
 void RoboDK_Render(struct RoboDK_t* inst, bool always_render);
 void RoboDK_Update(struct RoboDK_t* inst);
 bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct Item_t* object_parent);
@@ -376,6 +377,7 @@ void Item_Stop(const struct Item_t* inst);//Done
 bool Item_Disconnect(const struct Item_t* inst); //Done
 enum eITEM_TYPE Item_Type(const struct Item_t* inst);
 void Item_Save(const struct Item_t* inst, char* filename);
+void Item_AddGeometry(const struct Item_t* inst, const struct Item_t* fromitem, const struct Mat_t pose);
 void Item_Delete(struct Item_t* inst);
 void Item_SetParent(const struct Item_t* inst1, const struct Item_t* inst2);
 void Item_SetParentStatic(const struct Item_t* inst1, const struct Item_t* inst2);
@@ -451,6 +453,8 @@ void Mat_ToString(const struct Mat_t *inst, char *output, bool xyzwprOnly);
 
 //These functions are mostly here as helpers 
 void Mat_Inv_out(struct Mat_t *out, const struct Mat_t *in);
+
+void Mat_MultiplyXYZ_out(double *outXYZ, const struct Mat_t *inA, const double *xyz);
 void Mat_Multiply_out(struct Mat_t *out, const struct Mat_t *inA, const struct Mat_t *inB);
 
 //Functions to operate on the joints class
@@ -500,7 +504,7 @@ bool          _RoboDK_send_Line(struct RoboDK_t *inst, const char *); //Complete
 bool          _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item); //Complete
 bool          _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int size); //Complete
 bool          _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose); //Complete
-
+bool          _RoboDK_send_xyz(struct RoboDK_t *inst, const double *pValues);
 
 //These functions will need to work on a big endian system
 int32_t       _RoboDK_recv_Int(struct RoboDK_t *inst); //Complete
@@ -509,6 +513,7 @@ struct Item_t _RoboDK_recv_Item(struct RoboDK_t *inst); //Complete
 struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize); //Complete
 struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst); //Complete
+bool          _RoboDK_recv_xyz(struct RoboDK_t *inst, double *pValues); //Complete
 
 bool          _RoboDK_check_status(struct RoboDK_t *inst); //Complete
 

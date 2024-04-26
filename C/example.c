@@ -38,6 +38,14 @@ int main()
     }
     return 0;
 
+    // Test collision line:
+    double p1XYZ[3] = {1,0,-1000};
+    double p2XYZ[3] = {1,0,2000};
+    double xyz_col[3] = {0,0,0};
+    struct Item_t item;
+    bool collided = RoboDK_Collision_Line(&rdk, p1XYZ, p2XYZ, 0, &item, xyz_col);
+    return 0;
+
 
     // To prevent memory allocation issues, keep your string MAX_STR_LENGTH long
     char robotName[MAX_STR_LENGTH];

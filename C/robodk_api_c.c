@@ -717,6 +717,15 @@ void Item_Save(const struct Item_t* inst, char* filename) {
     //_RoboDK_Save(filename, inst->_RDK);
 }
 
+void Item_AddGeometry(const struct Item_t* inst, const struct Item_t* fromitem, const struct Mat_t pose) {
+    _RoboDK_check_connection(inst->_RDK);
+    _RoboDK_send_Line(inst->_RDK,"CopyFaces");
+    _RoboDK_send_Item(inst->_RDK, fromitem);
+    _RoboDK_send_Item(inst->_RDK, inst);
+    _RoboDK_send_Pose(inst->_RDK, pose);
+    _RoboDK_check_status(inst->_RDK);
+}
+
 void Item_Delete(struct Item_t* inst) {
     _RoboDK_check_connection(inst->_RDK);
     _RoboDK_send_Line(inst->_RDK, "Remove");
@@ -1054,11 +1063,32 @@ struct Item_t RoboDK_GetActiveStation(struct RoboDK_t* inst) {
     return station;
 }
 
-void RoboDK_SetActiveStation(struct RoboDK_t* inst,struct Item_t* station) {
+void RoboDK_SetActiveStation(struct RoboDK_t* inst, struct Item_t* station) {
     _RoboDK_check_connection(inst);
     _RoboDK_send_Line(inst, "S_ActiveStn");
     _RoboDK_send_Item(inst, station);
     _RoboDK_check_status(inst);
+}
+
+bool RoboDK_Collision_Line(struct RoboDK_t* inst, const double* p1XYZ, const double* p2XYZ, struct Mat_t *ref, struct Item_t *item, double *outXYZ) {
+    double p1XYZabs[3];
+    double p2XYZabs[3];
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "CollisionLine");
+    if (ref == NULL){
+        // Identity matrix assumed
+        _RoboDK_send_xyz(inst, p1XYZ);
+        _RoboDK_send_xyz(inst, p2XYZ);
+    } else {
+        Mat_MultiplyXYZ_out(p1XYZabs, ref, p1XYZ);
+        Mat_MultiplyXYZ_out(p2XYZabs, ref, p2XYZ);
+        _RoboDK_send_xyz(inst, p1XYZabs);
+        _RoboDK_send_xyz(inst, p2XYZabs);
+    }
+    *item = _RoboDK_recv_Item(inst);
+    _RoboDK_recv_xyz(inst, outXYZ);
+    _RoboDK_check_status(inst);
+    return Item_Valid(item);
 }
 
 void RoboDK_Render(struct RoboDK_t* inst,bool always_render) {
@@ -1634,11 +1664,11 @@ void Mat_Multiply_cumul(struct Mat_t *in1out, const struct Mat_t *in2) {
 void Mat_Multiply_rotxyz(struct Mat_t *in1out, const double rx, const double ry, const double rz) {
     struct Mat_t matResult;
     struct Mat_t matTemp;
-    matTemp = Mat_rotx(0);
+    matTemp = Mat_rotx(rx);
     Mat_Multiply_cumul(&matResult, &matTemp);
-    matTemp = Mat_roty(0);
+    matTemp = Mat_roty(ry);
     Mat_Multiply_cumul(&matResult, &matTemp);
-    matTemp = Mat_rotz(0);
+    matTemp = Mat_rotz(rz);
     Mat_Multiply_cumul(&matResult, &matTemp);
     return;
 }
@@ -1958,6 +1988,12 @@ void Mat_Multiply_out(struct Mat_t *out, const struct Mat_t *inA, const struct M
     (out->arr16)[13] = (inA->arr16)[1] * (inB->arr16)[12] + (inA->arr16)[5] * (inB->arr16)[13] + (inA->arr16)[9] * (inB->arr16)[14] + (inA->arr16)[13];
     (out->arr16)[14] = (inA->arr16)[2] * (inB->arr16)[12] + (inA->arr16)[6] * (inB->arr16)[13] + (inA->arr16)[10] * (inB->arr16)[14] + (inA->arr16)[14];
     (out->arr16)[15] = 1;
+}
+
+void Mat_MultiplyXYZ_out(double *outXYZ, const struct Mat_t *inA, const double *xyz) {
+    outXYZ[0] = (inA->arr16)[0] * xyz[0] + (inA->arr16)[4] * xyz[1] + (inA->arr16)[8] * xyz[2] + (inA->arr16)[12];
+    outXYZ[1] = (inA->arr16)[1] * xyz[0] + (inA->arr16)[5] * xyz[1] + (inA->arr16)[9] * xyz[2] + (inA->arr16)[13];
+    outXYZ[2] = (inA->arr16)[2] * xyz[0] + (inA->arr16)[6] * xyz[1] + (inA->arr16)[10] * xyz[2] + (inA->arr16)[14];
 }
 
 
@@ -2451,6 +2487,19 @@ bool _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose) {
     return true;
 }
 
+bool _RoboDK_send_xyz(struct RoboDK_t *inst, const double *pValues){
+    for (int i = 0; i < 3; i++) {
+        double iValue = pValues[i];
+        char valueIBytesSend[sizeof(double)];
+        char valueIBytesNative[sizeof(double)];
+        memcpy(valueIBytesNative, &iValue, sizeof(double));
+        for (size_t k = 0; k < sizeof(double); k++) {
+            valueIBytesSend[k] = valueIBytesNative[sizeof(double) - 1 - k];
+        }
+        SocketWrite(inst->_COM, &valueIBytesSend, sizeof(double));
+    }
+    return true;
+}
 
 int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
     int32_t value = 0;
@@ -2583,6 +2632,28 @@ struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst) {
     struct Joints_t jnts;
     _RoboDK_recv_Array(inst, jnts._Values, &(jnts._nDOFs));
     return jnts;
+}
+
+bool _RoboDK_recv_xyz(struct RoboDK_t *inst, double *pValues){
+    double valuei;
+    for (int i = 0; i < 3; i++) {
+        char bufferCurValue[sizeof(double)];
+        char valueIBytes[sizeof(double)];
+        while (SocketBytesAvailable(inst->_COM) < sizeof(double)){
+            // waste time?
+        }
+        int nread = SocketRead(inst->_COM, &bufferCurValue, sizeof(double));
+        if (nread < 0) {
+            return false;
+        }
+        for (size_t k = 0; k < sizeof(double); k++) {
+            valueIBytes[sizeof(double) - 1 - k] = bufferCurValue[k];
+        }
+        memcpy(&valuei, &valueIBytes, sizeof(double));
+        pValues[i] = valuei;
+    }
+    //}
+    return true;
 }
 
 bool _RoboDK_check_status(struct RoboDK_t *inst) {
