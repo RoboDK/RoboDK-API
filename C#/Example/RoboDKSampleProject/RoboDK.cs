@@ -1883,6 +1883,16 @@ public class RoboDK
     public const int EVENT_ROBOT_MOVED = 9;
     public const int EVENT_KEY = 10;
     public const int EVENT_ITEM_MOVED_POSE = 11;
+    public const int EVENT_COLLISIONMAP_RESET = 12;
+    public const int EVENT_COLLISIONMAP_TOO_LARGE = 13;
+    public const int EVENT_CALIB_MEASUREMENT = 14;
+    public const int EVENT_SELECTION3D_CLICK = 15; // An object in the 3D view was clicked on (right click, left click or double click), this is not triggered when we deselect an item (use Selection3DChanged instead to have more complete information).
+    public const int EVENT_CHANGED = 16; // The state of one or more items changed in the tree (parent/child relationship, added/removed items or instructions, changed the active station). Use this event to know if the tree changed and had to be re-rendered.
+    public const int EVENT_RENAME = 17; // The name of an item changed (RoboDK 5.6.3 required).
+    public const int EVENT_SETVISIBLE = 18; // The visibility state of an item changed (RoboDK 5.6.3 required).
+    public const int EVENT_STATIONCHANGED = 19; // A new robodk station was loaded (RoboDK 5.6.3 required).
+    public const int EVENT_PROGSLIDER_CHANGED = 20; // A program slider was opened, changed, or closed (RoboDK 5.6.4 required).
+    public const int EVENT_PROGSLIDER_SET = 21; // The index of a program slider changed (RoboDK 5.6.4 required).
 
     // Robot link visibility
     public const int VISIBLE_REFERENCE_DEFAULT = -1;

@@ -115,6 +115,8 @@ namespace RoboDk.API
 
             _connectionType = ConnectionType.Api;
 
+            _eventFilter = new List<int>();
+
             Name = "RoboDk API Client";
             CustomCommandLineArgumentString = "";
             ApplicationDir = "";
