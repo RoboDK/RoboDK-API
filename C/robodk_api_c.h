@@ -495,6 +495,7 @@ int Matrix2D_Size(const struct Matrix2D_t *mat, int dim);
 int Matrix2D_Get_ncols(const struct Matrix2D_t *var);
 int Matrix2D_Get_nrows(const struct Matrix2D_t *var);
 double Matrix2D_Get_ij(const struct Matrix2D_t *var, int i, int j);
+void Matrix2D_Set_ij(const struct Matrix2D_t* var, int i, int j, double value);
 double* Matrix2D_Get_col(const struct Matrix2D_t *var, int col);
 
 void Debug_Array(const double *array, int arraysize);

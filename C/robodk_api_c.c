@@ -115,6 +115,32 @@
 #pragma warning(disable : 4996) // _CRT_SECURE_NO_WARNINGS
 #endif
 
+double byteswap_double(double x) {
+    size_t i;
+    double result;
+    for (i = 0; i < sizeof(double); ++i) {
+        ((char*) &result)[i] = ((char*) &x)[sizeof(double) - 1 - i];
+    }
+    return result;
+}
+
+double htobedbl(double x) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+    return byteswap_double(x);
+#else
+    return x;
+#endif
+}
+
+double bedbltoh(double x) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+    return byteswap_double(x);
+#else
+    return x;
+#endif
+}
+
+
 static const char ROBODK_API_START_STRING[] = "CMD_START";
 static const char ROBODK_API_READY_STRING[] = "READY";
 static const char ROBODK_API_LF[] = "\n";
@@ -284,8 +310,9 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_p
     static bool s_socketsReady = false;
     static WSADATA wsaData;
     if (!s_socketsReady) {
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             return;
+        }
 
         s_socketsReady = true;
     }
@@ -314,16 +341,13 @@ void RoboDK_Connect(struct RoboDK_t *inst, const char* robodk_ip, uint16_t com_p
 
 void RoboDK_ShowMessage(struct RoboDK_t *inst, const char *message, bool isPopup) {
     _RoboDK_check_connection(inst);
-    if (isPopup)
-    {
+    if (isPopup) {
         _RoboDK_send_Line(inst, "ShowMessage");
         _RoboDK_send_Line(inst, message);
         SetSocketTimeout(inst->_COM, (int)(3600 * 1000));
         _RoboDK_check_status(inst); //Will wait here
         SetSocketTimeout(inst->_COM, inst->_TIMEOUT);
-    }
-    else
-    {
+    } else {
         _RoboDK_send_Line(inst, "ShowMessageStatus");
         _RoboDK_send_Line(inst, message);
         _RoboDK_check_status(inst);
@@ -471,13 +495,15 @@ size_t RoboDK_Selection(struct RoboDK_t* inst, struct Item_t* items, size_t item
     _RoboDK_check_connection(inst);
     _RoboDK_send_Line(inst, "G_Selection");
     total_items = _RoboDK_recv_Int(inst);
-    if (total_items < 0)
+    if (total_items < 0) {
         total_items = 0;
+    }
 
     for (i = 0; i < total_items; ++i) {
         item = _RoboDK_recv_Item(inst);
-        if (items && i < items_maxsize)
+        if (items && i < items_maxsize) {
             items[i] = item;
+        }
     }
 
     _RoboDK_check_status(inst);
@@ -791,8 +817,7 @@ void Item_Scale(const struct Item_t* inst, double scale_xyz[3]) {
 }
 
 
-struct Item_t Item_SetMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options)
-{
+struct Item_t Item_SetMachiningParameters(const struct Item_t* inst, char ncfile, const struct Item_t* part_obj, char *options) {
     struct Item_t program;
     _RoboDK_check_connection(inst->_RDK);
     _RoboDK_send_Line(inst->_RDK, "S_MachiningParams");
@@ -1133,13 +1158,12 @@ int RoboDK_Collisions(struct RoboDK_t* inst) {
     return ncollisions;
 }
 
-struct Matrix2D_t* RoboDK_ProjectPoints(struct RoboDK_t* inst, const struct Matrix2D_t* points, const struct Item_t* object_project, enum eProjectionType projection_type)
-{
+struct Matrix2D_t* RoboDK_ProjectPoints(struct RoboDK_t* inst, const struct Matrix2D_t* points, const struct Item_t* object_project, enum eProjectionType projection_type) {
     _RoboDK_check_connection(inst);
     _RoboDK_send_Line(inst, "ProjectPoints");
     _RoboDK_send_Matrix2D(inst, points);
     _RoboDK_send_Item(inst, object_project);
-    _RoboDK_send_Int(inst, (int)projection_type);
+    _RoboDK_send_Int(inst, (int) projection_type);
     struct Matrix2D_t* result = _RoboDK_recv_Matrix2D(inst);
     _RoboDK_check_status(inst);
     return result;
@@ -1547,8 +1571,7 @@ void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, cons
 
 }
 
-struct Matrix2D_t* Item_ProjectPoints(const struct Item_t* inst, const struct Matrix2D_t* points, enum eProjectionType projection_type)
-{
+struct Matrix2D_t* Item_ProjectPoints(const struct Item_t* inst, const struct Matrix2D_t* points, enum eProjectionType projection_type) {
     return RoboDK_ProjectPoints(inst->_RDK, points, inst, projection_type);
 }
 
@@ -2072,25 +2095,34 @@ void Joints_ToString(struct Joints_t *inst, char *output) {
 /////////////////////////////////////
 // 2D matrix functions
 /////////////////////////////////////
-void emxInit_real_T(struct Matrix2D_t **pEmxArray, int numDimensions)
-{
+void emxInit_real_T(struct Matrix2D_t **pEmxArray, int numDimensions) {
     struct Matrix2D_t *emxArray;
-    int i;
-    *pEmxArray = (struct Matrix2D_t *)malloc(sizeof(struct Matrix2D_t));
-    emxArray = *pEmxArray;
-    emxArray->data = (double *)NULL;
+
+    if (!pEmxArray) {
+        return;
+    }
+
+    emxArray = (struct Matrix2D_t*) malloc(sizeof(struct Matrix2D_t));
+    *pEmxArray = emxArray;
+
+    if (!emxArray) {
+        return;
+    }
+
+    emxArray->data = NULL;
     emxArray->numDimensions = numDimensions;
-    emxArray->size = (int *)malloc((unsigned int)(sizeof(int) * numDimensions));
+    emxArray->size = (int*) malloc(sizeof(int) * numDimensions);
+    if (emxArray->size) {
+        memset(emxArray->size, 0, sizeof(int) * numDimensions);
+    }
+
     emxArray->allocatedSize = 0;
     emxArray->canFreeData = true;
-    for (i = 0; i < numDimensions; i++) {
-        emxArray->size[i] = 0;
-    }
 }
 ///
 struct Matrix2D_t* Matrix2D_Create() {
-    struct Matrix2D_t *matrix;
-    emxInit_real_T((struct Matrix2D_t**)(&matrix), 2);
+    struct Matrix2D_t* matrix = NULL;
+    emxInit_real_T(&matrix, 2);
     return matrix;
 }
 
@@ -2137,7 +2169,7 @@ void emxEnsureCapacity(struct Matrix2D_t *emxArray, int oldNumel, unsigned int e
             }
         }
         newData = (double*)calloc((unsigned int)i, elementSize);
-        if (emxArray->data != NULL) {
+        if (newData && emxArray->data) {
             memcpy(newData, emxArray->data, elementSize * oldNumel);
             if (emxArray->canFreeData) {
                 free(emxArray->data);
@@ -2179,7 +2211,7 @@ int Matrix2D_Get_nrows(const struct Matrix2D_t *var) {
 double Matrix2D_Get_ij(const struct Matrix2D_t *var, int i, int j) { // ZERO BASED!!
     return var->data[var->size[0] * j + i];
 }
-void Matrix2D_SET_ij(const struct Matrix2D_t *var, int i, int j, double value) { // ZERO BASED!!
+void Matrix2D_Set_ij(const struct Matrix2D_t *var, int i, int j, double value) { // ZERO BASED!!
     var->data[var->size[0] * j + i] = value;
 }
 
@@ -2196,8 +2228,9 @@ void Matrix2D_Add_Double(struct Matrix2D_t *var, const double *array, int numel)
     var->size[1] = size2 + 1;
     emxEnsureCapacity(var, oldnumel, (int)sizeof(double));
 
-    if (numel > size1)
+    if (numel > size1) {
         numel = size1;
+    }
 
     for (int i = 0; i < numel; i++) {
         var->data[size1 * size2 + i] = array[i];
@@ -2237,19 +2270,26 @@ void Debug_Array(const double *array, int arraysize) {
 }
 
 void Debug_Matrix2D(const struct Matrix2D_t *emx) {
-    int size1;
-    int size2;
-    int j;
-    double *column;
-    size1 = Matrix2D_Get_nrows(emx);
-    size2 = Matrix2D_Get_ncols(emx);
-    printf("Matrix size = [%i, %i]\n", size1, size2);
-    //std::out << "Matrix size = [%i, %i]" << size1 << " " << size2 << "]\n";
-    for (j = 0; j < size2; j++) {
-        column = Matrix2D_Get_col(emx, j);
-        Debug_Array(column, size1);
+    int rows;
+    int cols;
+    int row;
+    int col;
+    double value;
+
+    rows = Matrix2D_Get_nrows(emx);
+    cols = Matrix2D_Get_ncols(emx);
+
+    printf("Matrix size = [%i, %i]\n", rows, cols);
+
+    for (row = 0; row < rows; ++row) {
+        for (col = 0; col < cols; ++col) {
+            if (col > 0) {
+                printf(" , ");
+            }
+            value = Matrix2D_Get_ij(emx, row, col);
+            printf("%.3f", value);
+        }
         printf("\n");
-        //std::cout << "\n";
     }
 }
 
@@ -2431,8 +2471,7 @@ bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
     while (inputLine[i] != '\0')
     {
         /* If occurrence of character is found */
-        if (inputLine[i] == '\n')
-        {
+        if (inputLine[i] == '\n') {
             *outputChar = '<';
             outputChar++;
             *outputChar = 'b';
@@ -2441,8 +2480,7 @@ bool _RoboDK_send_Line(struct RoboDK_t *inst, const char *inputLine) {
             outputChar++;
             *outputChar = '>';
             outputChar++;
-        }
-        else {
+        } else {
             *outputChar = inputLine[i];
             outputChar++;
         }
@@ -2518,15 +2556,19 @@ bool _RoboDK_send_xyz(struct RoboDK_t *inst, const double *pValues){
     return true;
 }
 
-bool _RoboDK_send_Matrix2D(struct RoboDK_t *inst, const struct Matrix2D_t *matrix)
-{
+bool _RoboDK_send_Matrix2D(struct RoboDK_t *inst, const struct Matrix2D_t *matrix) {
+    int i;
+    double value;
     int rows = Matrix2D_Get_nrows(matrix);
     int cols = Matrix2D_Get_ncols(matrix);
 
     _RoboDK_send_Int(inst, rows);
     _RoboDK_send_Int(inst, cols);
 
-    SocketWrite(inst->_COM, matrix->data, sizeof(double) * rows * cols);
+    for (i = 0; i < rows * cols; ++i) {
+        value = htobedbl(matrix->data[i]);
+        SocketWrite(inst->_COM, &value, sizeof(double));
+    }
 
     return true;
 }
@@ -2686,17 +2728,21 @@ bool _RoboDK_recv_xyz(struct RoboDK_t *inst, double *pValues){
     return true;
 }
 
-struct Matrix2D_t* _RoboDK_recv_Matrix2D(struct RoboDK_t* inst)
-{
+struct Matrix2D_t* _RoboDK_recv_Matrix2D(struct RoboDK_t* inst) {
+    int i;
     int rows = _RoboDK_recv_Int(inst);
     int cols = _RoboDK_recv_Int(inst);
 
     struct Matrix2D_t* result = Matrix2D_Create();
-    if (!result)
+    if (!result) {
         return 0;
+    }
 
     Matrix2D_Set_Size(result, rows, cols);
     SocketRead(inst->_COM, result->data, sizeof(double) * rows * cols);
+    for (i = 0; i < rows * cols; ++i) {
+        result->data[i] = bedbltoh(result->data[i]);
+    }
 
     return result;
 }
@@ -2771,8 +2817,9 @@ void _RoboDK_moveX(struct RoboDK_t* inst, const struct Item_t* target, const str
         return;
     }
     _RoboDK_send_Item(inst, itemrobot);
-    if (!_RoboDK_check_status(inst))
+    if (!_RoboDK_check_status(inst)) {
         return;
+    }
 
     if (blocking) {
         SetSocketTimeout(inst->_COM, 3600 * 1000);
