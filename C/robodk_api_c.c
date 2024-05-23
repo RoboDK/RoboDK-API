@@ -1133,6 +1133,18 @@ int RoboDK_Collisions(struct RoboDK_t* inst) {
     return ncollisions;
 }
 
+struct Matrix2D_t* RoboDK_ProjectPoints(struct RoboDK_t* inst, const struct Matrix2D_t* points, const struct Item_t* object_project, enum eProjectionType projection_type)
+{
+    _RoboDK_check_connection(inst);
+    _RoboDK_send_Line(inst, "ProjectPoints");
+    _RoboDK_send_Matrix2D(inst, points);
+    _RoboDK_send_Item(inst, object_project);
+    _RoboDK_send_Int(inst, (int)projection_type);
+    struct Matrix2D_t* result = _RoboDK_recv_Matrix2D(inst);
+    _RoboDK_check_status(inst);
+    return result;
+}
+
 uint32_t RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2) {
     _RoboDK_check_connection(inst);
     _RoboDK_send_Line(inst, "Collided");
@@ -1533,6 +1545,11 @@ void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, cons
     *out_poseFiltered = pose_filtered;
     *out_joints_filtered = joints_filtered;
 
+}
+
+struct Matrix2D_t* Item_ProjectPoints(const struct Item_t* inst, const struct Matrix2D_t* points, enum eProjectionType projection_type)
+{
+    return RoboDK_ProjectPoints(inst->_RDK, points, inst, projection_type);
 }
 
 void RoboDK_SetRunMode(struct RoboDK_t *inst, enum eRobotRunMode run_mode) {
@@ -2501,6 +2518,19 @@ bool _RoboDK_send_xyz(struct RoboDK_t *inst, const double *pValues){
     return true;
 }
 
+bool _RoboDK_send_Matrix2D(struct RoboDK_t *inst, const struct Matrix2D_t *matrix)
+{
+    int rows = Matrix2D_Get_nrows(matrix);
+    int cols = Matrix2D_Get_ncols(matrix);
+
+    _RoboDK_send_Int(inst, rows);
+    _RoboDK_send_Int(inst, cols);
+
+    SocketWrite(inst->_COM, matrix->data, sizeof(double) * rows * cols);
+
+    return true;
+}
+
 int32_t _RoboDK_recv_Int(struct RoboDK_t *inst) {
     int32_t value = 0;
 
@@ -2654,6 +2684,21 @@ bool _RoboDK_recv_xyz(struct RoboDK_t *inst, double *pValues){
     }
     //}
     return true;
+}
+
+struct Matrix2D_t* _RoboDK_recv_Matrix2D(struct RoboDK_t* inst)
+{
+    int rows = _RoboDK_recv_Int(inst);
+    int cols = _RoboDK_recv_Int(inst);
+
+    struct Matrix2D_t* result = Matrix2D_Create();
+    if (!result)
+        return 0;
+
+    Matrix2D_Set_Size(result, rows, cols);
+    SocketRead(inst->_COM, result->data, sizeof(double) * rows * cols);
+
+    return result;
 }
 
 bool _RoboDK_check_status(struct RoboDK_t *inst) {

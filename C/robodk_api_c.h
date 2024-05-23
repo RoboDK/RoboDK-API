@@ -200,6 +200,27 @@ enum eCollisionState{
     COLLISION_ON = 1
 };
 
+/// Projection types
+enum eProjectionType {
+    /// No projection
+    PROJECTION_NONE = 0,
+
+    /// The projection will be the closest point on the surface
+    PROJECTION_CLOSEST = 1,
+
+    /// The projection will be done along the normal
+    PROJECTION_ALONG_NORMAL = 2,
+
+    /// The projection will be done along the normal.Furthermore, the normal will be recalculated according to the surface normal
+    PROJECTION_ALONG_NORMAL_RECALC = 3,
+
+    /// The projection will be the closest point on the surface and the normals will be recalculated
+    PROJECTION_CLOSEST_RECALC = 4,
+
+    /// The normals are recalculated according to the surface normal of the closest projection.The points are not changed
+    PROJECTION_RECALC = 5
+};
+
 // Structures
 #ifdef _WIN32
 typedef uintptr_t socket_t;
@@ -322,6 +343,7 @@ bool RoboDK_IsInside(struct RoboDK_t* inst, struct Item_t* object_inside, struct
 uint32_t RoboDK_SetCollisionActive(struct RoboDK_t* inst, enum eCollisionState check_state);
 uint32_t RoboDK_Collision(struct RoboDK_t* inst, struct Item_t* item1, struct Item_t* item2);
 int RoboDK_Collisions(struct RoboDK_t* inst);
+struct Matrix2D_t* RoboDK_ProjectPoints(struct RoboDK_t* inst, const struct Matrix2D_t* points, const struct Item_t* object_project, enum eProjectionType projection_type);
 
 
 
@@ -412,6 +434,8 @@ struct Joints_t Item_SolveIK(const struct Item_t* inst, const struct Mat_t* pose
 struct Mat_t Item_SolveFK(const struct Item_t *inst, const struct Joints_t *joints, const struct Mat_t *tool_pose, const struct Mat_t *reference_pose);
 void Item_JointsConfig(const struct Item_t* inst, const struct Joints_t *joints, double config);
 void Item_FilterTarget(const struct Item_t *inst, const struct Mat_t *pose, const struct Joints_t *joints_approx,struct Mat_t *out_poseFiltered,struct Joints_t *joints_filtered);
+struct Matrix2D_t* Item_ProjectPoints(const struct Item_t* inst, const struct Matrix2D_t* points, enum eProjectionType projection_type);
+
 
 //DI and DO
 char Item_GetDI(const struct Item_t* inst, char* io_var);
@@ -505,6 +529,7 @@ bool          _RoboDK_send_Item(struct RoboDK_t *inst, const struct Item_t *item
 bool          _RoboDK_send_Array(struct RoboDK_t *inst, const double *values, int size); //Complete
 bool          _RoboDK_send_Pose(struct RoboDK_t *inst, const struct Mat_t pose); //Complete
 bool          _RoboDK_send_xyz(struct RoboDK_t *inst, const double *pValues);
+bool          _RoboDK_send_Matrix2D(struct RoboDK_t* inst, const struct Matrix2D_t* matrix);
 
 //These functions will need to work on a big endian system
 int32_t       _RoboDK_recv_Int(struct RoboDK_t *inst); //Complete
@@ -514,6 +539,7 @@ struct Mat_t  _RoboDK_recv_Pose(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_Array(struct RoboDK_t *inst, double *pValues, int *pSize); //Complete
 struct Joints_t _RoboDK_recv_Array_Joints(struct RoboDK_t *inst); //Complete
 bool          _RoboDK_recv_xyz(struct RoboDK_t *inst, double *pValues); //Complete
+struct Matrix2D_t* _RoboDK_recv_Matrix2D(struct RoboDK_t* inst);
 
 bool          _RoboDK_check_status(struct RoboDK_t *inst); //Complete
 
