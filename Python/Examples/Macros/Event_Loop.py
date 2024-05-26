@@ -2,6 +2,7 @@
 # Listening to events should be done with a dedicated Robolink instance. This same instance should only be used for events.
 
 from robolink import *
+from robodk.robomath import Mat
 
 # List of events that are reported via the event loop
 EVENT_SELECTION_TREE_CHANGED = 1
@@ -183,6 +184,9 @@ class RobolinkEvents(Robolink):
         
         elif evt == EVENT_SELECTION_3D_CLICK:                
             print("Event: An object was clicked in the 3D view")
+            if rdk.BUILD > 24315:
+                click_type = int(rdk.Command("Event", "TriggeredId1"))
+                print("Click type = " + str(click_type))
             
         elif evt == EVENT_ITEM_CHANGED:                
             print("Event: An object was clicked in the 3D view")
