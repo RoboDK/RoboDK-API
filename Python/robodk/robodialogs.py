@@ -769,7 +769,7 @@ if ENABLE_TK:
                 app.destroy()
                 return None
 
-            values = widget_to_value(dialog.funcs, value)
+            values = widget_to_value(dialog.funcs, dialog.default_value)
 
             dialog.destroy()
             app.destroy()
@@ -1029,7 +1029,7 @@ if ENABLE_QT:
             if not ret:
                 return None
 
-            return widget_to_value(dialog.funcs, value)
+            return widget_to_value(dialog.funcs, dialog.default_value)
 
 
 if __name__ == "__main__":
