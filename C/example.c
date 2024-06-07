@@ -17,6 +17,36 @@ int main()
     }
 
 
+    // Test ProjectPoints
+    struct Matrix2D_t* points = Matrix2D_Create();
+    Matrix2D_Set_Size(points, 3, 3);
+
+    // Column 0
+    Matrix2D_Set_ij(points, 0, 0, -33.8414);
+    Matrix2D_Set_ij(points, 1, 0, 31.0503);
+    Matrix2D_Set_ij(points, 2, 0, 0.0);
+
+    // Column 1
+    Matrix2D_Set_ij(points, 0, 1, 51.05289);
+    Matrix2D_Set_ij(points, 1, 1, 31.05039);
+    Matrix2D_Set_ij(points, 2, 1, 0.0);
+
+    // Column 2
+    Matrix2D_Set_ij(points, 0, 2, 0.0);
+    Matrix2D_Set_ij(points, 1, 2, 0.0);
+    Matrix2D_Set_ij(points, 2, 2, 0.0);
+
+    struct Item_t object_project = RoboDK_getItem(&rdk, NULL, ITEM_TYPE_OBJECT);
+
+    // struct Matrix2D_t* result_points = RoboDK_ProjectPoints(&rdk, points, &object_project, PROJECTION_NONE);
+    struct Matrix2D_t* result_points = Item_ProjectPoints(&object_project, points, PROJECTION_NONE);
+    Debug_Matrix2D(result_points);
+    Matrix2D_Delete(&result_points);
+    return 0;
+
+
+
+
     // Test retrieving all items at once
     #define MAX_ITEMS 1000
     struct Item_t itemlist[MAX_ITEMS];
