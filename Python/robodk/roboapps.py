@@ -367,12 +367,9 @@ def widget_to_value(funcs: List, original_value: Any) -> Any:
         return False
 
     def is_dropdown(value):
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-        if type(value) is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
-            return True
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-        elif type(value) is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        if type(value) is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             return True
 
         return False
@@ -383,7 +380,6 @@ def widget_to_value(funcs: List, original_value: Any) -> Any:
             if len(value.keys()) > 0:
                 if all(is_pod(n) or is_pod_list(n) or is_pod_tuple(n) or is_dropdown(n) for n in value.values()):
                     return True
-                return True
         return False
 
     if is_pod(original_value):
@@ -400,26 +396,34 @@ def widget_to_value(funcs: List, original_value: Any) -> Any:
         new_value[0] = value_list[0]
         return new_value
 
-    elif is_pod_dict(original_value):
-        new_value = original_value
-        for key, old_value in original_value.items():
-            if is_pod(old_value):
-                new_value[key] = value_list[0]
-                value_list.pop(0)
+    elif isinstance(original_value, dict):
 
-            elif is_pod_list(old_value):
-                new_value[key] = value_list[0:len(old_value)]
-                value_list = value_list[len(old_value):]
+        def parse_dict(original_value, value_list):
+            new_value = original_value
+            for key, old_value in original_value.items():
+                if is_pod(old_value):
+                    new_value[key] = value_list[0]
+                    value_list.pop(0)
 
-            elif is_pod_tuple(old_value):
-                new_value[key] = tuple(value_list[0:len(old_value)])
-                value_list = value_list[len(old_value):]
+                elif is_pod_list(old_value):
+                    new_value[key] = value_list[0:len(old_value)]
+                    value_list = value_list[len(old_value):]
 
-            elif is_dropdown(old_value):
-                new_value[key] = old_value
-                new_value[key][0] = value_list[0]
-                value_list.pop(0)
-        return new_value
+                elif is_pod_tuple(old_value):
+                    new_value[key] = tuple(value_list[0:len(old_value)])
+                    value_list = value_list[len(old_value):]
+
+                elif is_dropdown(old_value):
+                    new_value[key] = old_value
+                    new_value[key][0] = value_list[0]
+                    value_list.pop(0)
+
+                elif is_pod_dict(old_value):
+                    new_value[key] = parse_dict(old_value, value_list)
+
+            return new_value
+
+        return parse_dict(original_value, value_list)
 
     return value_list
 
@@ -764,22 +768,16 @@ if robodialogs.ENABLE_QT:
             widget = QtWidgets.QWidget(parent)
             widget.setLayout(h_layout)
 
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
+            if isinstance(index, str):
+                index = value[1].index(value[0])
             options = value[1]
             widget = QtWidgets.QComboBox(parent)
             widget.addItems(options)
-            widget.setCurrentIndex(index)
-            func = [widget.currentIndex]
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
-            index = value[1].index(value[0])
-            options = value[1]
-            widget = QtWidgets.QComboBox(parent)
-            widget.addItems(options)
-            widget.setCurrentIndex(index)
+            widget.setCurrentIndex(max(0, min(len(options) - 1, index)))
             func = [widget.currentIndex]  # str index will be replaced with int index once saved
 
         # Dictionary of label:value
@@ -911,19 +909,14 @@ if robodialogs.ENABLE_TK:
                 func.extend(f_func)
                 widget.grid_columnconfigure(idcol, weight=1)
 
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and value[0] in range(len(value[1])) and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in  range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
+            if isinstance(index, str):
+                index = value[1].index(value[0])
             options = value[1]
-            tkvar = tkinter.StringVar(value=options[index])
-            widget = tkinter.OptionMenu(frame, tkvar, *options)
-            func = [tkvar.get]
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']]
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and value[0] in value[1] and all(isinstance(n, str) for n in value[1]):
-            index = value[0].index(value[0])
-            options = value[1]
-            tkvar = tkinter.StringVar(value=options[index])
+            tkvar = tkinter.StringVar(value=options[max(0, min(len(options) - 1, index))])
             widget = tkinter.OptionMenu(frame, tkvar, *options)
             func = [tkvar.get]
 
@@ -1366,15 +1359,13 @@ def ShowExample():
     S.Erase()  # Remove all data from the station
 
 
-
-
-
 if __name__ == "__main__":
+
     def RunExample():
         ShowExample()
 
         if robodialogs.ENABLE_QT:
             robodialogs.ENABLE_QT = False
             ShowExample()
-    
-    # RunExample()
+
+    #RunExample()
