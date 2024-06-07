@@ -367,12 +367,9 @@ def widget_to_value(funcs: List, original_value: Any) -> Any:
         return False
 
     def is_dropdown(value):
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
-        if type(value) is list and (len(value) == 2) and isinstance(value[0], int) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
-            return True
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
-        elif type(value) is list and (len(value) == 2) and isinstance(value[0], str) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        if type(value) is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             return True
 
         return False
@@ -771,18 +768,12 @@ if robodialogs.ENABLE_QT:
             widget = QtWidgets.QWidget(parent)
             widget.setLayout(h_layout)
 
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
-            options = value[1]
-            widget = QtWidgets.QComboBox(parent)
-            widget.addItems(options)
-            widget.setCurrentIndex(max(0, min(len(options) - 1, index)))
-            func = [widget.currentIndex]
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
-            index = value[1].index(value[0])
+            if isinstance(index, str):
+                index = value[1].index(value[0])
             options = value[1]
             widget = QtWidgets.QComboBox(parent)
             widget.addItems(options)
@@ -918,17 +909,12 @@ if robodialogs.ENABLE_TK:
                 func.extend(f_func)
                 widget.grid_columnconfigure(idcol, weight=1)
 
-        # ComboBox with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in  range(len(value[1]))" check, as developer can remove choices
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], int) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
+        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in  range(len(value[1]))" check, as developer can remove choices
+        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+        elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
             index = value[0]
-            options = value[1]
-            tkvar = tkinter.StringVar(value=options[max(0, min(len(options) - 1, index))])
-            widget = tkinter.OptionMenu(frame, tkvar, *options)
-            func = [tkvar.get]
-
-        # ComboBox with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], str) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
-            index = value[1].index(value[0])
+            if isinstance(index, str):
+                index = value[1].index(value[0])
             options = value[1]
             tkvar = tkinter.StringVar(value=options[max(0, min(len(options) - 1, index))])
             widget = tkinter.OptionMenu(frame, tkvar, *options)
