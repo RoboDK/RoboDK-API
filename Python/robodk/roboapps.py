@@ -15,10 +15,11 @@
 This toolbox helps create checkable actions in RoboDK Add-ins, automatic Add-in settings UI, etc.
 
 More information about the RoboDK API for Python here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/index.html
-https://robodk.com/doc/en/PythonAPI/robodk.html#roboapps-py
-https://robodk.com/doc/en/Add-ins.html
+
+* https://robodk.com/doc/en/RoboDK-API.html
+* https://robodk.com/doc/en/PythonAPI/index.html
+* https://robodk.com/doc/en/PythonAPI/robodk.html#roboapps-py
+* https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys

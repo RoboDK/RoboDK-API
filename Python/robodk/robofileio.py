@@ -16,9 +16,10 @@ This toolbox includes FTP transfer functions, CSV import/export,
 file operations, etc.
 
 More information about the RoboDK API for Python here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/robodk.html#robofileio-py
-https://robodk.com/doc/en/Add-ins.html
+
+* https://robodk.com/doc/en/RoboDK-API.html
+* https://robodk.com/doc/en/PythonAPI/robodk.html#robofileio-py
+* https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys

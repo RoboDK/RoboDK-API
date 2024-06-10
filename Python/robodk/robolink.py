@@ -16,16 +16,18 @@ Every object in the RoboDK item tree can be retrieved using a
 Robolink() object and it is represented by the Item object. 
 
 Among others, this module defines the following two classes:
-  Robolink()
-  Item()
+
+* Robolink()
+* Item()
 
 An item is an object in the RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
 Items can be retrieved from the RoboDK station using the Robolink() object (such as Robolink.Item() method)
 
 More information about the RoboDK API for Python here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/index.html
-https://robodk.com/doc/en/Add-ins.html
+
+* https://robodk.com/doc/en/RoboDK-API.html
+* https://robodk.com/doc/en/PythonAPI/index.html
+* https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys

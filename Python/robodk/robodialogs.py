@@ -15,9 +15,10 @@
 This toolbox includes user prompts, open file dialogs, messages, etc.
 
 More information about the RoboDK API for Python here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/robodk.html#robodialogs-py
-https://robodk.com/doc/en/Add-ins.html
+
+* https://robodk.com/doc/en/RoboDK-API.html
+* https://robodk.com/doc/en/PythonAPI/robodk.html#robodialogs-py
+* https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys

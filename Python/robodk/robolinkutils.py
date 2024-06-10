@@ -16,9 +16,10 @@ These functions facilitate the usage of some RoboDK API functions
 and create RoboDK add-ins.
 
 More information about the RoboDK API for Python and RoboDK Add-ins here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/robodk.html#robolinkutils-py
-https://robodk.com/doc/en/Add-ins.html
+
+* https://robodk.com/doc/en/RoboDK-API.html
+* https://robodk.com/doc/en/PythonAPI/robodk.html#robolinkutils-py
+* https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys

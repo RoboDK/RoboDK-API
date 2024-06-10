@@ -22,9 +22,10 @@ In this module:
 pose = transformation matrix = homogeneous matrix = 4x4 matrix = Mat class
 
 More information about the RoboDK API for Python here:
-https://robodk.com/doc/en/RoboDK-API.html
-https://robodk.com/doc/en/PythonAPI/robodk.html#robomath-py
-https://robodk.com/doc/en/Add-ins.html
+
+ * https://robodk.com/doc/en/RoboDK-API.html
+ * https://robodk.com/doc/en/PythonAPI/robodk.html#robomath-py
+ * https://robodk.com/doc/en/Add-ins.html
 """
 # --------------------------------------------
 import sys
