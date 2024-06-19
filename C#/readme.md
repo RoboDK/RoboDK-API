@@ -1,6 +1,8 @@
 RoboDK API for C#
 ======================
-Read the [RoboDK API description](../README.md) for general information about the RoboDK API.
+The RoboDK API for C# allows you to simulate and program robots from your C# code for robot automation project. The RoboDK API also allows you to automate tasks within RoboDK software and customize your manufacturing applications.
+
+Learn more about the RoboDK API in the [RoboDK documentation page](https://robodk.com/doc/en/RoboDK-API.html).
 
 Requirements
 ------------
