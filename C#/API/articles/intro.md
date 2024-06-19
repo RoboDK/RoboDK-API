@@ -1,12 +1,22 @@
 Articles
 ======================
 
-Robot SDK
-----------------------------------------
-Learn the advantages of robot programming off-line using a Robot SDK: https://robodk.com/blog/robot-sdk/.
-A programming language like C# can be used to program any industrial robot using the same API.
+RoboDK API for C# package
+--------------------
+You can find the NuiGet package or the RoboDK API for C# in the official nuget website:
+https://www.nuget.org/packages/RoboDkApi
 
-Robot HMI for Automation Projects
+You can find the template to create your integrations in the Visual Studio Marketplace page:
+https://marketplace.visualstudio.com/items?itemName=RoboDK.RoboDK-Template
+
+RoboDK API documentation
 ---------------------------------
-Learn how you can integrate your HMI with a 3D virtual environment of your industrial robot and your cell: https://robodk.com/blog/robot-hmi-automation/.
-You can simulate robot arms, program off-line and control industrial robots using the same C# code.
+https://robodk.com/doc/en/RoboDK-API.html
+
+RoboDK API on GitHub
+----------------------
+You can find the latest version of the RoboDK API on the official RoboDK GitHub repository:
+
+RoboDK API projects
+----------------------------------------
+Learn the advantages of using the RoboDK API for your automation projects: https://robodk.com/blog/category/robodk-api/.
