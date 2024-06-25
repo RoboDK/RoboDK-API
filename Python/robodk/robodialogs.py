@@ -526,7 +526,6 @@ if ENABLE_TK:
 
         @staticmethod
         def ShowMessage(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -540,7 +539,6 @@ if ENABLE_TK:
 
         @staticmethod
         def ShowMessageOkCancel(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -555,7 +553,6 @@ if ENABLE_TK:
 
         @staticmethod
         def ShowMessageYesNo(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -569,7 +566,6 @@ if ENABLE_TK:
 
         @staticmethod
         def ShowMessageYesNoCancel(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -854,7 +850,6 @@ if ENABLE_QT:
 
         @staticmethod
         def ShowMessage(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -873,7 +868,6 @@ if ENABLE_QT:
 
         @staticmethod
         def ShowMessageOkCancel(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -892,7 +886,6 @@ if ENABLE_QT:
 
         @staticmethod
         def ShowMessageYesNo(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
@@ -911,7 +904,6 @@ if ENABLE_QT:
 
         @staticmethod
         def ShowMessageYesNoCancel(msg, title=None):
-            print(msg)
             if title is None:
                 title = _message_to_window_title(msg)
 
