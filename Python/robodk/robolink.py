@@ -1799,7 +1799,6 @@ class Robolink:
         :type popup: bool
         """
         with self._lock:
-            print(message)
             self._check_connection()
             if popup:
                 command = 'ShowMessage'
