@@ -5203,8 +5203,7 @@ class Item:
             self.link._check_status()
             return newprog, status
 
-    #"""Target item calls"""
-    def setAsCartesianTarget(self):
+    def setAsCartesianTarget(self) -> 'Item':
         """Sets a target as a cartesian target. A cartesian target moves to cartesian coordinates.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.setPose`, :func:`~robodk.robolink.Item.setAsJointTarget`
@@ -5221,7 +5220,7 @@ class Item:
             self.link._check_status()
             return self
 
-    def setAsJointTarget(self):
+    def setAsJointTarget(self) -> 'Item':
         """Sets a target as a joint target. A joint target moves to the joint position without taking into account the cartesian coordinates.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.setPose`, :func:`~robodk.robolink.Item.setAsCartesianTarget`
