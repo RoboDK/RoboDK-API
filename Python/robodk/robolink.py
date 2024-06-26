@@ -1109,7 +1109,7 @@ class Robolink:
             self._check_status()
             if blocking:
                 #itemrobot.WaitMove()
-                self.COM.settimeout(360000)
+                self.COM.settimeout(max(360000, self.TIMEOUT))
                 self._check_status()  #will wait here
                 self.COM.settimeout(self.TIMEOUT)
 
@@ -1163,7 +1163,7 @@ class Robolink:
             self._check_status()
             if blocking:
                 #itemrobot.WaitMove()
-                self.COM.settimeout(360000)
+                self.COM.settimeout(max(360000, self.TIMEOUT))
                 self._check_status()  #will wait here
                 self.COM.settimeout(self.TIMEOUT)
 
@@ -1450,7 +1450,7 @@ class Robolink:
                     if self.NODELAY:
                         self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-                    self.COM.settimeout(1)
+                    self.COM.settimeout(1) # Intentionally low timeout
                     try:
                         self.COM.connect((self.IP, port))
                         connected = self._is_connected()
@@ -1633,7 +1633,7 @@ class Robolink:
                 for itm in itemtype_or_list:
                     self._send_item(itm)
 
-            self.COM.settimeout(3600)  # wait up to 1 hour for user input
+            self.COM.settimeout(max(3600, self.TIMEOUT))  # wait up to 1 hour for user input
             item = self._rec_item()
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -1804,7 +1804,7 @@ class Robolink:
                 command = 'ShowMessage'
                 self._send_line(command)
                 self._send_line(message)
-                self.COM.settimeout(3600)  # wait up to 1 hour user to hit OK
+                self.COM.settimeout(max(3600, self.TIMEOUT))  # wait up to 1 hour user to hit OK
                 self._check_status()
                 self.COM.settimeout(self.TIMEOUT)
             else:
@@ -1920,7 +1920,7 @@ class Robolink:
             self._send_line(command)
             self._send_line(filename)
             self._send_item(parent)
-            self.COM.settimeout(60)  # 60 seconds timeout to add a file
+            self.COM.settimeout(max(60,self.TIMEOUT))  # 60 seconds timeout to add a file
             newitem = self._rec_item()
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -2172,7 +2172,7 @@ class Robolink:
             self._send_matrix(points)
             self._send_item(object_project)
             self._send_int(projection_type)
-            self.COM.settimeout(timeout)  # 30 seconds timeout
+            self.COM.settimeout(max(timeout, self.TIMEOUT)) 
             projected_points = self._rec_matrix()  # will wait here
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -2228,7 +2228,7 @@ class Robolink:
             self._send_line(command)
             self._send_line(filename)
             self._send_item(itemsave)
-            self.COM.settimeout(60)
+            self.COM.settimeout(max(60, self.TIMEOUT))
             self._check_status()
             self.COM.settimeout(self.TIMEOUT)
 
@@ -2983,7 +2983,7 @@ class Robolink:
                 self._send_item(None)
                 self._send_line(str(cmd))
                 self._send_matrix(value)
-                self.COM.settimeout(3600)
+                self.COM.settimeout(max(3600, self.TIMEOUT))
                 nmats = self._rec_int()
                 self.COM.settimeout(self.TIMEOUT)
                 mat2d_list = []
@@ -3017,7 +3017,7 @@ class Robolink:
                 self._send_line(command)
                 self._send_line(str(cmd))
                 self._send_line(value)
-                self.COM.settimeout(3600)
+                self.COM.settimeout(max(3600,self.TIMEOUT))
                 line = self._rec_line()
                 self.COM.settimeout(self.TIMEOUT)
                 self._check_status()
@@ -3289,7 +3289,7 @@ class Robolink:
             self._send_array(algorithm)
             self._send_item(robot)
             self._send_item(tool)
-            self.COM.settimeout(3600)
+            self.COM.settimeout(max(3600, self.TIMEOUT))
             TCPxyz = self._rec_array()
             self.COM.settimeout(self.TIMEOUT)
             errorstats = self._rec_array()
@@ -3669,7 +3669,7 @@ class Robolink:
                 self._send_item(cam_handle)
                 self._send_line(file_save_img)
                 self._send_line(params)
-                self.COM.settimeout(3600)
+                self.COM.settimeout(max(3600, self.TIMEOUT))
                 if len(file_save_img) == 0:
                     # If the file name is empty we are expecting a byte array as PNG file
                     success = self._rec_bytes()
@@ -3958,7 +3958,7 @@ class Robolink:
             command = 'Popup_ProgISO9283'
             self._send_line(command)
             self._send_item(robot)
-            self.COM.settimeout(3600)
+            self.COM.settimeout(max(3600, self.TIMEOUT))
             iso_program = self._rec_item()
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -4138,7 +4138,7 @@ class Robolink:
             self._send_line(plugin_name)
             self._send_line(plugin_command)
             self._send_line(str(value))
-            self.COM.settimeout(3600 * 24 * 7)
+            self.COM.settimeout(max(3600 * 24 * 7, self.TIMEOUT))
             result = self._rec_line()
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -5195,7 +5195,7 @@ class Item:
             self.link._send_line(ncfile)
             self.link._send_item(part)
             self.link._send_line(params)
-            self.link.COM.settimeout(3600)
+            self.link.COM.settimeout(max(3600, self.TIMEOUT))
             newprog = self.link._rec_item()
             self.link.COM.settimeout(self.link.TIMEOUT)
             status = self.link._rec_int() / 1000.0
@@ -6175,7 +6175,7 @@ class Item:
             self.link._send_array(j1)
             self.link._send_array(j2)
             self.link._send_int(minstep_deg * 1000)
-            self.link.COM.settimeout(3600)  # wait up to 1 hour
+            self.link.COM.settimeout(max(3600, self.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6209,7 +6209,7 @@ class Item:
             self.link._send_array(j3)
             self.link._send_int(minstep_deg * 1000.0)
             self.link._send_int(blend_deg * 1000.0)
-            self.link.COM.settimeout(3600)
+            self.link.COM.settimeout(max(3600, self.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6239,7 +6239,7 @@ class Item:
             self.link._send_array(j1)
             self.link._send_pose(pose)
             self.link._send_int(minstep_mm * 1000)
-            self.link.COM.settimeout(3600)  # wait up to 1 hour
+            self.link.COM.settimeout(max(3600, self.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6464,7 +6464,7 @@ class Item:
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._check_status()
-        self.link.COM.settimeout(timeout)
+        self.link.COM.settimeout(max(timeout,self.TIMEOUT))
         self.link._check_status()  #will wait here
         self.link.COM.settimeout(self.link.TIMEOUT)
         #busy = self.link.Is_Busy(self.item)
@@ -6587,7 +6587,7 @@ class Item:
             self.link._send_item(self)
             self.link._send_line(folder_path)
             self.link._send_int(run_mode)
-            self.link.COM.settimeout(300)  # wait up to 5 minutes for the program to generate
+            self.link.COM.settimeout(max(300, self.TIMEOUT))  # wait at least 5 minutes for the program to generate
             prog_status = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             prog_log_str = self.link._rec_line()
@@ -6836,7 +6836,7 @@ class Item:
             self.link._send_line(str(io_var))
             self.link._send_line(str(io_value))
             self.link._send_int(timeout_ms * 1000)
-            self.link.COM.settimeout(3600 * 24 * 7)  # wait up to 1 week
+            self.link.COM.settimeout(max(3600 * 24 * 7, self.TIMEOUT))
             self.link._check_status()
             self.link.COM.settimeout(self.link.TIMEOUT)
 
@@ -7136,7 +7136,7 @@ class Item:
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_array([check_collisions, mm_step, deg_step])
-            self.link.COM.settimeout(timeout_sec)  # wait up to 1 hour user to hit OK
+            self.link.COM.settimeout(max(timeout_sec, self.TIMEOUT))  # wait at least up to 1 hour user to hit OK
             values = self.link._rec_array().tolist()
             self.link.COM.settimeout(self.link.TIMEOUT)
             readable_msg = self.link._rec_line()
@@ -7213,7 +7213,7 @@ class Item:
             self.link._send_item(self)
             self.link._send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
             joint_list = save_to_file
-            self.link.COM.settimeout(3600)
+            self.link.COM.settimeout(max(3600, self.TIMEOUT))
             if save_to_file is None:
                 self.link._send_line('')
                 joint_list = self.link._rec_matrix()
@@ -7337,7 +7337,7 @@ class Item:
                 self.link._send_item(self)
                 self.link._send_line(str(param))
                 self.link._send_matrix(value)
-                self.link.COM.settimeout(3600)
+                self.link.COM.settimeout(max(3600, self.TIMEOUT))
                 nmats = self.link._rec_int()
                 self.link.COM.settimeout(self.link.TIMEOUT)
                 mat2d_list = []
@@ -7376,7 +7376,7 @@ class Item:
                 self.link._send_line(str(param))
                 self.link._send_line(value)
 
-                self.link.COM.settimeout(3600)
+                self.link.COM.settimeout(max(3600, self.TIMEOUT))
                 line = self.link._rec_line()
                 self.link.COM.settimeout(self.link.TIMEOUT)
 
