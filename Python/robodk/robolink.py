@@ -5195,7 +5195,7 @@ class Item:
             self.link._send_line(ncfile)
             self.link._send_item(part)
             self.link._send_line(params)
-            self.link.COM.settimeout(max(3600, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
             newprog = self.link._rec_item()
             self.link.COM.settimeout(self.link.TIMEOUT)
             status = self.link._rec_int() / 1000.0
@@ -6175,7 +6175,7 @@ class Item:
             self.link._send_array(j1)
             self.link._send_array(j2)
             self.link._send_int(minstep_deg * 1000)
-            self.link.COM.settimeout(max(3600, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6209,7 +6209,7 @@ class Item:
             self.link._send_array(j3)
             self.link._send_int(minstep_deg * 1000.0)
             self.link._send_int(blend_deg * 1000.0)
-            self.link.COM.settimeout(max(3600, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6239,7 +6239,7 @@ class Item:
             self.link._send_array(j1)
             self.link._send_pose(pose)
             self.link._send_int(minstep_mm * 1000)
-            self.link.COM.settimeout(max(3600, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
             collision = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             self.link._check_status()
@@ -6464,7 +6464,7 @@ class Item:
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._check_status()
-        self.link.COM.settimeout(max(timeout, self.TIMEOUT))
+        self.link.COM.settimeout(max(timeout, self.link.TIMEOUT))
         self.link._check_status()  #will wait here
         self.link.COM.settimeout(self.link.TIMEOUT)
         #busy = self.link.Is_Busy(self.item)
@@ -6587,7 +6587,7 @@ class Item:
             self.link._send_item(self)
             self.link._send_line(folder_path)
             self.link._send_int(run_mode)
-            self.link.COM.settimeout(max(300, self.TIMEOUT))  # wait at least 5 minutes for the program to generate
+            self.link.COM.settimeout(max(300, self.link.TIMEOUT))  # wait at least 5 minutes for the program to generate
             prog_status = self.link._rec_int()
             self.link.COM.settimeout(self.link.TIMEOUT)
             prog_log_str = self.link._rec_line()
@@ -6836,7 +6836,7 @@ class Item:
             self.link._send_line(str(io_var))
             self.link._send_line(str(io_value))
             self.link._send_int(timeout_ms * 1000)
-            self.link.COM.settimeout(max(3600 * 24 * 7, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600 * 24 * 7, self.link.TIMEOUT))
             self.link._check_status()
             self.link.COM.settimeout(self.link.TIMEOUT)
 
@@ -7136,7 +7136,7 @@ class Item:
             self.link._send_line(command)
             self.link._send_item(self)
             self.link._send_array([check_collisions, mm_step, deg_step])
-            self.link.COM.settimeout(max(timeout_sec, self.TIMEOUT))  # wait at least up to 1 hour user to hit OK
+            self.link.COM.settimeout(max(timeout_sec, self.link.TIMEOUT))  # wait at least up to 1 hour user to hit OK
             values = self.link._rec_array().tolist()
             self.link.COM.settimeout(self.link.TIMEOUT)
             readable_msg = self.link._rec_line()
@@ -7213,7 +7213,7 @@ class Item:
             self.link._send_item(self)
             self.link._send_array([mm_step, deg_step, float(collision_check), float(flags), float(time_step)])
             joint_list = save_to_file
-            self.link.COM.settimeout(max(3600, self.TIMEOUT))
+            self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
             if save_to_file is None:
                 self.link._send_line('')
                 joint_list = self.link._rec_matrix()
@@ -7337,7 +7337,7 @@ class Item:
                 self.link._send_item(self)
                 self.link._send_line(str(param))
                 self.link._send_matrix(value)
-                self.link.COM.settimeout(max(3600, self.TIMEOUT))
+                self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
                 nmats = self.link._rec_int()
                 self.link.COM.settimeout(self.link.TIMEOUT)
                 mat2d_list = []
@@ -7376,7 +7376,7 @@ class Item:
                 self.link._send_line(str(param))
                 self.link._send_line(value)
 
-                self.link.COM.settimeout(max(3600, self.TIMEOUT))
+                self.link.COM.settimeout(max(3600, self.link.TIMEOUT))
                 line = self.link._rec_line()
                 self.link.COM.settimeout(self.link.TIMEOUT)
 
