@@ -1450,7 +1450,7 @@ class Robolink:
                     if self.NODELAY:
                         self.COM.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-                    self.COM.settimeout(1) # Intentionally low timeout
+                    self.COM.settimeout(1)  # Intentionally low timeout
                     try:
                         self.COM.connect((self.IP, port))
                         connected = self._is_connected()
@@ -1920,7 +1920,7 @@ class Robolink:
             self._send_line(command)
             self._send_line(filename)
             self._send_item(parent)
-            self.COM.settimeout(max(60,self.TIMEOUT))  # 60 seconds timeout to add a file
+            self.COM.settimeout(max(60, self.TIMEOUT))  # 60 seconds timeout to add a file
             newitem = self._rec_item()
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -2172,7 +2172,7 @@ class Robolink:
             self._send_matrix(points)
             self._send_item(object_project)
             self._send_int(projection_type)
-            self.COM.settimeout(max(timeout, self.TIMEOUT)) 
+            self.COM.settimeout(max(timeout, self.TIMEOUT))
             projected_points = self._rec_matrix()  # will wait here
             self.COM.settimeout(self.TIMEOUT)
             self._check_status()
@@ -3017,7 +3017,7 @@ class Robolink:
                 self._send_line(command)
                 self._send_line(str(cmd))
                 self._send_line(value)
-                self.COM.settimeout(max(3600,self.TIMEOUT))
+                self.COM.settimeout(max(3600, self.TIMEOUT))
                 line = self._rec_line()
                 self.COM.settimeout(self.TIMEOUT)
                 self._check_status()
@@ -6464,7 +6464,7 @@ class Item:
         self.link._send_line(command)
         self.link._send_item(self)
         self.link._check_status()
-        self.link.COM.settimeout(max(timeout,self.TIMEOUT))
+        self.link.COM.settimeout(max(timeout, self.TIMEOUT))
         self.link._check_status()  #will wait here
         self.link.COM.settimeout(self.link.TIMEOUT)
         #busy = self.link.Is_Busy(self.item)
