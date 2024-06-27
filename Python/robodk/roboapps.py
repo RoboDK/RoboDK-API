@@ -138,10 +138,7 @@ def Checked() -> bool:
     .. code-block:: python
 
         def runmain():
-            if roboapps.Unchecked():
-                ActionUnchecked()
-            else:
-                roboapps.SkipKill()  # Optional, prevents RoboDK from force-killing the action after 2 seconds
+            if roboapps.Checked():
                 ActionChecked()
 
     .. seealso:: :func:`~robodk.roboapps.Unchecked`, :func:`~robodk.roboapps.SkipKill`, :func:`~robodk.roboapps.KeepChecked`
