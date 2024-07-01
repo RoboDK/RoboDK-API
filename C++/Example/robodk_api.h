@@ -763,7 +763,7 @@ class ROBODK RoboDK {
     friend class RoboDK_API::Item;
 
 public:
-    RoboDK(const QString &robodk_ip="", int com_port=-1, const QString &args="", const QString &path="");
+    RoboDK(const QString &robodk_ip="", int com_port=-1, const QString &args="", const QString &path="", bool fUseExceptions = false);
     ~RoboDK();
 
     quint64 ProcessID();
@@ -1698,6 +1698,7 @@ public:
 
 private:
     QTcpSocket *_COM;
+    bool _USE_EXCPETIONS;
     QTcpSocket *_COM_EVT;
     QString _IP;
     int _PORT;
