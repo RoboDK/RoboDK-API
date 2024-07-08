@@ -128,7 +128,7 @@ QString tJoints::ToString(const QString &separator, int precision) const {
     if (!Valid()){
         return "tJoints(Invalid)";
     }
-    QString values("tJoints({");
+    QString values;//("tJoints({");
     if (_nDOFs <= 0){
         return values;
     }
@@ -137,11 +137,11 @@ QString tJoints::ToString(const QString &separator, int precision) const {
         values.append(separator);
         values.append(QString::number(_Values[i],'f',precision));
     }
-    values.append("}  ,  " + QString::number(_nDOFs) +  ")");
+    //values.append("}  ,  " + QString::number(_nDOFs) +  ")");
     return values;
 }
 bool tJoints::FromString(const QString &str){
-    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     _nDOFs = qMin(jnts_list.length(), RDK_SIZE_JOINTS_MAX);
     for (int i=0; i<_nDOFs; i++){
         QString stri(jnts_list.at(i));
@@ -413,7 +413,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
     if (!isHomogeneous()){
         str.append("Warning!! Pose is not homogeneous! Use Mat::MakeHomogeneous() to make this matrix homogeneous\n");
     }
-    str.append("Mat(XYZRPW_2_Mat(");
+    //str.append("Mat(XYZRPW_2_Mat(");
 
     tXYZWPR xyzwpr;
     ToXYZRPW(xyzwpr);
@@ -422,7 +422,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
         str.append(separator);
         str.append(QString::number(xyzwpr[i],'f',precision));
     }
-    str.append("))");
+    //str.append("))");
 
     if (xyzwpr_only){
         return str;
@@ -442,7 +442,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
 }
 
 bool Mat::FromString(const QString &pose_str){
-    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     int nvalues = qMin(values_list.length(), 6);
     tXYZWPR xyzwpr;
     for (int i=0; i<6; i++){
@@ -3482,7 +3482,7 @@ bool RoboDK::_connect_smart(){
     // Start RoboDK
     QProcess *p = new QProcess();
     //_ARGUMENTS = "/DEBUG";
-    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", QString::SkipEmptyParts));
+    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", Qt::SkipEmptyParts));
     p->setReadChannel(QProcess::StandardOutput);
     //p->waitForReadyRead(10000);
     _PROCESS = p->processId();
