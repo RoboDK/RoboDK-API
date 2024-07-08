@@ -4,7 +4,9 @@
 
 #include <QFileDialog>
 #include <QWindow>
-#include <QtConcurrent/QtConcurrent>
+#include <QStandardPaths>
+
+//#include <QtConcurrent/QtConcurrent>
 
 #ifdef WIN32
 // this is used to integrate RoboDK window as a child window
@@ -115,7 +117,7 @@ void MainWindow::on_btnGetPosition_clicked(){
 
     // Get robot pose
     Mat robot_pose(ROBOT->Pose());
-    QString pose_str = robot_pose.ToString(separator, decimals);
+    QString pose_str = robot_pose.ToString(separator, decimals, true);
     ui->txtXYZWPR->setText(pose_str);
 }
 
@@ -170,7 +172,7 @@ void blocking_task(){
 void MainWindow::on_btnTestButton_clicked(){
 
     // example to listen to events
-    QtConcurrent::run(this, &MainWindow::EventsLoop);
+    // QtConcurrent::run(this, &MainWindow::EventsLoop);
     //RDK->EventsLoop();
 
 
