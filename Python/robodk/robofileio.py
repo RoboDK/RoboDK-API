@@ -90,7 +90,7 @@ def FileExists(file: str) -> bool:
     return os.path.exists(file)
 
 
-def FilterName(namefilter: str, safechar: str = 'P', reserved_names: List[str] = None, max_len: int = -1, space_to_underscore: bool = False, invalid_chars: str = r' .-[]/\;,><&*:%=+@!#^|?^') -> str:
+def FilterName(namefilter: str, safechar: str = 'P', reserved_names: List[str] = None, max_len: int = -1, space_to_underscore: bool = False, invalid_chars: str = ' .-[]/\\;,><&*:%=+@!#^|?^') -> str:
     """
     Get a safe program or variable name that can be used for robot programming.
     Removes invalid characters ( .-[]/\;,><&*:%=+@!#^|?), remove non-english characters, etc.

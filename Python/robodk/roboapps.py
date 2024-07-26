@@ -221,7 +221,7 @@ def Str2FloatList(str_values: str, expected_nvalues: int = 3) -> List[float]:
     if str_values is None:
         return None
 
-    values = re.findall("[-+]?\d+[\.]?\d*", str_values)
+    values = re.findall(r"""[-+]?\d+[\.]?\d*""", str_values)
     valuesok = []
     for i in range(len(values)):
         try:
