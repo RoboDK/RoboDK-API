@@ -1,4 +1,4 @@
-# This script scrolls the tree to the last running instruction
+# Automatically scroll the tree to the running instruction. If multiple programs are running, it will take the last running instruction.
 
 from robodk import *      # RoboDK API
 from robolink import *    # Robot toolbox
