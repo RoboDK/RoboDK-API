@@ -5661,7 +5661,7 @@ class Item:
             self.link._check_status()
             return newtool
 
-    def SolveFK(self, joints: Union[robomath.Mat, List[float]], tool: 'Item' = None, reference: 'Item' = None) -> robomath.Mat:
+    def SolveFK(self, joints: Union[robomath.Mat, List[float]], tool: robomath.Mat = None, reference: robomath.Mat = None) -> robomath.Mat:
         """Calculate the forward kinematics of the robot for the provided joints.
         Returns the pose of the robot flange with respect to the robot base reference (:class:`~robodk.robomath.Mat`).
 
