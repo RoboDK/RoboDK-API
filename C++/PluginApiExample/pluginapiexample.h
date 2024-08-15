@@ -2,6 +2,9 @@
 #define PLUGINAPIEXAMPLE_H
 
 
+#include <QScopedPointer>
+#include <QObjectCleanupHandler>
+
 #include "iapprobodk.h"
 #include "robodktypes.h"
 
@@ -35,8 +38,8 @@ public:
     virtual bool PluginItemClickMulti(QList<Item>& itemList, QMenu* menu, TypeClick clickType);
 
 private:
-    RoboDKInternalSocket* _socket;
-    RoboDK_API::RoboDK* _api;
+    QScopedPointer<RoboDK_API::RoboDK> _api;
+    QObjectCleanupHandler _objectCleaner;
 };
 
 

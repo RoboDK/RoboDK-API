@@ -1,5 +1,8 @@
 #include "pluginapiexample.h"
 
+#include <QMenuBar>
+#include <QAction>
+
 #include "irobodk.h"
 #include "robodkinternalsocket.h"
 #include "robodk_api.h"
@@ -7,8 +10,6 @@
 
 PluginApiExample::PluginApiExample(QObject* parent)
     : QObject(parent)
-    , _socket(nullptr)
-    , _api(nullptr)
 {
 }
 
@@ -22,11 +23,25 @@ QString PluginApiExample::PluginName()
     return QLatin1String("PluginApiExample");
 }
 
-QString PluginApiExample::PluginLoad(QMainWindow* , QMenuBar* , QStatusBar* ,
+QString PluginApiExample::PluginLoad(QMainWindow* , QMenuBar* menuBar, QStatusBar* ,
                              IRoboDK* rdk, const QString& )
 {
-    _socket = new RoboDKInternalSocket(rdk);
-    _api = new RoboDK_API::RoboDK(_socket);
+    auto socket = new RoboDKInternalSocket(rdk);
+    socket->connectToHost(QString(), 0);
+    _objectCleaner.add(socket);
+
+    _api.reset(new RoboDK_API::RoboDK(socket));
+
+    auto action = menuBar->addAction(tr("Plugin Api Example"), [&]
+    {
+        if (!_api)
+            return;
+
+        auto names = _api->getItemListNames();
+        _api->ShowMessage(names.join(QLatin1String("<br>")));
+    });
+
+    _objectCleaner.add(action);
 
     return QString();
 };
@@ -34,17 +49,8 @@ QString PluginApiExample::PluginLoad(QMainWindow* , QMenuBar* , QStatusBar* ,
 
 void PluginApiExample::PluginUnload()
 {
-    if (_api)
-    {
-        delete _api;
-        _api = nullptr;
-    }
-
-    if (_socket)
-    {
-        delete _socket;
-        _socket = nullptr;
-    }
+    _api.reset();
+    _objectCleaner.clear();
 }
 
 void PluginApiExample::PluginLoadToolbar(QMainWindow* , int )

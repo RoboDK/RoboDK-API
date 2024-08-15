@@ -2107,6 +2107,7 @@ RoboDK::RoboDK(QAbstractSocket* socket, bool fUseExceptions) {
     _PROCESS = 0;
     _PORT = ROBODK_DEFAULT_PORT;
     _ROBODK_BIN = ROBODK_DEFAULT_PATH_BIN;
+    _connect_smart();
 }
 
 RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path, bool fUseExceptions) {

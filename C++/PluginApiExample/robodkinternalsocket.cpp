@@ -20,13 +20,20 @@ RoboDKInternalSocket::~RoboDKInternalSocket()
 
 void RoboDKInternalSocket::connectToHost(const QString& hostName, quint16 port, OpenMode mode, NetworkLayerProtocol protocol)
 {
-    if (open(QIODevice::ReadWrite))
+    Q_UNUSED(hostName)
+    Q_UNUSED(port)
+    Q_UNUSED(protocol)
+
+    if (open(mode))
         setSocketState(QAbstractSocket::ConnectedState);
 }
 
 void RoboDKInternalSocket::connectToHost(const QHostAddress& address, quint16 port, OpenMode mode)
 {
-    if (open(QIODevice::ReadWrite))
+    Q_UNUSED(address)
+    Q_UNUSED(port)
+
+    if (open(mode))
         setSocketState(QAbstractSocket::ConnectedState);
 }
 
@@ -37,7 +44,7 @@ void RoboDKInternalSocket::disconnectFromHost()
 
 qint64 RoboDKInternalSocket::bytesAvailable() const
 {
-    if (!isOpen())
+    if (!isOpen() || _direction != Read)
         return 0;
 
     qint64 total = static_cast<qint64>(_data.size());
@@ -60,12 +67,10 @@ bool RoboDKInternalSocket::canReadLine() const
 
 bool RoboDKInternalSocket::open(OpenMode mode)
 {
-    Q_UNUSED(mode)
-
     if (!_rdk)
         return false;
 
-    return QIODevice::open(QIODevice::ReadWrite);
+    return QIODevice::open(mode | QIODevice::Unbuffered);
 }
 
 void RoboDKInternalSocket::close()
@@ -86,11 +91,13 @@ bool RoboDKInternalSocket::atEnd() const
 
 bool RoboDKInternalSocket::waitForConnected(int msecs)
 {
+    Q_UNUSED(msecs)
     return (_rdk != nullptr);
 }
 
 bool RoboDKInternalSocket::waitForReadyRead(int msecs)
 {
+    Q_UNUSED(msecs)
     if (isOpen())
     {
         changeDirection(Read);
@@ -101,11 +108,13 @@ bool RoboDKInternalSocket::waitForReadyRead(int msecs)
 
 bool RoboDKInternalSocket::waitForBytesWritten(int msecs)
 {
+    Q_UNUSED(msecs)
     return isOpen();
 }
 
 bool RoboDKInternalSocket::waitForDisconnected(int msecs)
 {
+    Q_UNUSED(msecs)
     return true;
 }
 
@@ -154,6 +163,7 @@ qint64 RoboDKInternalSocket::writeData(const char* data, qint64 len)
         return 0;
     _data.append(data, static_cast<int>(len));
     _writeOffset += len;
+    return len;
 }
 
 void RoboDKInternalSocket::changeDirection(Direction newDirection)
