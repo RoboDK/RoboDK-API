@@ -128,7 +128,7 @@ QString tJoints::ToString(const QString &separator, int precision) const {
     if (!Valid()){
         return "tJoints(Invalid)";
     }
-    QString values("tJoints({");
+    QString values;//("tJoints({");
     if (_nDOFs <= 0){
         return values;
     }
@@ -137,11 +137,11 @@ QString tJoints::ToString(const QString &separator, int precision) const {
         values.append(separator);
         values.append(QString::number(_Values[i],'f',precision));
     }
-    values.append("}  ,  " + QString::number(_nDOFs) +  ")");
+    //values.append("}  ,  " + QString::number(_nDOFs) +  ")");
     return values;
 }
 bool tJoints::FromString(const QString &str){
-    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     _nDOFs = qMin(jnts_list.length(), RDK_SIZE_JOINTS_MAX);
     for (int i=0; i<_nDOFs; i++){
         QString stri(jnts_list.at(i));
@@ -413,7 +413,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
     if (!isHomogeneous()){
         str.append("Warning!! Pose is not homogeneous! Use Mat::MakeHomogeneous() to make this matrix homogeneous\n");
     }
-    str.append("Mat(XYZRPW_2_Mat(");
+    //str.append("Mat(XYZRPW_2_Mat(");
 
     tXYZWPR xyzwpr;
     ToXYZRPW(xyzwpr);
@@ -422,7 +422,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
         str.append(separator);
         str.append(QString::number(xyzwpr[i],'f',precision));
     }
-    str.append("))");
+    //str.append("))");
 
     if (xyzwpr_only){
         return str;
@@ -442,7 +442,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
 }
 
 bool Mat::FromString(const QString &pose_str){
-    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     int nvalues = qMin(values_list.length(), 6);
     tXYZWPR xyzwpr;
     for (int i=0; i<6; i++){
@@ -2099,8 +2099,9 @@ quint64 Item::GetID(){
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
 /////////////////////////////////// RoboDK CLASS ////////////////////////////////////////////////////
-RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path) {
+RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path, bool fUseExceptions) {
     _COM = nullptr;
+    _USE_EXCPETIONS = fUseExceptions;
     _IP = robodk_ip;
     _TIMEOUT = ROBODK_API_TIMEOUT;
     _PROCESS = 0;
@@ -3441,12 +3442,20 @@ bool RoboDK::_check_status(){
             qDebug() << "Invalid RoboDK License";
         }
         //print(strproblems);
-        //throw new RDKException(strproblems); //raise Exception(strproblems)
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception(strproblems.toStdString().c_str(),status);
+        }
     } else if (status < 100){
         QString strproblems = _recv_Line();
         qDebug() << "RoboDK API ERROR: " << strproblems;
+        if (_USE_EXCPETIONS == true) {
+            QString errorMessage = QString("RoboDK API ERROR: ") + strproblems;
+            throw new std::exception(errorMessage.toStdString().c_str(),status);
+        }
     } else  {
-        //throw new RDKException("Communication problems with the RoboDK API"); //raise Exception('Problems running function');
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Communication problems with the RoboDK API",status);
+        }
         qDebug() << "Communication problems with the RoboDK API";
     }
     return status;
@@ -3473,7 +3482,7 @@ bool RoboDK::_connect_smart(){
     // Start RoboDK
     QProcess *p = new QProcess();
     //_ARGUMENTS = "/DEBUG";
-    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", QString::SkipEmptyParts));
+    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", Qt::SkipEmptyParts));
     p->setReadChannel(QProcess::StandardOutput);
     //p->waitForReadyRead(10000);
     _PROCESS = p->processId();
@@ -3841,7 +3850,9 @@ void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_ta
         _send_Array(mat_target); // keep it as array!
         _send_Item(nullptr);
     } else {
-        //throw new RDKException("Invalid target type"); //raise Exception('Problems running function');
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid target type");
+        }
         throw 0;
     }
     _send_Item(itemrobot);
@@ -3868,8 +3879,9 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Array(mat_target1);
         _send_Item(nullptr);
     } else {
-        throw 0;
-        //throw new RDKException("Invalid type of target 1");
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid type of target 1");
+        }
     }
     /////////////////////////////////////
     if (target2 != nullptr) {
@@ -3885,8 +3897,9 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Array(mat_target2);
         _send_Item(nullptr);
     } else {
-        throw 0;
-        //throw new RDKException("Invalid type of target 2");
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid type of target 2");
+        }
     }
     /////////////////////////////////////
     _send_Item(itemrobot);
@@ -4118,9 +4131,6 @@ void Debug_Mat(Mat pose, char show_full_pose) {
     }
 }
 */
-
-
-
 
 #ifndef RDK_SKIP_NAMESPACE
 }
