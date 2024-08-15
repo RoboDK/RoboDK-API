@@ -2099,9 +2099,20 @@ quint64 Item::GetID(){
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
 /////////////////////////////////// RoboDK CLASS ////////////////////////////////////////////////////
+RoboDK::RoboDK(QAbstractSocket* socket, bool fUseExceptions) {
+    _COM = socket;
+    _USE_EXCPETIONS = fUseExceptions;
+    _OWN_SOCKET = false;
+    _TIMEOUT = ROBODK_API_TIMEOUT;
+    _PROCESS = 0;
+    _PORT = ROBODK_DEFAULT_PORT;
+    _ROBODK_BIN = ROBODK_DEFAULT_PATH_BIN;
+}
+
 RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path, bool fUseExceptions) {
     _COM = nullptr;
     _USE_EXCPETIONS = fUseExceptions;
+    _OWN_SOCKET = true;
     _IP = robodk_ip;
     _TIMEOUT = ROBODK_API_TIMEOUT;
     _PROCESS = 0;
@@ -3464,10 +3475,12 @@ bool RoboDK::_check_status(){
 
 
 void RoboDK::_disconnect(){
-    if (_COM != nullptr){
-        _COM->deleteLater();
-        _COM = nullptr;
+    if (!_COM || !_OWN_SOCKET) {
+        return;
     }
+
+    _COM->deleteLater();
+    _COM = nullptr;
 }
 
 // attempt a simple connection to RoboDK and start RoboDK if it is not running
@@ -3476,6 +3489,11 @@ bool RoboDK::_connect_smart(){
     if (_connect()){
         qDebug() << "The RoboDK API is connected";
         return true;
+    }
+
+    // Don't try to start RoboDK in case we have custom socket
+    if (!_OWN_SOCKET) {
+        return false;
     }
 
     qDebug() << "...Trying to start RoboDK: " << _ROBODK_BIN << " " << _ARGUMENTS;
@@ -3506,6 +3524,11 @@ bool RoboDK::_connect_smart(){
 
 // attempt a simple connection to RoboDK
 bool RoboDK::_connect(){
+    // Do nothing with custom socket, just return its state
+    if (!_OWN_SOCKET) {
+        return _connected();
+    }
+
     _disconnect();
     _COM = new QTcpSocket();
     if (_IP.isEmpty()){
@@ -3548,7 +3571,7 @@ bool RoboDK::_connect(){
 
 
 /////////////////////////////////////////////
-bool RoboDK::_waitline(QTcpSocket *com){
+bool RoboDK::_waitline(QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3560,7 +3583,7 @@ bool RoboDK::_waitline(QTcpSocket *com){
     }
     return true;
 }
-QString RoboDK::_recv_Line(QTcpSocket *com){//QString &string){
+QString RoboDK::_recv_Line(QAbstractSocket* com){//QString &string){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3576,7 +3599,7 @@ QString RoboDK::_recv_Line(QTcpSocket *com){//QString &string){
     string.append(QString::fromUtf8(line));
     return string;
 }
-bool RoboDK::_send_Line(const QString& string,QTcpSocket *com){
+bool RoboDK::_send_Line(const QString& string, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3586,7 +3609,7 @@ bool RoboDK::_send_Line(const QString& string,QTcpSocket *com){
     return true;
 }
 
-int RoboDK::_recv_Int(QTcpSocket *com){//qint32 &value){
+int RoboDK::_recv_Int(QAbstractSocket* com){//qint32 &value){
     if (com == nullptr){
         com = _COM;
     }
@@ -3602,7 +3625,7 @@ int RoboDK::_recv_Int(QTcpSocket *com){//qint32 &value){
     ds >> value;
     return value;
 }
-bool RoboDK::_send_Int(qint32 value,QTcpSocket *com){
+bool RoboDK::_send_Int(qint32 value, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3612,7 +3635,7 @@ bool RoboDK::_send_Int(qint32 value,QTcpSocket *com){
     return true;
 }
 
-Item RoboDK::_recv_Item(QTcpSocket *com){//Item *item){
+Item RoboDK::_recv_Item(QAbstractSocket* com){//Item *item){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3645,7 +3668,7 @@ bool RoboDK::_send_Item(const Item &item){
     return _send_Item(&item);
 }
 
-Mat RoboDK::_recv_Pose(QTcpSocket *com){//Mat &pose){
+Mat RoboDK::_recv_Pose(QAbstractSocket* com){//Mat &pose){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3738,7 +3761,7 @@ bool RoboDK::_send_Array(const Mat *mat){
     }
     return _send_Array(m44, 16);
 }
-bool RoboDK::_recv_Array(double *values, int *psize, QTcpSocket *com){
+bool RoboDK::_recv_Array(double *values, int *psize, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }

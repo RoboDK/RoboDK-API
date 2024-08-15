@@ -263,7 +263,7 @@
 #include <QDebug>
 
 
-class QTcpSocket;
+class QAbstractSocket;
 
 
 #ifndef RDK_SKIP_NAMESPACE
@@ -763,6 +763,7 @@ class ROBODK RoboDK {
     friend class RoboDK_API::Item;
 
 public:
+    explicit RoboDK(QAbstractSocket *socket, bool fUseExceptions = false);
     RoboDK(const QString &robodk_ip="", int com_port=-1, const QString &args="", const QString &path="", bool fUseExceptions = false);
     ~RoboDK();
 
@@ -1697,9 +1698,10 @@ public:
     };
 
 private:
-    QTcpSocket *_COM;
+    QAbstractSocket *_COM;
     bool _USE_EXCPETIONS;
-    QTcpSocket *_COM_EVT;
+    bool _OWN_SOCKET;
+    QAbstractSocket *_COM_EVT;
     QString _IP;
     int _PORT;
     int _TIMEOUT;
@@ -1716,19 +1718,19 @@ private:
     bool _check_connection();
     bool _check_status();
 
-    bool _waitline(QTcpSocket *com = nullptr);
-    QString _recv_Line(QTcpSocket *com = nullptr);//QString &string);
-    bool _send_Line(const QString &string,QTcpSocket *com = nullptr);
-    int _recv_Int(QTcpSocket *com = nullptr);//qint32 &value);
-    bool _send_Int(const qint32 value,QTcpSocket *com = nullptr);
-    Item _recv_Item(QTcpSocket *com = nullptr);//Item *item);
+    bool _waitline(QAbstractSocket *com = nullptr);
+    QString _recv_Line(QAbstractSocket *com = nullptr);//QString &string);
+    bool _send_Line(const QString &string,QAbstractSocket *com = nullptr);
+    int _recv_Int(QAbstractSocket *com = nullptr);//qint32 &value);
+    bool _send_Int(const qint32 value,QAbstractSocket *com = nullptr);
+    Item _recv_Item(QAbstractSocket *com = nullptr);//Item *item);
     bool _send_Item(const Item *item);
     bool _send_Item(const Item &item);
-    Mat _recv_Pose(QTcpSocket *com = nullptr);//Mat &pose);
+    Mat _recv_Pose(QAbstractSocket *com = nullptr);//Mat &pose);
     bool _send_Pose(const Mat &pose);
     bool _recv_XYZ(tXYZ pos);
     bool _send_XYZ(const tXYZ pos);
-    bool _recv_Array(double *values, int *psize=nullptr,QTcpSocket *com = nullptr);
+    bool _recv_Array(double *values, int *psize=nullptr,QAbstractSocket *com = nullptr);
     bool _send_Array(const double *values, int nvalues);
     bool _recv_Array(tJoints *jnts);
     bool _send_Array(const tJoints *jnts);
