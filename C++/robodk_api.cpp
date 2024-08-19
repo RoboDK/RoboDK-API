@@ -128,7 +128,7 @@ QString tJoints::ToString(const QString &separator, int precision) const {
     if (!Valid()){
         return "tJoints(Invalid)";
     }
-    QString values("tJoints({");
+    QString values;//("tJoints({");
     if (_nDOFs <= 0){
         return values;
     }
@@ -137,11 +137,11 @@ QString tJoints::ToString(const QString &separator, int precision) const {
         values.append(separator);
         values.append(QString::number(_Values[i],'f',precision));
     }
-    values.append("}  ,  " + QString::number(_nDOFs) +  ")");
+    //values.append("}  ,  " + QString::number(_nDOFs) +  ")");
     return values;
 }
 bool tJoints::FromString(const QString &str){
-    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList jnts_list = QString(str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     _nDOFs = qMin(jnts_list.length(), RDK_SIZE_JOINTS_MAX);
     for (int i=0; i<_nDOFs; i++){
         QString stri(jnts_list.at(i));
@@ -413,7 +413,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
     if (!isHomogeneous()){
         str.append("Warning!! Pose is not homogeneous! Use Mat::MakeHomogeneous() to make this matrix homogeneous\n");
     }
-    str.append("Mat(XYZRPW_2_Mat(");
+    //str.append("Mat(XYZRPW_2_Mat(");
 
     tXYZWPR xyzwpr;
     ToXYZRPW(xyzwpr);
@@ -422,7 +422,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
         str.append(separator);
         str.append(QString::number(xyzwpr[i],'f',precision));
     }
-    str.append("))");
+    //str.append("))");
 
     if (xyzwpr_only){
         return str;
@@ -442,7 +442,7 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
 }
 
 bool Mat::FromString(const QString &pose_str){
-    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", QString::SkipEmptyParts);
+    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
     int nvalues = qMin(values_list.length(), 6);
     tXYZWPR xyzwpr;
     for (int i=0; i<6; i++){
@@ -1019,6 +1019,41 @@ void Item::Scale(double scale_xyz[3]){
     _RDK->_send_Item(this);
     _RDK->_send_Array(scale_xyz, 3);
     _RDK->_check_status();
+}
+
+GetPointsResult Item::GetPoints(int featureType, int featureId) {
+    GetPointsResult result;
+    result.featureType = RoboDK::FEATURE_NONE;
+    result.featureId = 0;
+    result.points = nullptr;
+
+    if (featureType >= RoboDK::FEATURE_HOVER_OBJECT_MESH) {
+        return result;
+    }
+
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ObjPoint");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(featureType);
+    _RDK->_send_Int(featureId);
+    _RDK->_recv_Matrix2D(&result.points);
+    result.featureName = _RDK->_recv_Line();
+    result.featureType = featureType;
+    result.featureId = featureId;
+    _RDK->_check_status();
+    return result;
+}
+
+bool Item::SelectedFeature(int& featureType, int& featureId)
+{
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ObjSelection");
+    _RDK->_send_Item(this);
+    int isSelected = _RDK->_recv_Int();
+    featureType = _RDK->_recv_Int();
+    featureId = _RDK->_recv_Int();
+    _RDK->_check_status();
+    return isSelected != 0;
 }
 
 
@@ -2068,6 +2103,25 @@ QString Item::setParam(const QString &param, const QString &value){
     return result;
 }
 
+void Item::setParam(const QString& param, const QByteArray& value) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_ItmDataParam");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(param);
+    _RDK->_send_Bytes(value);
+    _RDK->_check_status();
+}
+
+QByteArray Item::getParam(const QString& param) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ItmDataParam");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(param);
+    QByteArray result = _RDK->_recv_Bytes();
+    _RDK->_check_status();
+    return result;
+}
+
 /// <summary>
 /// Disconnect from the RoboDK API. This flushes any pending program generation.
 /// </summary>
@@ -2099,8 +2153,21 @@ quint64 Item::GetID(){
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
 /////////////////////////////////// RoboDK CLASS ////////////////////////////////////////////////////
-RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path) {
+RoboDK::RoboDK(QAbstractSocket* socket, bool fUseExceptions) {
+    _COM = socket;
+    _USE_EXCPETIONS = fUseExceptions;
+    _OWN_SOCKET = false;
+    _TIMEOUT = ROBODK_API_TIMEOUT;
+    _PROCESS = 0;
+    _PORT = ROBODK_DEFAULT_PORT;
+    _ROBODK_BIN = ROBODK_DEFAULT_PATH_BIN;
+    _connect_smart();
+}
+
+RoboDK::RoboDK(const QString &robodk_ip, int com_port, const QString &args, const QString &path, bool fUseExceptions) {
     _COM = nullptr;
+    _USE_EXCPETIONS = fUseExceptions;
+    _OWN_SOCKET = true;
     _IP = robodk_ip;
     _TIMEOUT = ROBODK_API_TIMEOUT;
     _PROCESS = 0;
@@ -3155,6 +3222,35 @@ Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
     return selectedItem;
 }
 
+GetPointsResult RoboDK::GetPoints(int featureType) {
+    GetPointsResult result;
+    result.featureType = RoboDK::FEATURE_NONE;
+    result.featureId = 0;
+    result.points = nullptr;
+
+    if (featureType < FEATURE_HOVER_OBJECT_MESH) {
+        return result;
+    }
+
+    _check_connection();
+    _send_Line("G_ObjPoint");
+    _send_Item(nullptr);
+    _send_Int(featureType);
+    _send_Int(0);
+
+    if (featureType == RoboDK::FEATURE_HOVER_OBJECT_MESH) {
+        _recv_Matrix2D(&result.points);
+    }
+
+    result.item = _recv_Item();
+    _recv_Int(); // Skip isFrame
+    result.featureType = _recv_Int();
+    result.featureId = _recv_Int();
+    result.featureName = _recv_Line();
+    _check_status();
+    return result;
+}
+
 
 ///---------------------------------- add get/set robot parameters
 
@@ -3441,12 +3537,20 @@ bool RoboDK::_check_status(){
             qDebug() << "Invalid RoboDK License";
         }
         //print(strproblems);
-        //throw new RDKException(strproblems); //raise Exception(strproblems)
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception(strproblems.toStdString().c_str(),status);
+        }
     } else if (status < 100){
         QString strproblems = _recv_Line();
         qDebug() << "RoboDK API ERROR: " << strproblems;
+        if (_USE_EXCPETIONS == true) {
+            QString errorMessage = QString("RoboDK API ERROR: ") + strproblems;
+            throw new std::exception(errorMessage.toStdString().c_str(),status);
+        }
     } else  {
-        //throw new RDKException("Communication problems with the RoboDK API"); //raise Exception('Problems running function');
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Communication problems with the RoboDK API",status);
+        }
         qDebug() << "Communication problems with the RoboDK API";
     }
     return status;
@@ -3455,10 +3559,12 @@ bool RoboDK::_check_status(){
 
 
 void RoboDK::_disconnect(){
-    if (_COM != nullptr){
-        _COM->deleteLater();
-        _COM = nullptr;
+    if (!_COM || !_OWN_SOCKET) {
+        return;
     }
+
+    _COM->deleteLater();
+    _COM = nullptr;
 }
 
 // attempt a simple connection to RoboDK and start RoboDK if it is not running
@@ -3469,11 +3575,16 @@ bool RoboDK::_connect_smart(){
         return true;
     }
 
+    // Don't try to start RoboDK in case we have custom socket
+    if (!_OWN_SOCKET) {
+        return false;
+    }
+
     qDebug() << "...Trying to start RoboDK: " << _ROBODK_BIN << " " << _ARGUMENTS;
     // Start RoboDK
     QProcess *p = new QProcess();
     //_ARGUMENTS = "/DEBUG";
-    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", QString::SkipEmptyParts));
+    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", Qt::SkipEmptyParts));
     p->setReadChannel(QProcess::StandardOutput);
     //p->waitForReadyRead(10000);
     _PROCESS = p->processId();
@@ -3497,6 +3608,11 @@ bool RoboDK::_connect_smart(){
 
 // attempt a simple connection to RoboDK
 bool RoboDK::_connect(){
+    // Do nothing with custom socket, just return its state
+    if (!_OWN_SOCKET) {
+        return _connected();
+    }
+
     _disconnect();
     _COM = new QTcpSocket();
     if (_IP.isEmpty()){
@@ -3539,7 +3655,7 @@ bool RoboDK::_connect(){
 
 
 /////////////////////////////////////////////
-bool RoboDK::_waitline(QTcpSocket *com){
+bool RoboDK::_waitline(QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3551,7 +3667,7 @@ bool RoboDK::_waitline(QTcpSocket *com){
     }
     return true;
 }
-QString RoboDK::_recv_Line(QTcpSocket *com){//QString &string){
+QString RoboDK::_recv_Line(QAbstractSocket* com){//QString &string){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3567,7 +3683,7 @@ QString RoboDK::_recv_Line(QTcpSocket *com){//QString &string){
     string.append(QString::fromUtf8(line));
     return string;
 }
-bool RoboDK::_send_Line(const QString& string,QTcpSocket *com){
+bool RoboDK::_send_Line(const QString& string, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3577,7 +3693,7 @@ bool RoboDK::_send_Line(const QString& string,QTcpSocket *com){
     return true;
 }
 
-int RoboDK::_recv_Int(QTcpSocket *com){//qint32 &value){
+int RoboDK::_recv_Int(QAbstractSocket* com){//qint32 &value){
     if (com == nullptr){
         com = _COM;
     }
@@ -3593,7 +3709,7 @@ int RoboDK::_recv_Int(QTcpSocket *com){//qint32 &value){
     ds >> value;
     return value;
 }
-bool RoboDK::_send_Int(qint32 value,QTcpSocket *com){
+bool RoboDK::_send_Int(qint32 value, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3603,7 +3719,7 @@ bool RoboDK::_send_Int(qint32 value,QTcpSocket *com){
     return true;
 }
 
-Item RoboDK::_recv_Item(QTcpSocket *com){//Item *item){
+Item RoboDK::_recv_Item(QAbstractSocket* com){//Item *item){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3636,7 +3752,7 @@ bool RoboDK::_send_Item(const Item &item){
     return _send_Item(&item);
 }
 
-Mat RoboDK::_recv_Pose(QTcpSocket *com){//Mat &pose){
+Mat RoboDK::_recv_Pose(QAbstractSocket* com){//Mat &pose){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3729,7 +3845,7 @@ bool RoboDK::_send_Array(const Mat *mat){
     }
     return _send_Array(m44, 16);
 }
-bool RoboDK::_recv_Array(double *values, int *psize, QTcpSocket *com){
+bool RoboDK::_recv_Array(double *values, int *psize, QAbstractSocket* com){
     if (com == nullptr) {
         com = _COM;
     }
@@ -3823,6 +3939,42 @@ bool RoboDK::_send_Matrix2D(tMatrix2D *mat){
     }
     return true;
 }
+
+bool RoboDK::_send_Bytes(const QByteArray &data, QAbstractSocket *com) {
+    if (!com) {
+        com = _COM;
+    }
+    if (!com || !com->isOpen()) {
+        return false;
+    }
+
+    {
+        QDataStream ds(com);
+        ds << data.size();
+    }
+    com->write(data);
+    return true;
+}
+
+QByteArray RoboDK::_recv_Bytes(QAbstractSocket* com) {
+    if (!com) {
+        com = _COM;
+    }
+    if (!com || !com->isOpen()) {
+        return QByteArray();
+    }
+
+    int size = _recv_Int(com);
+
+    while (com->bytesAvailable() < size) {
+        if (!com->waitForReadyRead(_TIMEOUT)) {
+            return QByteArray();
+        }
+    }
+
+    return com->read(size);
+}
+
 // private move type, to be used by public methods (MoveJ  and MoveL)
 void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_target, const Item *itemrobot, int movetype, bool blocking){
     itemrobot->WaitMove();
@@ -3841,7 +3993,9 @@ void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_ta
         _send_Array(mat_target); // keep it as array!
         _send_Item(nullptr);
     } else {
-        //throw new RDKException("Invalid target type"); //raise Exception('Problems running function');
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid target type");
+        }
         throw 0;
     }
     _send_Item(itemrobot);
@@ -3868,8 +4022,9 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Array(mat_target1);
         _send_Item(nullptr);
     } else {
-        throw 0;
-        //throw new RDKException("Invalid type of target 1");
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid type of target 1");
+        }
     }
     /////////////////////////////////////
     if (target2 != nullptr) {
@@ -3885,8 +4040,9 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Array(mat_target2);
         _send_Item(nullptr);
     } else {
-        throw 0;
-        //throw new RDKException("Invalid type of target 2");
+        if (_USE_EXCPETIONS == true) {
+            throw new std::exception("Invalid type of target 2");
+        }
     }
     /////////////////////////////////////
     _send_Item(itemrobot);
@@ -4118,9 +4274,6 @@ void Debug_Mat(Mat pose, char show_full_pose) {
     }
 }
 */
-
-
-
 
 #ifndef RDK_SKIP_NAMESPACE
 }
