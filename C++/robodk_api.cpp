@@ -1021,6 +1021,41 @@ void Item::Scale(double scale_xyz[3]){
     _RDK->_check_status();
 }
 
+GetPointsResult Item::GetPoints(int featureType, int featureId) {
+    GetPointsResult result;
+    result.featureType = RoboDK::FEATURE_NONE;
+    result.featureId = 0;
+    result.points = nullptr;
+
+    if (featureType >= RoboDK::FEATURE_HOVER_OBJECT_MESH) {
+        return result;
+    }
+
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ObjPoint");
+    _RDK->_send_Item(this);
+    _RDK->_send_Int(featureType);
+    _RDK->_send_Int(featureId);
+    _RDK->_recv_Matrix2D(&result.points);
+    result.featureName = _RDK->_recv_Line();
+    result.featureType = featureType;
+    result.featureId = featureId;
+    _RDK->_check_status();
+    return result;
+}
+
+bool Item::SelectedFeature(int& featureType, int& featureId)
+{
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ObjSelection");
+    _RDK->_send_Item(this);
+    int isSelected = _RDK->_recv_Int();
+    featureType = _RDK->_recv_Int();
+    featureId = _RDK->_recv_Int();
+    _RDK->_check_status();
+    return isSelected != 0;
+}
+
 
 
 
@@ -2064,6 +2099,25 @@ QString Item::setParam(const QString &param, const QString &value){
     _RDK->_send_Line(param);
     _RDK->_send_Line(value);
     QString result =_RDK->_recv_Line();
+    _RDK->_check_status();
+    return result;
+}
+
+void Item::setParam(const QString& param, const QByteArray& value) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("S_ItmDataParam");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(param);
+    _RDK->_send_Bytes(value);
+    _RDK->_check_status();
+}
+
+QByteArray Item::getParam(const QString& param) {
+    _RDK->_check_connection();
+    _RDK->_send_Line("G_ItmDataParam");
+    _RDK->_send_Item(this);
+    _RDK->_send_Line(param);
+    QByteArray result = _RDK->_recv_Bytes();
     _RDK->_check_status();
     return result;
 }
@@ -3168,6 +3222,35 @@ Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
     return selectedItem;
 }
 
+GetPointsResult RoboDK::GetPoints(int featureType) {
+    GetPointsResult result;
+    result.featureType = RoboDK::FEATURE_NONE;
+    result.featureId = 0;
+    result.points = nullptr;
+
+    if (featureType < FEATURE_HOVER_OBJECT_MESH) {
+        return result;
+    }
+
+    _check_connection();
+    _send_Line("G_ObjPoint");
+    _send_Item(nullptr);
+    _send_Int(featureType);
+    _send_Int(0);
+
+    if (featureType == RoboDK::FEATURE_HOVER_OBJECT_MESH) {
+        _recv_Matrix2D(&result.points);
+    }
+
+    result.item = _recv_Item();
+    _recv_Int(); // Skip isFrame
+    result.featureType = _recv_Int();
+    result.featureId = _recv_Int();
+    result.featureName = _recv_Line();
+    _check_status();
+    return result;
+}
+
 
 ///---------------------------------- add get/set robot parameters
 
@@ -3856,6 +3939,42 @@ bool RoboDK::_send_Matrix2D(tMatrix2D *mat){
     }
     return true;
 }
+
+bool RoboDK::_send_Bytes(const QByteArray &data, QAbstractSocket *com) {
+    if (!com) {
+        com = _COM;
+    }
+    if (!com || !com->isOpen()) {
+        return false;
+    }
+
+    {
+        QDataStream ds(com);
+        ds << data.size();
+    }
+    com->write(data);
+    return true;
+}
+
+QByteArray RoboDK::_recv_Bytes(QAbstractSocket* com) {
+    if (!com) {
+        com = _COM;
+    }
+    if (!com || !com->isOpen()) {
+        return QByteArray();
+    }
+
+    int size = _recv_Int(com);
+
+    while (com->bytesAvailable() < size) {
+        if (!com->waitForReadyRead(_TIMEOUT)) {
+            return QByteArray();
+        }
+    }
+
+    return com->read(size);
+}
+
 // private move type, to be used by public methods (MoveJ  and MoveL)
 void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_target, const Item *itemrobot, int movetype, bool blocking){
     itemrobot->WaitMove();

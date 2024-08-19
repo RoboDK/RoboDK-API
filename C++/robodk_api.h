@@ -275,6 +275,7 @@ namespace RoboDK_API {
 
 class Item;
 class RoboDK;
+struct GetPointsResult;
 
 
 /// maximum size of robot joints (maximum allowed degrees of freedom for a robot)
@@ -490,8 +491,6 @@ public:
     /// joint values (floats, used to return a copy as a float pointer)
     float _ValuesF[RDK_SIZE_JOINTS_MAX];
 };
-
-
 
 
 /// \brief The Mat class represents a 4x4 pose matrix. The main purpose of this object is to represent a pose in the 3D space (position and orientation).
@@ -1268,6 +1267,13 @@ public:
     Item getCursorXYZ(int x = -1, int y = -1, tXYZ xyzStation = nullptr);
 
     /// <summary>
+    /// Retrieves the object under the mouse cursor.
+    /// </summary>
+    /// <param name="featureType">Set to FEATURE_HOVER_OBJECT_MESH to retrieve object under the mouse cursor, the selected feature and mesh, or FEATURE_HOVER_OBJECT if you don't need the mesh (faster).</param>
+    /// <returns>GetPointsResult object.</returns>
+    GetPointsResult GetPoints(int featureType = FEATURE_HOVER_OBJECT_MESH);
+
+    /// <summary>
     /// Returns the license as a readable string (same name shown in the RoboDK's title bar, on top of the main menu).
     /// </summary>
     /// <returns></returns>
@@ -1580,7 +1586,24 @@ public:
         FEATURE_CURVE = 2,
 
         /// Point selection
-        FEATURE_POINT = 3
+        FEATURE_POINT = 3,
+
+        /// Object mesh (using ID) feature type flag
+        FEATURE_OBJECT_MESH = 7,
+
+        /// Surface preview feature type flag
+        FEATURE_SURFACE_PREVIEW = 8,
+
+        /// Mesh (under the mouse cursor) feature flag
+        FEATURE_MESH = 9,
+
+        // The following do not require providing an object
+
+        /// Object mesh (under the mouse cursor) feature type flag
+        FEATURE_HOVER_OBJECT_MESH = 10,
+
+        /// Object feature (under the mouse cursor) feature type flag
+        FEATURE_HOVER_OBJECT = 11
     };
 
     /// Spray gun simulation:
@@ -1737,6 +1760,8 @@ private:
     bool _send_Array(const Mat *mat);
     bool _recv_Matrix2D(tMatrix2D **mat);
     bool _send_Matrix2D(tMatrix2D *mat);
+    bool _send_Bytes(const QByteArray &data, QAbstractSocket *com = nullptr);
+    QByteArray _recv_Bytes(QAbstractSocket *com = nullptr);
 
 
     void _moveX(const Item *target, const tJoints *joints, const Mat *mat_target, const Item *itemrobot, int movetype, bool blocking);
@@ -1971,6 +1996,25 @@ public:
     /// </summary>
     /// <param name="scale">scale to apply as [scale_x, scale_y, scale_z]</param>
     void Scale(double scale_xyz[3]);
+
+
+    /// <summary>
+    /// Retrieves the point under the mouse cursor, a curve or the 3D points of an object.
+    /// The points are provided in [XYZijk] format in relative coordinates.
+    /// The XYZ are the local point coordinate and ijk is the normal of the surface.
+    /// </summary>
+    /// <param name="featureType">The type of geometry (FEATURE_SURFACE, FEATURE_POINT, ...). Set to FEATURE_SURFACE and if not point or curve was selected, the name of the geometry will be 'point on surface'.</param>
+    /// <param name="featureId">The internal ID to retrieve the right geometry from the object (use SelectedFeature).</param>
+    /// <returns>GetPointsResult object.</returns>
+    GetPointsResult GetPoints(int featureType = RoboDK::FEATURE_SURFACE, int featureId = 0);
+
+    /// <summary>
+    /// Retrieve the currently selected feature for this object.
+    /// </summary>
+    /// <param name="featureType">The type of geometry, FEATURE_SURFACE, FEATURE_POINT, ... </param>
+    /// <param name="featureId">The internal ID to retrieve the raw geometry (use GetPoints)</param>
+    /// <returns>True if the object is selected</returns>
+    bool SelectedFeature(int &featureType, int &featureId);
 
     /// <summary>
     /// Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
@@ -2470,6 +2514,19 @@ public:
     QString setParam(const QString &param, const QString &value);
 
     /// <summary>
+    /// Set a specific binary item parameter.
+    /// </summary>
+    /// <param name="param">item parameter</param>
+    /// <param name="value">binary data</param>
+    void setParam(const QString &param, const QByteArray &value);
+
+    /// <summary>
+    /// Get a specific binary item parameter.
+    /// </summary>
+    /// <param name="param">item parameter</param>
+    QByteArray getParam(const QString &param);
+
+    /// <summary>
     /// Disconnect from the RoboDK API. This flushes any pending program generation.
     /// </summary>
     /// <returns></returns>
@@ -2489,6 +2546,17 @@ private:
 
     /// Item type
     qint32 _TYPE;
+};
+
+
+/// \brief The GetPointsResult method represents the results of executing the GetPoints function.
+struct GetPointsResult
+{
+    Item item;
+    int featureType;
+    int featureId;
+    QString featureName;
+    tMatrix2D* points;
 };
 
 
