@@ -26,7 +26,7 @@ The single file RoboDK.cs API is available as a template on [Visual Studio Marke
 
 Video Overview
 --------------
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=3I6OK1Kd2Eo " target="_blank"><img src="http://img.youtube.com/vi/3I6OK1Kd2Eo/0.jpg" alt="Robot programming using the RoboDK API for C#" width="360" height="240" border="10" /></a>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=3I6OK1Kd2Eo" target="_blank"><img src="http://img.youtube.com/vi/3I6OK1Kd2Eo/0.jpg" alt="Robot programming using the RoboDK API for C#" width="360" height="240" border="10" /></a>
 
 C# Example
 ------------

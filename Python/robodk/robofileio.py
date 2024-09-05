@@ -25,7 +25,6 @@ More information about the RoboDK API for Python here:
 import sys
 import time
 import os.path
-import ftplib
 from robodk import robomath
 
 if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
@@ -93,7 +92,7 @@ def FileExists(file: str) -> bool:
 def FilterName(namefilter: str, safechar: str = 'P', reserved_names: List[str] = None, max_len: int = -1, space_to_underscore: bool = False, invalid_chars: str = ' .-[]/\\;,><&*:%=+@!#^|?^') -> str:
     """
     Get a safe program or variable name that can be used for robot programming.
-    Removes invalid characters ( .-[]/\;,><&*:%=+@!#^|?), remove non-english characters, etc.
+    Removes invalid characters (such as .-[]/;,><&*:%=+@!#^|?), remove non-english characters, etc.
 
     :param namefilter: The name to filter
     :type namefilter: str
@@ -105,7 +104,7 @@ def FilterName(namefilter: str, safechar: str = 'P', reserved_names: List[str] =
     :type max_len: int, optional
     :param space_to_underscore: Replace whitespaces with underscores
     :type space_to_underscore: bool, optional
-    :param invalid_chars: string containing all invalid character to remove. Defaults to r' .-[]/\;,><&*:%=+@!#^|?^'
+    :param invalid_chars: string containing all invalid character to remove. Defaults to r' .-[]/;,><&*:%=+@!#^|?^'
     :type invalid_chars: str, optional
 
     :return: The filtered name
@@ -277,8 +276,9 @@ def LoadMat(strfile: str, separator: str = ',') -> robomath.Mat:
 
 #-------------------------------------------------------
 # FTP TRANSFER Tools
-def RemoveFileFTP(ftp: ftplib.FTP, filepath: str):
+def RemoveFileFTP(ftp: 'ftplib.FTP', filepath: str):
     """Delete a file on a remote server."""
+    import ftplib
     try:
         ftp.delete(filepath)
     except ftplib.all_errors as e:
@@ -287,8 +287,9 @@ def RemoveFileFTP(ftp: ftplib.FTP, filepath: str):
         sys.stdout.flush()
 
 
-def RemoveDirFTP(ftp: ftplib.FTP, path: str):
+def RemoveDirFTP(ftp: 'ftplib.FTP', path: str):
     """Recursively delete a directory tree on a remote server."""
+    import ftplib
     wd = ftp.pwd()
     try:
         names = ftp.nlst(path)
@@ -317,6 +318,7 @@ def RemoveDirFTP(ftp: ftplib.FTP, path: str):
 
 def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
     """Upload a folder to a robot through FTP recursively"""
+    import ftplib
     import os
     import sys
     main_folder = os.path.basename(os.path.normpath(localpath))
@@ -379,6 +381,7 @@ def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str
 
 def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
     """Upload a file to a robot through FTP"""
+    import ftplib
     filepath = getFileDir(file_path_name)
     filename = getBaseName(file_path_name)
     import sys
