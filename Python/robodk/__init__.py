@@ -24,10 +24,15 @@
 
 #==================================
 # REMOVE BELOW after the adoption period
-from . import robolink, robomath, robodialogs, robofileio
-from .robomath import *
-from .robodialogs import *
-from .robofileio import *
+import sys
+if sys.version_info[0] < 3:
+    # Python 2 does not like the circular dependency
+    pass
+else:
+    from . import robolink, robomath, robodialogs, robofileio    
+    from .robomath import *
+    from .robodialogs import *
+    from .robofileio import *
 
 # Inform our users of the changes
 # Note: "from robodk import robomath" will trigger a warning while being perfectly valid.
