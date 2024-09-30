@@ -791,7 +791,7 @@ if robodialogs.ENABLE_QT:
                 if key.endswith('$') and key.startswith('$'):
                     # Section separator
                     label = QtWidgets.QLabel()
-                    label.setText(key[1:-1].upper())
+                    label.setText("[ " + key[1:-1].upper() + " ]")
                     label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
                     spacing = 0
                     if f_layout.rowCount() > 0:
@@ -926,7 +926,7 @@ if robodialogs.ENABLE_TK:
 
                 if key.endswith('$') and key.startswith('$'):
                     # Section separator
-                    label = tkinter.Label(widget, text=key[1:-1].upper(), anchor='w')
+                    label = tkinter.Label(widget, text="[ " + key[1:-1].upper() + " ]", anchor='w')
                     label.grid(row=i, columnspan=2, sticky=tkinter.W + tkinter.S)
                     func.extend([key])
                     continue
