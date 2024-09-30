@@ -791,7 +791,7 @@ if robodialogs.ENABLE_QT:
                 if key.endswith('$') and key.startswith('$'):
                     # Section separator
                     label = QtWidgets.QLabel()
-                    label.setText(f'[  {key[1:-1]}  ]'.upper())
+                    label.setText(key[1:-1].upper())
                     label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
                     spacing = 0
                     if f_layout.rowCount() > 0:
@@ -840,7 +840,7 @@ if robodialogs.ENABLE_TK:
         app.update_idletasks()
         xp = (app.winfo_screenwidth() // 2) - (app.winfo_width() // 2)
         yp = (app.winfo_screenheight() // 2) - (app.winfo_height() // 2)
-        app.geometry(f'+{xp}+{yp}')
+        app.geometry('+' + str(xp) + '+' + str(yp))
         app.update_idletasks()
 
         if robodk_icon:
@@ -879,7 +879,7 @@ if robodialogs.ENABLE_TK:
             func = [tkvar.get]
             import decimal
             decimals = min(6, max(3, abs(decimal.Decimal(str(value)).as_tuple().exponent)))
-            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format=f"%.{decimals}f")
+            widget = tkinter.Spinbox(frame, from_=-9999999, to=9999999, textvariable=tkvar, format="%." + str(decimals) + "f")
 
         elif value_type is int:
             tkvar = tkinter.IntVar(value=value)
@@ -926,7 +926,7 @@ if robodialogs.ENABLE_TK:
 
                 if key.endswith('$') and key.startswith('$'):
                     # Section separator
-                    label = tkinter.Label(widget, text=f'[  {key[1:-1]}  ]'.upper(), anchor='w')
+                    label = tkinter.Label(widget, text=key[1:-1].upper(), anchor='w')
                     label.grid(row=i, columnspan=2, sticky=tkinter.W + tkinter.S)
                     func.extend([key])
                     continue
@@ -1241,7 +1241,7 @@ class AppSettings:
             elif hasattr(self, attrib):
                 attrib_value[attrib] = getattr(self, attrib)
             else:
-                print(f"Unable to find attribute {attrib}")
+                print("Unable to find attribute " + attrib)
 
         # Get the default values of the class, if the user tries to restore them
         attrib_defaults = self.GetDefaults()
@@ -1366,4 +1366,4 @@ if __name__ == "__main__":
             robodialogs.ENABLE_QT = False
             ShowExample()
 
-    #RunExample()
+    RunExample()
