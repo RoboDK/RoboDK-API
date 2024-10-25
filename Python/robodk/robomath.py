@@ -16,7 +16,7 @@ and matrix (pose) operations. This toolbox includes a simple matrix class
 for pose transformations (Mat class).
 
 This toolbox has been inspired from Peter Corke's Robotics Toolbox:
-http://petercorke.com/wordpress/toolboxes/robotics-toolbox
+https://petercorke.com/toolboxes/robotics-toolbox/
 
 In this module: 
 pose = transformation matrix = homogeneous matrix = 4x4 matrix = Mat class
