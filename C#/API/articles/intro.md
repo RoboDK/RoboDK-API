@@ -3,7 +3,7 @@ Articles
 
 RoboDK API for C# package
 --------------------
-You can find the NuiGet package or the RoboDK API for C# in the official nuget website:
+You can find the NuGet package or the RoboDK API for C# in the official nuget website:
 https://www.nuget.org/packages/RoboDkApi
 
 You can find the template to create your integrations in the Visual Studio Marketplace page:

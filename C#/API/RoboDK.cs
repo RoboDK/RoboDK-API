@@ -61,10 +61,13 @@ using RoboDk.API.Model;
 
 #endregion
 
+/// <summary>
+///     The RoboDK API namespace contains classes and interfaces to interact with RoboDK.
+/// </summary>
 namespace RoboDk.API
 {
     /// <summary>
-    ///     This class is the link to allows to create macros and automate RoboDK.
+    ///     The RoboDK API class is the link that allows you to communicate with RoboDK.
     ///     Any interaction is made through \"items\" (IItem() objects). An item is an object in the
     ///     RoboDK tree (it can be either a robot, an object, a tool, a frame, a program, ...).
     /// </summary>

@@ -31,7 +31,7 @@
       {
         "files": [
           "api/**.yml",
-          "api/index.md"
+		  "api/RoboDk.md"
         ]
       },
       {

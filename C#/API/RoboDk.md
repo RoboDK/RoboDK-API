@@ -1,7 +1,9 @@
 RoboDK API for .NET
 =================
 
-With the RoboDK API for .NET you can simulate and program any robot using C# or Visual Basic for robot manufacturing applications. The RoboDK API allows you to program robots without learning vendor-specific programming languages.
+The RoboDK API for .NET allows you to simulate and program any robot using C# or Visual Basic for robot manufacturing applications. 
+
+The RoboDK API allows you to program robots without learning vendor-specific programming languages.
  
 Video Overview
 ========
