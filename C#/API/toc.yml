@@ -1,5 +1,13 @@
-- name: Articles
-  href: articles/
-- name: API Documentation
-  href: api/
+- name: C# API Reference
+  href: api/RoboDk.API.html
   homepage: api/RoboDk.md
+
+- name: Articles
+  href: articles/intro.html
+  homepage: api/RoboDk.md
+
+- name: Download
+  href: https://robodk.com/download
+  homepage: api/RoboDk.md
+
+

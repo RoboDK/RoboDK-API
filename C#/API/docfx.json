@@ -31,14 +31,9 @@
       {
         "files": [
           "api/**.yml",
-		  "api/RoboDk.md"
-        ]
-      },
-      {
-        "files": [
           "api/*.md",
           "articles/**.md",
-          "articles/**/toc.yml",
+          "articles/toc.yml",
           "toc.yml",
           "*.md"
         ],
@@ -62,7 +57,7 @@
     "overwrite": [
       {
         "files": [
-          "apidoc/**.md"
+          "api/**.md"
         ],
         "exclude": [
           "obj/**",

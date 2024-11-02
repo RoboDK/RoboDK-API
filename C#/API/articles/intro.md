@@ -1,4 +1,4 @@
-Articles
+Useful RoboDK API Links
 ======================
 
 RoboDK API for C# package
@@ -16,7 +16,9 @@ https://robodk.com/doc/en/RoboDK-API.html
 RoboDK API on GitHub
 ----------------------
 You can find the latest version of the RoboDK API on the official RoboDK GitHub repository:
+https://github.com/RoboDK/RoboDK-API
 
-RoboDK API projects
+RoboDK Success Stories
 ----------------------------------------
-Learn the advantages of using the RoboDK API for your automation projects: https://robodk.com/blog/category/robodk-api/.
+Learn the advantages of using the RoboDK API for your automation projects. You can find some sucess stories that involved using the API:
+https://robodk.com/blog/category/robodk-api/
