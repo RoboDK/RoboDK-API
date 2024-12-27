@@ -3125,7 +3125,7 @@ class Robolink:
             self._check_status()
             return pose1, data
 
-    def Collision_Line(self, p1: List[float], p2: List[float], ref=robomath.eye(4)) -> Tuple[bool, 'Item', List[float]]:
+    def Collision_Line(self, p1: List[float], p2: List[float], ref=None) -> Tuple[bool, 'Item', List[float]]:
         """Checks the collision between a line and any objects in the station. The line is defined by 2 points.
 
         :param p1: start point of the line [x,y,z]
@@ -3137,24 +3137,56 @@ class Robolink:
         :return: [collision (True or False), item (collided), point (point of collision with respect to the station)]
         :rtype: [bool, :class:`.Item`, list of float]
         """
-        with self._lock:
-            p1abs = ref * p1
-            p2abs = ref * p2
-            self._check_connection()
-            command = 'CollisionLine'
-            self._send_line(command)
-            self._send_xyz(p1abs)
-            self._send_xyz(p2abs)
-            itempicked = self._rec_item()
-            xyz = self._rec_xyz()
-            self._check_status()
+        if isinstance(p1[0], list):
+            if self.BUILD < 24976:
+                # TODO (never tested)
+                toreturn = []
+                for pa, pb in zip(p1, p2):
+                    c,itm,lst = self.Collision_Line(pa, pb, ref)
+                    toreturn.append(lst)
+                return itm, toreturn
 
-            # Avoid a deadlock
-            self._lock.release()
-            collision = itempicked.Valid()
-            self._lock.acquire()
+            with self._lock:                
+                self._require_build(24976)
+                self._check_connection()
+                command = 'CollisionLineLst'
+                self._send_line(command)
+                np = min(len(p1), len(p2))
+                self._send_int(np)
+                for i in range(np):
+                    if ref:
+                        self._send_xyz(ref * p1[i][:3])
+                        self._send_xyz(ref * p2[i][:3])
+                    else:
+                        self._send_xyz(p1[i])
+                        self._send_xyz(p2[i])
+                itempicked = self._rec_item()
+                xyz_list = self._rec_matrix().tr().rows
+                self._check_status()
+                return itempicked, xyz_list
+                    
+        else:
+            with self._lock:
+                if ref:
+                    p1 = ref * p1[:3]
+                    p2 = ref * p2[:3]
+                    
+                self._check_connection()
+                command = 'CollisionLine'
+                self._send_line(command)
+                self._send_xyz(p1)
+                self._send_xyz(p2)
+                itempicked = self._rec_item()
+                xyz = self._rec_xyz()
+                self._check_status()
 
-            return collision, itempicked, xyz
+                # Avoid a deadlock
+                #self._lock.release()
+                #collision = itempicked.Valid()
+                #self._lock.acquire()
+                collision = itempicked.item != 0
+
+                return collision, itempicked, xyz
 
     def setPoses(self, items: List['Item'], poses: List[robomath.Mat]):
         """Sets the relative positions (poses) of a list of items with respect to their parent. For example, the position of an object/frame/target with respect to its parent.
