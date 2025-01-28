@@ -1889,10 +1889,25 @@ classdef RobolinkItem < handle
             % Get custom binary data from this item. Use setParam to set the data.
             this.link.check_connection();
             command = 'G_ItmDataParam';
-            this.link.send_line(command)
-            this.link.send_item(this)
-            this.link.send_line(param)
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_line(param);
             data = this.link.rec_bytes();
+            this.link.check_status();
+        end
+
+        function data = setParam(this, param, value)
+            % Get custom binary data from this item. Use setParam to set the data.
+            this.link.check_connection();
+            command = 'ICMD';
+            this.link.send_line(command);
+            this.link.send_item(this);
+            this.link.send_line(param);
+            this.link.send_line(value);
+            data = this.link.rec_line();
+            if numel(data) > 1 && data(1) == '{'
+                data = jsondecode(data);
+            end
             this.link.check_status()
         end
 
