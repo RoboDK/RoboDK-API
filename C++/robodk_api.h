@@ -1073,7 +1073,7 @@ public:
     /// </summary>
     /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools).</param>
     /// <returns>List of items that are in a collision state.</returns>
-    QList<Item> getCollisionItems(QList<int> link_id_list);
+    QList<Item> getCollisionItems(QList<int>& link_id_list);
 
     /// <summary>
     /// Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed. Set to a high value (>100) for fast simulation results.
