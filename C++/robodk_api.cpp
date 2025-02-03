@@ -2863,22 +2863,19 @@ int RoboDK::Collision(Item item1, Item item2){
     return ncollisions;
 }
 
-QList<Item> RoboDK::getCollisionItems(QList<int> link_id_list)
-{
+QList<Item> RoboDK::getCollisionItems(QList<int>& link_id_list) {
+    link_id_list.clear();
+    QList<Item> itemList;
+
     _check_connection();
-    _send_Line("Collision Items");
+    _send_Line("Collision_Items");
     int nitems = _recv_Int();
-    QList<Item> itemList = QList<Item>();
-    if (!link_id_list.isEmpty()){
-        link_id_list.clear();
-    }
-    for (int i = 0; i < nitems; i++){
+    itemList.reserve(nitems);
+    link_id_list.reserve(nitems);
+    for (int i = 0; i < nitems; i++) {
         itemList.append(_recv_Item());
-        int linkId = _recv_Int();
-        if (!link_id_list.isEmpty()){
-            link_id_list.append(linkId);
-        }
-        int collisionTimes = _recv_Int();
+        link_id_list.append(_recv_Int());
+        _recv_Int(); // Number of objects it is in collisions with (unused)
     }
     _check_status();
     return itemList;
