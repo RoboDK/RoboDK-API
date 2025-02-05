@@ -18,3 +18,9 @@ Python/unit_tests/report.html
 **/install/**
 **/.cache/**
 **/build-**
+
+# JetBrains IDE
+.idea/
+cmake-build-*/
+CMakeUserPresets.json
+CMakePresets.json
