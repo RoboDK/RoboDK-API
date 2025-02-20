@@ -378,7 +378,7 @@ classdef Robolink < handle
         function send_line(this, string)
             % This is a private function.
             % Sends a string of characters with a \n
-            write(this.COM, uint8([string, char(10)]));
+            write(this.COM, uint8([char(string), char(10)]));
         end
 
         function string = rec_line(this)
