@@ -3535,18 +3535,18 @@ bool RoboDK::_check_status(){
         }
         //print(strproblems);
         if (_USE_EXCPETIONS == true) {
-            throw std::runtime_error(strproblems.toStdString() + ": " + std::to_string(status));
+            throw std::runtime_error(strproblems.toStdString() + ": " + QString::number(status).toStdString());
         }
     } else if (status < 100){
         QString strproblems = _recv_Line();
         qDebug() << "RoboDK API ERROR: " << strproblems;
         if (_USE_EXCPETIONS == true) {
             QString errorMessage = QString("RoboDK API ERROR: ") + strproblems;
-            throw std::runtime_error(errorMessage.toStdString() + ": " + std::to_string(status));
+            throw std::runtime_error(errorMessage.toStdString() + ": " + QString::number(status).toStdString());
         }
     } else  {
         if (_USE_EXCPETIONS == true) {
-            throw std::runtime_error("Communication problems with the RoboDK API: " + std::to_string(status));
+            throw std::runtime_error("Communication problems with the RoboDK API: " + QString::number(status).toStdString());
         }
         qDebug() << "Communication problems with the RoboDK API";
     }
