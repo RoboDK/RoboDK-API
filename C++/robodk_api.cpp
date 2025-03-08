@@ -3535,18 +3535,18 @@ bool RoboDK::_check_status(){
         }
         //print(strproblems);
         if (_USE_EXCPETIONS == true) {
-            throw new std::exception(strproblems.toStdString().c_str(),status);
+            throw std::runtime_error(strproblems.toStdString() + ": " + QString::number(status).toStdString());
         }
     } else if (status < 100){
         QString strproblems = _recv_Line();
         qDebug() << "RoboDK API ERROR: " << strproblems;
         if (_USE_EXCPETIONS == true) {
             QString errorMessage = QString("RoboDK API ERROR: ") + strproblems;
-            throw new std::exception(errorMessage.toStdString().c_str(),status);
+            throw std::runtime_error(errorMessage.toStdString() + ": " + QString::number(status).toStdString());
         }
     } else  {
         if (_USE_EXCPETIONS == true) {
-            throw new std::exception("Communication problems with the RoboDK API",status);
+            throw std::runtime_error("Communication problems with the RoboDK API: " + QString::number(status).toStdString());
         }
         qDebug() << "Communication problems with the RoboDK API";
     }
@@ -3991,7 +3991,7 @@ void RoboDK::_moveX(const Item *target, const tJoints *joints, const Mat *mat_ta
         _send_Item(nullptr);
     } else {
         if (_USE_EXCPETIONS == true) {
-            throw new std::exception("Invalid target type");
+            throw std::runtime_error("Invalid target type");
         }
         throw 0;
     }
@@ -4020,7 +4020,7 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Item(nullptr);
     } else {
         if (_USE_EXCPETIONS == true) {
-            throw new std::exception("Invalid type of target 1");
+            throw std::runtime_error("Invalid type of target 1");
         }
     }
     /////////////////////////////////////
@@ -4038,7 +4038,7 @@ void RoboDK::_moveC(const Item *target1, const tJoints *joints1, const Mat *mat_
         _send_Item(nullptr);
     } else {
         if (_USE_EXCPETIONS == true) {
-            throw new std::exception("Invalid type of target 2");
+            throw std::runtime_error("Invalid type of target 2");
         }
     }
     /////////////////////////////////////
