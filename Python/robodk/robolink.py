@@ -2596,8 +2596,21 @@ class Robolink:
             self._send_int(0)
             self._check_status()
 
-    def IsInside(self, object_inside: 'Item', object: 'Item') -> bool:
-        """Return 1 (True) if object_inside is inside the object, otherwise, it returns 0 (False). Both objects must be of type :class:`.Item`"""
+    def IsInside(self, object_inside: 'Item', object: 'Item') -> int:
+        """
+        Checks if an object is inside another object.
+        The encapsulating object must be closed-form, and both objects must be visible with at least 50% color transparency.
+
+        :param object_inside: Object to check, that is potentially inside
+        :type object_inside: :class:`.Item`
+        :param object: Object that encapsulates
+        :type object: :class:`.Item`
+
+        :return: 1 if `object_inside` is inside `object`, else 0.
+        :rtype: int
+
+        .. seealso:: :func:`~robodk.robolink.Item.IsInside`
+        """
         with self._lock:
             self._check_connection()
             self._send_line('IsInside')
@@ -3142,11 +3155,11 @@ class Robolink:
                 # TODO (never tested)
                 toreturn = []
                 for pa, pb in zip(p1, p2):
-                    c,itm,lst = self.Collision_Line(pa, pb, ref)
+                    c, itm, lst = self.Collision_Line(pa, pb, ref)
                     toreturn.append(lst)
                 return itm, toreturn
 
-            with self._lock:                
+            with self._lock:
                 self._require_build(24976)
                 self._check_connection()
                 command = 'CollisionLineLst'
@@ -3164,13 +3177,13 @@ class Robolink:
                 xyz_list = self._rec_matrix().tr().rows
                 self._check_status()
                 return itempicked, xyz_list
-                    
+
         else:
             with self._lock:
                 if ref:
                     p1 = ref * p1[:3]
                     p2 = ref * p2[:3]
-                    
+
                 self._check_connection()
                 command = 'CollisionLine'
                 self._send_line(command)
@@ -4348,11 +4361,16 @@ class Item:
         """
         return self.link.Collision(self.item, item_check)
 
-    def IsInside(self, object: 'Item') -> bool:
-        """Return True if the object is inside the provided object
+    def IsInside(self, object: 'Item') -> int:
+        """
+        Checks if the Item is inside the provided object.
+        The encapsulating object must be closed-form, and both objects must be visible with at least 50% color transparency.
 
-        :param object: object to check
+        :param object: Object that encapsulates
         :type object: :class:`.Item`
+
+        :return: 1 if the Item is inside `object`, else 0.
+        :rtype: int
 
         .. seealso:: :func:`~robodk.robolink.Robolink.IsInside`
         """
