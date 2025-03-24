@@ -558,60 +558,80 @@ namespace RoboDk.API
             return xyzwpr;
         }
 
-		/// <summary>
-		/// Calculates the equivalent position and euler angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
-		/// The uvw values are the rotation vector
-		/// </summary>
-		/// <returns>XYZWPR translation and rotation in mm and radians</returns>
+        /// <summary>
+        /// Calculates the equivalent position and rotation angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
+        /// The uvw values are the rotation vector
+        /// </summary>
+        /// <returns>XYZWPR translation and rotation in mm and radians</returns>
         public double[] ToUR()
         {
-			double[] xyzwpr = new double[6];
-			double x = _mat[0, 3];
-			double y = _mat[1, 3];
-			double z = _mat[2, 3];
-			double rx = _mat[2, 1] - _mat[1, 2];
-			double ry = _mat[0, 2] - _mat[2, 0];
-			double rz = _mat[1, 0] - _mat[0, 1];
-			double angle = Math.Acos(Math.Min(Math.Max(  (_mat[0, 0] + _mat[1, 1] + _mat[2, 2] - 1) * 0.5, -1.0), 1.0));
-			if (angle < 1e-8){
-				rx = 0;
-				ry = 0;
-				rz = 0;		
-			} else {
+            const double tolerance = 1e-8;
+
+            double[] rxyz =
+            {
+                _mat[2, 1] - _mat[1, 2],
+                _mat[0, 2] - _mat[2, 0],
+                _mat[1, 0] - _mat[0, 1]
+            };
+
+            double angle = Math.Acos(Math.Min(Math.Max((_mat[0, 0] + _mat[1, 1] + _mat[2, 2] - 1) * 0.5, -1.0), 1.0));
+			if (angle < tolerance)
+            {
+                rxyz[0] = 0.0;
+                rxyz[1] = 0.0;
+                rxyz[2] = 0.0;
+            }
+            else
+            {
+                double factor = 1.0;
+
 				double sin_angle = Math.Sin(angle);
-				double rxyz_norm_sq = rx*rx + ry*ry + rz*rz;
-				if (Math.Abs(sin_angle) < 1e-8 || rxyz_norm_sq < 1e-4){
+				if (Math.Abs(sin_angle) < tolerance || norm(rxyz) < tolerance)
+                {
 					double mx = 0;
-					if (_mat[0, 0] > _mat[1, 1] && _mat[0, 0] > _mat[2, 2]){
-						rx = _mat[0, 0] + 1;
-						ry = _mat[1, 0];
-						rz = _mat[2, 0];
+					if (_mat[0, 0] >= _mat[1, 1] && _mat[0, 0] >= _mat[2, 2])
+                    {
+                        rxyz[0] = _mat[0, 0] + 1.0;
+                        rxyz[1] = _mat[1, 0];
+                        rxyz[2] = _mat[2, 0];
 						mx = _mat[0, 0];
-					} else if (_mat[1, 1] > _mat[2, 2]) {
-						rx = _mat[0, 1];
-						ry = _mat[1, 1] + 1;
-						rz = _mat[2, 1];
+					}
+                    else if (_mat[1, 1] >= _mat[2, 2])
+                    {
+                        rxyz[0] = _mat[0, 1];
+                        rxyz[1] = _mat[1, 1] + 1.0;
+                        rxyz[2] = _mat[2, 1];
 						mx = _mat[1, 1];
-					} else {
-						rx = _mat[0, 2];
-						ry = _mat[1, 2];
-						rz = _mat[2, 2] + 1;
+					}
+                    else
+                    {
+                        rxyz[0] = _mat[0, 2];
+                        rxyz[1] = _mat[1, 2];
+                        rxyz[2] = _mat[2, 2] + 1.0;
 						mx = _mat[2, 2];
 					}
-					double mult_factor = angle / (Math.Sqrt(Math.Max(0, 2 * (1 + mx))));				
+
+					factor = angle / (Math.Sqrt(Math.Max(0.0, 2.0 * (1.0 + mx))));				
 				} else {
-					double mult_factor = angle / Math.Sqrt(rxyz_norm_sq);
-					rx = rx * mult_factor;
-					ry = ry * mult_factor;
-					rz = rz * mult_factor;				
+                    rxyz = normalize3(rxyz);
+                    factor = angle;
 				}
-			}
-			xyzwpr[0] = x;
-			xyzwpr[1] = y;
-			xyzwpr[2] = z;
-			xyzwpr[3] = rx;
-			xyzwpr[4] = ry;
-			xyzwpr[5] = rz;
+
+                rxyz[0] *= factor;
+                rxyz[1] *= factor;
+                rxyz[2] *= factor;
+            }
+
+            double[] xyzwpr =
+            {
+                _mat[0, 3],
+                _mat[1, 3],
+                _mat[2, 3],
+                rxyz[0],
+                rxyz[1],
+                rxyz[2]
+            };
+
 			return xyzwpr;
         }
 

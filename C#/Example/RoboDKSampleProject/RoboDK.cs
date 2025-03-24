@@ -764,59 +764,81 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
-    /// Calculates the equivalent position and euler angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
+    /// Calculates the equivalent position and rotation angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
     /// The uvw values are the rotation vector
     /// </summary>
     /// <returns>XYZWPR translation and rotation in mm and radians</returns>
     public double[] ToUR()
     {
-        double[] xyzwpr = new double[6];
-        double x = mat[0, 3];
-        double y = mat[1, 3];
-        double z = mat[2, 3];
-		double rx = mat[2, 1] - mat[1, 2];
-		double ry = mat[0, 2] - mat[2, 0];
-		double rz = mat[1, 0] - mat[0, 1];
-		double angle = Math.Acos(Math.Min(Math.Max(  (mat[0, 0] + mat[1, 1] + mat[2, 2] - 1) * 0.5, -1.0), 1.0));
-		if (angle < 1e-8){
-			rx = 0;
-			ry = 0;
-			rz = 0;		
-		} else {
-			double sin_angle = Math.Sin(angle);
-			double rxyz_norm_sq = rx*rx + ry*ry + rz*rz;
-			if (Math.Abs(sin_angle) < 1e-8 || rxyz_norm_sq < 1e-4){
-				double mx = 0;
-				if (mat[0, 0] > mat[1, 1] && mat[0, 0] > mat[2, 2]){
-					rx = mat[0, 0] + 1;
-					ry = mat[1, 0];
-					rz = mat[2, 0];
-					mx = mat[0, 0];
-				} else if (mat[1, 1] > mat[2, 2]) {
-					rx = mat[0, 1];
-					ry = mat[1, 1] + 1;
-					rz = mat[2, 1];
-					mx = mat[1, 1];
-				} else {
-					rx = mat[0, 2];
-					ry = mat[1, 2];
-					rz = mat[2, 2] + 1;
-					mx = mat[2, 2];
-				}
-				double mult_factor = angle / (Math.Sqrt(Math.Max(0, 2 * (1 + mx))));				
-			} else {
-				double mult_factor = angle / Math.Sqrt(rxyz_norm_sq);
-				rx = rx * mult_factor;
-				ry = ry * mult_factor;
-				rz = rz * mult_factor;				
-			}
-		}
-        xyzwpr[0] = x;
-        xyzwpr[1] = y;
-        xyzwpr[2] = z;
-        xyzwpr[3] = rx;
-        xyzwpr[4] = ry;
-        xyzwpr[5] = rz;
+        const double tolerance = 1e-8;
+
+        double[] rxyz =
+        {
+                mat[2, 1] - mat[1, 2],
+                mat[0, 2] - mat[2, 0],
+                mat[1, 0] - mat[0, 1]
+            };
+
+        double angle = Math.Acos(Math.Min(Math.Max((mat[0, 0] + mat[1, 1] + mat[2, 2] - 1) * 0.5, -1.0), 1.0));
+        if (angle < tolerance)
+        {
+            rxyz[0] = 0.0;
+            rxyz[1] = 0.0;
+            rxyz[2] = 0.0;
+        }
+        else
+        {
+            double factor = 1.0;
+
+            double sin_angle = Math.Sin(angle);
+            if (Math.Abs(sin_angle) < tolerance || norm(rxyz) < tolerance)
+            {
+                double mx = 0;
+                if (mat[0, 0] >= mat[1, 1] && mat[0, 0] >= mat[2, 2])
+                {
+                    rxyz[0] = mat[0, 0] + 1.0;
+                    rxyz[1] = mat[1, 0];
+                    rxyz[2] = mat[2, 0];
+                    mx = mat[0, 0];
+                }
+                else if (mat[1, 1] >= mat[2, 2])
+                {
+                    rxyz[0] = mat[0, 1];
+                    rxyz[1] = mat[1, 1] + 1.0;
+                    rxyz[2] = mat[2, 1];
+                    mx = mat[1, 1];
+                }
+                else
+                {
+                    rxyz[0] = mat[0, 2];
+                    rxyz[1] = mat[1, 2];
+                    rxyz[2] = mat[2, 2] + 1.0;
+                    mx = mat[2, 2];
+                }
+
+                factor = angle / (Math.Sqrt(Math.Max(0.0, 2.0 * (1.0 + mx))));
+            }
+            else
+            {
+                rxyz = normalize3(rxyz);
+                factor = angle;
+            }
+
+            rxyz[0] *= factor;
+            rxyz[1] *= factor;
+            rxyz[2] *= factor;
+        }
+
+        double[] xyzwpr =
+        {
+                mat[0, 3],
+                mat[1, 3],
+                mat[2, 3],
+                rxyz[0],
+                rxyz[1],
+                rxyz[2]
+            };
+
         return xyzwpr;
     }
 
