@@ -764,7 +764,7 @@ public class Mat // simple matrix class for homogeneous operations
     }
 
     /// <summary>
-    /// Calculates the equivalent position and euler angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
+    /// Calculates the equivalent position and rotation angles ([x,y,z,u,v,w] vector) of the given pose in Universal Robots format
     /// The uvw values are the rotation vector
     /// </summary>
     /// <returns>XYZWPR translation and rotation in mm and radians</returns>
@@ -780,7 +780,7 @@ public class Mat // simple matrix class for homogeneous operations
             };
 
         double angle = Math.Acos(Math.Min(Math.Max((mat[0, 0] + mat[1, 1] + mat[2, 2] - 1) * 0.5, -1.0), 1.0));
-        if (angle < 1e-8)
+        if (angle < tolerance)
         {
             rxyz[0] = 0.0;
             rxyz[1] = 0.0;
