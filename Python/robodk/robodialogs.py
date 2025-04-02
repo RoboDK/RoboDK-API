@@ -691,6 +691,7 @@ if ENABLE_TK:
                     self.default_value = default_value
 
                 self.bind("<Escape>", self.reject)
+                self.protocol("WM_DELETE_WINDOW", self.reject)
 
                 # Add the global message
                 body = tkinter.Frame(self)

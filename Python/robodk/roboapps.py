@@ -1181,17 +1181,30 @@ class AppSettings:
 
         import pickle
         saved_dict = pickle.loads(bytes_data)
-        for key in saved_dict.keys():
+
+        def is_dropdown(value):
+            return (isinstance(value, list) and len(value) == 2 and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]))
+
+        for key, value in saved_dict.items():
             if key == '_FIELDS_UI':
                 continue
 
             # if we have a list of attributes that we want, load it only if it is in the list
-            if len(attribs_list) == 0 or (key not in attribs_list and key != '_FIELDS_UI'):
+            if len(attribs_list) == 0 or (key not in attribs_list):
                 print("Obsolete variable saved (will be deleted): " + key)
+                continue
 
-            else:
-                value = saved_dict[key]
-                setattr(self, key, value)
+            # Take the dropdown choices from the current settings, not the stored ones (avoids having to set defaults to get changes)
+            if is_dropdown(value):
+                current_value = self.get(key)
+                if is_dropdown(current_value) and value[1] != current_value[1]:
+                    print("Dropdown options changed: " + str(value[1]) + " to " + str(current_value[1]))
+                    if isinstance(value[0], str) and value[0] not in current_value[1] or isinstance(value[0], int) and value[0] >= len(current_value[1]):
+                        print("Dropdown selection is now invalid: " + str(value[0]))
+                        value[0] = 0
+                    value[1] = current_value[1]
+
+            setattr(self, key, value)
 
         return True
 
