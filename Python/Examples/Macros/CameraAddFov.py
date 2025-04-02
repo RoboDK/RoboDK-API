@@ -6,7 +6,7 @@
 # This example shows how to create a RoboDK Shape to represent a camera's FoV
 # and verify if an object is within that shape.
 from robodk.robolink import Robolink, ITEM_TYPE_CAMERA, ITEM_TYPE_OBJECT
-from robodk import robolink, robomath, robodialogs, roboapps, robolinkutils
+from robodk import robomath
 
 #----------------------------------
 # You might need to play arround these settings depending on the object/setup
