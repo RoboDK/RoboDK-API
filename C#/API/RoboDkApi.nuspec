@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>RoboDkApi</id>
-    <version>5.8.0</version>
+    <version>5.9.0</version>
     <title>RoboDK API</title>
     <authors>RoboDK</authors>
     <projectUrl>https://robodk.com/</projectUrl>
