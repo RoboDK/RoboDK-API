@@ -38,7 +38,7 @@ tJoints::tJoints(const float *joints, int ndofs)
 
 tJoints::tJoints(const tMatrix2D *mat2d, int column, int ndofs)
 {
-    if (Matrix2D_Size(mat2d, 2) >= column)
+    if (column >= Matrix2D_Size(mat2d, 2))
     {
         _nDOFs = 0;
         qDebug() << "Warning: tMatrix2D column outside range when creating joints";
@@ -66,7 +66,7 @@ const double* tJoints::ValuesD() const
 
 const float* tJoints::ValuesF() const
 {
-    for (int i=0; i < RDK_SIZE_JOINTS_MAX; i++)
+    for (int i = 0; i < RDK_SIZE_JOINTS_MAX; i++)
     {
         _ValuesF[i] = _Values[i];
     }
@@ -108,7 +108,7 @@ void tJoints::SetValues(const double *values, int ndofs)
         _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
     }
 
-    for (int i=0; i<_nDOFs; i++)
+    for (int i = 0; i < _nDOFs; i++)
     {
         _Values[i] = values[i];
     }
@@ -121,7 +121,7 @@ void tJoints::SetValues(const float *values, int ndofs)
         _nDOFs = qMin(ndofs, RDK_SIZE_JOINTS_MAX);
     }
 
-    for (int i=0; i<_nDOFs; i++)
+    for (int i = 0; i < _nDOFs; i++)
     {
         _Values[i] = values[i];
     }
@@ -129,7 +129,7 @@ void tJoints::SetValues(const float *values, int ndofs)
 
 int tJoints::GetValues(double *values)
 {
-    for (int i=0; i<_nDOFs; i++)
+    for (int i = 0; i < _nDOFs; i++)
     {
         values[i] = _Values[i];
     }
@@ -167,7 +167,7 @@ bool tJoints::FromString(const QString &str)
 
     QStringList jointList = s.split(separator, behavior);
     _nDOFs = qMin(jointList.length(), RDK_SIZE_JOINTS_MAX);
-    for (int i=0; i < _nDOFs; i++)
+    for (int i = 0; i < _nDOFs; i++)
     {
         _Values[i] = jointList[i].trimmed().toDouble();
     }
@@ -555,7 +555,8 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
         for (int j = 0; j < 4; j++)
         {
             str.append(QString::number(row(i)[j], 'f', precision));
-            if (j < 3) {
+            if (j < 3)
+            {
                 str.append(separator);
             }
         }
