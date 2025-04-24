@@ -1,8 +1,11 @@
 #include "robodk_api.h"
-#include <QtNetwork/QTcpSocket>
-#include <QtCore/QProcess>
+
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
+
+#include <QtNetwork/QTcpSocket>
+#include <QtCore/QProcess>
 #include <QFile>
 
 
@@ -1079,7 +1082,7 @@ Item Item::setMachiningParameters(QString ncfile, Item part_obj, QString options
     _RDK->_TIMEOUT = 3600 * 1000;
     Item program = _RDK->_recv_Item();
     _RDK->_TIMEOUT = ROBODK_API_TIMEOUT;
-    double status = _RDK->_recv_Int() / 1000.0;
+    _RDK->_recv_Int(); // Status (unused)
     _RDK->_check_status();
     return program;
 }
@@ -1215,7 +1218,7 @@ void Item::JointLimits(tJoints *lower_limits, tJoints *upper_limits){
     _RDK->_send_Item(this);
     _RDK->_recv_Array(lower_limits);
     _RDK->_recv_Array(upper_limits);
-    double joints_type = _RDK->_recv_Int() / 1000.0;
+    _RDK->_recv_Int(); // Joints Type (unused)
     _RDK->_check_status();
 }
 
@@ -1383,7 +1386,6 @@ tMatrix2D* Item::SolveIK_All_Mat2D(const Mat &pose, const Mat *tool, const Mat *
 QList<tJoints> Item::SolveIK_All(const Mat &pose, const Mat *tool, const Mat *ref){
     tMatrix2D *mat2d = SolveIK_All_Mat2D(pose, tool, ref);
     QList<tJoints> jnts_list;
-    int ndofs = Matrix2D_Size(mat2d, 1) - 2;
     int nsol = Matrix2D_Size(mat2d, 2);
     for (int i=0; i<nsol; i++){
         tJoints jnts = tJoints(mat2d, i);
@@ -2199,10 +2201,8 @@ quint64 RoboDK::ProcessID(){
 }
 
 quint64 RoboDK::WindowID(){
-    qint64 window_id;
 	QString response = Command("MainWindow_ID");
-	window_id = response.toULongLong();
-    return window_id;
+    return response.toULongLong();
 }
 
 bool RoboDK::Connected(){
@@ -2351,7 +2351,7 @@ QString RoboDK::Version()
     _check_connection();
     _send_Line("Version");
     QString appName = _recv_Line();
-    int bitArch = _recv_Int();
+    _recv_Int(); // Architecture (32- or 64-bit) (unused)
     QString ver4 = _recv_Line();
     QString dateBuild = _recv_Line();
     _check_status();
@@ -3206,7 +3206,7 @@ Item RoboDK::getCursorXYZ(int x, int y, tXYZ xyzStation)
     _send_Line("Proj2d3d");
     _send_Int(x);
     _send_Int(y);
-    int selection = _recv_Int();
+    _recv_Int(); // Selection (unused)
     Item selectedItem = _recv_Item();
     tXYZ xyz;
     _recv_XYZ(xyz);
@@ -3446,7 +3446,7 @@ bool RoboDK::EventsListen()
     _send_Int(0, _COM_EVT);
     QString response = _recv_Line(_COM_EVT);
     qDebug() << response;
-    int ver_evt = _recv_Int(_COM_EVT);
+    _recv_Int(_COM_EVT); // vet_evt (unused)
     int status = _recv_Int(_COM_EVT);
     if (response != "RDK_EVT" || status != 0)
     {
@@ -4148,15 +4148,10 @@ void emxEnsureCapacity(tMatrix2D *emxArray, int oldNumel, unsigned int elementSi
 
 void Matrix2D_Set_Size(tMatrix2D *mat, int rows, int cols) {
     int old_numel;
-    int numbel;
     old_numel = mat->size[0] * mat->size[1];
     mat->size[0] = rows;
     mat->size[1] = cols;
-    numbel = rows*cols;
     emxEnsureCapacity(mat, old_numel, sizeof(double));
-    /*for (i=0; i<numbel; i++){
-    mat->data[i] = 0.0;
-    }*/
 }
 
 int Matrix2D_Size(const tMatrix2D *var, int dim) { // ONE BASED!!
@@ -4246,31 +4241,6 @@ void Debug_Matrix2D(const tMatrix2D *emx) {
         //std::cout << "\n";
     }
 }
-/*
-void Debug_Mat(Mat pose, char show_full_pose) {
-    tMatrix4x4 pose_tr;
-    double xyzwpr[6];
-    int j;
-    if (show_full_pose > 0) {
-        POSE_TR(pose_tr, pose);
-        printf("Pose size = [4x4]\n");
-        //std::cout << "Pose size = [4x4]\n";
-        for (j = 0; j < 4; j++) {
-            Debug_Array(pose_tr + j * 4, 4);
-            printf("\n");
-            //std::cout << "\n";
-        }
-    }
-    else {
-        POSE_2_XYZWPR(xyzwpr, pose);
-        //std::cout << "XYZWPR = [ ";
-        printf("XYZWPR = [ ");
-        Debug_Array(xyzwpr, 6);
-        printf(" ]\n");
-        //std::cout << " ]\n";
-    }
-}
-*/
 
 #ifndef RDK_SKIP_NAMESPACE
 }
