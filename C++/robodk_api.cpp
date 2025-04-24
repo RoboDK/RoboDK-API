@@ -4179,10 +4179,10 @@ int RoboDK::_recv_Int(QAbstractSocket* com)
     {
         return false;
     }
-    if (com->bytesAvailable() < sizeof(qint32))
+    if (com->bytesAvailable() < static_cast<qint64>(sizeof(qint32)))
     {
         com->waitForReadyRead(_TIMEOUT);
-        if (com->bytesAvailable() < sizeof(qint32))
+        if (com->bytesAvailable() < static_cast<qint64>(sizeof(qint32)))
         {
             return -1;
         }
@@ -4220,10 +4220,10 @@ Item RoboDK::_recv_Item(QAbstractSocket* com)
     }
     item._PTR = 0;
     item._TYPE = -1;
-    if (com->bytesAvailable() < sizeof(quint64))
+    if (com->bytesAvailable() < static_cast<qint64>(sizeof(quint64)))
     {
         com->waitForReadyRead(_TIMEOUT);
-        if (com->bytesAvailable() < sizeof(quint64))
+        if (com->bytesAvailable() < static_cast<qint64>(sizeof(quint64)))
         {
             return item;
         }
