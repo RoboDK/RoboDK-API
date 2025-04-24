@@ -4032,11 +4032,17 @@ bool RoboDK::_connect_smart()
         return false;
     }
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    const QString::SplitBehavior behavior = QString::SkipEmptyParts;
+#else
+    const Qt::SplitBehavior behavior = Qt::SkipEmptyParts;
+#endif
+
     qDebug() << "...Trying to start RoboDK: " << _ROBODK_BIN << " " << _ARGUMENTS;
     // Start RoboDK
     QProcess *p = new QProcess();
     //_ARGUMENTS = "/DEBUG";
-    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", Qt::SkipEmptyParts));
+    p->start(_ROBODK_BIN, _ARGUMENTS.split(" ", behavior));
     p->setReadChannel(QProcess::StandardOutput);
     //p->waitForReadyRead(10000);
     _PROCESS = p->processId();
