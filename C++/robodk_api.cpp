@@ -33,7 +33,9 @@
 
 
 
+#ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
+#endif
 
 
 #ifndef RDK_SKIP_NAMESPACE
@@ -570,7 +572,13 @@ QString Mat::ToString(const QString &separator, int precision, bool xyzwpr_only)
 
 bool Mat::FromString(const QString &pose_str)
 {
-    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", Qt::SkipEmptyParts);
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    const QString::SplitBehavior behavior = QString::SkipEmptyParts;
+#else
+    const Qt::SplitBehavior behavior = Qt::SkipEmptyParts;
+#endif
+
+    QStringList values_list = QString(pose_str).replace(";",",").replace("\t",",").split(",", behavior);
     int nvalues = qMin(values_list.length(), 6);
     tXYZWPR xyzwpr;
     for (int i = 0; i < 6; i++)
