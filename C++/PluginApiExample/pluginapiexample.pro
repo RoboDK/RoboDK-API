@@ -6,6 +6,18 @@ TEMPLATE = lib
 CONFIG += plugin
 CONFIG += c++17
 
+CONFIG += sdk_no_version_check
+
+*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-deprecated-declarations
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-deprecated-copy-with-user-provided-copy
+}
+
+*-g++* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-comment
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-deprecated-copy
+}
+
 CONFIG(release, debug|release) {
     message("Using release binaries.")
     message("Select Projects-Run-Executable and set to C:/RoboDK/bin/RoboDK.exe")

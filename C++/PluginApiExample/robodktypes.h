@@ -343,7 +343,7 @@ public:
     double _Values[RDK_SIZE_JOINTS_MAX];
 
     /// joint values (floats, used to return a copy as a float pointer)
-    float _ValuesF[RDK_SIZE_JOINTS_MAX];
+    mutable float _ValuesF[RDK_SIZE_JOINTS_MAX];
 };
 
 
@@ -619,8 +619,7 @@ private:
 // this is a dummy variable to easily obtain a pointer to a 16-double-array for matrix multiplications
 private:
     /// Copy of the data as a double array.
-    double _ddata16[16];
-
+    mutable double _ddata16[16];
 };
 
 /// Translation matrix class: Mat::transl.

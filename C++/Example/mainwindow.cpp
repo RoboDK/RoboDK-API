@@ -17,7 +17,9 @@
 //#include <thread>
 
 
+#ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -673,6 +675,7 @@ void MainWindow::on_radIntegrateRoboDK_clicked()
 /// <returns></returns>
 bool MainWindow::SampleRoboDkEvent(int evt, Item itm)
 {
+    Q_UNUSED(itm)
     qDebug() << "";
     qDebug() << "**** New event ****";
 
