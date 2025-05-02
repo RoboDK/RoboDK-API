@@ -998,11 +998,15 @@ class AppSettings:
 
     """
 
-    def __init__(self, settings_param: str = 'App-Settings'):
-        self._ATTRIBS_SAVE = None  #: Optional, specific list of attributes names to save (default use all attributes that does not start with "_")
+    def __init__(self, settings_param: str = 'App-Settings',ATTRIBS_LOAD = None):
+        self._ATTRIBS_SAVE = ATTRIBS_LOAD  #: Optional, specific list of attributes names to save/load (default use all attributes that does not start with "_")
         self._FIELDS_UI = None  #: Optional, specific list of attributes description for the UI (default use attribute names)
         self._SETTINGS_PARAM = settings_param  #: Optional, settings name (any settings with the same name will override the other on save)
         self._ATTRIBS_SKIP_DEFAULT = []  #: Optional, specific list of attributes not to restore when restoring defaults (default use all attributes that does not start with "_")
+
+        if ATTRIBS_LOAD:
+                for att in ATTRIBS_LOAD:
+                    self.__setattr__(att,None)
 
     def CopyFrom(self, other: 'AppSettings'):
         """
