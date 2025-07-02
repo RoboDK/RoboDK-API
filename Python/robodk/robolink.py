@@ -5215,7 +5215,8 @@ class Item:
         return newprog, status
 
     def setMachiningParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
-        """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object item in RoboDK. A curve or a point follow project will be automatically set up for a robot manufacturing project.
+        """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object/part item in RoboDK with curves or points. A curve follow project or a point follow project will be automatically created for the project if the object has curves or points respectively.
+        
         Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
         Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
 
@@ -5234,7 +5235,8 @@ class Item:
             object_curve = RDK.AddCurve(POINTS)
             object_curve.setName('AutoPoints n%i' % NUM_POINTS)
             path_settings = RDK.AddMillingProject("AutoCurveFollow settings")
-            prog, status = path_settings.setMillingParameters(part=object_curve)
+            # Prepare a curve follow project moving through all the curves in the curve object provided
+            prog, status = path_settings.setMillingParameters(part=object_curve, params="ReorderAuto=0")
 
         """
         with self.link._lock:
