@@ -32,7 +32,7 @@ def LoadDXF(file_path=None):
     for entity in doc.modelspace():
         print(entity.DXFTYPE)
 
-        if entity.DXFTYPE not in ['LINE', 'ARC', 'CIRCLE', 'LWPOLYLINE', 'SPLINE']:
+        if entity.DXFTYPE not in ['LINE', 'ARC', 'CIRCLE', 'LWPOLYLINE', 'SPLINE', 'HATCH']:
             continue
 
         entity_path = ezdxf.path.make_path(entity)
@@ -57,8 +57,77 @@ def LoadDXF(file_path=None):
     base_name = Path(file_path).stem
     for layer, curves in layer_objects.items():
         layer_objects = []
+
+        # Contours detection
+        if False and robodialogs.ShowMessageYesNo("Detect contours?"):
+
+            tol = 0.001
+
+            tmp_curves = []
+            final_curves = []
+
+            for curve in curves:
+                if robomath.distance((curve[0])[:3], (curve[-1])[:3]) < tol:
+                    final_curves.append(curve)
+                else:
+                    tmp_curves.append(curve)
+
+            n = len(tmp_curves) - 1
+            j = 0
+
+            while (j < n):
+
+                k = len(tmp_curves) - 1
+                i = 1
+
+                while (i <= k):
+
+                    d1 = robomath.distance(((tmp_curves[j])[-1])[:3], ((tmp_curves[i])[-1])[:3])
+                    d2 = robomath.distance(((tmp_curves[j])[0])[:3], ((tmp_curves[i])[0])[:3])
+                    d3 = robomath.distance(((tmp_curves[j])[0])[:3], ((tmp_curves[i])[-1])[:3])
+                    d4 = robomath.distance(((tmp_curves[j])[-1])[:3], ((tmp_curves[i])[0])[:3])
+
+                    if d1 < tol:
+                        tmp_curves[j] = tmp_curves[j] + ((tmp_curves[i])[:-1])[::-1]
+                        del tmp_curves[i]
+                        k = len(tmp_curves) - 1
+                        i = 1
+                        continue
+
+                    if d2 < tol:
+                        tmp_curves[j] = ((tmp_curves[i])[1:])[::-1] + tmp_curves[j]
+                        del tmp_curves[i]
+                        k = len(tmp_curves) - 1
+                        i = 1
+                        continue
+
+                    if d3 < tol:
+                        tmp_curves[j] = ((tmp_curves[i])[:-1]) + tmp_curves[j]
+                        del tmp_curves[i]
+                        k = len(tmp_curves) - 1
+                        i = 1
+                        continue
+
+                    if d4 < tol:
+                        tmp_curves[j] = tmp_curves[j] + (tmp_curves[i])[1:]
+                        del tmp_curves[i]
+                        k = len(tmp_curves) - 1
+                        i = 1
+                        continue
+
+                    i += 1
+
+                final_curves.append(tmp_curves[j])
+
+                del tmp_curves[j]
+                n = len(tmp_curves) - 1
+                j = 0
+
+            curves = final_curves
+
         for curve in curves:
             layer_objects.append(RDK.AddCurve(curve))
+
         dxf = RDK.MergeItems(layer_objects)
         dxf.setName(base_name + " - " + layer)
         objects.append(dxf)
@@ -73,6 +142,8 @@ def LoadDXF(file_path=None):
             RDK.Render(True)
 
     RDK.ShowMessage("Done loading: " + file_path, False)
+
+    return dxf
 
 
 if __name__ == "__main__":
