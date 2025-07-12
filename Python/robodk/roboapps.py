@@ -972,7 +972,7 @@ class AppSettings:
 
                     # Variable names when displayed on the user interface (detailed descriptions).
                     # Create this dictionary in the same order that you want to display it.
-                    # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used displayed with their attribute name.
+                    # If AppSettings._FIELDS_UI is not provided, all variables of this class will be used and displayed with their attribute name.
                     # Fields within dollar signs (i.e. $abc$) are used as section headers.
                     from collections import OrderedDict
                     self._FIELDS_UI = OrderedDict()
