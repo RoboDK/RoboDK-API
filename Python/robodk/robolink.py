@@ -11,9 +11,9 @@
 #
 # --------------------------------------------
 # --------------- DESCRIPTION ----------------
-"""The robolink module is the bridge between RoboDK and Python. 
-Every object in the RoboDK item tree can be retrieved using a 
-Robolink() object and it is represented by the Item object. 
+"""The robolink module is the bridge between RoboDK and Python.
+Every object in the RoboDK item tree can be retrieved using a
+Robolink() object and it is represented by the Item object.
 
 Among others, this module defines the following two classes:
 
@@ -2305,7 +2305,7 @@ class Robolink:
         :return: New program item
         :rtype: :class:`.Item`
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.MoveJ`, :func:`~robodk.robolink.Item.MoveL`, :func:`~robodk.robolink.Item.setDO`, :func:`~robodk.robolink.Item.waitDI`, :func:`~robodk.robolink.Item.Pause`, :func:`~robodk.robolink.Item.RunCodeCustom`, :func:`~robodk.robolink.Item.RunInstruction`, :func:`~robodk.robolink.Item.ShowInstructions`, :func:`~robodk.robolink.Item.ShowTargets`, :func:`~robodk.robolink.Item.Update`
+        .. seealso:: :func:`~robodk.robolink.Robolink.AddTarget`, :func:`~robodk.robolink.Item.MoveJ`, :func:`~robodk.robolink.Item.MoveL`, :func:`~robodk.robolink.Item.setDO`, :func:`~robodk.robolink.Item.waitDI`, :func:`~robodk.robolink.Item.Pause`, :func:`~robodk.robolink.Item.RunInstruction`, :func:`~robodk.robolink.Item.ShowInstructions`, :func:`~robodk.robolink.Item.ShowTargets`, :func:`~robodk.robolink.Item.Update`
 
 
         Example 1 - Generic program with movements:
@@ -2490,7 +2490,7 @@ class Robolink:
 
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def RunProgram(self, fcn_param: str, wait_for_finished: bool = False) -> int:
-        """Run a program (start a program). If the program exists in the RoboDK station it has the same behavior as right clicking a and selecting Run (or Run Python script for Python programs).
+        """Run a program (start a program). If the program exists in the RoboDK station, it has the same behavior as right clicking and selecting Run (or Run Python script for Python programs).
         When generating a program offline (Offline Programming), the program call will be generated in the program output (RoboDK will handle the syntax when the code is generated for a specific robot using the post processor).
 
         :param fcn_param: program name and parameters. Parameters can be provided for Python programs available in the RoboDK station as well.
@@ -2498,12 +2498,13 @@ class Robolink:
         :param wait_for_finished: Set to True to block execution during a simulation until the program finishes (skipped if the program does not exist or when the program is generated)
         :type wait_for_finished: bool
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.Item`, :func:`~robodk.robolink.Robolink.AddProgram`, :func:`~robodk.robolink.Item.Busy`
+        .. seealso:: :func:`~robodk.robolink.Item.RunCode`, :func:`~robodk.robolink.Item.Busy`, :func:`~robodk.robolink.Robolink.AddProgram`
         """
         if wait_for_finished:
-            prog_item = self.Item(fcn_param, ITEM_TYPE_PROGRAM)
-            if not prog_item.Valid():
+            prog_items = [p for p in [self.Item(fcn_param, ITEM_TYPE_PROGRAM), self.Item(fcn_param, ITEM_TYPE_PROGRAM_PYTHON)] if p.Valid()]
+            if not prog_items:
                 raise Exception('Invalid program %s' % fcn_param)
+            prog_item = prog_items[0]
             prog_status = prog_item.RunProgram()
             prog_item.WaitFinished()
         else:
@@ -2528,6 +2529,7 @@ class Robolink:
             RDK = Robolink()                        # connect to the RoboDK API (RoboDK starts if it has not started
             RDK.RunCode("Prog1", True)              # Run a program named Prog1 available in the RoboDK station
 
+        .. seealso:: :func:`~robodk.robolink.Item.RunCode`, :func:`~robodk.robolink.Item.Busy`, :func:`~robodk.robolink.Robolink.RunProgram`
         """
         with self._lock:
             self._check_connection()
@@ -5216,7 +5218,7 @@ class Item:
 
     def setMachiningParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """Update the robot milling path input and parameters. Parameter input can be an NC file (G-code or APT file) or an object/part item in RoboDK with curves or points. A curve follow project or a point follow project will be automatically created for the project if the object has curves or points respectively.
-        
+
         Tip: Use getLink(), setPoseTool(), setPoseFrame() to get/set the robot tool, reference frame, robot and program linked to the project.
         Tip: Use setPose() and setJoints() to update the path to tool orientation or the preferred start joints.
 
@@ -5234,9 +5236,9 @@ class Item:
 
             object_curve = RDK.AddCurve(POINTS)
             object_curve.setName('AutoPoints n%i' % NUM_POINTS)
-            path_settings = RDK.AddMillingProject("AutoCurveFollow settings")
+            path_settings = RDK.AddMachiningProject("AutoCurveFollow settings")
             # Prepare a curve follow project moving through all the curves in the curve object provided
-            prog, status = path_settings.setMillingParameters(part=object_curve, params="ReorderAuto=0")
+            prog, status = path_settings.setMachiningParameters(part=object_curve, params="ReorderAuto=0")
 
         """
         with self.link._lock:
@@ -6465,7 +6467,7 @@ class Item:
         """Checks if a robot or program is currently running (busy or moving).
         Returns a busy status (1=moving, 0=stopped)
 
-        .. seealso:: :func:`~robodk.robolink.Item.WaitMove`, :func:`~robodk.robolink.Item.RunProgram`, :func:`~robodk.robolink.Item.RunCodeCustom`, :func:`~robodk.robolink.Item.RunInstruction`
+        .. seealso:: :func:`~robodk.robolink.Item.WaitMove`, :func:`~robodk.robolink.Item.RunCode`, :func:`~robodk.robolink.Item.RunInstruction`
 
         Example:
 
@@ -6475,7 +6477,7 @@ class Item:
             from robodk.robomath import *
             RDK = Robolink()                   # Connect to the RoboDK API
             prog = RDK.Item('MainProgram', ITEM_TYPE_PROGRAM)
-            prog.RunProgram()
+            prog.RunCode()
             while prog.Busy():
                 pause(0.1)
 
@@ -6494,7 +6496,7 @@ class Item:
     def Stop(self):
         """Stop a program or a robot
 
-        .. seealso:: :func:`~robodk.robolink.Item.RunProgram`, :func:`~robodk.robolink.Item.MoveJ`
+        .. seealso:: :func:`~robodk.robolink.Item.RunCode`, :func:`~robodk.robolink.Item.MoveJ`
         """
         with self.link._lock:
             self.link._check_connection()
@@ -6692,20 +6694,17 @@ class Item:
         return self.RunCode(prog_parameters)
 
     def RunCode(self, prog_parameters: List[str] = None) -> int:
-        """Run a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts)
+        """Run a program. It returns the number of instructions that can be executed successfully (a quick program check is performed before the program starts).
         This is a non-blocking call. Use program.Busy() to check if the program execution finished, or program.WaitFinished() to wait until the program finishes.
 
+        * If setRunMode(RUNMODE_SIMULATE) is used: the program will be simulated (default run mode)
+        * If setRunMode(RUNMODE_RUN_ROBOT) is used: the program will run on the robot (default when RUNMODE_RUN_ROBOT is used)
+        * If setRunMode(RUNMODE_RUN_ROBOT) is used together with program.setRunType(PROGRAM_RUN_ON_ROBOT): the program will run sequentially on the robot the same way as if we right clicked the program and selected "Run on robot" in the RoboDK GUI
+        
         :param prog_parameters: Program parameters can be provided for Python programs as a string
         :type prog_parameters: list of str
 
-        .. seealso:: :func:`~robodk.robolink.Item.RunCodeCustom`, :func:`~robodk.robolink.Item.Busy`, :func:`~robodk.robolink.Robolink.AddProgram`
-
-        If setRunMode(RUNMODE_SIMULATE) is used: the program will be simulated (default run mode)
-
-        If setRunMode(RUNMODE_RUN_ROBOT) is used: the program will run on the robot (default when RUNMODE_RUN_ROBOT is used)
-
-        If setRunMode(RUNMODE_RUN_ROBOT) is used together with program.setRunType(PROGRAM_RUN_ON_ROBOT) -> the program will run sequentially on the robot the same way as if we right clicked the program and selected "Run on robot" in the RoboDK GUI
-
+        .. seealso:: :func:`~robodk.robolink.Item.RunInstruction`, :func:`~robodk.robolink.Item.Busy`, :func:`~robodk.robolink.Item.WaitFinished`, :func:`~robodk.robolink.Robolink.AddProgram`
         """
         with self.link._lock:
             self.link._check_connection()
