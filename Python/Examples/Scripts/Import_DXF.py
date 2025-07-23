@@ -11,6 +11,8 @@ from ezdxf import recover, path
 from ezdxf.math import Matrix44
 import math
 
+DEFAULT_RESOLUTION = 0.001
+
 
 def insert_transform(ins):
     """
@@ -36,7 +38,7 @@ def insert_transform(ins):
     )
 
 
-def traverse_entity(layout_or_block, parent_matrix=Matrix44(), factor_mm=1.0):
+def traverse_entity(layout_or_block, parent_matrix=Matrix44(), factor_mm=1.0, resolution=DEFAULT_RESOLUTION):
     """
     Recursively traverse a DXF layout or block and extract geometry.
 
@@ -67,13 +69,13 @@ def traverse_entity(layout_or_block, parent_matrix=Matrix44(), factor_mm=1.0):
 
             m = parent_matrix @ insert_transform(entity)
             block = entity.doc.blocks[block_name]
-            entities += traverse_entity(block, parent_matrix=m, factor_mm=factor_mm)
+            entities += traverse_entity(block, parent_matrix=m, factor_mm=factor_mm, resolution=resolution)
 
         elif dxftype in ['LINE', 'ARC', 'CIRCLE', 'LWPOLYLINE', 'SPLINE']:
             try:
                 spath = path.make_path(entity)
                 spath = spath.transform(parent_matrix)
-                curve = [list(v.xyz) for v in spath.flattening(2)]
+                curve = [list(v.xyz) for v in spath.flattening(distance=resolution, segments=4)]
 
                 if len(curve) > 0:
                     if factor_mm != 1.0:
@@ -159,7 +161,7 @@ def merge_connected_curves(curves, tol=0.001):
     return closed_curves + merged_curves
 
 
-def LoadDXF(file_path=None, merge_continuous_segments=True):
+def LoadDXF(file_path=None, merge_continuous_segments=True, resolution=DEFAULT_RESOLUTION):
     """
     Load a DXF file, extract geometry, and import it into RoboDK.
 
@@ -170,6 +172,8 @@ def LoadDXF(file_path=None, merge_continuous_segments=True):
     :type file_path: str or None
     :param merge_continuous_segments: Whether to merge connected curves. If None, user is prompted.
     :type merge_continuous_segments: bool or None
+    :param resolution: Segment resolution. If None, user is prompted.
+    :type resolution: bool or None
     :return: The main RoboDK object created from the DXF, or None on failure.
     :rtype: robolink.Item or None
     """
@@ -189,10 +193,16 @@ def LoadDXF(file_path=None, merge_continuous_segments=True):
     RDK = robolink.Robolink()
     RDK.ShowMessage("Loading DXF file: " + file_path, False)
 
+    if resolution is None:
+        resolution = robodialogs.InputDialog("Specify the segment resolution", DEFAULT_RESOLUTION + 1e-10)
+        if resolution is None:
+            RDK.ShowMessage("Operation cancelled")
+            return None
+
     doc, auditor = ezdxf.recover.readfile(file_path)
     factor_mm = ezdxf.units.conversion_factor(doc.units, 4) if doc.units > 0 else 1.0
 
-    entities = traverse_entity(doc.modelspace(), factor_mm=factor_mm)
+    entities = traverse_entity(doc.modelspace(), factor_mm=factor_mm, resolution=resolution)
     layer_objects = OrderedDict()
     for layer, curve in entities:
         layer_objects.setdefault(layer, []).append(curve)
@@ -240,4 +250,4 @@ def LoadDXF(file_path=None, merge_continuous_segments=True):
 
 
 if __name__ == "__main__":
-    LoadDXF()
+    LoadDXF(merge_continuous_segments=True, resolution=None)
