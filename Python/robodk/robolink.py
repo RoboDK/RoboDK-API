@@ -2661,7 +2661,7 @@ class Robolink:
         """Set collision checking ON or OFF (COLLISION_ON/COLLISION_OFF) for a specific list of pairs of objects. This allows altering the collision map for Collision checking.
         Specify the link id for robots or moving mechanisms (id 0 is the base).
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Robolink.setCollisionActivePair`
+        .. seealso:: :func:`~robodk.robolink.Robolink.CollisionActivePairList`, :func:`~robodk.robolink.Robolink.setCollisionActive`, :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Robolink.setCollisionActivePair`
         """
         with self._lock:
             npairs = min(len(list_check_state), min(len(list_item1), len(list_item2)))
@@ -2686,6 +2686,27 @@ class Robolink:
             success = self._rec_int()
             self._check_status()
             return success
+            
+    def CollisionActivePairList(self) -> List[Tuple['Item', 'Item', int, int]]:
+        """Return the list of pairs of items that are being checked for collisions. The list includes the index of a robot joint if the item is a robot. 
+
+        .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.Visible`
+        """
+        with self._lock:
+            self._check_connection()
+            command = 'Collision_GetPairList'
+            self._send_line(command)
+            nitems = self._rec_int()
+            item_list = []
+            for i in range(nitems):
+                item_1 = self._rec_item()
+                id_1 = self._rec_int()
+                item_2 = self._rec_item()
+                id_2 = self._rec_int()
+                item_list.append([item_1, item_2, id_1, id_2])
+
+            self._check_status()
+            return item_list
 
     def Collisions(self) -> int:
         """Return the number of pairs of objects that are currently in a collision state.
@@ -2735,7 +2756,7 @@ class Robolink:
             return item_list
 
     def CollisionPairs(self) -> List[Tuple['Item', 'Item', int, int]]:
-        """Return the list of pairs of items that are in a collision state.
+        """Return the list of pairs of items that are in a collision state. The list includes the index of a robot joint if the item is a robot. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
 
         .. seealso:: :func:`~robodk.robolink.Robolink.Collisions`, :func:`~robodk.robolink.Item.Visible`
         """
