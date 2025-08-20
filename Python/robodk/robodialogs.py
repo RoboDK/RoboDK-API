@@ -365,8 +365,11 @@ def mbox(msg: str, b1: str = 'OK', b2: str = 'Cancel', frame: bool = True, t: fl
 
     .. seealso:: :func:`~robodk.robodialogs.InputDialog`
     """
-    if ENABLE_QT and b1 == 'OK' and b2 == 'Cancel' and frame and t is False and entry is not None:
-        return DialogsQt.InputDialog(msg=msg, value=entry, title='Input')
+    if ENABLE_QT and b1 == 'OK' and b2 == 'Cancel' and frame and t is False:
+        if entry is None:
+            return DialogsQt.ShowMessageOkCancel(msg=msg, title='Input')
+        else:
+            return DialogsQt.InputDialog(msg=msg, value=entry, title='Input')
     else:
         return DialogsTk.mbox(msg, b1, b2, frame, t, entry)
 
@@ -597,12 +600,36 @@ if ENABLE_TK:
                     b1, self.b1_return = b1
                 if isinstance(b2, tuple):
                     b2, self.b2_return = b2
+
                 # main frame
                 frm_1 = tkinter.Frame(root)
-                frm_1.pack(ipadx=2, ipady=2)
+                frm_1.pack(ipadx=2, ipady=2, fill='both', expand=True)
+
                 # the message
-                message = tkinter.Label(frm_1, text=self.msg)
-                message.pack(padx=8, pady=8)
+                message = tkinter.Message(frm_1, text=msg, width=600, anchor="w", justify="left")
+                message.update_idletasks()
+                needed_h = message.winfo_reqheight()
+                sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
+
+                if needed_h <= (sh * 2) // 3:
+                    # fits on screen
+                    message.pack(padx=10, pady=10)
+                else:
+                    # too tall: use scrollable Text
+                    message.destroy()
+                    frame = tkinter.Frame(frm_1)
+                    frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+                    parent_bg = frm_1.cget("bg")
+                    text = tkinter.Text(frame, wrap="word", width=70, height=sh // 30, background=parent_bg)
+                    text.insert("1.0", msg)
+                    text.config(state="disabled")
+                    text.pack(side="left", fill="both", expand=True)
+
+                    sb = tkinter.Scrollbar(frame, command=text.yview)
+                    sb.pack(side="right", fill="y")
+                    text.config(yscrollcommand=sb.set)
+
                 # if entry=True create and set focus
                 if entry is not None:
                     if entry == True:
@@ -629,6 +656,10 @@ if ENABLE_TK:
                 # roughly center the box on screen
                 # for accuracy see: http://stackoverflow.com/a/10018670/1217270
                 root.update_idletasks()
+                # size constraints so content never exceeds screen and buttons remain visible
+                max_w = root.winfo_screenwidth() * 2 // 3
+                max_h = root.winfo_screenheight() * 2 // 3
+                root.maxsize(max_w, max_h)
                 xp = (root.winfo_screenwidth() // 2) - (root.winfo_width() // 2)
                 yp = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
                 geom = (root.winfo_width(), root.winfo_height(), xp, yp)
@@ -656,10 +687,9 @@ if ENABLE_TK:
                 self.returning = self.b2_return
                 self.root.quit()
 
-            # remove this function and the call to protocol
-            # then the close button will act normally
             def close_mod(self):
-                pass
+                self.returning = None
+                self.root.quit()
 
             def time_out(self):
                 try:
@@ -878,9 +908,16 @@ if ENABLE_QT:
             msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
             msg_box.setIcon(QtWidgets.QMessageBox.Information)
-            msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
+
+            lines = msg.splitlines()
+            if len(lines) > 25:
+                preview = "\n".join(lines[:25]) + "\n... (see details for full message)"
+                msg_box.setText(preview)
+                msg_box.setDetailedText(msg)
+            else:
+                msg_box.setText(msg)
 
             ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
