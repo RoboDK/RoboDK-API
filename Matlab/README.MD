@@ -45,6 +45,10 @@ Examples
 ------------
 Run one of the Example files to see some examples to use the API. Such as:
  * Example_RoboDK.m
+ * Example_RoboDK_DrawHexagon.m
+ * Example_RoboDK_ModifyProgram.m
+ * Example_RoboDK_SelectRobot.m
+ * Examples/BinPickingCHOMP/exampleRoboDKChomp.m
 
 The following files are used by the Simulink model:
  * RoboDK_Sample.mdl
