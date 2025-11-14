@@ -2923,36 +2923,6 @@ Public Class RoboDK
     '    self._check_status()
     '    return success
 
-    'def SignatureRobot(self, robot=0):
-    '    """Gets the signature of the robot after calibration."""
-    '    self._check_connection()
-    '    command = 'G_AbsAccParam'
-    '    self._send_line(command)
-    '    self._send_item(robot)
-    '    r2b = self._rec_pose()
-    '    # get nominal kinematics
-    '    nominal_base = self._rec_pose()
-    '    nominal_tool = self._rec_pose()        
-    '    ndofs = self._rec_int()
-    '    nominal_kin = []
-    '    for i in range(ndofs):
-    '        nominal_kin.append(self._rec_array())
-
-    '    accurate_base = self._rec_pose()
-    '    accurate_tool = self._rec_pose()
-    '    ndofs = self._rec_int()
-    '    accurate_kin = []
-    '    for i in range(ndofs):
-    '        accurate_kin.append(self._rec_array())
-
-    '    coupling = self._rec_array()
-    '    stiffness = self._rec_array()
-    '    self._check_status()
-    '    return r2b, nominal_base, nominal_too
-
-
-
-
 
 
     ''' <summary>
