@@ -40,6 +40,8 @@
 
 
 
+using System;
+
 namespace RoboDk.API.Model
 {
     // Instruction types
@@ -47,15 +49,18 @@ namespace RoboDk.API.Model
     {
         Invalid = -1,
         Move = 0,
-        Movec = 1,
-        Changespeed = 2,
-        Changeframe = 3,
-        Changetool = 4,
-        Changerobot = 5,
+        MoveC = 1,
+        ChangeSpeed = 2,
+        ChangeFrame = 3,
+        ChangeTool = 4,
+        ChangeRobot = 5,
         Pause = 6,
         Event = 7,
         Code = 8,
-        Print = 9
+        Print = 9,
+        Rounding = 10,
+        IO = 11,
+        Custom = 12
     }
 }
 

@@ -1715,6 +1715,9 @@ public class RoboDK
     public const int INS_TYPE_EVENT = 7;
     public const int INS_TYPE_CODE = 8;
     public const int INS_TYPE_PRINT = 9;
+    public const int INS_TYPE_ROUNDING = 10;
+    public const int INS_TYPE_IO = 11;
+    public const int INS_TYPE_CUSTOM = 12;
 
     // Move types
     public const int MOVE_TYPE_INVALID = -1;

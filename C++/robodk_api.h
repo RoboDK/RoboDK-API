@@ -1415,7 +1415,16 @@ public:
         INS_TYPE_CODE = 8,
 
         /// Display message on the teach pendant.
-        INS_TYPE_PRINT = 9
+        INS_TYPE_PRINT = 9,
+
+        /// Rounding instruction.
+        INS_TYPE_ROUNDING = 10,
+
+        /// Set or Wait I/O instruction.
+        INS_TYPE_IO = 11,
+
+        /// Custom instruction.
+        INS_TYPE_CUSTOM = 12
     };
 
     /// Movement types
