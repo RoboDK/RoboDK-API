@@ -1296,6 +1296,25 @@ namespace RoboDk.API
             return list_items;
         }
 
+        /// <inheritdoc />
+        public List<CollisionPair> CollisionActivePairList()
+        {
+            check_connection();
+            send_line("Collision_GetPairList");
+            int nitems = rec_int();
+            List<CollisionPair> list_items = new List<CollisionPair>(nitems);
+            for (int i = 0; i < nitems; i++)
+            {
+                IItem item1 = rec_item();
+                int id1 = rec_int();
+                IItem item2 = rec_item();
+                int id2 = rec_int();
+                CollisionPair collisionPair = new CollisionPair(item1, id1, item2, id2);
+                list_items.Add(collisionPair);
+            }
+            check_status();
+            return list_items;
+        }
 
         /// <inheritdoc />
         public void SetSimulationSpeed(double speed)

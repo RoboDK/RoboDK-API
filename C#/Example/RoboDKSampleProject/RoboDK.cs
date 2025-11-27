@@ -3934,6 +3934,27 @@ public class RoboDK
         return item_list;
     }
 
+    /// <summary>
+    /// Returns the list of pairs of items that are in a collision state.
+    /// </summary>
+    /// <returns>List of items that are in a collision state</returns>
+    public List<Tuple<Item, Item, int, int>> CollisionActivePairList()
+    {
+        _check_connection();
+        _send_Line("Collision_GetPairList");
+        int nitems = _recv_Int();
+        List<Tuple<Item, Item, int, int>> list_items = new List<Tuple<Item, Item, int, int>>(nitems);
+        for (int i = 0; i < nitems; i++)
+        {
+            Item item1 = _recv_Item();
+            int id1 = _recv_Int();
+            Item item2 = _recv_Item();
+            int id2 = _recv_Int();
+            list_items.Add(new Tuple<Item, Item, int, int>(item1, item2, id1, id2));
+        }
+        _check_status();
+        return list_items;
+    }
 
     /// <summary>
     /// Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed. Set to a high value (>100) for fast simulation results.
