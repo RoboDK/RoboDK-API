@@ -1069,6 +1069,15 @@ public:
     int Collision(Item item1, Item item2);
 
     /// <summary>
+    /// Returns the pairs of objects that are currently in a collision state.
+    /// </summary>
+    /// <param name="item1">List of the first colliding objects</param>
+    /// <param name="item2">List of the second colliding objects</param>
+    /// <param name="id1">List of Joint IDs for the first colliding objects</param>
+    /// <param name="id2">List of Joint IDs for the second colliding objects</param>
+    void CollisionActivePairList(QList<Item>& item1, QList<Item>& item2, QList<int>& id1, QList<int>& id2);
+
+    /// <summary>
     /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
     /// </summary>
     /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools).</param>

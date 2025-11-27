@@ -3196,6 +3196,45 @@ int RoboDK::Collision(Item item1, Item item2)
     return ncollisions;
 }
 
+/// <summary>
+/// Returns the pairs of objects that are currently in a collision state.
+/// </summary>
+/// <param name="item1">List of the first colliding objects</param>
+/// <param name="item2">List of the second colliding objects</param>
+/// <param name="id1">List of Joint IDs for the first colliding objects</param>
+/// <param name="id2">List of Joint IDs for the second colliding objects</param>
+void RoboDK::CollisionActivePairList(QList<Item>& item1, QList<Item>& item2, QList<int>& id1, QList<int>& id2)
+{
+    _check_connection();
+    _send_Line("Collision_GetPairList");
+    int nitems = _recv_Int();
+
+    item1.clear();
+    item2.clear();
+    id1.clear();
+    id2.clear();
+
+    item1.reserve(nitems);
+    item2.reserve(nitems);
+    id1.reserve(nitems);
+    id2.reserve(nitems);
+
+    for (int i = 0; i < nitems; ++i)
+    {
+        item1.append(_recv_Item());
+        id1.append(_recv_Int());
+        item2.append(_recv_Item());
+        id2.append(_recv_Int());
+    }
+
+    _check_status();
+}
+
+/// <summary>
+/// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
+/// </summary>
+/// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools).</param>
+/// <returns>List of items that are in a collision state.</returns>
 QList<Item> RoboDK::getCollisionItems(QList<int>& link_id_list)
 {
     link_id_list.clear();
