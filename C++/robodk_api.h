@@ -1069,7 +1069,7 @@ public:
     int Collision(Item item1, Item item2);
 
     /// <summary>
-    /// Returns the pairs of objects that are currently in a collision state.
+    /// Returns the pairs of objects that are currently in the collision map.
     /// </summary>
     /// <param name="item1">List of the first colliding objects</param>
     /// <param name="item2">List of the second colliding objects</param>

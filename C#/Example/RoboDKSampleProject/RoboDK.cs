@@ -3938,9 +3938,9 @@ public class RoboDK
     }
 
     /// <summary>
-    /// Returns the list of pairs of items that are in a collision state.
+    /// Returns the list of pairs of items that are in the collision map.
     /// </summary>
-    /// <returns>List of items that are in a collision state</returns>
+    /// <returns>List of items that are in the collision map</returns>
     public List<Tuple<Item, Item, int, int>> CollisionActivePairList()
     {
         _check_connection();

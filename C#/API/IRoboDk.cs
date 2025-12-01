@@ -558,9 +558,9 @@ namespace RoboDk.API
         List<CollisionPair> GetCollisionPairs();
 
         /// <summary>
-        /// Returns the list of pairs of items that are in a collision state.
+        /// Returns the list of pairs of items that are in the collision map.
         /// </summary>
-        /// <returns>List of items that are in a collision state</returns>
+        /// <returns>List of items that are in the collision map</returns>
         List<CollisionPair> CollisionActivePairList();
 
         /// <summary>
