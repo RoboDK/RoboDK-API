@@ -554,8 +554,15 @@ namespace RoboDk.API
         /// <summary>
         /// Returns the list of pairs of items that are in a collision state. This call will run a check for collisions if collision checking is not activated (if SetCollisionActive is set to Off).
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of items that are in a collision state</returns>
         List<CollisionPair> GetCollisionPairs();
+
+        /// <summary>
+        /// Returns the list of pairs of items that are in the collision map.
+        /// Items that are not visible will still be included, regardless of the "Include hidden objects" option.
+        /// </summary>
+        /// <returns>List of items that are in the collision map</returns>
+        List<CollisionPair> CollisionActivePairList();
 
         /// <summary>
         /// Set the simulation speed. A simulation speed of 5 (default) means that 1 second of simulation 

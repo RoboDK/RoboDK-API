@@ -1069,6 +1069,16 @@ public:
     int Collision(Item item1, Item item2);
 
     /// <summary>
+    /// Returns the pairs of objects that are currently in the collision map.
+    /// Items that are not visible will still be included, regardless of the "Include hidden objects" option.
+    /// </summary>
+    /// <param name="item1">List of the first colliding objects</param>
+    /// <param name="item2">List of the second colliding objects</param>
+    /// <param name="id1">List of Joint IDs for the first colliding objects</param>
+    /// <param name="id2">List of Joint IDs for the second colliding objects</param>
+    void CollisionActivePairList(QList<Item>& item1, QList<Item>& item2, QList<int>& id1, QList<int>& id2);
+
+    /// <summary>
     /// Return the list of items that are in a collision state. This function can be used after calling Collisions() to retrieve the items that are in a collision state.
     /// </summary>
     /// <param name="link_id_list">List of robot link IDs that are in collision (0 for objects and tools).</param>
@@ -1406,7 +1416,16 @@ public:
         INS_TYPE_CODE = 8,
 
         /// Display message on the teach pendant.
-        INS_TYPE_PRINT = 9
+        INS_TYPE_PRINT = 9,
+
+        /// Rounding instruction.
+        INS_TYPE_ROUNDING = 10,
+
+        /// Set or Wait I/O instruction.
+        INS_TYPE_IO = 11,
+
+        /// Custom instruction.
+        INS_TYPE_CUSTOM = 12
     };
 
     /// Movement types

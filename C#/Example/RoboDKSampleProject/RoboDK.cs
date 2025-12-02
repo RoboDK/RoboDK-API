@@ -1715,6 +1715,9 @@ public class RoboDK
     public const int INS_TYPE_EVENT = 7;
     public const int INS_TYPE_CODE = 8;
     public const int INS_TYPE_PRINT = 9;
+    public const int INS_TYPE_ROUNDING = 10;
+    public const int INS_TYPE_IO = 11;
+    public const int INS_TYPE_CUSTOM = 12;
 
     // Move types
     public const int MOVE_TYPE_INVALID = -1;
@@ -3934,6 +3937,28 @@ public class RoboDK
         return item_list;
     }
 
+    /// <summary>
+    /// Returns the list of pairs of items that are in the collision map.
+    /// Items that are not visible will still be included, regardless of the "Include hidden objects" option.
+    /// </summary>
+    /// <returns>List of items that are in the collision map</returns>
+    public List<Tuple<Item, Item, int, int>> CollisionActivePairList()
+    {
+        _check_connection();
+        _send_Line("Collision_GetPairList");
+        int nitems = _recv_Int();
+        List<Tuple<Item, Item, int, int>> list_items = new List<Tuple<Item, Item, int, int>>(nitems);
+        for (int i = 0; i < nitems; i++)
+        {
+            Item item1 = _recv_Item();
+            int id1 = _recv_Int();
+            Item item2 = _recv_Item();
+            int id2 = _recv_Int();
+            list_items.Add(new Tuple<Item, Item, int, int>(item1, item2, id1, id2));
+        }
+        _check_status();
+        return list_items;
+    }
 
     /// <summary>
     /// Sets the current simulation speed. Set the speed to 1 for a real-time simulation. The slowest speed allowed is 0.001 times the real speed. Set to a high value (>100) for fast simulation results.
