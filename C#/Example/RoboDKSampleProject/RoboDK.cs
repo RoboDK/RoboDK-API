@@ -3939,6 +3939,7 @@ public class RoboDK
 
     /// <summary>
     /// Returns the list of pairs of items that are in the collision map.
+    /// Items that are not visible will still be included, regardless of the "Include hidden objects" option.
     /// </summary>
     /// <returns>List of items that are in the collision map</returns>
     public List<Tuple<Item, Item, int, int>> CollisionActivePairList()

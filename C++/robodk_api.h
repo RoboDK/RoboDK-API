@@ -1070,6 +1070,7 @@ public:
 
     /// <summary>
     /// Returns the pairs of objects that are currently in the collision map.
+    /// Items that are not visible will still be included, regardless of the "Include hidden objects" option.
     /// </summary>
     /// <param name="item1">List of the first colliding objects</param>
     /// <param name="item2">List of the second colliding objects</param>
