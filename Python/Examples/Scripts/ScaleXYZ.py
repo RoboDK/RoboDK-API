@@ -46,13 +46,14 @@ RDK = Robolink()
 RDK.setSelection([])
 
 # Ask the user to select an object or tool
-obj = RDK.ItemUserPick('Select an object or tool to scale', RDK.ItemList(ITEM_TYPE_TOOL) + RDK.ItemList(ITEM_TYPE_OBJECT))
-if not obj.Valid():
+itm = RDK.ItemUserPick('Select an object or tool to scale')
+if not itm.Valid():
     quit(0)
 
 scale_xyz = mbox_getfloatlist("Enter a per-axis scale", [1, 1, 1], 3)
 if not scale_xyz:
     quit(0)
 
-# Trigger scaling
-obj.Scale(scale_xyz)
+# Trigger scaling (if we provide the scale point we can also scale programs)
+scale_point = eye(4)
+itm.Scale(scale_xyz, scale_point)
