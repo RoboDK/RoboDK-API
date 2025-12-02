@@ -8,7 +8,7 @@ from __future__ import print_function  # (Must be always at the top)
 from setuptools import setup  # Always prefer setuptools over distutils
 from pathlib import Path
 
-VERSION = '5.9.2'
+VERSION = '5.9.4'
 
 this_directory = Path(__file__).parent
 LONG_DESCRIPTION = (this_directory / "README.md").read_text()
@@ -73,6 +73,9 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Programming Language :: C',
         'Programming Language :: C#',
         'Programming Language :: C++',

@@ -3,8 +3,8 @@ RoboDK API for Python
 
 The `robodk` package implements the [RoboDK API for Python](https://robodk.com/doc/en/PythonAPI/index.html).
 
-The RoboDK API allows creating simulations for industrial robots, specific mechanisms and generating vendor-specific programs for robots.
-With the RoboDK API for Python it is possible to simulate and program any industrial robot using Python programming language. 
+The RoboDK API allows you to create simulations for industrial robots, mechanisms and generate vendor-specific programs for robots.
+With the RoboDK API for Python you can simulate and program any industrial robot using Python programming language. 
 The RoboDK API provides an alternative to using vendor-specific programming languages.
 
 While RoboDK's graphical user interface can be used to create programs, it is possible to extend the robot controller limitations by using a universal programming language such as Python.
@@ -125,29 +125,47 @@ More information about robot post processors here:
  * [Technical Reference](https://robodk.com/doc/en/PythonAPI/postprocessor.html)
 
 
-You can find the most up to date list of supported robot controllers in our documentation for [Post processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
+The following list includes the supported robot controllers from different robot manufacturers. You can find the most up to date list of supported robot controllers in our [library of post processors](https://robodk.com/posts) and the [documentation for Post processors](https://robodk.com/doc/en/Post-Processors.html#AvailablePosts).
 
 * ABB RAPID IRC5: for ABB IRC5 robot controllers
 * ABB RAPID S4C: for ABB S4C robot controllers
 * Adept Vplus: for Adept V+ programming language
 * Allen Bradley Logix5000: for Allen Bradley Logix5000 PLC
+* Annin Robotics: for AR3 and AR4 robots.
 * Aubo: for AUBO robot controllers
+* Aubo ARCS: generates code (.lua and .pro) for AUBO ARCS robotic controllers.
+* Automata: for Automata EVA robots.
+* Borunte: for Borunte robot arms. Generates zip-package with necessary files for BRTIRUS robot controllers.
+* Brooks: for PreciseFlex robots.
+* CPR: produces XML-formatted code suitable for CPR robotic systems.
+* CSV: generates simple CSV-formatted files for generic robotic and automation controllers. This post processor is versatile and can be used in applications requiring straightforward data import and export.
 * CLOOS: for CLOOS robot controllers
 * Comau C5G: for Comau C5G robot controllers
 * Denso PAC: for Denso RC7 (and older) robot controllers (PAC programming language)
 * Denso RC8: for Denso RC8 (and newer) robot controllers (PacScript programming language)
 * Dobot: for educational Dobot robots
 * Doosan: for Doosan collaborative robots
+* Elite: The Elite Robots CS Task post processor allows you to generate code for CS controllers.
 * Epson: for Epson robot controllers
+* Estun: for Estun robot controllers
+* Fairino: produces .lua files and supports the Fairino FR series of robots.
 * Fanuc R30iA: for Fanuc R30iA and R30iB robot controllers
 * Fanuc R30iA_Arc: for Fanuc Arc welding
 * Fanuc RJ3: for Fanuc RJ3 robot controllers
+* Flexiv: generates trajectory files (.traj) for Flexiv Hesper controllers
+* Foxbot: generates .pac files for Foxbot controllers
 * GCode BnR: for B&R robot controllers
 * GSK: for GSK robots
 * HCR: for Hanwha robot controllers
 * HIWIN HRSS: for HIWIN robots
+* Huayan: generates programs for Huayan Robotics robots (formerly known as Han's Robot)
 * Hyundai: for Hyundai robot controllers
-* KAIRO: for Keba Kairo robot controllers
+* IGUS: generates XML-formatted code suitable for igus robotic systems
+* IIMT: generates .txt files that you can load in IIMT CR robot controllers easily.
+* Inexbot: generates .JBI files specifically designed for Inexbot controllers (Inform III)
+* JAKA: for JAKA robot controllers
+* Kassow: generate code for Kassow Robots KR2 controllers
+* KEBA KAIRO: for Keba Kairo robot controllers
 * Kinova: for Kinova robots
 * Kawasaki: for Kawasaki AS robot controllers
 * KUKA IIWA: for KUKA IIWA sunrise programming in Java
@@ -157,27 +175,43 @@ You can find the most up to date list of supported robot controllers in our docu
 * KUKA KRC4: for KUKA KRC4 robot controllers
 * KUKA KRC4_Config: for KUKA KRC4 robot controllers with configuration data in each line
 * KUKA KRC4_DAT: for KUKA KRC4 robot controllers including DAT data files
+* KUKA KRC5: for KUKA KRC5 robot controllers
+* MARS: generates .gpl files for MARS systems
 * Mecademic: for Mecademic's script code required by the Meca500 robot
 * Mecademic Python: it generates a Python script that can control the Mecademic Meca500 robot remotely.
 * Mitsubishi: for Mitsubishi robot controllers
 * Motoman/Yaskawa: for different Motoman robot controllers using Inform II and Inform III (JBI)
+* Motoman Cartesian: for Yaskawa/Motoman robot controllers using Cartesian values. You may require the Relative Job option on the robot controller if you want to manually modify this program on the robot controller.
+* MyCobot: generates Python code compatible with MyCobot robotic arms
 * Nachi AX FD: for Nachi AX and FD robot controllers
-* Omron: for Omron/Techman robot controllers
+* Neura: generates a NeuraPy Python script compatible with the Neura Robotics Real-Time NR-Motion Master controller
+* NEWKer i6: generates code designed for NEWKer i6 CNC controllers
+* Niryo: generates Python code designed for Niryo educational robots
+* Omron: for Omron-TM robot controllers
 * OTC: for Daihen OTC robot controllers
-* Panasonic: For Panasonic PRG programs (requires Panasonic G2PC tools to compile ASCII files to binary files)
+* Panasonic: for Panasonic PRG programs (requires Panasonic G2PC tools to compile ASCII files to binary files)
 * Precise: for Precise Scara robots
+* QJAR: generates .rbg files for QJAR robot controllers
+* Rainbow Robotics: generates .wsl files for Rainbow Robotics controllers
 * Robostar: for Robostar robot controllers
+* Rokae: generates .mod files for ROKAE robot controllers 
+* Rozum RC API: generates .py files to integrate with Rozum RC Series controllers
+* Rozum RC Pulse: generates .rcp files designed for Rozum RC Series controllers
+* Schneider: for Schneider Electric Lexium controllers
 * Siasun: for Siasun robot controllers
-* Siemens_Sinumerik: for Siemens Sinumerik ROBX robot controller
+* Siemens Sinumerik: for Siemens Sinumerik ROBX robot controller
 * Staubli VAL3: to generate Staubli VAL3 robot programs (CS8 controllers and later). It inlines the robot movements.
 * Staubli VAL3_Machining: for Staubli VAL3 controllers that have the Machining HSM option.
 * Staubli S6: for Staubli S6 robot controllers
 * Toshiba: for Toshiba robots
-* Techman: for Omron/Techman robot controllers
+* Techman: for Techman robot controllers
+* Turin: outputs .txt files for Turin robot controllers
 * Universal Robots: for UR robots, it generates linear movements as pose targets
 * Universal Robots URP: for UR robots, it generates a URP that can be loaded and modified in Polyscope (the UR robot controller)
-* Universal Robots_RobotiQ: for UR robots including support for RobotiQ gripper
-* Universal Robots_MoveP: for UR robots, it generates linear movements as MoveP commands
+* Universal Robots RobotiQ: for UR robots including support for RobotiQ gripper
+* Universal Robots MoveP: for UR robots, it generates linear movements as MoveP commands
+* Wlkata: for WLKATA Mirobot robotic arms
+* xArm: for uFactory xArm robotic systems
 * Yamaha: for Yamaha robots
 
 
@@ -205,5 +239,8 @@ More about RoboDK
 ----------------
 
 * [Main website](https://robodk.com/)
-* [RoboDK Documentation](https://robodk.com/doc/en/Basic-Guide.html)
-* [Blog](https://robodk.com/blog)
+* [Help to get started](https://robodk.com/help)
+* [RoboDK documentation](https://robodk.com/doc/en/Basic-Guide.html)
+* [Example applications](https://robodk.com/examples)
+* [Contact us](https://robodk.com/contact)
+
