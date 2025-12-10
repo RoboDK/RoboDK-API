@@ -270,7 +270,15 @@ def LoadDXF(file_path=None, merge_continuous_segments=True, resolution=DEFAULT_R
     """
     if not file_path and len(sys.argv) >= 2:
         file_path = sys.argv[1]
-
+        
+    if len(sys.argv) >= 3:
+        if "-SkipInput" in sys.argv[2:]:
+            if resolution is None:
+                resolution = DEFAULT_RESOLUTION
+                orient_closed_curves = False
+                create_machining_project = False
+                
+            
     if not file_path or not Path(file_path).is_file():
         file_path = robodialogs.getOpenFileName(defaultextension='.dxf', filetypes=[('DXF files', '.DXF .dxf')])
 
