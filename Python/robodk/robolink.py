@@ -5156,7 +5156,7 @@ class Item:
         .. code-block:: python
 
             from robodk.robolink import *    # Import the RoboDK API
-            RDK = Robolink()          # Start RoboDK API
+            RDK = Robolink()                 # Start RoboDK API
 
             # Ask the user to select an object
             OBJECT = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
@@ -5212,7 +5212,7 @@ class Item:
                 time.sleep(0.1)
 
 
-        .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`
+        .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`, :func:`~robodk.robolink.Item.GetCurves`, 
         """
         if feature_type >= FEATURE_HOVER_OBJECT_MESH:
             raise Exception("Invalid feature type. Use FEATURE_SURFACE, FEATURE_MESH or equivalent.")
@@ -5229,6 +5229,53 @@ class Item:
             self.link._check_status()
             return list(points), feature_name
 
+    def GetCurves(self) -> List[Tuple[robomath.Mat, str]]:
+        """Retrieve the curves object. The points are provided in [XYZijk] format in relative coordinates. The XYZ are the local point coordinate and ijk is the normal of the surface.
+
+        :return: List of points for each curve as a list
+        
+        
+        Example - Retrieve all the curves of an object
+
+        .. code-block:: python
+
+            from robodk.robolink import *    # Import the RoboDK API            
+            RDK = Robolink()                 # Start RoboDK API
+
+            # Ask the user to select an object
+            object = RDK.ItemUserPick("Select an object", ITEM_TYPE_OBJECT)
+
+            curves = object.GetCurves()
+            print("The object " + object.Name() + " has " + str(len(curves)) + " curves")
+
+            for c in curves:
+                pts, name = c
+                print("Curve:" + name)
+                print("Number of points: " + str(len(pts[0])))
+                x,y,z,i,j,k = pts[0,0], pts[1,0], pts[2,0] , pts[3,0], pts[4,0], pts[5,0]
+                print("First point [x,y,z , i,j,k]: %.3f,%.3f,%.3f , %.3f,%.3f,%.3f" % (x,y,z,i,j,k))
+
+
+        .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`, :func:`~robodk.robolink.Item.GetPoints`
+        """
+        with self.link._lock:
+            self.link._check_connection()
+            command = 'G_ObjCurves'
+            self.link._send_line(command)
+            self.link._send_item(self)
+            self.link._send_int(2) # FEATURE_CURVE
+            ncrv = self.link._rec_int()
+            allcurves = []
+            for i in range(ncrv):
+                points = self.link._rec_matrix()
+                curve_name = self.link._rec_line()
+                print(curve_name)
+                allcurves.append([points, curve_name])
+                
+            self.link._check_status()
+            return allcurves
+            
+    
     def setMillingParameters(self, ncfile: str = '', part: 'Item' = 0, params: str = '') -> Tuple['Item', float]:
         """
         .. deprecated:: 4.0
