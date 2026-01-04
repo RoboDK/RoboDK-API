@@ -5258,6 +5258,24 @@ class Item:
 
         .. seealso:: :func:`~robodk.robolink.Item.SelectedFeature`, :func:`~robodk.robolink.Item.GetPoints`
         """
+
+        if self.link.BUILD < 25560:
+            print("Update RoboDK to retrieve curves faster")
+            allcurves = []
+            curve_id = 0
+            while True:
+                # Retrieve the curve points
+                points, curve_name = self.GetPoints(FEATURE_CURVE, curve_id)
+                npoints = len(points)                
+                if npoints == 0:
+                    break
+                
+                allcurves.append([robomath.Mat(points).tr(), curve_name])
+                curve_id = curve_id + 1
+
+            return allcurves
+
+
         with self.link._lock:
             self.link._check_connection()
             command = 'G_ObjCurves'
