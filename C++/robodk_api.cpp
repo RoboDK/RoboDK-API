@@ -1,4 +1,5 @@
 #include "robodk_api.h"
+#include "robodktypes.h"
 
 #include <cmath>
 #include <algorithm>
@@ -3410,6 +3411,32 @@ bool RoboDK::LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search)
 
     return true;
 }
+
+bool RoboDK::CollisionLine(const tXYZ p1, const tXYZ p2, Item *itm, tXYZ xyz, const Mat *pref)
+{
+    xyz[0] = 0.0;
+    xyz[1] = 0.0;
+    xyz[2] = 0.0;
+    _check_connection();
+    _send_Line("CollisionLine");
+    if (pref == nullptr){
+        _send_XYZ(p1);
+        _send_XYZ(p2);
+    } else {
+        const double *matd = pref->ValuesD();
+        tXYZ p1abs;
+        tXYZ p2abs;
+        MULT_MAT_POINT(p1abs, matd, p1);
+        MULT_MAT_POINT(p2abs, matd, p2);
+        _send_XYZ(p1abs);
+        _send_XYZ(p2abs);
+    }
+    *itm = _recv_Item();
+    _recv_XYZ(xyz);
+    _check_status();
+    return itm->_PTR != 0;
+}
+
 
 void RoboDK::ShowAsCollided(QList<Item> itemList, QList<bool> collidedList, QList<int> *robot_link_id)
 {

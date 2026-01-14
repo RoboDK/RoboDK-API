@@ -1172,11 +1172,13 @@ public:
     /// Checks the collision between a line and any objects in the station. The line is composed by 2 points.
     /// Returns the collided item. Use Item.Valid() to check if there was a valid collision.
     /// </summary>
-    /// <param name="p1">Start point of the line (absolute coordinates).</param>
-    /// <param name="p2">End point of the line (absolute coordinates).</param>
-    /// <param name="xyz_collision">Collided point.</param>
+    /// <param name="p1">Start point of the line (absolute coordinates or relative to pref).</param>
+    /// <param name="p2">End point of the line (absolute coordinates or relative to pref).</param>
+    /// <param name="xyz">Returns the collision point in absolute coordinates.</param>
+    /// <param name="itm">Returns the collision item.</param>
+    /// <param name="pref">Optionally pass the reference frame for points p1 and p2.</param>
     /// <returns>True if collision found.</returns>
-    bool CollisionLine(tXYZ p1, tXYZ p2);
+    bool CollisionLine(const tXYZ p1, const tXYZ p2, Item *itm, tXYZ xyz, const Mat *pref=nullptr);
 
     /// \brief Set a list of items visibile (faster than the default setVisible())
     void setVisible(QList<Item> itemList, QList<bool> visibleList, QList<int> visibleFrames);
