@@ -1,5 +1,4 @@
 #include "robodk_api.h"
-#include "robodktypes.h"
 
 #include <cmath>
 #include <algorithm>
@@ -31,6 +30,8 @@
 #define ROBODK_API_START_STRING "CMD_START"
 #define ROBODK_API_READY_STRING "READY"
 #define ROBODK_API_LF "\n"
+
+
 
 
 
@@ -3410,6 +3411,14 @@ bool RoboDK::LaserTrackerMeasure(tXYZ xyz, tXYZ estimate, bool search)
     }
 
     return true;
+}
+
+
+/// Translate a 3D point (Multiply a 4x4 pose x 3D point)
+void MULT_MAT_POINT(double *out, const double *H, const double *p){
+    (out)[0] = (H)[0]*(p)[0] + (H)[4]*(p)[1] + (H)[8]*(p)[2] + (H)[12];\
+    (out)[1] = (H)[1]*(p)[0] + (H)[5]*(p)[1] + (H)[9]*(p)[2] + (H)[13];\
+    (out)[2] = (H)[2]*(p)[0] + (H)[6]*(p)[1] + (H)[10]*(p)[2] + (H)[14];
 }
 
 bool RoboDK::CollisionLine(const tXYZ p1, const tXYZ p2, Item *itm, tXYZ xyz, const Mat *pref)
