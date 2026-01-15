@@ -1353,7 +1353,7 @@ classdef RobolinkItem < handle
             % Waits (blocks) until the robot finished its move.
             % In  1 (optional) timeout -> Max time to wait for robot to finish its movement (in seconds)
             if nargin < 2
-                timeout = 300;
+                timeout = 360000;
             end
 
             this.link.check_connection();

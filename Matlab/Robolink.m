@@ -306,7 +306,7 @@ classdef Robolink < handle
     end
 
     properties
-        APPLICATION_DIR = 'C:\RoboDK\bin\RoboDK.exe'; % file path to the Robodk program (executable)
+        APPLICATION_DIR = 'C:/RoboDK/bin/RoboDK.exe'; % file path to the Robodk program (executable)
         COM = 0; % tcpip com
         TIMEOUT = 5; % timeout for communication, in seconds
     end
@@ -315,7 +315,7 @@ classdef Robolink < handle
         SAFE_MODE = 1; % checks that provided items exist in memory
         AUTO_UPDATE = 0; % if AUTO_UPDATE is zero, the scene is rendered after every function call
         PORT_START = 20500; % port to start looking for app connection
-        PORT_END = 20502; % port to stop looking for app connection
+        PORT_END = 20500; % port to stop looking for app connection
         PORT = -1;
     end
 
@@ -325,17 +325,21 @@ classdef Robolink < handle
         function connected = is_connected(this)
             % This is a private function.
             % Returns 1 if connection is valid, returns 0 if connection is invalid
-            if this.COM == 0 || strcmp(this.COM, 'tcpip') ~= 0
+%             if this.COM == 0 || strcmp(this.COM, 'tcpip') ~= 0
+%                 connected = 0;
+%                 return
+%             end
+% 
+%             status = get(this.COM, 'status');
+% 
+%             if status(1) == 'o'
+%                 connected = 1;
+%             end
+            if this.COM == 0 || ~isa(this.COM, 'tcpclient')
                 connected = 0;
                 return
             end
-
-            status = get(this.COM, 'status');
-
-            if status(1) == 'o'
-                connected = 1;
-            end
-
+            connected = 1;
         end
 
         function check_connection(this)
@@ -775,7 +779,7 @@ classdef Robolink < handle
                         end
 
                     catch
-
+                        fprintf('Unable to connect to RoboDK API port %i\n', port);
                     end
 
                 end
@@ -784,12 +788,15 @@ classdef Robolink < handle
                     this.PORT = port_ok;
                     break;
                 else
-
-                    try
-                        winopen(this.APPLICATION_DIR);
-                        pause(2);
-                    catch
-                        error(['application path is not correct or could not start: ', this.APPLICATION_DIR]);
+                    if i == 1
+                        % Only try opening the first time
+                        try
+                            fprintf('Starting RoboDK...\n')
+                            winopen(this.APPLICATION_DIR);
+                            pause(2);
+                        catch
+                            error(['application path is not correct or could not start: ', this.APPLICATION_DIR]);
+                        end
                     end
 
                 end
@@ -1591,7 +1598,7 @@ classdef Robolink < handle
             command = 'SCMD';
             send_line(this, command);
             send_line(this, cmd);
-            send_line(this, strrep(strrep(value, '\r\n', '<<br>>'), '\n', '<<br>>'));
+            send_line(this, strrep(value, '\n', '<br>'));
             this.COM.Timeout = 3600; % wait up to 1 hour for user input
             response = rec_line(this);
             this.COM.Timeout = this.TIMEOUT;
@@ -2188,6 +2195,100 @@ classdef Robolink < handle
             feature_name = rec_line(this);
             check_status(this);
         end
+        
+        % function PluginLoad(this, plugin_name="", load=1)
+        %     %Load or unload the specified plugin (path to DLL, dylib or SO file). If the plugin is already loaded it will unload the plugin and reload it. Pass an empty plugin_name to reload all plugins.
+
+        %     :param str plugin_name: name of the plugin or path (if it is not in the default directory.
+        %     :param int load: load the plugin (1/default) or unload (0)
+
+        %     .. code-block:: python
+        %         :caption: Example to load a plugin
+
+        %         RDK = Robolink()
+        %         RDK.PluginLoad("C:/RoboDK/bin/plugin/yourplugin.dll")
+        %         % or if the Add-in is located in the default folder you can simply do:
+        %         RDK.PluginLoad("yourplugin")
+
+        %         % You can also load the library in RoboDK as you would open any other file:
+        %         RDK.AddFile("C:/RoboDK/bin/plugin/yourplugin.dll")
+
+        %     %
+        %     result = ""
+        %     if load:
+        %         if load >= 2:
+        %             %result = this.Command("PluginReload", plugin_name) % crash?
+        %             result = this.Command("PluginUnload", plugin_name)
+        %             result = this.Command("PluginLoad", plugin_name)
+        %         else:
+        %             result = this.Command("PluginLoad", plugin_name)
+        %     else:
+        %         result = this.Command("PluginUnload", plugin_name)
+
+        %     success = result == "OK"
+        %     return success
+
+        %     % Old version:
+        %     %
+        %     %    check_connection(this);
+        %     %    command = 'PluginLoad'
+        %     %    send_line(this, command);
+        %     %    send_line(this, plugin_name)
+        %     %    send_int(this, load)
+        %     %    check_status(this);
+
+        % function PluginCommand(this, plugin_name, plugin_command="", value="")
+        %     %Send a specific command to a RoboDK plugin. The command and value (optional) must be handled by your plugin. It returns the result as a string.
+
+        %     :param str plugin_name: The plugin name must match the PluginName() implementation in the RoboDK plugin.
+        %     :param str command: Specific command handled by your plugin
+        %     :param str value: Specific value (optional) handled by your plugin
+        %     %
+
+        %         check_connection(this);
+        %         command = 'PluginCommand'
+        %         send_line(this, command);
+        %         send_line(this, plugin_name)
+        %         send_line(this, plugin_command)
+        %         send_line(this, str(value))
+        %         this.COM.Timeout = 3600 * 24 * 7)
+        %         result = rec_line(this);
+        %         this.COM.Timeout = this.TIMEOUT)
+        %         check_status(this);
+        %         return result
+
+        % function EmbedWindow(this, window_name, docked_name=None, size_w=-1, size_h=-1, pid=0, area_add=1, area_allowed=15, timeout=500)
+        %     %Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
+
+        %     Note: This function should be called on a seperate thread. Use the static function: :func:`~robodk.robolink.EmbedWindow` instead.
+
+        %     :param str window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
+        %     :param str docked_name: Name of the docked tab in RoboDK (optional, if different from the window name)
+        %     :param int pid: Process ID (optional)
+        %     :param int area_add: Set to 1 (right) or 2 (left) (default is 1)
+        %     :param int area_allowed: Areas allowed (default is 15:no constrain)
+        %     :param int timeout: Timeout to abort attempting to embed the window
+
+        %     .. seealso:: :func:`~robodk.robolink.EmbedWindow`
+
+        %     %
+
+        %         if not docked_name:
+        %             docked_name = window_name
+
+        %         check_connection(this);
+        %         command = 'WinProcDock'
+        %         send_line(this, command);
+        %         send_line(this, docked_name)
+        %         send_line(this, window_name)
+        %         send_array(this, [size_w, size_h])
+        %         send_line(this, str(pid))
+        %         send_int(this, area_allowed)
+        %         send_int(this, area_add)
+        %         send_int(this, timeout)
+        %         result = rec_int(this);
+        %         check_status(this);
+        %         return result > 0
 
     end
 
