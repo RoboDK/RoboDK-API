@@ -1,4 +1,4 @@
-# Copyright 2015-2024 - RoboDK Inc. - https://robodk.com/
+# Copyright 2015-2026 - RoboDK Inc. - https://robodk.com/
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -1938,7 +1938,7 @@ class Robolink:
         :return: added object/shape (0 if failed)
         :rtype: :class:`.Item`
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddCurve`, :func:`~robodk.robolink.Robolink.AddPoints`
+        .. seealso:: :func:`~robodk.robolink.Robolink.ProjectPoints`, :func:`~robodk.robolink.Robolink.AddCurve`, :func:`~robodk.robolink.Robolink.AddPoints`
         """
 
         if isinstance(triangle_points, list):
@@ -2066,7 +2066,7 @@ class Robolink:
             PROJECTION_CLOSEST_RECALC      = 4 # The projection will be the closest point on the surface and the normals will be recalculated
             PROJECTION_RECALC              = 5 # The normals are recalculated according to the surface normal of the closest projection. The points are not changed.
 
-        .. seealso:: :func:`~robodk.robolink.Robolink.AddShape`, :func:`~robodk.robolink.Robolink.AddPoints`
+        .. seealso:: :func:`~robodk.robolink.Robolink.ProjectPoints`, :func:`~robodk.robolink.Robolink.AddShape`, :func:`~robodk.robolink.Robolink.AddPoints`
         """
         if isinstance(curve_points, list):
             if isinstance(curve_points[0], robomath.Mat) or (isinstance(curve_points[0], list) and isinstance(curve_points[0][0], list)):
@@ -2126,7 +2126,7 @@ class Robolink:
         
         If you provide relative point coordinates you should not pass a reference object. You can attach the points to the parent using setParent(). 
         
-        For maximum performance results provide the points as a 6xN matrix.
+        For maximum performance results it is better to provide the points as a 6xN matrix.
         
         Example - Project points to an object relative to a coordinate system
 
@@ -2174,7 +2174,7 @@ class Robolink:
         :param timeout: Max timeout to wait for a reply in seconds (30 seconds by default).
         :type timeout: int
         
-        For maximum performance results provide the points as a 6xN matrix.
+        For maximum performance results you should provide the points as a 6xN matrix.
 
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
