@@ -55,7 +55,7 @@ while True:
             continue
                     
         if obj in RDK.Selection():
-            print("OBject selected!")
+            print("Object selected!")
             # RDK.Selection() # returns the current selection
             RDK.setSelection([]) # Clear selection
             
@@ -74,7 +74,7 @@ while True:
             if True:
                 # Best fit the selected geometry to a type of geometry (plane, cylinder, sphere, etc)
                 geometry = FitGeometry(points)
-                print("Current geometry selected")
+                print("Info about geometry selected:")
                 print(geometry)
             
             # Color is defined as AARRGGBB (Alpha-Red-Green-Blue)
