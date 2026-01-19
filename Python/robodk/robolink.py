@@ -2106,7 +2106,7 @@ class Robolink:
 
     def AddPoints(self, points: Union[List[float], robomath.Mat], reference_object: 'Item' = 0, add_to_ref: bool = False, projection_type: int = PROJECTION_ALONG_NORMAL_RECALC) -> 'Item':
         """Adds a list of points to an object. The provided points must be a list of vertices. A vertex normal can be provided optionally.
-
+        
         :param points: list of points or matrix
         :type points: :class:`~robodk.robomath.Mat` (3xN matrix, or 6xN to provide point normals as ijk vectors)
         :param reference_object: item to attach the newly added geometry (optional)
@@ -2121,6 +2121,25 @@ class Robolink:
         .. seealso:: :func:`~robodk.robolink.Robolink.ProjectPoints`, :func:`~robodk.robolink.Robolink.AddShape`, :func:`~robodk.robolink.Robolink.AddCurve`
 
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
+        
+        If you provide the points in absolute coordinates and you want to add them relative to an existing object you should pass a reference_object.
+        
+        If you provide relative point coordinates you should not pass a reference object. You can attach the points to the parent using setParent(). 
+        
+        For maximum performance results provide the points as a 6xN matrix.
+        
+        Example - Project points to an object relative to a coordinate system
+
+        .. code-block:: python
+
+            # Project points to the part object
+            projected_points = RDK.ProjectPoints( robomath.Mat(points_list)).tr(), part, projection_type=robolink.PROJECTION_ALONG_NORMAL)
+            # Add them to RoboDK as relative points
+            points_object = RDK.AddPoints(projected_points)
+            # Attach them to the same parent
+            points_object.setParent(part.Parent())
+            
+            
         """
         with self._lock:
             if isinstance(points, list):
@@ -2142,7 +2161,9 @@ class Robolink:
     def ProjectPoints(self, points: Union[List[float], robomath.Mat], object_project: 'Item', projection_type: int = PROJECTION_ALONG_NORMAL_RECALC, timeout: float = 30) -> Union[List[float], robomath.Mat]:
         """Project a point or a list of points given its coordinates.
         The provided points must be a list of [XYZ] coordinates. Optionally, a vertex normal can be provided [XYZijk].
-        It returns the projected points as a list of points (empty matrix if failed).
+        This function returns the projected points as a list of points (empty matrix if failed).
+        
+        This function wors with relative coordinates. The points must be relative to the coordinate system where the object is attached to. And the returned points are relative to the reference frame of the same object provided.
 
         :param points: list of points to project
         :type points: list of points (XYZ or XYZijk list of floats), or :class:`~robodk.robomath.Mat` (3xN matrix, or 6xN to provide point normals as ijk vectors)
@@ -2152,6 +2173,8 @@ class Robolink:
         :type projection_type: int
         :param timeout: Max timeout to wait for a reply in seconds (30 seconds by default).
         :type timeout: int
+        
+        For maximum performance results provide the points as a 6xN matrix.
 
         The difference between ProjectPoints and AddPoints is that ProjectPoints does not add the points to the RoboDK station.
         """
@@ -2179,6 +2202,7 @@ class Robolink:
             if islist:
                 projected_points = list(projected_points)
             return projected_points
+
 
     def CloseStation(self):
         """Closes the current RoboDK station without suggesting to save"""
