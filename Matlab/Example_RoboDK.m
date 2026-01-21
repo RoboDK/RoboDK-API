@@ -27,17 +27,21 @@ close all
 % Generate a Robolink object RDK. This object interfaces with RoboDK.
 RDK = Robolink;
 
-% Get the library path
-% path = "C:\RoboDK\Library"; % Since RoboDK 5.5, PATH_LIBRARY points to Documents
-path = RDK.getParam('PATH_LIBRARY');
+% Set the path to the library
+path = 'C:\RoboDK\Library'; 
+
+% Since RoboDK 5.5, PATH_LIBRARY points to Documents
+% Since RoboDK 6.0 PATH_LIBRARY points to the RoboDK/Library folder 
+% and PATH_DOCUMENTS was introducted to points to user documents
+% path = RDK.getParam('PATH_LIBRARY');
 
 % Open example 1
 % RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
-station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+station = RDK.AddFile([char(path), 'Example-06.b-Pick and place 2 tables.rdk']);
 
 if ~station.Valid()
-    path = ['C:/RoboDK/Library/'];
-    station = RDK.AddFile([path, 'Example-06.b-Pick and place 2 tables.rdk']);
+    path = 'C:/RoboDK/Library/';
+    station = RDK.AddFile('C:/RoboDK/Library/Example-06.b-Pick and place 2 tables.rdk');
 
     if ~station.Valid()
         RDK.ShowMessage(sprintf('This example requires Example-06.b-Pick and place 2 tables.rdk library folder:<br>%s.', library_path))

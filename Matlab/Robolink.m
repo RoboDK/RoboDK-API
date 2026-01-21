@@ -770,7 +770,8 @@ classdef Robolink < handle
                 for port = this.PORT_START:this.PORT_END
 
                     try
-                        this.COM = tcpclient('localhost', port, 'Timeout', this.TIMEOUT);
+                        % this.COM = tcpclient('localhost', port, 'Timeout', this.TIMEOUT);
+                        this.COM = tcpclient('127.0.0.1', port, 'Timeout', this.TIMEOUT);
                         connected = is_connected(this);
 
                         if connected
