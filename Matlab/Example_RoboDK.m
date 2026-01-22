@@ -37,7 +37,7 @@ path = 'C:\RoboDK\Library';
 
 % Open example 1
 % RDK.AddFile([path,'Example 01 - Pick and place.rdk']); % prior to RoboDK 4.0.0
-station = RDK.AddFile([char(path), 'Example-06.b-Pick and place 2 tables.rdk']);
+station = RDK.AddFile([char(path), '\Example-06.b-Pick and place 2 tables.rdk']);
 
 if ~station.Valid()
     path = 'C:/RoboDK/Library/';
