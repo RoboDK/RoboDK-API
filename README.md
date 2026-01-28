@@ -6,6 +6,7 @@ The RoboDK API allows you to program any industrial robot arm using your preferr
 
 The RoboDK API is available in the following programming languages:
 * [Python](https://pypi.python.org/pypi/robodk/)
+* [JavaScript/TypeScript (Node.js)](https://www.npmjs.com/package/@robodk/robodk)
 * [C#](./C%23)
 * [Matlab](https://www.mathworks.com/matlabcentral/fileexchange/65690-robodk-api-for-matlab)
 * [C++](https://robodk.com/doc/en/CppAPI/index.html)
@@ -40,6 +41,7 @@ You can find more information about RoboDK API in our documentation.
  * [Introduction to the RoboDK API](https://robodk.com/doc/en/RoboDK-API.html#PythonAPI)
  * [Introduction to RoboDK for robot simulation and offline programming](https://robodk.com/offline-programming)
  * [The `robodk` package for Python](https://robodk.com/doc/en/PythonAPI/index.html)
+ * [The `@robodk/robodk` package for Node.js](https://www.npmjs.com/package/@robodk/robodk)
  * [C++ version of the API](https://robodk.com/doc/en/CppAPI/index.html)
  * [C# version of the API (NuGet)](https://robodk.com/doc/en/CsAPI/index.html)
  * [PlugIn interface (C++)](https://robodk.com/doc/en/PlugIns/index.html)

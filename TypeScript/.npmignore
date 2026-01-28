@@ -1,0 +1,22 @@
+# Source files (types are in dist/)
+src/
+tests/
+docs/
+
+# Config files
+tsconfig.json
+.gitignore
+
+# Development files
+*.test.js
+*.test.d.ts
+*.test.js.map
+*.test.d.ts.map
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

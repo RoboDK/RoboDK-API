@@ -1,0 +1,58 @@
+{
+  "name": "@robodk/robodk",
+  "version": "1.0.0",
+  "description": "Official RoboDK API for TypeScript and JavaScript - Control robots, create programs, and automate manufacturing",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "dist/src/robodk.js",
+  "types": "dist/src/robodk.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/robodk.d.ts",
+      "import": "./dist/src/robodk.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && node --test dist/tests/robodk.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "robodk",
+    "robot",
+    "robotics",
+    "automation",
+    "manufacturing",
+    "simulation",
+    "industrial",
+    "arm",
+    "cnc",
+    "offline-programming"
+  ],
+  "author": "RoboDK Inc.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RoboDK/RoboDK-API.git",
+    "directory": "TypeScript"
+  },
+  "bugs": {
+    "url": "https://github.com/RoboDK/RoboDK-API/issues"
+  },
+  "homepage": "https://robodk.com/doc/en/PythonAPI/index.html",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
