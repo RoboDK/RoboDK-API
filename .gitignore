@@ -24,3 +24,4 @@ Python/unit_tests/report.html
 cmake-build-*/
 CMakeUserPresets.json
 CMakePresets.json
+.claude/**
