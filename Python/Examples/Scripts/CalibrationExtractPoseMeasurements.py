@@ -42,7 +42,7 @@ str_options = ""
 for idx, meastype in enumerate(meas_options):
     str_options += "  %i -> %s\n" % (idx+1, meas_options[idx])
     
-meas_idx = InputDialog("What type of mesaurement would you like to extract?\n" + str_options + "\nEnter a number 1-4:", 1)
+meas_idx = InputDialog("What type of measurement would you like to extract?\n" + str_options + "\nEnter a number 1-4:", 1)
 if meas_idx is None:
     quit()
     

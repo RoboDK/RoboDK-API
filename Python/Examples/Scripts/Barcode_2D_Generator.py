@@ -32,12 +32,13 @@ if ASK_USER_SAVE_TO_DISK:
     filename = getSaveFileName(strtitle='Save QR on disk, or cancel to skip', strfile=name, defaultextension='.png', filetypes=[('PNG files', '*.png')])
 if filename is None or filename == '':
     import tempfile
+    import os
     tempdir = tempfile.gettempdir()
-    filename = tempdir + "\\" + name + ".png"
+    filename = os.path.join(tempdir, name + ".png")
 
 img.save(filename)
 
-import os.path
+import os
 if not os.path.exists(filename):
     quit(-1)
 

@@ -38,13 +38,14 @@ if ASK_USER_SAVE_TO_DISK:
     filename = getSaveFileName(strtitle='Save bar code on disk, or cancel to skip', strfile=name, defaultextension='.png', filetypes=[('PNG files', '*.png')])
 if filename is None or filename == '':
     import tempfile
+    import os
     tempdir = tempfile.gettempdir()
-    filename = tempdir + "\\" + name
+    filename = os.path.join(tempdir, name)
 
 img.save(filename)
 
 filename += '.png'  # barcode .save adds the .png
-import os.path
+import os
 if not os.path.exists(filename):
     quit(-1)
 

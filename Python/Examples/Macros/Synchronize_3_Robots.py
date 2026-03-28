@@ -10,6 +10,7 @@ from robodk.robomath import *  # Robot toolbox
 
 import threading
 import queue
+import time
 
 #----------------------------------------------
 # Function definitions and global variable declarations
