@@ -207,7 +207,7 @@ def load_targets_station(strfile):
             robot.setTool(tool)
         try:
             program.MoveJ(target)
-        except:
+        except Exception:
             print('Warning: %s can not be reached. It will not be added to the program' % name)
 
     return poses, jointlist, names, refnames, toolnames, configs
@@ -286,7 +286,7 @@ else:
                 #pose_filtered = robot.FilterTarget(poses[i_target], jointlist[i_target])
                 pose_filtered = FilterTarget(poses[i_target], frame.Pose(), tool.PoseTool(), jointlist[i_target])
                 name = name.replace(' on ', '-F on ')
-            except:
+            except Exception:
                 msg = 'Warning! Can not filter target %i: %s' % (i_target, name)
                 print(msg)
                 show_warning = show_warning + msg + '<br>'

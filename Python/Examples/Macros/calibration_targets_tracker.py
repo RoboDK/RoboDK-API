@@ -293,7 +293,7 @@ def CreateMeasurementsPoint(calib_targets=None):
             try:
                 print("Random joints: " + str(jrand.list()))
                 hrand = rob.SolveFK(jrand) * htool
-            except:
+            except Exception:
                 continue
             prand = hrand[0:3, 3].tolist()
             zvect = normalize3(subs3(point, prand))

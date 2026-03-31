@@ -34,7 +34,7 @@ def runmain():
         ip = ipaddress.ip_address(connection_params[0])
         if ip.version != 4:
             raise ValueError('IPv6 is not supported')
-    except:
+    except (ValueError, TypeError):
         ShowMessage("Incorrect IP address, check your robot's connection settings.", "Error")
         return
 

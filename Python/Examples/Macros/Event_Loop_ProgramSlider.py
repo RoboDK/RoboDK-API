@@ -30,7 +30,7 @@ class RobolinkEvents(Robolink):
             else:
                 print("Failed to reconnect (1)")
                 return False
-        except:
+        except Exception:
             print("Failed to reconnect (2)")
             return False
         

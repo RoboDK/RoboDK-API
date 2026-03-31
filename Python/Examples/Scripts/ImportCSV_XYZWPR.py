@@ -89,7 +89,7 @@ def load_targets_GUI(strfile):
 
         try:
             program.MoveJ(target)
-        except:
+        except Exception:
             print('Warning: %s can not be reached. It will not be added to the program' % name)
 
 
@@ -104,7 +104,7 @@ def load_targets_move(strfile):
     for pose, idx in zip(poses, idxs):
         try:
             ROBOT.MoveJ(pose)
-        except:
+        except Exception:
             RDK.ShowMessage('Target %i can not be reached' % idx, False)
 
 

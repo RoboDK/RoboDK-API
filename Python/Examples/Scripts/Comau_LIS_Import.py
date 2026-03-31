@@ -128,5 +128,5 @@ if __name__ == "__main__":
 
         try:
             program.MoveJ(target)
-        except:
+        except Exception:
             print('Warning: %s can not be reached. It will not be added to the program' % name)

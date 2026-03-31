@@ -58,7 +58,7 @@ def GetValues(line):
     for value in values:
         try:
             value = float(value)
-        except:
+        except ValueError:
             continue
 
         list_values.append(value)

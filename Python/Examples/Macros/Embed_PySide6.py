@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
 		try:
 			self.RDK.CloseRoboDK()
 			print('Closed RoboDK')
-		except:
+		except Exception:
 			print("Wasn't able to close the RDK object")
 
 	def connect(self):

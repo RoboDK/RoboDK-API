@@ -82,8 +82,8 @@ if len(sys.argv) >= 3:
     arg_2 = sys.argv[2]
     try:
         SPHERE_RADIUS = float(arg_2)
-    except:
-        print("Unable to read paramter 2 as radius")
+    except ValueError:
+        print("Unable to read parameter 2 as radius")
 
 #------------------------------------------------------------------
 

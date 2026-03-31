@@ -296,7 +296,7 @@ def CreateMeasurementsPose(calib_targets=None):
             jrand = randjoints()
             try:
                 hrand = rob.SolveFK(jrand) * htool
-            except:
+            except Exception:
                 continue
             hrandorient = hrand
             hrandorient[0:3, 0:3] = href[0:3, 0:3]

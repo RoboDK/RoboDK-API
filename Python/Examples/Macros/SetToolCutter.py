@@ -56,8 +56,8 @@ diam_length = user_input.split('-')
 try:
     diameter = float(diam_length[0])
     length = float(diam_length[1])
-except:
-    raise Exception("Invalid input: " + diam_length)
+except (ValueError, IndexError):
+    raise Exception("Invalid input: " + str(diam_length))
 
 # Create a new tool and add the geometry to it
 tool_i_name = 'Tool %s' % user_input

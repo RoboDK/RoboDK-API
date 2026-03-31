@@ -25,7 +25,7 @@ def get_len_tool(toolname):
             try:
                 len_tcp_definition = float(w[1:])
                 return len_tcp_definition
-            except:
+            except ValueError:
                 print("Unable to convert word: " + str(w))
                 continue
 

@@ -192,7 +192,7 @@ def calibrate_static(chessboard_images, board_type: MarkerTypes, chess_size, squ
                 corners, _, _ = find_chessboard(img, mtx=None, dist=None, chess_size=chess_size, squares_edge=squares_edge, draw_img=draw_img)
             else:
                 corners, _, _ = find_charucoboard(img, mtx=None, dist=None, chess_size=chess_size, squares_edge=squares_edge, markers_edge=markers_edge, draw_img=draw_img)
-        except:
+        except Exception:
             print(f'Unable to find chessboard in {file}!')
             continue
 
@@ -261,7 +261,7 @@ def calibrate_handeye(robot_poses, chessboard_images, camera_matrix, camera_dist
                 _, R_target2cam, t_target2cam = find_chessboard(image, camera_matrix, camera_distortion, chess_size, squares_edge, draw_img=draw_img)
             else:
                 _, R_target2cam, t_target2cam = find_charucoboard(image, camera_matrix, camera_distortion, chess_size, squares_edge, markers_edge, draw_img=draw_img)
-        except:
+        except Exception:
             print(f'Unable to find chessboard in {i}!')
             continue
 

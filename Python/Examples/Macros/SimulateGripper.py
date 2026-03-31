@@ -74,6 +74,6 @@ while True:
             # Take a pause...
             pause(UPDATE_FREQUENCY)
 
-        except:
+        except Exception:
             print('An item was deleted. Remaking tool list')
             break

@@ -25,7 +25,7 @@ for l in file_stream:
     line = line + 1
     try:
         file_output.write(l)
-    except:
+    except Exception:
         print('Error reading line %i' % line)
         try:
             idx = unknown_names.index(l)

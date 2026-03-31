@@ -56,7 +56,7 @@ class RobolinkEvents(Robolink):
             else:
                 print("Failed to reconnect (1)")
                 return False
-        except:
+        except Exception:
             print("Failed to reconnect (2)")
             return False
         
@@ -188,8 +188,8 @@ class RobolinkEvents(Robolink):
                 click_type = int(rdk.Command("Event", "TriggeredId1"))
                 print("Click type = " + str(click_type))
             
-        elif evt == EVENT_ITEM_CHANGED:                
-            print("Event: An object was clicked in the 3D view")
+        elif evt == EVENT_ITEM_CHANGED:
+            print("Event: Item changed in the tree")
             
         elif evt == EVENT_ITEM_RENAMED:            
             name = data = self._rec_line()

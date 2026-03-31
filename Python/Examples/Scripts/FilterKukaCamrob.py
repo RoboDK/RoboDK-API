@@ -53,7 +53,7 @@ for i, row in enumerate(robofileio.LoadList(csv_path, ';')):
             row[14] = joints_filtered.tolist()[6]
         if len(joints) > 7:
             row[15] = joints_filtered.tolist()[7]
-    except:
+    except Exception:
         print('Unable to reach point. Ensure your frame and tool are properly defined.')
         print(xyzwpr)
 
