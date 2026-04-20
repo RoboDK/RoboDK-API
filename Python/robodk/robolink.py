@@ -6001,6 +6001,7 @@ class Item:
 
     def FilterTarget(self, pose: robomath.Mat, joints_approx: Union[robomath.Mat, List[float]] = None) -> Tuple[robomath.Mat, robomath.Mat]:
         """Filters a target to improve accuracy. This option requires a calibrated robot.
+        
         :param pose: pose of the robot TCP with respect to the robot reference frame
         :type pose: :class:`~robodk.robomath.Mat`
         :param joints_approx: approximated desired joints to define the preferred configuration
