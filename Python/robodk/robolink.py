@@ -819,7 +819,9 @@ class Robolink:
         if status == 0:
             # everything is OK
             self.LAST_STATUS_MESSAGE = ''
-
+        elif status == -1:
+            self.LAST_STATUS_MESSAGE = 'Communication problems'
+            raise Exception(self.LAST_STATUS_MESSAGE)
         elif status > 0 and status < 10:
             self.LAST_STATUS_MESSAGE = 'Unknown error'
             if status == 1:
