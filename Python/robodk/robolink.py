@@ -1228,7 +1228,8 @@ class Robolink:
                     with socket() as s:
                         s.bind(('', 0))
                         port = s.getsockname()[1]
-                        print("Using available port %i" % port)
+                        if not self.CLOSE_STD_OUT:
+                            print("Using available port %i" % port)
                         self.PORT_START = port
                         self.PORT_END = port
                         self.ARGUMENTS.append("-PORT=%i" % port)
@@ -1236,7 +1237,8 @@ class Robolink:
                     sock = socket()
                     sock.bind(('', 0))
                     port = sock.getsockname()[1]
-                    print("Using available port %i" % port)
+                    if not self.CLOSE_STD_OUT:
+                        print("Using available port %i" % port)
                     self.PORT_START = port
                     self.PORT_END = port
                     self.ARGUMENTS.append("-PORT=%i" % port)
@@ -1308,7 +1310,8 @@ class Robolink:
     def Disconnect(self):
         """Stops the communication with RoboDK. If setRunMode is set to RUNMODE_MAKE_ROBOTPROG for offline programming, any programs pending will be generated."""
         if self.QUIT_ON_CLOSE and self.NEW_INSTANCE is not None:
-            print('Stopping %s\n' % self.APPLICATION_DIR)
+            if not self.CLOSE_STD_OUT:
+                print('Stopping %s\n' % self.APPLICATION_DIR)
             self.CloseRoboDK()
             with self._lock:
                 self.NEW_INSTANCE.wait()
@@ -1342,7 +1345,8 @@ class Robolink:
                 self.COM.connect((self.IP, self.PORT))
                 connected = self._is_connected()
                 if not (connected > 0):
-                    print("Failed to reconnect (1)")
+                    if not self.CLOSE_STD_OUT:
+                        print("Failed to reconnect (1)")
                     return
 
                 # Validate the connection
@@ -1350,7 +1354,8 @@ class Robolink:
                 self.COM.settimeout(self.TIMEOUT)
 
         except:
-            print("Failed to reconnect (2)")
+            if not self.CLOSE_STD_OUT:
+                print("Failed to reconnect (2)")
 
     def isNewInstance(self) -> bool:
         return self.NEW_INSTANCE is not None
@@ -1360,7 +1365,9 @@ class Robolink:
         If the connection succeeds it returns 1, otherwise it returns 0"""
 
         def start_robodk(command):
-            print('Starting %s\n' % self.APPLICATION_DIR)
+            if not self.CLOSE_STD_OUT:
+                print('Starting %s\n' % self.APPLICATION_DIR)
+                
             import subprocess
 
             #import time
@@ -1398,7 +1405,9 @@ class Robolink:
                     lineb = self.NEW_INSTANCE.stdout.readline()
                     line = str(lineb.decode("utf-8")).strip()
                     if len(lineb) > 0:
-                        print(line)
+                        if not self.CLOSE_STD_OUT:
+                            print(line)
+                            
                         emptyln = 0
                     else:
                         emptyln += 1
