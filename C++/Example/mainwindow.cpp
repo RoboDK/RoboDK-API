@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QWindow>
 #include <QStandardPaths>
+#include <QtConcurrent/QtConcurrent>
 
 //#include <QtConcurrent/QtConcurrent>
 
@@ -174,8 +175,11 @@ void blocking_task(){
 void MainWindow::on_btnTestButton_clicked(){
 
     // example to listen to events
-    // QtConcurrent::run(this, &MainWindow::EventsLoop);
-    //RDK->EventsLoop();
+    //Simple way to teset EventsLoop: RDK->EventsLoop(); return;
+
+    // Start a separate thread:
+    QtConcurrent::run(this, &MainWindow::EventsLoop);
+
 
 
     if (!Check_Robot()){ return; }
