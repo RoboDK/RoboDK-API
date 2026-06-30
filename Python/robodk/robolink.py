@@ -2902,6 +2902,7 @@ class Robolink:
     def getParams(self) -> List[Tuple[str, str]]:
         """Get all the user parameters from the open RoboDK station.
         Station parameters can also be modified manually by right clicking the station item and selecting "Station parameters"
+        
         :return: list of pairs of strings
         :rtype: list of str
 
@@ -6113,7 +6114,8 @@ class Item:
         return con_status
 
     def ConnectionParams(self) -> Tuple[str, int, str, str, str]:
-        """Returns the robot connection parameters
+        """Retrieve the robot connection parameters.
+        
         :return: [robotIP (str), port (int), remote_path (str), FTP_user (str), FTP_pass (str)]
 
         .. seealso:: :func:`~robodk.robolink.Item.setConnectionParams`, :func:`~robodk.robolink.Item.Connect`, :func:`~robodk.robolink.Item.ConnectSafe`
@@ -7400,10 +7402,36 @@ class Item:
             return error_msg, joint_list, error_code
 
     def getParam(self, param: str):
-        """Get custom binary data from this item. Use setParam to set the data.
+        """Get custom binary data from this item. Use setParam(str, bytes) to set the data.
 
         :param param: Parameter name
         :type param: str
+        
+        .. code-block:: python
+            :caption: Example to create a custom item, set the icon and custom parameters
+
+            from robodk import robolink
+            RDK = robolink.Robolink()
+
+            # Add a custom item
+            itm_ptr = RDK.Command("AddItem", "New custom item")
+            item = robolink.Item(RDK, itm_ptr)
+
+            # If name is unique for this generic item you can also do:
+            # item = RDK.Item("New custom item", robolink.ITEM_TYPE_GENERIC)
+
+            # This custom data value will be stored with the RDK file, it works with any type of item (custom or not)
+            item.setParam("DataValue1", b'Custom data value in bytes')
+
+            # Retrieve the data as a byte array
+            savedData = item.getParam("DataValue1")
+            print(savedData) # prints b'Custom data value in bytes'
+
+            # Set a custom icon (works with generic nodes only)
+            item.setParam("IconSet", "C:/RoboDK/Icons/about.svg")
+
+            # Note: look for events like doubleclick or left click in the eventloop or using the plugin interface
+        
 
         .. seealso:: :func:`~robodk.robolink.Item.setParam`
         """
@@ -7427,8 +7455,8 @@ class Item:
 
         :param param: Parameter/command name
         :type param: str
-        :param value: Parameter value (optional, not all commands require a value). If value is bytes it will store customized data to an item given the param name.
-        :type value: str
+        :param value: Parameter value (optional, not all commands require a value). If value is bytes it will store customized data to an item given the param name (use getParam to retrieve it).
+        :type value: str, bytes, Dict
 
         .. code-block:: python
             :caption: Example to expand or collapse an item in the tree
