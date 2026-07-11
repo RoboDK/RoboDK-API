@@ -25,3 +25,4 @@ cmake-build-*/
 CMakeUserPresets.json
 CMakePresets.json
 .claude/**
+.DS_Store
