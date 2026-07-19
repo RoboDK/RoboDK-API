@@ -776,6 +776,10 @@ class Robolink:
     _lock = None
     ARGUMENTS: List[str] = []  # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     CLOSE_STD_OUT: bool = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
+    
+    # Function to print stdandard output from process (default: print)
+    STD_OUT_PRINT: function = print
+
     PORT: int = -1  # current port
     BUILD: int = 0  # This variable holds the build id and is used for version checking
 
@@ -1182,8 +1186,8 @@ class Robolink:
         :type args: list
         :param robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
         :type robodk_path: str
-        :param close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
-        :type close_std_out: bool
+        :param close_std_out: Close RoboDK standard output path. Set to true to not show console output from RoboDK.
+        :type close_std_out: bool of function
         :param quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
         :type quit_on_close: bool
         :param com_object: Custom communication class (allows using WebSockets or other custom implementations). It defaults to socket communication.
@@ -1202,7 +1206,11 @@ class Robolink:
 
             self.IP = robodk_ip
             self.ARGUMENTS = list(args)
-            self.CLOSE_STD_OUT = close_std_out
+            if callable(close_std_out):
+                self.STD_OUT_PRINT = close_std_out
+            else:
+                self.CLOSE_STD_OUT = close_std_out
+
             self.QUIT_ON_CLOSE = quit_on_close
 
             if robodk_path is not None:
@@ -1250,6 +1258,12 @@ class Robolink:
                 self.DEBUG = True
             elif self.DEBUG:
                 self.ARGUMENTS.append("-DEBUG")
+            
+            if "-NOUI" in self.ARGUMENTS and not "--platform" in self.ARGUMENTS:
+                # On linux we must add the --platform minimal command to run headless
+                from sys import platform as _platform
+                if _platform == "linux" or _platform == "linux2":
+                    self.ARGUMENTS = ["--platform", "minimal"] + self.ARGUMENTS
 
         # This is already locked
         self.Connect()
@@ -1379,7 +1393,7 @@ class Robolink:
                 for line in iter(proc.stdout.readline, b''):
                     ln = str(line.decode("utf-8")).strip()
                     if ln:
-                        print(ln)
+                        self.STD_OUT_PRINT(ln)
 
             from sys import platform as _platform
             if self.NEW_INSTANCE is not None:
@@ -1399,7 +1413,7 @@ class Robolink:
 
                 #self.NEW_INSTANCE = subprocess.call(startapp)
             else:
-                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             emptyln = 0
             if self.NEW_INSTANCE:
@@ -1408,7 +1422,7 @@ class Robolink:
                     line = str(lineb.decode("utf-8")).strip()
                     if len(lineb) > 0:
                         if not self.CLOSE_STD_OUT:
-                            print(line)
+                            self.STD_OUT_PRINT(line)
                             
                         emptyln = 0
                     else:
@@ -7589,6 +7603,16 @@ class Item:
 
 
 if __name__ == "__main__":
+    global do_print
+    do_print = False
+    def prnt(txt):
+        global do_print
+        if do_print:
+            print(txt)
+
+    RDK = Robolink(args=["-NOUI", "-NEWINSTANCE"], close_std_out=prnt)
+    #do_print = True
+    RDK.ItemList()
 
     def RoboDKInfo():
         print('=======================================')
