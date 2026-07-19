@@ -1276,7 +1276,7 @@ class Robolink:
         # Imortant! this should not thread locked
         use_new_version = True
         if self._SkipStatus:
-            # Todo: Remove on future versions when RoboDK for Web supports it
+            # To do: Remove on future versions when RoboDK for Web supports it
             use_new_version = False
 
         if use_new_version:
@@ -1400,13 +1400,14 @@ class Robolink:
                 print('Warning: A new instance of RoboDK is being created.')
             self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
                 #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
                 try:
                     #self.NEW_INSTANCE = subprocess.Popen(command,stdout=subprocess.PIPE)
-                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
+                    # TODO: Check why we see stdout output on the console even if we want to control the output with a custom function STD_OUT_PRINT
+                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except Exception as e:
                     print(str(e))
                     return False
@@ -3225,7 +3226,6 @@ class Robolink:
         """
         if isinstance(p1[0], list):
             if self.BUILD < 24976:
-                # TODO (never tested)
                 toreturn = []
                 for pa, pb in zip(p1, p2):
                     c, itm, lst = self.Collision_Line(pa, pb, ref)
