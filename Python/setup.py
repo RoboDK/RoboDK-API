@@ -11,7 +11,7 @@ from pathlib import Path
 VERSION = '5.9.4'
 
 this_directory = Path(__file__).parent
-LONG_DESCRIPTION = (this_directory / "README.md").read_text()
+LONG_DESCRIPTION = (this_directory / "readme.md").read_text()
 
 setup(
     name='robodk',

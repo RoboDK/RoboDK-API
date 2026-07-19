@@ -114,7 +114,7 @@ def main():
     src_dirs = []
     src_dirs.append((curr_dir / '../robodk').resolve())
     src_dirs.append((curr_dir / '../robolink').resolve())
-    src_dirs.append((curr_dir / '../README.md').resolve())
+    src_dirs.append((curr_dir / '../readme.md').resolve())
     src_dirs.append((curr_dir / '../LICENSE').resolve())
     src_dirs.append((curr_dir / '../MANIFEST.in').resolve())
     src_dirs.append((curr_dir / '../setup.py').resolve())
