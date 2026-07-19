@@ -71,6 +71,14 @@ Open in Visual Studio (.NET ≥ 2.0). Two integration options:
 
 Standalone `.m` files — no build step. Add the `/Matlab` directory to the MATLAB path.
 
+### C (`/C`)
+
+Plain-C bindings (`robodk_api_c.h` / `robodk_api_c.c`) over the same socket protocol. Build via the provided `.pro` (qmake) or `.sln`/`.vcxproj` (Visual Studio) project files.
+
+### Visual Basic (`/Visual Basic`)
+
+`RoboDK_API.vb` — include directly in a VB.NET project. See `Example/` and `RoboDKVBAPIDemo/` for usage.
+
 ## Python Package Structure
 
 ```
