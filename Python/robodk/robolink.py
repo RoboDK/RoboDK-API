@@ -1395,27 +1395,43 @@ class Robolink:
                     if ln:
                         self.STD_OUT_PRINT(ln)
 
+            def error_reader(proc):
+                for line in iter(proc.stderr.readline, b''):
+                    ln = str(line.decode("utf-8")).strip()
+                    if ln:
+                        self.STD_OUT_PRINT(ln)
+
             from sys import platform as _platform
             if self.NEW_INSTANCE is not None:
                 print('Warning: A new instance of RoboDK is being created.')
             self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
                 #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
                 try:
-                    # Merge stderr into stdout: a separate stderr=PIPE is never read anywhere, so it either
-                    # leaks straight to the console (bypassing STD_OUT_PRINT/CLOSE_STD_OUT) or fills up and
-                    # blocks the RoboDK process once the OS pipe buffer is full.
-                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except Exception as e:
                     print(str(e))
                     return False
 
                 #self.NEW_INSTANCE = subprocess.call(startapp)
             else:
-                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            # Drain stderr on its own thread from the start: a separate stderr=PIPE that nobody reads either
+            # leaks straight to the console (bypassing STD_OUT_PRINT/CLOSE_STD_OUT) or fills up and blocks the
+            # RoboDK process once the OS pipe buffer is full. Keep it off the stdout stream below, since that
+            # stream's content is pattern-matched for the "running" readiness message: stderr noise merged in
+            # there can match 'running' before RoboDK's API server is actually ready to accept connections.
+            if self.NEW_INSTANCE:
+                if self.CLOSE_STD_OUT:
+                    self.NEW_INSTANCE.stderr.close()
+                else:
+                    te = threading.Thread(target=error_reader, args=(self.NEW_INSTANCE,))
+                    te.daemon = True
+                    te.start()
 
             emptyln = 0
             if self.NEW_INSTANCE:
@@ -7605,7 +7621,7 @@ class Item:
 
 if __name__ == "__main__":
     global do_print
-    do_print = True
+    do_print = False
     def prnt(txt):
         global do_print
         if do_print:
@@ -7613,7 +7629,7 @@ if __name__ == "__main__":
 
     RDK = Robolink(args=["-NOUI", "-NEWINSTANCE"], close_std_out=prnt)
     #do_print = True
-    time.sleep(5)
+    #time.sleep(5)
     print(RDK.ItemList())
 
     def RoboDKInfo():
