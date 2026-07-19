@@ -778,7 +778,7 @@ class Robolink:
     CLOSE_STD_OUT: bool = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
     
     # Function to print stdandard output from process (default: print)
-    STD_OUT_PRINT: function = print
+    STD_OUT_PRINT = print
 
     PORT: int = -1  # current port
     BUILD: int = 0  # This variable holds the build id and is used for version checking
@@ -7620,18 +7620,6 @@ class Item:
 
 
 if __name__ == "__main__":
-    global do_print
-    do_print = False
-    def prnt(txt):
-        global do_print
-        if do_print:
-            print(txt)
-
-    RDK = Robolink(args=["-NOUI", "-NEWINSTANCE"], close_std_out=prnt)
-    #do_print = True
-    #time.sleep(5)
-    print(RDK.ItemList())
-
     def RoboDKInfo():
         print('=======================================')
         print('|        RoboDK API for Python        |')
