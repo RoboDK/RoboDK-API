@@ -1400,21 +1400,22 @@ class Robolink:
                 print('Warning: A new instance of RoboDK is being created.')
             self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
                 #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
                 try:
-                    #self.NEW_INSTANCE = subprocess.Popen(command,stdout=subprocess.PIPE)
-                    # TODO: Check why we see stdout output on the console even if we want to control the output with a custom function STD_OUT_PRINT
-                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    # Merge stderr into stdout: a separate stderr=PIPE is never read anywhere, so it either
+                    # leaks straight to the console (bypassing STD_OUT_PRINT/CLOSE_STD_OUT) or fills up and
+                    # blocks the RoboDK process once the OS pipe buffer is full.
+                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 except Exception as e:
                     print(str(e))
                     return False
 
                 #self.NEW_INSTANCE = subprocess.call(startapp)
             else:
-                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             emptyln = 0
             if self.NEW_INSTANCE:
@@ -7604,7 +7605,7 @@ class Item:
 
 if __name__ == "__main__":
     global do_print
-    do_print = False
+    do_print = True
     def prnt(txt):
         global do_print
         if do_print:
@@ -7612,7 +7613,8 @@ if __name__ == "__main__":
 
     RDK = Robolink(args=["-NOUI", "-NEWINSTANCE"], close_std_out=prnt)
     #do_print = True
-    RDK.ItemList()
+    time.sleep(5)
+    print(RDK.ItemList())
 
     def RoboDKInfo():
         print('=======================================')
