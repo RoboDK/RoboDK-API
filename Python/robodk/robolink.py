@@ -569,7 +569,7 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 print("Status Message: " + msg)
                 sys.stdout.flush()
 
-        except:
+        except Exception:
             msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
             print(msg)
             if rdk:
@@ -582,7 +582,7 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
             raise ImportError(msg)
 
 
-def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500, port: int = None, args=[]):
+def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500, port: int = None, args=None):
     """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
 
     :param window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
@@ -644,6 +644,9 @@ def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, siz
         window.mainloop()
 
     """
+
+    if args is None:
+        args = []
 
     #import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
@@ -1330,7 +1333,14 @@ class Robolink:
                 print('Stopping %s\n' % self.APPLICATION_DIR)
             self.CloseRoboDK()
             with self._lock:
-                self.NEW_INSTANCE.wait()
+                import subprocess
+                try:
+                    # RoboDK should quit shortly after CloseRoboDK(); don't hang forever
+                    # (e.g. during interpreter shutdown / __del__) if it doesn't.
+                    self.NEW_INSTANCE.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    self.NEW_INSTANCE.kill()
+                    self.NEW_INSTANCE.wait()
                 self.NEW_INSTANCE = None
 
         with self._lock:
@@ -1369,7 +1379,7 @@ class Robolink:
                 self._verify_connection()
                 self.COM.settimeout(self.TIMEOUT)
 
-        except:
+        except Exception:
             if not self.CLOSE_STD_OUT:
                 print("Failed to reconnect (2)")
 
@@ -1501,7 +1511,7 @@ class Robolink:
                             self.COM.settimeout(self.TIMEOUT)
                             break
 
-                    except:
+                    except Exception:
                         connected = connected
 
                 if connected > 0:  # if status is closed, try to open application
