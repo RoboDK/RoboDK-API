@@ -4181,14 +4181,14 @@ class Robolink:
 
             # Infinite loop to print the item under the mouse cursor
             while True:
-                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT) # Faster if you don't need the mesh
-                #object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT_MESH)
+                part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT) # Faster if you don't need the mesh
+                #part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT_MESH)
 
-                if object.Valid():
-                    print("Mouse on: " + object.Name() + ": " + feature_name + " Type/id=" + str(feature_type) + "/" + str(feature_id))
+                if part.Valid():
+                    print("Mouse on: " + part.Name() + ": " + feature_name + " Type/id=" + str(feature_type) + "/" + str(feature_id))
                     # print(points)
                     # RDK.Selection() # returns selection
-                    if object in RDK.Selection():
+                    if part in RDK.Selection():
                         print("Object is selected!")
                         #RDK.setSelection([]) # Clear selection
 
@@ -5261,15 +5261,15 @@ class Item:
 
             while True:
                 # Check if we have an object under the mouse cursor
-                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
-                if object.Valid() and (object.type == ITEM_TYPE_OBJECT or object.type == ITEM_TYPE_TOOL):
+                part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
+                if part.Valid() and (part.type == ITEM_TYPE_OBJECT or part.type == ITEM_TYPE_TOOL):
 
                     # Retrieve the selected feature on the object
-                    is_selected, feature_type, feature_id = object.SelectedFeature()
+                    is_selected, feature_type, feature_id = part.SelectedFeature()
 
                     if is_selected and feature_type == FEATURE_SURFACE:
                         # Retrieve the mesh related to the surface ID
-                        point_mesh, name_feature = object.GetPoints(FEATURE_OBJECT_MESH, feature_id)
+                        point_mesh, name_feature = part.GetPoints(FEATURE_OBJECT_MESH, feature_id)
                         print("Selected %i (%i):  %s" % (feature_id, feature_type, name_feature))
                         print("Mesh points:")
                         for xyzijk in point_mesh:
