@@ -226,7 +226,7 @@ def Str2FloatList(str_values: str, expected_nvalues: int = 3) -> List[float]:
     for i in range(len(values)):
         try:
             valuesok.append(float(values[i]))
-        except:
+        except ValueError:
             return None
 
     if len(valuesok) < expected_nvalues:
@@ -497,7 +497,7 @@ if robodialogs.ENABLE_QT:
             try:
                 if RDK._is_connected():
                     set_qt_theme(app, RDK)
-            except:
+            except Exception:
                 pass
 
         return app

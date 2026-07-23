@@ -1679,6 +1679,10 @@ class Mat(object):
         """Test equality"""
         if other is None:
             return False
+        if not isinstance(other, Mat):
+            # Let Python fall back to the reflected comparison (or identity-based
+            # equality) instead of crashing on other.Pos() for non-Mat operands.
+            return NotImplemented
         #return (other.rows == self.rows)
         return pose_is_similar(other, self)
 
@@ -2017,12 +2021,11 @@ class Mat(object):
         sz = self.size()
         m = sz[0]
         n = sz[1]
-        file = open(strfile, 'w')
-        for j in range(n):
-            for i in range(m):
-                file.write(('%.6f' + separator) % self.rows[i][j])
-            file.write('\n')
-        file.close()
+        with open(strfile, 'w') as file:
+            for j in range(n):
+                for i in range(m):
+                    file.write(('%.6f' + separator) % self.rows[i][j])
+                file.write('\n')
 
 
 if __name__ == "__main__":

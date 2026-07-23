@@ -241,7 +241,7 @@ def LoadList(strfile: str, separator: str = ',', codec: str = 'utf-8') -> List:
     def todecimal(value):
         try:
             return float(value)
-        except:
+        except ValueError:
             return value
 
     import csv
@@ -327,7 +327,7 @@ def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str
     try:
         myFTP = ftplib.FTP(server_ip, username, password)
         print('Connection established')
-    except:
+    except Exception:
         error_str = sys.exc_info()[1]
         print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
         sys.stdout.flush()
@@ -345,7 +345,7 @@ def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str
         myFTP.cwd(remote_path)
         myFTP.mkd(main_folder)
         myFTP.cwd(remote_path_prog)
-    except:
+    except Exception:
         error_str = sys.exc_info()[1]
         print("POPUP: <font color=\"red\">Remote path not found or can't be created: %s</font>" % (remote_path))
         sys.stdout.flush()
@@ -357,18 +357,18 @@ def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str
         files = os.listdir(path)
         os.chdir(path)
         for f in files:
-            if os.path.isfile(path + r'\{}'.format(f)):
+            fpath = os.path.join(path, f)
+            if os.path.isfile(fpath):
                 print('  Sending file: %s' % f)
                 print("POPUP: Sending file: %s" % f)
                 sys.stdout.flush()
-                fh = open(f, 'rb')
-                myFTP.storbinary('STOR %s' % f, fh)
-                fh.close()
-            elif os.path.isdir(path + r'\{}'.format(f)):
+                with open(f, 'rb') as fh:
+                    myFTP.storbinary('STOR %s' % f, fh)
+            elif os.path.isdir(fpath):
                 print('  Sending folder: %s' % f)
                 myFTP.mkd(f)
                 myFTP.cwd(f)
-                uploadThis(path + r'\{}'.format(f))
+                uploadThis(fpath)
         myFTP.cwd('..')
         os.chdir('..')
 
@@ -389,7 +389,7 @@ def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, usernam
     sys.stdout.flush()
     try:
         myFTP = ftplib.FTP(server_ip, username, password)
-    except:
+    except Exception:
         error_str = sys.exc_info()[1]
         print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
         sys.stdout.flush()
@@ -404,7 +404,7 @@ def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, usernam
     sys.stdout.flush()
     try:
         myFTP.cwd(remote_path)
-    except:
+    except Exception:
         error_str = sys.exc_info()[1]
         print("POPUP: <font color=\"red\">Remote path not found or can't be created: %s</font>" % (remote_path))
         sys.stdout.flush()
@@ -416,9 +416,8 @@ def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, usernam
         print('  Sending file: %s' % localfile)
         print("POPUP: Sending file: %s" % filename)
         sys.stdout.flush()
-        fh = open(localfile, 'rb')
-        myFTP.storbinary('STOR %s' % filename, fh)
-        fh.close()
+        with open(localfile, 'rb') as fh:
+            myFTP.storbinary('STOR %s' % filename, fh)
 
     uploadThis(file_path_name, filename)
     myFTP.close()

@@ -569,7 +569,7 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 print("Status Message: " + msg)
                 sys.stdout.flush()
 
-        except:
+        except Exception:
             msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
             print(msg)
             if rdk:
@@ -582,7 +582,7 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
             raise ImportError(msg)
 
 
-def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500, port: int = None, args=[]):
+def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, size_h: int = -1, pid: int = 0, area_add: int = 1, area_allowed: int = 15, timeout: int = 500, port: int = None, args=None):
     """Embed a window from a separate process in RoboDK as a docked window. Returns True if successful.
 
     :param window_name: The name of the window currently open. Make sure the window name is unique and it is a top level window
@@ -644,6 +644,9 @@ def EmbedWindow(window_name: str, docked_name: str = None, size_w: int = -1, siz
         window.mainloop()
 
     """
+
+    if args is None:
+        args = []
 
     #import threading
     def t_dock(wname, dname, sz_w, sz_h, p, a_add, a_allowed, tout):
@@ -776,6 +779,10 @@ class Robolink:
     _lock = None
     ARGUMENTS: List[str] = []  # Command line arguments to RoboDK, such as /NOSPLASH /NOSHOW to not display RoboDK. It has no effect if RoboDK is already running.
     CLOSE_STD_OUT: bool = False  # Close standard output for roboDK (RoboDK console output will no longer be visible)
+    
+    # Function to print stdandard output from process (default: print)
+    STD_OUT_PRINT = print
+
     PORT: int = -1  # current port
     BUILD: int = 0  # This variable holds the build id and is used for version checking
 
@@ -1182,8 +1189,8 @@ class Robolink:
         :type args: list
         :param robodk_path: RoboDK installation path. It defaults to RoboDK's default path (C:/RoboDK/bin/RoboDK.exe on Windows or /Applications/RoboDK.app/Contents/MacOS/RoboDK on Mac)
         :type robodk_path: str
-        :param close_std_out: Close RoboDK standard output path. No RoboDK console output will be shown.
-        :type close_std_out: bool
+        :param close_std_out: Close RoboDK standard output path. Set to true to not show console output from RoboDK.
+        :type close_std_out: bool of function
         :param quit_on_close: Close RoboDK when this instance of Robolink disconnect. It has no effect if RoboDK is already running.
         :type quit_on_close: bool
         :param com_object: Custom communication class (allows using WebSockets or other custom implementations). It defaults to socket communication.
@@ -1202,7 +1209,11 @@ class Robolink:
 
             self.IP = robodk_ip
             self.ARGUMENTS = list(args)
-            self.CLOSE_STD_OUT = close_std_out
+            if callable(close_std_out):
+                self.STD_OUT_PRINT = close_std_out
+            else:
+                self.CLOSE_STD_OUT = close_std_out
+
             self.QUIT_ON_CLOSE = quit_on_close
 
             if robodk_path is not None:
@@ -1250,6 +1261,12 @@ class Robolink:
                 self.DEBUG = True
             elif self.DEBUG:
                 self.ARGUMENTS.append("-DEBUG")
+            
+            if "-NOUI" in self.ARGUMENTS and not "--platform" in self.ARGUMENTS:
+                # On linux we must add the --platform minimal command to run headless
+                from sys import platform as _platform
+                if _platform == "linux" or _platform == "linux2":
+                    self.ARGUMENTS = ["--platform", "minimal"] + self.ARGUMENTS
 
         # This is already locked
         self.Connect()
@@ -1262,7 +1279,7 @@ class Robolink:
         # Imortant! this should not thread locked
         use_new_version = True
         if self._SkipStatus:
-            # Todo: Remove on future versions when RoboDK for Web supports it
+            # To do: Remove on future versions when RoboDK for Web supports it
             use_new_version = False
 
         if use_new_version:
@@ -1316,7 +1333,14 @@ class Robolink:
                 print('Stopping %s\n' % self.APPLICATION_DIR)
             self.CloseRoboDK()
             with self._lock:
-                self.NEW_INSTANCE.wait()
+                import subprocess
+                try:
+                    # RoboDK should quit shortly after CloseRoboDK(); don't hang forever
+                    # (e.g. during interpreter shutdown / __del__) if it doesn't.
+                    self.NEW_INSTANCE.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    self.NEW_INSTANCE.kill()
+                    self.NEW_INSTANCE.wait()
                 self.NEW_INSTANCE = None
 
         with self._lock:
@@ -1355,7 +1379,7 @@ class Robolink:
                 self._verify_connection()
                 self.COM.settimeout(self.TIMEOUT)
 
-        except:
+        except Exception:
             if not self.CLOSE_STD_OUT:
                 print("Failed to reconnect (2)")
 
@@ -1379,27 +1403,45 @@ class Robolink:
                 for line in iter(proc.stdout.readline, b''):
                     ln = str(line.decode("utf-8")).strip()
                     if ln:
-                        print(ln)
+                        self.STD_OUT_PRINT(ln)
+
+            def error_reader(proc):
+                for line in iter(proc.stderr.readline, b''):
+                    ln = str(line.decode("utf-8")).strip()
+                    if ln:
+                        self.STD_OUT_PRINT(ln)
 
             from sys import platform as _platform
             if self.NEW_INSTANCE is not None:
                 print('Warning: A new instance of RoboDK is being created.')
             self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
                 #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
                 try:
-                    #self.NEW_INSTANCE = subprocess.Popen(command,stdout=subprocess.PIPE)
-                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
+                    self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except Exception as e:
                     print(str(e))
                     return False
 
                 #self.NEW_INSTANCE = subprocess.call(startapp)
             else:
-                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE)
+                self.NEW_INSTANCE = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            # Drain stderr on its own thread from the start: a separate stderr=PIPE that nobody reads either
+            # leaks straight to the console (bypassing STD_OUT_PRINT/CLOSE_STD_OUT) or fills up and blocks the
+            # RoboDK process once the OS pipe buffer is full. Keep it off the stdout stream below, since that
+            # stream's content is pattern-matched for the "running" readiness message: stderr noise merged in
+            # there can match 'running' before RoboDK's API server is actually ready to accept connections.
+            if self.NEW_INSTANCE:
+                if self.CLOSE_STD_OUT:
+                    self.NEW_INSTANCE.stderr.close()
+                else:
+                    te = threading.Thread(target=error_reader, args=(self.NEW_INSTANCE,))
+                    te.daemon = True
+                    te.start()
 
             emptyln = 0
             if self.NEW_INSTANCE:
@@ -1408,7 +1450,7 @@ class Robolink:
                     line = str(lineb.decode("utf-8")).strip()
                     if len(lineb) > 0:
                         if not self.CLOSE_STD_OUT:
-                            print(line)
+                            self.STD_OUT_PRINT(line)
                             
                         emptyln = 0
                     else:
@@ -1469,7 +1511,7 @@ class Robolink:
                             self.COM.settimeout(self.TIMEOUT)
                             break
 
-                    except:
+                    except Exception:
                         connected = connected
 
                 if connected > 0:  # if status is closed, try to open application
@@ -3211,7 +3253,6 @@ class Robolink:
         """
         if isinstance(p1[0], list):
             if self.BUILD < 24976:
-                # TODO (never tested)
                 toreturn = []
                 for pa, pb in zip(p1, p2):
                     c, itm, lst = self.Collision_Line(pa, pb, ref)
@@ -4140,14 +4181,14 @@ class Robolink:
 
             # Infinite loop to print the item under the mouse cursor
             while True:
-                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT) # Faster if you don't need the mesh
-                #object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT_MESH)
+                part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT) # Faster if you don't need the mesh
+                #part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT_MESH)
 
-                if object.Valid():
-                    print("Mouse on: " + object.Name() + ": " + feature_name + " Type/id=" + str(feature_type) + "/" + str(feature_id))
+                if part.Valid():
+                    print("Mouse on: " + part.Name() + ": " + feature_name + " Type/id=" + str(feature_type) + "/" + str(feature_id))
                     # print(points)
                     # RDK.Selection() # returns selection
-                    if object in RDK.Selection():
+                    if part in RDK.Selection():
                         print("Object is selected!")
                         #RDK.setSelection([]) # Clear selection
 
@@ -5220,15 +5261,15 @@ class Item:
 
             while True:
                 # Check if we have an object under the mouse cursor
-                object, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
-                if object.Valid() and (object.type == ITEM_TYPE_OBJECT or object.type == ITEM_TYPE_TOOL):
+                part, feature_type, feature_id, feature_name, points = RDK.GetPoints(FEATURE_HOVER_OBJECT)
+                if part.Valid() and (part.type == ITEM_TYPE_OBJECT or part.type == ITEM_TYPE_TOOL):
 
                     # Retrieve the selected feature on the object
-                    is_selected, feature_type, feature_id = object.SelectedFeature()
+                    is_selected, feature_type, feature_id = part.SelectedFeature()
 
                     if is_selected and feature_type == FEATURE_SURFACE:
                         # Retrieve the mesh related to the surface ID
-                        point_mesh, name_feature = object.GetPoints(FEATURE_OBJECT_MESH, feature_id)
+                        point_mesh, name_feature = part.GetPoints(FEATURE_OBJECT_MESH, feature_id)
                         print("Selected %i (%i):  %s" % (feature_id, feature_type, name_feature))
                         print("Mesh points:")
                         for xyzijk in point_mesh:
@@ -7589,7 +7630,6 @@ class Item:
 
 
 if __name__ == "__main__":
-
     def RoboDKInfo():
         print('=======================================')
         print('|        RoboDK API for Python        |')

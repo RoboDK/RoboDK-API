@@ -31,7 +31,7 @@ ENABLE_QT = False
 try:
     from PySide2 import QtWidgets, QtCore
     ENABLE_QT = True
-except:
+except ImportError:
     pass
 
 ENABLE_TK = False
@@ -45,7 +45,7 @@ try:
         from tkinter import filedialog
         from tkinter import messagebox
     ENABLE_TK = True
-except:
+except ImportError:
     pass
 
 if not ENABLE_TK and not ENABLE_QT:
@@ -813,7 +813,7 @@ if ENABLE_TK:
                 from robodk.robolink import getPathIcon
                 iconpath = getPathIcon()
                 msgbox.root.iconbitmap(iconpath)
-            except:
+            except Exception:
                 print("RoboDK's Robolink module not found")
 
             msgbox.root.attributes("-topmost", True)
