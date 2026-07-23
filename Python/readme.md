@@ -84,8 +84,8 @@ sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-
 # rm -rf ~/RoboDK
 ./Install-RoboDK install --platform minimal --verbose --accept-licenses --confirm-command --accept-messages
 
-# To start RoboDK hidden (no window, using default settings and loading a license if it was setup on this computer):
-# this may be required if libraries not found:
+# To start RoboDK hidden (no window, using default settings and loading a license if it was already set up on this computer):
+# this may be required if libraries are not found:
 # export LD_LIBRARY_PATH="~/RoboDK/bin/lib"
 # or:
 # export LD_LIBRARY_PATH="/RoboDK/bin/lib"
@@ -94,7 +94,7 @@ sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-
 
 To apply a license on startup (usually for development/testing) you can use the -LCMD command with your Network or Standalone license code (-LCMD=Network:code or -LCMD=Standalone:code). Example:
 
-```
+```bash
 ~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -LCMD=Network:my-network-license -Settings=Save -QUIT
 
 # For a permanent instance, or to use any license without setting up the ini file,
@@ -103,16 +103,15 @@ To apply a license on startup (usually for development/testing) you can use the 
 # echo "Standalone:code" > RoboDK/bin/startup.rdklic
 ```
 
-Contact us at info@robodk.com for more information and licensing.
+Contact us at [info@robodk.com](mailto:info@robodk.com) for more information and licensing.
 
-Tip: You can run benchmarks about performace using the PluginExample and see the result through the console. More information here: https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginExample
+Tip: You can run benchmarks about performance using the PluginExample and see the result through the console. More information here: https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginExample
 
-```
+```bash
 curl -O "https://cdn.robodk.com/downloads-library/library-stations/Welding-with-Comau-Smart5-NJ-130-2-6.rdk"
 
 ~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -LCMD=Standalone:your-standalone-license -PLUGINLOAD=PluginExample "Welding-with-Comau-Smart5-NJ-130-2-6.rdk" -PluginCommand=BenchmarkInfo=main
 ```
-
 
 Example
 ------------
