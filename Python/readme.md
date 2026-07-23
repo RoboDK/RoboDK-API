@@ -87,13 +87,15 @@ sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-
 # To start RoboDK hidden (no window, using default settings and loading a license if it was setup on this computer):
 # this may be required if libraries not found:
 # export LD_LIBRARY_PATH="~/RoboDK/bin/lib"
+# or:
+# export LD_LIBRARY_PATH="/RoboDK/bin/lib"
 ~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -Settings=LicenseLoad
 ```
 
-To apply a network license on startup (usually for development/testing) you can use the -LCMD command with your network license code. Example:
+To apply a license on startup (usually for development/testing) you can use the -LCMD command with your Network or Standalone license code (-LCMD=Network:code or -LCMD=Standalone:code). Example:
 
 ```
-exec "RoboDK/bin/RoboDK" --platform minimal -NOUI -SKIPINI -LCMD=my-network-license
+~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -LCMD=Network:my-network-license -Settings=Save -QUIT
 
 # For a permanent instance, or to use any license without setting up the ini file,
 # drop a startup.rdklic file in the RoboDK/bin folder — it is applied automatically
@@ -101,12 +103,14 @@ exec "RoboDK/bin/RoboDK" --platform minimal -NOUI -SKIPINI -LCMD=my-network-lice
 # echo "Standalone:code" > RoboDK/bin/startup.rdklic
 ```
 
+Contact us at info@robodk.com for more information and licensing.
+
 Tip: You can run benchmarks about performace using the PluginExample and see the result through the console. More information here: https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginExample
 
 ```
 curl -O "https://cdn.robodk.com/downloads-library/library-stations/Welding-with-Comau-Smart5-NJ-130-2-6.rdk"
 
-~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -Settings=LicenseLoad -PLUGINLOAD=PluginExample "Welding-with-Comau-Smart5-NJ-130-2-6.rdk" -PluginCommand=BenchmarkInfo=MainProg
+~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -LCMD=Standalone:your-standalone-license -PLUGINLOAD=PluginExample "Welding-with-Comau-Smart5-NJ-130-2-6.rdk" -PluginCommand=BenchmarkInfo=main
 ```
 
 
