@@ -12,6 +12,8 @@ Multi-language implementation of the RoboDK API for simulating and offline-progr
 
 The Python package (`robodk`) is the reference implementation and is the most complete. All other languages mirror its API naming.
 
+**Important:** there is no code generation or shared source of truth between languages — each of `/Python`, `/TypeScript`, `/C++`, `/C#`, `/Matlab`, `/C`, `/Visual Basic` independently re-implements the same TCP socket wire protocol (line-based commands, `SAFE_MODE`/`AUTO_UPDATE` handshake, etc.). When fixing a protocol-level bug or adding a new API call, check whether the change needs to be ported to the other language implementations by hand.
+
 ## Languages and Build Commands
 
 ### Python (`/Python`)
@@ -40,6 +42,8 @@ The test `.cmd` files in `Python/tests/` show which `.rdk` station each test sui
 
 ### TypeScript/JavaScript (`/TypeScript`)
 
+The entire package (`Robolink`, `Item`, `Mat`, protocol handling) lives in the single file `TypeScript/src/robodk.ts`; tests are in `TypeScript/tests/robodk.test.ts`.
+
 ```bash
 cd TypeScript
 npm install
@@ -49,10 +53,10 @@ npm test        # build + node --test
 
 ### C++ (`/C++`)
 
-Requires Qt (Open Source or Commercial). Either:
+Requires Qt (Widgets, GUI, Concurrent, Core, Network — see `C++/CMakeLists.txt`). Either:
 
 - Include `robodk_api.h` / `robodk_api.cpp` directly in a Qt project, or
-- Build as a static library via CMake:
+- Build as a static library via CMake (also installable via Conan, see `C++/conanfile.txt`):
 
 ```bash
 cd C++
@@ -60,6 +64,8 @@ mkdir build && cd build
 cmake ..
 cmake --build .
 ```
+
+`C++/PluginApiExample` and `C++/Example` show usage; the top-level `CMakeLists.txt` at the repo root just adds the `C++` subdirectory.
 
 ### C# (`/C#`)
 

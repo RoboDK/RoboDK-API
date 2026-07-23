@@ -42,12 +42,11 @@ You can find more information about RoboDK API in our documentation.
 Requirements
 ------------
 * [RoboDK Simulation Software](https://robodk.com/download)
-* [Python](https://www.python.org/downloads/) (Python 2 and Python 3 supported)
+* [Python 3.5+](https://www.python.org/downloads/)
 
-Mac and Linux usually have Python 2 installed by default. Although it is not required, Python 3 can be installed on Linux by typing:
+Most Linux distributions ship with Python 3 pre-installed. If it is missing, you can install it on Ubuntu/Debian with:
 ```
-sudo apt-get install pip3
-sudo apt-get install idle3
+sudo apt-get install python3 python3-pip idle3
 ```
 
 The RoboDK API can be used with a free RoboDK license.
@@ -68,6 +67,48 @@ pip install robodk[cv,apps,lint]
 
 The Python interpreter and editor used by RoboDK can be set in:
 >RoboDK - Tools - Options - Python
+
+Headless run
+------------
+
+RoboDK can run headless on Linux/Ubuntu x86_64 without a screen or a graphics card, and with a smaller memory footprint than the standard UI. This is useful for running RoboDK on a server or inside a container (a build against the official [RoboDK Docker image](https://hub.docker.com/r/robodk/robodk) is also available).
+
+```bash
+# Install RoboDK in the home folder
+cd ~
+curl -s https://cdn.robodk.com/downloads/Install-RoboDK.tar.gz | tar -xz
+sudo apt-get update
+sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-keysyms1 libxcb-render-util0
+
+# If RoboDK is already installed, delete the existing folder first:
+# rm -rf ~/RoboDK
+./Install-RoboDK install --platform minimal --verbose --accept-licenses --confirm-command --accept-messages
+
+# To start RoboDK hidden (no window, using default settings and loading a license if it was setup on this computer):
+# this may be required if libraries not found:
+# export LD_LIBRARY_PATH="~/RoboDK/bin/lib"
+~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -Settings=LicenseLoad
+```
+
+To apply a network license on startup (usually for development/testing) you can use the -LCMD command with your network license code. Example:
+
+```
+exec "RoboDK/bin/RoboDK" --platform minimal -NOUI -SKIPINI -LCMD=my-network-license
+
+# For a permanent instance, or to use any license without setting up the ini file,
+# drop a startup.rdklic file in the RoboDK/bin folder — it is applied automatically
+# even when -SKIPINI is used:
+# echo "Standalone:code" > RoboDK/bin/startup.rdklic
+```
+
+Tip: You can run benchmarks about performace using the PluginExample and see the result through the console. More information here: https://github.com/RoboDK/Plug-In-Interface/tree/master/PluginExample
+
+```
+curl -O "https://cdn.robodk.com/downloads-library/library-stations/Welding-with-Comau-Smart5-NJ-130-2-6.rdk"
+
+~/RoboDK/bin/RoboDK --platform minimal -NOUI -SKIPINI -Settings=LicenseLoad -PLUGINLOAD=PluginExample "Welding-with-Comau-Smart5-NJ-130-2-6.rdk" -PluginCommand=BenchmarkInfo=MainProg
+```
+
 
 Example
 ------------
@@ -113,7 +154,7 @@ robot.MoveL(target)
 ```
 
 Post Processors
-------------------
+---------------
 
 The same script used for simulation can be used for robot programming offline. This means a program will be automatically generated for your robot controller to reproduce the movements on the robot.
 RoboDK supports a large number of robot controllers and it is easy to include compatibility for new robot controllers using Post Processors.
