@@ -1211,6 +1211,8 @@ class Robolink:
             self.ARGUMENTS = list(args)
             if callable(close_std_out):
                 self.STD_OUT_PRINT = close_std_out
+                # Make sure we print debug output through the stdout channel
+                self.DEBUG = True
             else:
                 self.CLOSE_STD_OUT = close_std_out
 
