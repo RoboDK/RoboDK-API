@@ -8,7 +8,7 @@ from __future__ import print_function  # (Must be always at the top)
 from setuptools import setup  # Always prefer setuptools over distutils
 from pathlib import Path
 
-VERSION = '6.0.0'
+VERSION = '6.0.1'
 
 this_directory = Path(__file__).parent
 LONG_DESCRIPTION = (this_directory / "readme.md").read_text()
