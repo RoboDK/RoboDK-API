@@ -1418,7 +1418,9 @@ class Robolink:
                 print('Warning: A new instance of RoboDK is being created.')
             self.NEW_INSTANCE = None
             if (_platform == "linux" or _platform == "linux2") and os.path.splitext(command[0])[1] == ".sh":
-                self.NEW_INSTANCE = subprocess.Popen(command, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                import shlex
+                command_string = shlex.join(str(c) for c in command)
+                self.NEW_INSTANCE = subprocess.Popen(command_string, shell=True, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             elif _platform == "darwin":
                 # Popen does not work sometimes (such as running from fusion)
                 #startapp = ["/usr/bin/open", command[0].split("/Content")[0]]
