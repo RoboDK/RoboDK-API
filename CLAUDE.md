@@ -14,6 +14,8 @@ The Python package (`robodk`) is the reference implementation and is the most co
 
 **Important:** there is no code generation or shared source of truth between languages — each of `/Python`, `/TypeScript`, `/C++`, `/C#`, `/Matlab`, `/C`, `/Visual Basic` independently re-implements the same TCP socket wire protocol (line-based commands, `SAFE_MODE`/`AUTO_UPDATE` handshake, etc.). When fixing a protocol-level bug or adding a new API call, check whether the change needs to be ported to the other language implementations by hand.
 
+For writing, porting, or debugging application code against this API (Robolink/Item/Mat, in any of the seven languages), see the `robodk-api-reference` skill at [`.claude/skills/robodk-api-reference/SKILL.md`](.claude/skills/robodk-api-reference/SKILL.md).
+
 ## Languages and Build Commands
 
 ### Python (`/Python`)
