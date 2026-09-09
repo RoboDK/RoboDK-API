@@ -110,7 +110,7 @@ covering the same operations as the reference C# `Mat` class:
 ## Notes on the wire protocol
 
 RoboDK API commands are ASCII strings terminated by `\n`, generally followed by binary
-arguments (32-bit little-endian integers, 64-bit little-endian IEEE 754 doubles, or item
+arguments (32-bit big-endian integers, 64-bit big-endian IEEE 754 doubles, or item
 references made of a 64-bit item id followed by a 32-bit item type). Every command ends with
 a status code read via `checkStatus()`; a non-zero status either carries a warning/error
 message or signals a hard failure, which is surfaced as an `RdkException`.

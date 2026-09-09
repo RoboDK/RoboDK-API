@@ -26,7 +26,7 @@ import java.util.List;
  * <p>
  * This class also implements the low level RoboDK API wire protocol: a simple, synchronous,
  * request/response protocol made of newline terminated ASCII commands followed by binary
- * arguments (32-bit signed integers and 64-bit IEEE 754 doubles, both little-endian). The
+ * arguments (32-bit signed integers and 64-bit IEEE 754 doubles, both big-endian). The
  * {@code sendXxx}/{@code recvXxx} methods below are the Java equivalent of the
  * {@code send_xxx}/{@code rec_xxx} methods of the reference RoboDK C# and Python APIs.
  *
@@ -428,30 +428,30 @@ public class RoboDK implements Closeable {
         return builder.toString();
     }
 
-    /** Sends a 32-bit signed integer, little-endian. */
+    /** Sends a 32-bit signed integer, big-endian. */
     void sendInt(int value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.BIG_ENDIAN);
         buffer.putInt(value);
         writeBytes(buffer.array());
     }
 
-    /** Reads a 32-bit signed integer, little-endian. */
+    /** Reads a 32-bit signed integer, big-endian. */
     int recvInt() {
         byte[] bytes = readBytes(Integer.BYTES);
-        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        return ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getInt();
     }
 
-    /** Sends a 64-bit IEEE 754 double, little-endian. */
+    /** Sends a 64-bit IEEE 754 double, big-endian. */
     void sendDouble(double value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Double.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.allocate(Double.BYTES).order(ByteOrder.BIG_ENDIAN);
         buffer.putDouble(value);
         writeBytes(buffer.array());
     }
 
-    /** Reads a 64-bit IEEE 754 double, little-endian. */
+    /** Reads a 64-bit IEEE 754 double, big-endian. */
     double recvDouble() {
         byte[] bytes = readBytes(Double.BYTES);
-        return ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+        return ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getDouble();
     }
 
     /** Sends an array of doubles, prefixed by its length. A {@code null} array is sent as empty. */
@@ -461,7 +461,7 @@ public class RoboDK implements Closeable {
             return;
         }
         sendInt(values.length);
-        ByteBuffer buffer = ByteBuffer.allocate(values.length * Double.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.allocate(values.length * Double.BYTES).order(ByteOrder.BIG_ENDIAN);
         for (double value : values) {
             buffer.putDouble(value);
         }
@@ -474,7 +474,7 @@ public class RoboDK implements Closeable {
         double[] values = new double[count];
         if (count > 0) {
             byte[] bytes = readBytes(count * Double.BYTES);
-            ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN);
             for (int i = 0; i < count; i++) {
                 values[i] = buffer.getDouble();
             }
@@ -503,7 +503,7 @@ public class RoboDK implements Closeable {
         if (!pose.isHomogeneous()) {
             throw new RdkException("Matrix not homogeneous, cannot be sent as a pose");
         }
-        ByteBuffer buffer = ByteBuffer.allocate(16 * Double.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.allocate(16 * Double.BYTES).order(ByteOrder.BIG_ENDIAN);
         for (int col = 0; col < 4; col++) {
             for (int row = 0; row < 4; row++) {
                 buffer.putDouble(pose.get(row, col));
@@ -515,7 +515,7 @@ public class RoboDK implements Closeable {
     /** Reads a 4x4 pose (column by column), as sent by RoboDK. */
     Mat recvPose() {
         byte[] bytes = readBytes(16 * Double.BYTES);
-        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN);
         Mat pose = new Mat();
         for (int col = 0; col < 4; col++) {
             for (int row = 0; row < 4; row++) {
@@ -528,7 +528,7 @@ public class RoboDK implements Closeable {
     /** Sends a reference to an item (its internal 64-bit identifier). A {@code null} item is sent as 0. */
     void sendItem(Item item) {
         long itemId = item == null ? 0L : item.getItemId();
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
         buffer.putLong(itemId);
         writeBytes(buffer.array());
     }
@@ -537,8 +537,8 @@ public class RoboDK implements Closeable {
     Item recvItem() {
         byte[] idBytes = readBytes(Long.BYTES);
         byte[] typeBytes = readBytes(Integer.BYTES);
-        long itemId = ByteBuffer.wrap(idBytes).order(ByteOrder.LITTLE_ENDIAN).getLong();
-        int typeValue = ByteBuffer.wrap(typeBytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        long itemId = ByteBuffer.wrap(idBytes).order(ByteOrder.BIG_ENDIAN).getLong();
+        int typeValue = ByteBuffer.wrap(typeBytes).order(ByteOrder.BIG_ENDIAN).getInt();
         return new Item(this, itemId, ItemType.fromValue(typeValue));
     }
 
