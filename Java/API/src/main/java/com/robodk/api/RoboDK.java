@@ -59,9 +59,9 @@ public class RoboDK implements Closeable {
 
     private static final String API_NAME = "RDK_API";
 
-    private final String roboDkServerIp;
-    private final int roboDkServerStartPort;
-    private final int roboDkServerEndPort;
+    private final String robodkServerIp;
+    private final int robodkServerStartPort;
+    private final int robodkServerEndPort;
 
     private Socket socket;
     private InputStream input;
@@ -70,7 +70,7 @@ public class RoboDK implements Closeable {
     private int socketTimeoutMilliseconds = 10_000;
     private int connectedPort = -1;
     private int apiVersion;
-    private int roboDKBuild;
+    private int robodkBuild;
     private String lastStatusMessage = "";
 
     /** If true, checks that provided items exist in memory and that poses are homogeneous. */
@@ -105,25 +105,25 @@ public class RoboDK implements Closeable {
     /**
      * Creates a new link to RoboDK running on the given host/port.
      *
-     * @param roboDkServerIp host name or IP address where RoboDK is running
-     * @param roboDkServerPort single TCP port to connect to
+     * @param robodkServerIp host name or IP address where RoboDK is running
+     * @param robodkServerPort single TCP port to connect to
      */
-    public RoboDK(String roboDkServerIp, int roboDkServerPort) {
-        this(roboDkServerIp, roboDkServerPort, roboDkServerPort);
+    public RoboDK(String robodkServerIp, int robodkServerPort) {
+        this(robodkServerIp, robodkServerPort, robodkServerPort);
     }
 
     /**
      * Creates a new link to RoboDK, scanning a range of consecutive ports for a running
      * instance.
      *
-     * @param roboDkServerIp host name or IP address where RoboDK is running
-     * @param roboDkServerStartPort first port to try
-     * @param roboDkServerEndPort last port to try (inclusive)
+     * @param robodkServerIp host name or IP address where RoboDK is running
+     * @param robodkServerStartPort first port to try
+     * @param robodkServerEndPort last port to try (inclusive)
      */
-    public RoboDK(String roboDkServerIp, int roboDkServerStartPort, int roboDkServerEndPort) {
-        this.roboDkServerIp = roboDkServerIp;
-        this.roboDkServerStartPort = roboDkServerStartPort;
-        this.roboDkServerEndPort = roboDkServerEndPort;
+    public RoboDK(String robodkServerIp, int robodkServerStartPort, int robodkServerEndPort) {
+        this.robodkServerIp = robodkServerIp;
+        this.robodkServerStartPort = robodkServerStartPort;
+        this.robodkServerEndPort = robodkServerEndPort;
     }
 
     // ------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ public class RoboDK implements Closeable {
         disconnect();
 
         if (!startNewInstance) {
-            for (int port = roboDkServerStartPort; port <= roboDkServerEndPort; port++) {
+            for (int port = robodkServerStartPort; port <= robodkServerEndPort; port++) {
                 if (tryConnect(port) && verifyConnection()) {
                     connectedPort = port;
                     return true;
@@ -155,7 +155,7 @@ public class RoboDK implements Closeable {
             }
         }
 
-        if (startNewInstance || isLocalHost(roboDkServerIp)) {
+        if (startNewInstance || isLocalHost(robodkServerIp)) {
             return startNewRoboDKInstanceAndConnect();
         }
 
@@ -163,7 +163,7 @@ public class RoboDK implements Closeable {
     }
 
     /**
-     * Launches a new RoboDK instance (asking it to listen on {@link #roboDkServerStartPort} via
+     * Launches a new RoboDK instance (asking it to listen on {@link #robodkServerStartPort} via
      * the {@code -PORT=} command-line argument) and connects to it.
      *
      * @throws RdkException if no RoboDK executable could be found or resolved, or if the
@@ -192,7 +192,7 @@ public class RoboDK implements Closeable {
 
         List<String> command = new ArrayList<>();
         command.add(executableFile.getPath());
-        command.add("-PORT=" + roboDkServerStartPort);
+        command.add("-PORT=" + robodkServerStartPort);
         command.addAll(Arrays.asList(commandLineArgs));
 
         try {
@@ -207,8 +207,8 @@ public class RoboDK implements Closeable {
             return false;
         }
 
-        if (tryConnect(roboDkServerStartPort) && verifyConnection()) {
-            connectedPort = roboDkServerStartPort;
+        if (tryConnect(robodkServerStartPort) && verifyConnection()) {
+            connectedPort = robodkServerStartPort;
             return true;
         }
         disconnect();
@@ -267,7 +267,7 @@ public class RoboDK implements Closeable {
     private boolean tryConnect(int port) {
         try {
             Socket newSocket = new Socket();
-            newSocket.connect(new InetSocketAddress(roboDkServerIp, port), 1000);
+            newSocket.connect(new InetSocketAddress(robodkServerIp, port), 1000);
             newSocket.setTcpNoDelay(true);
             newSocket.setSoTimeout(socketTimeoutMilliseconds);
             this.socket = newSocket;
@@ -289,7 +289,7 @@ public class RoboDK implements Closeable {
             sendInt(0);
             String response = recvLine();
             apiVersion = recvInt();
-            roboDKBuild = recvInt();
+            robodkBuild = recvInt();
             checkStatus();
             return API_NAME.equals(response);
         } catch (RuntimeException e) {
@@ -348,7 +348,7 @@ public class RoboDK implements Closeable {
 
     /** RoboDK build id reported by the station during the handshake. */
     public int getRoboDKBuild() {
-        return roboDKBuild;
+        return robodkBuild;
     }
 
     /** TCP port this instance is currently connected to, or -1 if not connected. */
