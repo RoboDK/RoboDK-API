@@ -107,6 +107,61 @@ covering the same operations as the reference C# `Mat` class:
 * Tool/frame offsets: `relTool`, `offset`.
 * Persistence: `saveCsv`, `saveMat`.
 
+## Connecting to RoboDK, and launching it automatically
+
+`connect()` first scans a small range of local ports (like the C# and Python reference APIs)
+for an already-running RoboDK with its API server enabled. If none is found and the target
+host is localhost, it will also try to **start RoboDK itself** and connect to the new instance,
+without requiring any external/third-party dependency:
+
+```java
+RoboDK robodk = new RoboDK();
+robodk.setStartNewInstance(true); // force a new instance even if one is already running
+if (!robodk.connect()) {
+    throw new IllegalStateException("Could not connect to RoboDK, and could not start it either.");
+}
+```
+
+By default (`isStartNewInstance() == false`), a new instance is only launched as a fallback when
+connecting to localhost and no running instance answered on any of the scanned ports — matching
+the reference APIs' behavior of "connect, or start one for me".
+
+Relevant `RoboDK` members:
+
+* `setApplicationDir(String)` / `getApplicationDir()` — explicit path to the RoboDK executable to
+  launch. When not set, the executable is located automatically (see below).
+* `setStartNewInstance(boolean)` / `isStartNewInstance()` — always launch a new instance instead
+  of trying to reuse one that is already running.
+* `setCommandLineArgs(String...)` / `getCommandLineArgs()` — extra command-line arguments passed
+  to RoboDK on launch (in addition to the `-PORT=` argument, which is always added automatically).
+* `setStartTimeoutMilliseconds(int)` / `getStartTimeoutMilliseconds()` — how long to wait for the
+  newly launched process to report that it is ready (default 60000 ms).
+* `getProcess()` — the `java.lang.Process` for an instance started by this `RoboDK` object, or
+  `null` if none was started (either not launched, or connected to an already-running instance).
+* `RoboDK.findRoboDKExecutable()` — static helper that locates the RoboDK executable on the
+  current machine, or returns `null` if it can't be found.
+* `RoboDK.isRoboDKInstallFound()` — convenience wrapper: `findRoboDKExecutable() != null`.
+
+### Executable discovery
+
+Locating the executable without a third-party dependency (such as JNA, needed for a proper
+Windows registry API) is handled per-OS, mirroring `getPathRoboDK()` from the Python reference
+API (`robolink.py`), which is the only reference implementation that supports more than Windows
+(the C# API only looks up the Windows registry via `Microsoft.Win32.Registry`, which is
+Windows-only):
+
+* **Windows**: reads `HKLM\SOFTWARE\RoboDK\INSTDIR` by shelling out to `reg.exe` (bundled with
+  every Windows install), then looks for `<INSTDIR>\bin\RoboDK.exe`. Falls back to
+  `C:\RoboDK\bin\RoboDK.exe` if the registry lookup fails or the key doesn't exist.
+* **Linux**: `~/RoboDK/bin/RoboDK`.
+* **macOS**: `~/Applications/RoboDK.app/Contents/MacOS/RoboDK`, falling back to
+  `~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK`.
+
+Launching is done with `java.lang.ProcessBuilder` (no external dependency), passing `-PORT=<port>`
+plus any `commandLineArgs`. `connect()` waits (up to `startTimeoutMilliseconds`) for RoboDK to
+print that it is running, then connects to it; the process's remaining output is drained on a
+background daemon thread so its stdout pipe never fills up and blocks it.
+
 ## Notes on the wire protocol
 
 RoboDK API commands are ASCII strings terminated by `\n`, generally followed by binary

@@ -4,10 +4,13 @@ import com.robodk.api.exception.RdkException;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -15,7 +18,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Entry point to the RoboDK API.
@@ -23,6 +28,10 @@ import java.util.List;
  * A {@code RoboDK} instance represents a TCP/IP link to a running RoboDK station. Every
  * interaction with the station tree (robots, reference frames, tools, targets, programs, ...)
  * goes through this class, either directly or through an {@link Item} obtained from it.
+ * <p>
+ * If no RoboDK instance is already running on the target host, {@link #connect()} launches one
+ * itself — on Windows, Linux, and macOS alike, see {@link #findRoboDKExecutable()} — the same
+ * way the reference Python API does (the reference C# API only supports this on Windows).
  * <p>
  * This class also implements the low level RoboDK API wire protocol: a simple, synchronous,
  * request/response protocol made of newline terminated ASCII commands followed by binary
@@ -70,6 +79,21 @@ public class RoboDK implements Closeable {
     /** Delays screen refresh until 100 ms after the last call, for faster scripts. */
     private boolean autoUpdate = false;
 
+    /** Explicit path to the RoboDK executable; {@code null} means auto-detect. */
+    private String applicationDir;
+
+    /** Extra command-line arguments passed to RoboDK when it is launched, e.g. {@code "-NOSPLASH"}. */
+    private String[] commandLineArgs = new String[0];
+
+    /** If true, {@link #connect()} always launches a fresh RoboDK instance. */
+    private boolean startNewInstance = false;
+
+    /** How long {@link #connect()} waits for a newly launched RoboDK to report it is running. */
+    private int startTimeoutMilliseconds = 60_000;
+
+    /** The RoboDK process this instance launched, or {@code null} if it attached to one already running. */
+    private Process process;
+
     /**
      * Creates a new link to RoboDK, connecting to a station running on {@code localhost} using
      * the default RoboDK API port range (20500-20502).
@@ -107,20 +131,137 @@ public class RoboDK implements Closeable {
     // ------------------------------------------------------------------------------------
 
     /**
-     * Connects to a RoboDK station, scanning the configured port range for a running instance.
+     * Connects to a RoboDK station.
+     * <p>
+     * Unless {@link #isStartNewInstance()} is set, this first scans the configured port range
+     * for an already running instance. If none is found and the target host is {@code
+     * localhost} (or {@link #isStartNewInstance()} is set), a new RoboDK instance is launched —
+     * on Windows, Linux, and macOS alike — and this connects to it. See
+     * {@link #findRoboDKExecutable()} for how the RoboDK executable is located, and
+     * {@link #setApplicationDir(String)} to override it explicitly.
      *
      * @return {@code true} if the connection (including the API handshake) succeeded
      */
     public boolean connect() {
         disconnect();
-        for (int port = roboDkServerStartPort; port <= roboDkServerEndPort; port++) {
-            if (tryConnect(port) && verifyConnection()) {
-                connectedPort = port;
-                return true;
+
+        if (!startNewInstance) {
+            for (int port = roboDkServerStartPort; port <= roboDkServerEndPort; port++) {
+                if (tryConnect(port) && verifyConnection()) {
+                    connectedPort = port;
+                    return true;
+                }
+                disconnect();
             }
-            disconnect();
         }
+
+        if (startNewInstance || isLocalHost(roboDkServerIp)) {
+            return startNewRoboDKInstanceAndConnect();
+        }
+
         return false;
+    }
+
+    /**
+     * Launches a new RoboDK instance (asking it to listen on {@link #roboDkServerStartPort} via
+     * the {@code -PORT=} command-line argument) and connects to it.
+     *
+     * @throws RdkException if no RoboDK executable could be found or resolved, or if the
+     *                       process could not be started
+     */
+    private boolean startNewRoboDKInstanceAndConnect() {
+        String executable = applicationDir != null && !applicationDir.isEmpty()
+                ? applicationDir
+                : findRoboDKExecutable();
+        if (executable == null) {
+            throw new RdkException("Could not find a RoboDK installation on this machine. "
+                    + "Install RoboDK from https://robodk.com/download, or set the executable "
+                    + "path explicitly with setApplicationDir(...).");
+        }
+
+        File executableFile = new File(executable);
+        if (!executableFile.isFile()) {
+            throw new RdkException("RoboDK executable not found: " + executable);
+        }
+        // Best-effort: the installer normally sets this, but make sure we can actually run it
+        // (relevant on Linux/macOS, where the executable bit can be lost, e.g. after a zip
+        // extraction).
+        if (!executableFile.canExecute()) {
+            executableFile.setExecutable(true);
+        }
+
+        List<String> command = new ArrayList<>();
+        command.add(executableFile.getPath());
+        command.add("-PORT=" + roboDkServerStartPort);
+        command.addAll(Arrays.asList(commandLineArgs));
+
+        try {
+            process = new ProcessBuilder(command)
+                    .redirectErrorStream(true)
+                    .start();
+        } catch (IOException e) {
+            throw new RdkException("Unable to start RoboDK: " + executableFile.getPath(), e);
+        }
+
+        if (!waitForRoboDKToStart(process)) {
+            return false;
+        }
+
+        if (tryConnect(roboDkServerStartPort) && verifyConnection()) {
+            connectedPort = roboDkServerStartPort;
+            return true;
+        }
+        disconnect();
+        return false;
+    }
+
+    /**
+     * Reads the launched process's output until a line containing "running" is seen (matching
+     * both the C# and Python reference implementations' startup detection), the process exits,
+     * or {@link #startTimeoutMilliseconds} elapses. Once detected, a daemon thread keeps
+     * draining the process's output for its remaining lifetime so its pipe never fills up and
+     * blocks it.
+     */
+    private boolean waitForRoboDKToStart(Process process) {
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+        long deadline = System.currentTimeMillis() + startTimeoutMilliseconds;
+        boolean started = false;
+        try {
+            String line;
+            while (System.currentTimeMillis() < deadline && (line = reader.readLine()) != null) {
+                if (line.toLowerCase(Locale.ROOT).contains("running")) {
+                    started = true;
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+
+        if (!started) {
+            return false;
+        }
+
+        Thread drainer = new Thread(() -> {
+            try {
+                while (reader.readLine() != null) {
+                    // Discard: we just need to keep the pipe from filling up.
+                }
+            } catch (IOException ignored) {
+                // The process ended or its output stream was closed; nothing left to drain.
+            }
+        }, "robodk-output-drainer");
+        drainer.setDaemon(true);
+        drainer.start();
+
+        return true;
+    }
+
+    private static boolean isLocalHost(String host) {
+        return "localhost".equalsIgnoreCase(host)
+                || "127.0.0.1".equals(host)
+                || "::1".equals(host);
     }
 
     private boolean tryConnect(int port) {
@@ -248,6 +389,90 @@ public class RoboDK implements Closeable {
         }
     }
 
+    /**
+     * Explicit path to the RoboDK executable to use when {@link #connect()} needs to launch a
+     * new instance, or {@code null} (the default) to auto-detect it with
+     * {@link #findRoboDKExecutable()}.
+     */
+    public String getApplicationDir() {
+        return applicationDir;
+    }
+
+    /** @see #getApplicationDir() */
+    public void setApplicationDir(String applicationDir) {
+        this.applicationDir = applicationDir;
+    }
+
+    /**
+     * Extra command-line arguments appended when {@link #connect()} launches a new RoboDK
+     * instance (for example {@code "-NOSPLASH"}, {@code "-NOSHOW"}). Empty by default. These
+     * have no effect if RoboDK was already running and this instance just attached to it.
+     */
+    public String[] getCommandLineArgs() {
+        return commandLineArgs.clone();
+    }
+
+    /** @see #getCommandLineArgs() */
+    public void setCommandLineArgs(String... commandLineArgs) {
+        this.commandLineArgs = commandLineArgs == null ? new String[0] : commandLineArgs.clone();
+    }
+
+    /**
+     * If {@code true}, {@link #connect()} always launches a fresh RoboDK instance instead of
+     * first trying to attach to one already running. Defaults to {@code false}.
+     */
+    public boolean isStartNewInstance() {
+        return startNewInstance;
+    }
+
+    /** @see #isStartNewInstance() */
+    public void setStartNewInstance(boolean startNewInstance) {
+        this.startNewInstance = startNewInstance;
+    }
+
+    /**
+     * How long, in milliseconds, {@link #connect()} waits for a newly launched RoboDK instance
+     * to report that it is running before giving up. Defaults to 60000 (60 seconds); a slow
+     * first-time startup (for example while a license is being validated) may need a larger
+     * value.
+     */
+    public int getStartTimeoutMilliseconds() {
+        return startTimeoutMilliseconds;
+    }
+
+    /** @see #getStartTimeoutMilliseconds() */
+    public void setStartTimeoutMilliseconds(int startTimeoutMilliseconds) {
+        this.startTimeoutMilliseconds = startTimeoutMilliseconds;
+    }
+
+    /**
+     * The RoboDK process this instance launched via {@link #connect()}, or {@code null} if it
+     * instead attached to an already running instance (or hasn't connected yet).
+     */
+    public Process getProcess() {
+        return process;
+    }
+
+    /**
+     * Attempts to find the RoboDK executable on this machine: Windows (via the
+     * {@code HKLM\SOFTWARE\RoboDK} registry key written by the RoboDK installer), Linux
+     * ({@code ~/RoboDK/bin/RoboDK}), and macOS ({@code ~/Applications/RoboDK.app/...} or
+     * {@code ~/RoboDK/RoboDK.app/...}).
+     *
+     * @return the absolute path to the RoboDK executable, or {@code null} if none was found
+     */
+    public static String findRoboDKExecutable() {
+        return RoboDKLocator.findExecutable();
+    }
+
+    /**
+     * Returns {@code true} if a RoboDK installation was found on this machine (see
+     * {@link #findRoboDKExecutable()}).
+     */
+    public static boolean isRoboDKInstallFound() {
+        return findRoboDKExecutable() != null;
+    }
+
     // ------------------------------------------------------------------------------------
     // Public API calls
     // ------------------------------------------------------------------------------------
@@ -274,6 +499,7 @@ public class RoboDK implements Closeable {
         sendLine("QUIT");
         checkStatus();
         disconnect();
+        process = null;
     }
 
     /**
