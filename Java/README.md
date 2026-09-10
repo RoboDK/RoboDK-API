@@ -13,10 +13,12 @@ Java/
   the `RoboDK`/`Item` API calls. See [`API/README.md`](API/README.md) for details. This is what
   you'd depend on from your own project.
 * **`Example`** — a plain `main()` (`com.robodk.example.BasicExample`) that depends on `API`,
-  connects to a running RoboDK station, and exercises a few calls (listing robots, reading a
-  robot's pose/joints, building an offset pose with `Mat`). It exists to give you something
-  runnable/debuggable against a live RoboDK instance, since the library itself has no unit
-  tests.
+  connects to a running RoboDK station, and builds a small scene from scratch (a reference
+  frame with a child frame, two box primitives added as triangulated shapes, and a target),
+  then exercises a few robot-level calls (joints/pose/forward kinematics) if a robot happens to
+  be in the station. It assumes an **empty station**, so it works right after `File > New
+  Station`, and exists to give you something runnable/debuggable against a live RoboDK
+  instance, since the library itself has no unit tests.
 
 ## Building everything
 

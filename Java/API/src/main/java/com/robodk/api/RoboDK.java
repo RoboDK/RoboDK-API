@@ -1313,14 +1313,615 @@ public class RoboDK implements Closeable {
         checkStatus();
     }
 
-    /** Returns the pose (position and orientation) of the station's active camera/view. */
+    /**
+     * Returns the pose (position and orientation) of the station's active camera/view.
+     * <p>
+     * This uses the plain {@code G_ViewPose} command (matching the Python reference API) rather
+     * than the C#-only {@code G_ViewPose2} variant, which additionally takes a {@code
+     * ViewPoseType} preset selector whose numeric values are not available in any reference
+     * source; this command returns the same information without needing it.
+     */
     public Mat getViewPose() {
         checkConnection();
-        sendLine("G_ViewPose2");
-        sendInt(0); // ViewPoseType.ActiveView
+        sendLine("G_ViewPose");
         Mat pose = recvPose();
         checkStatus();
         return pose;
+    }
+
+    /** Returns the current simulation time, in seconds. */
+    public double getSimulationTime() {
+        checkConnection();
+        sendLine("GetSimTime");
+        double time = recvInt() / 1000.0;
+        checkStatus();
+        return time;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // UI: window/item flags, window state
+    // ------------------------------------------------------------------------------------
+
+    /** Sets the state of the RoboDK main window; see {@link WindowState}. */
+    public void setWindowState(WindowState windowState) {
+        checkConnection();
+        sendLine("S_WindowState");
+        sendInt(windowState.getValue());
+        checkStatus();
+    }
+
+    /** @see #setWindowState(WindowState) */
+    public void setWindowState() {
+        setWindowState(WindowState.NORMAL);
+    }
+
+    /**
+     * Updates the RoboDK window flags, controlling how much access the user has to RoboDK's UI.
+     * Combine {@link WindowFlags} constants with bitwise OR.
+     */
+    public void setWindowFlags(int flags) {
+        checkConnection();
+        sendLine("S_RoboDK_Rights");
+        sendInt(flags);
+        checkStatus();
+    }
+
+    /**
+     * Updates an item's flags, controlling how much access the user has to that item's
+     * tree/UI features. Combine {@link ItemFlags} constants with bitwise OR.
+     */
+    public void setItemFlags(Item item, int flags) {
+        checkConnection();
+        sendLine("S_Item_Rights");
+        sendItem(item);
+        sendInt(flags);
+        checkStatus();
+    }
+
+    /** @see #setItemFlags(Item, int) */
+    public void setItemFlags(Item item) {
+        setItemFlags(item, ItemFlags.ALL);
+    }
+
+    /** Returns an item's current flags; see {@link ItemFlags}. */
+    public int getItemFlags(Item item) {
+        checkConnection();
+        sendLine("G_Item_Rights");
+        sendItem(item);
+        int flags = recvInt();
+        checkStatus();
+        return flags;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // UI: interactive mode, cursor, embedded windows, user selection
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Sets the interactive mode (behavior of the 3D mouse) used when navigating/selecting items
+     * in the 3D view.
+     *
+     * @param modeType the action performed when the 3D view is interacted with
+     * @param defaultRefFlags default allowed movement, as a bitwise OR of {@link DisplayRefType} constants
+     * @param customItems items to customize the behavior for, or {@code null}
+     * @param customRefFlags matching per-item {@link DisplayRefType} flags (same length as {@code customItems}), or {@code null}
+     */
+    public void setInteractiveMode(InteractiveMode modeType, int defaultRefFlags, List<Item> customItems,
+                                    List<Integer> customRefFlags) {
+        checkConnection();
+        sendLine("S_InteractiveMode");
+        sendInt(modeType.getValue());
+        sendInt(defaultRefFlags);
+        if (customItems == null || customRefFlags == null) {
+            sendInt(-1);
+        } else {
+            int count = Math.min(customItems.size(), customRefFlags.size());
+            sendInt(count);
+            for (int i = 0; i < count; i++) {
+                sendItem(customItems.get(i));
+                sendInt(customRefFlags.get(i));
+            }
+        }
+        checkStatus();
+    }
+
+    /** @see #setInteractiveMode(InteractiveMode, int, List, List) */
+    public void setInteractiveMode(InteractiveMode modeType) {
+        setInteractiveMode(modeType, DisplayRefType.DEFAULT, null, null);
+    }
+
+    /**
+     * Returns the item under the given screen coordinates (or under the mouse cursor if not
+     * provided), along with the station-relative XYZ point.
+     */
+    public CursorXyzResult getCursorXYZ(int xCoord, int yCoord) {
+        checkConnection();
+        sendLine("Proj2d3d");
+        sendInt(xCoord);
+        sendInt(yCoord);
+        recvInt(); // Selection flag (unused).
+        Item item = recvItem();
+        double[] xyz = recvXyz();
+        checkStatus();
+        return new CursorXyzResult(item, xyz);
+    }
+
+    /** @see #getCursorXYZ(int, int) */
+    public CursorXyzResult getCursorXYZ() {
+        return getCursorXYZ(-1, -1);
+    }
+
+    /**
+     * Embeds an external application window (identified by its window title) into the RoboDK
+     * main window, as a docked panel.
+     */
+    public boolean embedWindow(String windowName, String dockedName, int width, int height, int pid,
+                                int areaAdd, int areaAllowed, int timeoutMilliseconds) {
+        checkConnection();
+        sendLine("WinProcDock");
+        sendLine(dockedName != null ? dockedName : windowName);
+        sendLine(windowName);
+        sendArray(new double[] {width, height});
+        sendLine(Integer.toString(pid));
+        sendInt(areaAdd);
+        sendInt(areaAllowed);
+        sendInt(timeoutMilliseconds);
+        int result = recvInt();
+        checkStatus();
+        return result > 0;
+    }
+
+    /** @see #embedWindow(String, String, int, int, int, int, int, int) */
+    public boolean embedWindow(String windowName) {
+        return embedWindow(windowName, null, -1, -1, 0, 1, 15, 500);
+    }
+
+    /**
+     * Retrieves the object feature (surface, curve, point, or mesh) currently under the mouse
+     * cursor, or the last item the user hovered/selected, depending on {@code featureType}.
+     */
+    public GetPointsResult getPoints(ObjectSelectionType featureType) {
+        checkConnection();
+        sendLine("G_ObjPoint");
+        sendItem(null);
+        sendInt(featureType.getValue());
+        sendInt(0); // Feature id filter (unused; always retrieves the current feature).
+        Mat points = null;
+        if (featureType == ObjectSelectionType.HOVER_OBJECT_MESH) {
+            points = recvMatrix();
+        }
+        Item item = recvItem();
+        recvInt(); // IsFrame (unused).
+        ObjectSelectionType resultFeatureType = ObjectSelectionType.fromValue(recvInt());
+        int featureId = recvInt();
+        String name = recvLine();
+        checkStatus();
+        return new GetPointsResult(item, resultFeatureType, featureId, name, points);
+    }
+
+    /** @see #getPoints(ObjectSelectionType) */
+    public GetPointsResult getPoints() {
+        return getPoints(ObjectSelectionType.HOVER_OBJECT_MESH);
+    }
+
+    /**
+     * Measures the pose of a calibrated tracking device (for example a laser tracker or a
+     * stereo camera) connected as a "measurement" driver, optionally averaged over a period of
+     * time and/or offset by a known tip.
+     *
+     * @param target target number to measure, or -1 for the default/last target
+     * @param averageTimeMilliseconds time window to average the measurement over, or 0 for a single reading
+     * @param tipOffset a 3-value XYZ offset (mm) applied to the measured point, or {@code null}
+     */
+    public MeasurePoseResult measurePose(int target, int averageTimeMilliseconds, double[] tipOffset) {
+        double[] request = new double[] {target, averageTimeMilliseconds, 0.0, 0.0, 0.0};
+        if (tipOffset != null && tipOffset.length >= 3) {
+            request[2] = tipOffset[0];
+            request[3] = tipOffset[1];
+            request[4] = tipOffset[2];
+        }
+        checkConnection();
+        sendLine("MeasPose4");
+        sendArray(request);
+        Mat pose = recvPose();
+        double[] result = recvArray();
+        checkStatus();
+        return new MeasurePoseResult(pose, result[0], result[1]);
+    }
+
+    /** @see #measurePose(int, int, double[]) */
+    public MeasurePoseResult measurePose() {
+        return measurePose(-1, 0, null);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Station tree: merging, ISO cube program, joint targets
+    // ------------------------------------------------------------------------------------
+
+    /** Merges several items (for example several curves/objects) into a single new item. */
+    public Item mergeItems(List<Item> items) {
+        checkConnection();
+        sendLine("MergeItems");
+        sendInt(items.size());
+        for (Item item : items) {
+            sendItem(item);
+        }
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /** Pops up the "Create Cube ISO9283" utility dialog and returns the resulting program (invalid until it completes). */
+    public Item popupIso9283CubeProgram(Item robot) {
+        checkConnection();
+        sendLine("Popup_ProgISO9283");
+        sendItem(robot);
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Item program;
+        try {
+            program = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return program;
+    }
+
+    /** @see #popupIso9283CubeProgram(Item) */
+    public Item popupIso9283CubeProgram() {
+        return popupIso9283CubeProgram(null);
+    }
+
+    /**
+     * Adds a joint target to {@code program} at the given joint values, creating a hidden,
+     * joint-based target as an intermediate step.
+     */
+    public Item addTargetJ(Item program, String targetName, double[] joints, Item robotBase, Item robot) {
+        Item target = addTarget(targetName, robotBase, robot);
+        if (!target.isValid()) {
+            throw new RdkException("Create target '" + targetName + "' failed.");
+        }
+        target.setVisible(false);
+        target.setAsJointTarget();
+        target.setJoints(joints);
+        if (robot != null) {
+            target.setRobot(robot);
+        }
+        program.addMoveJ(target);
+        return target;
+    }
+
+    /** @see #addTargetJ(Item, String, double[], Item, Item) */
+    public Item addTargetJ(Item program, String targetName, double[] joints) {
+        return addTargetJ(program, targetName, joints, null, null);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Batch poses, sequence display
+    // ------------------------------------------------------------------------------------
+
+    /** Sets the local pose of several items in a single call. */
+    public void setPoses(List<Item> items, List<Mat> poses) {
+        if (items.size() != poses.size()) {
+            throw new RdkException("The number of items must match the number of poses");
+        }
+        if (items.isEmpty()) {
+            return;
+        }
+        checkConnection();
+        sendLine("S_Hlocals");
+        sendInt(items.size());
+        for (int i = 0; i < items.size(); i++) {
+            sendItem(items.get(i));
+            sendPose(poses.get(i));
+        }
+        checkStatus();
+    }
+
+    /** Sets the absolute (station-relative) pose of several items in a single call. */
+    public void setPosesAbs(List<Item> items, List<Mat> poses) {
+        if (items.size() != poses.size()) {
+            throw new RdkException("The number of items must match the number of poses");
+        }
+        if (items.isEmpty()) {
+            return;
+        }
+        checkConnection();
+        sendLine("S_Hlocal_AbsS");
+        sendInt(items.size());
+        for (int i = 0; i < items.size(); i++) {
+            sendItem(items.get(i));
+            sendPose(poses.get(i));
+        }
+        checkStatus();
+    }
+
+    /** Displays a sequence of poses (for example a path being planned) directly, as a matrix. */
+    public void showSequence(Mat sequence) {
+        checkConnection();
+        sendLine("Show_Seq");
+        sendMatrix(sequence);
+        sendItem(null);
+        checkStatus();
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Collisions: per-pair configuration
+    // ------------------------------------------------------------------------------------
+
+    /** Enables/disables collision checking for a single pair of items (optionally restricted to specific robot links). */
+    public boolean setCollisionActivePair(boolean active, CollisionPair pair) {
+        checkConnection();
+        sendLine("Collision_SetPair");
+        sendItem(pair.getItem1());
+        sendItem(pair.getItem2());
+        sendInt(pair.getRobotLinkId1());
+        sendInt(pair.getRobotLinkId2());
+        sendInt(active ? 1 : 0);
+        int success = recvInt();
+        checkStatus();
+        return success > 0;
+    }
+
+    /** Enables/disables collision checking for several item pairs in a single call. */
+    public boolean setCollisionActivePair(List<Boolean> activeStates, List<CollisionPair> pairs) {
+        checkConnection();
+        sendLine("Collision_SetPairList");
+        int count = Math.min(activeStates.size(), pairs.size());
+        sendInt(count);
+        for (int i = 0; i < count; i++) {
+            CollisionPair pair = pairs.get(i);
+            sendItem(pair.getItem1());
+            sendItem(pair.getItem2());
+            sendInt(pair.getRobotLinkId1());
+            sendInt(pair.getRobotLinkId2());
+            sendInt(activeStates.get(i) ? 1 : 0);
+        }
+        int ok = recvInt();
+        checkStatus();
+        return ok == count;
+    }
+
+    /** Returns every item currently in a collision state. */
+    public List<CollisionItem> getCollisionItems() {
+        checkConnection();
+        sendLine("Collision_Items");
+        int count = recvInt();
+        List<CollisionItem> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            Item item = recvItem();
+            int robotLinkId = recvInt();
+            items.add(new CollisionItem(item, robotLinkId));
+            recvInt(); // Number of objects this item is in collision with (unused).
+        }
+        checkStatus();
+        return items;
+    }
+
+    /** Returns every pair of items currently in a collision state. */
+    public List<CollisionPair> getCollisionPairs() {
+        checkConnection();
+        sendLine("Collision_Pairs");
+        int count = recvInt();
+        List<CollisionPair> pairs = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            Item item1 = recvItem();
+            int id1 = recvInt();
+            Item item2 = recvItem();
+            int id2 = recvInt();
+            pairs.add(new CollisionPair(item1, id1, item2, id2));
+        }
+        checkStatus();
+        return pairs;
+    }
+
+    /** Returns every pair of items for which collision checking is currently active. */
+    public List<CollisionPair> collisionActivePairList() {
+        checkConnection();
+        sendLine("Collision_GetPairList");
+        int count = recvInt();
+        List<CollisionPair> pairs = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            Item item1 = recvItem();
+            int id1 = recvInt();
+            Item item2 = recvItem();
+            int id2 = recvInt();
+            pairs.add(new CollisionPair(item1, id1, item2, id2));
+        }
+        checkStatus();
+        return pairs;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Camera (2D camera simulation)
+    // ------------------------------------------------------------------------------------
+
+    /** Adds a 2D simulated camera looking at (or attached to) {@code item}, returning its handle. */
+    public long cam2DAdd(Item item, String cameraParameters) {
+        checkConnection();
+        sendLine("Cam2D_Add");
+        sendItem(item);
+        sendLine(cameraParameters == null ? "" : cameraParameters);
+        long camHandle = recvPtr();
+        checkStatus();
+        return camHandle;
+    }
+
+    /** @see #cam2DAdd(Item, String) */
+    public long cam2DAdd(Item item) {
+        return cam2DAdd(item, "");
+    }
+
+    /** Saves a snapshot from a simulated camera (by handle) to an image file. */
+    public boolean cam2DSnapshot(String fileSaveImg, long camHandle) {
+        checkConnection();
+        sendLine("Cam2D_Snapshot");
+        sendPtr(camHandle);
+        sendLine(fileSaveImg);
+        int success = recvInt();
+        checkStatus();
+        return success > 0;
+    }
+
+    /** Saves a snapshot from a simulated camera (by item) to an image file. */
+    public boolean cam2DSnapshot(String fileSaveImg, Item cam, String cameraParameters) {
+        if (fileSaveImg == null || fileSaveImg.isEmpty()) {
+            throw new RdkException("Retrieving binary image data is not supported; provide a file path");
+        }
+        checkConnection();
+        sendLine("Cam2D_PtrSnapshot");
+        sendItem(cam);
+        sendLine(fileSaveImg);
+        sendLine(cameraParameters == null ? "" : cameraParameters);
+        int success = recvInt();
+        checkStatus();
+        return success > 0;
+    }
+
+    /** Closes a simulated camera (by handle), or every simulated camera if {@code camHandle} is 0. */
+    public boolean cam2DClose(long camHandle) {
+        checkConnection();
+        if (camHandle == 0) {
+            sendLine("Cam2D_CloseAll");
+        } else {
+            sendLine("Cam2D_Close");
+            sendPtr(camHandle);
+        }
+        int success = recvInt();
+        checkStatus();
+        return success > 0;
+    }
+
+    /** @see #cam2DClose(long) */
+    public boolean cam2DCloseAll() {
+        return cam2DClose(0);
+    }
+
+    /** Updates the parameters of a simulated camera. */
+    public boolean cam2DSetParameters(String cameraParameters, long camHandle) {
+        checkConnection();
+        sendLine("Cam2D_SetParams");
+        sendPtr(camHandle);
+        sendLine(cameraParameters == null ? "" : cameraParameters);
+        int success = recvInt();
+        checkStatus();
+        return success > 0;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Plugin hosting
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Sends a command to a loaded RoboDK plugin and returns its response. Blocks for up to a week
+     * (matching the reference APIs), since a plugin command may itself be a long-running operation.
+     */
+    public String pluginCommand(String pluginName, String command, String value) {
+        checkConnection();
+        sendLine("PluginCommand");
+        sendLine(pluginName);
+        sendLine(command);
+        sendLine(value);
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(3_600 * 24 * 7 * 1000);
+        String result;
+        try {
+            result = recvLine();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return result;
+    }
+
+    /** Loads, unloads, or reloads a RoboDK plugin by name. */
+    public boolean pluginLoad(String pluginName, PluginOperation operation) {
+        switch (operation) {
+            case LOAD:
+                return "OK".equals(command("PluginLoad", pluginName));
+            case RELOAD:
+                command("PluginUnload", pluginName);
+                return "OK".equals(command("PluginLoad", pluginName));
+            case UNLOAD:
+            default:
+                return "OK".equals(command("PluginUnload", pluginName));
+        }
+    }
+
+    /** @see #pluginLoad(String, PluginOperation) */
+    public boolean pluginLoad(String pluginName) {
+        return pluginLoad(pluginName, PluginOperation.LOAD);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Spray gun simulation
+    // ------------------------------------------------------------------------------------
+
+    /** Adds a new simulated spray gun and returns its handle/id. */
+    public int sprayAdd(Item tool, Item referenceObject, String parameters, Mat points, Mat geometry) {
+        checkConnection();
+        sendLine("Gun_Add");
+        sendItem(tool);
+        sendItem(referenceObject);
+        sendLine(parameters == null ? "" : parameters);
+        sendMatrix(points != null ? points : new Mat(0, 0));
+        sendMatrix(geometry != null ? geometry : new Mat(0, 0));
+        int sprayId = recvInt();
+        checkStatus();
+        return sprayId;
+    }
+
+    /** @see #sprayAdd(Item, Item, String, Mat, Mat) */
+    public int sprayAdd() {
+        return sprayAdd(null, null, "", null, null);
+    }
+
+    /** Stops simulating a spray gun (or every spray gun, if {@code sprayId} is -1), clearing its particles. */
+    public int sprayClear(int sprayId) {
+        checkConnection();
+        sendLine("Gun_Clear");
+        sendInt(sprayId);
+        int result = recvInt();
+        checkStatus();
+        return result;
+    }
+
+    /** @see #sprayClear(int) */
+    public int sprayClear() {
+        return sprayClear(-1);
+    }
+
+    /** Returns statistics from a simulated spray gun (or every spray gun, if {@code sprayId} is -1). */
+    public SprayGunStats sprayGetStats(int sprayId) {
+        checkConnection();
+        sendLine("Gun_Stats");
+        sendInt(sprayId);
+        String info = recvLine().replace("<br>", "\t");
+        Mat data = recvMatrix();
+        checkStatus();
+        return new SprayGunStats(info, data);
+    }
+
+    /** @see #sprayGetStats(int) */
+    public SprayGunStats sprayGetStats() {
+        return sprayGetStats(-1);
+    }
+
+    /** Turns a simulated spray gun (or every spray gun, if {@code sprayId} is -1) on or off. */
+    public int spraySetState(boolean on, int sprayId) {
+        checkConnection();
+        sendLine("Gun_SetState");
+        sendInt(sprayId);
+        sendInt(on ? 1 : 0);
+        int result = recvInt();
+        checkStatus();
+        return result;
+    }
+
+    /** @see #spraySetState(boolean, int) */
+    public int spraySetState(boolean on) {
+        return spraySetState(on, -1);
     }
 
     // ------------------------------------------------------------------------------------
@@ -1436,6 +2037,39 @@ public class RoboDK implements Closeable {
             }
         }
         return values;
+    }
+
+    /** Sends a 64-bit handle/pointer value (e.g. a camera handle), with no length prefix. */
+    void sendPtr(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.BIG_ENDIAN);
+        buffer.putLong(value);
+        writeBytes(buffer.array());
+    }
+
+    /** Reads a 64-bit handle/pointer value (e.g. a camera handle), with no length prefix. */
+    long recvPtr() {
+        byte[] bytes = readBytes(Long.BYTES);
+        return ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getLong();
+    }
+
+    /** Sends exactly 3 raw doubles (an XYZ point), with no length prefix. */
+    void sendXyz(double[] xyz) {
+        ByteBuffer buffer = ByteBuffer.allocate(3 * Double.BYTES).order(ByteOrder.BIG_ENDIAN);
+        for (int i = 0; i < 3; i++) {
+            buffer.putDouble(xyz != null && i < xyz.length ? xyz[i] : 0.0);
+        }
+        writeBytes(buffer.array());
+    }
+
+    /** Reads exactly 3 raw doubles (an XYZ point), with no length prefix. */
+    double[] recvXyz() {
+        byte[] bytes = readBytes(3 * Double.BYTES);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN);
+        double[] xyz = new double[3];
+        for (int i = 0; i < 3; i++) {
+            xyz[i] = buffer.getDouble();
+        }
+        return xyz;
     }
 
     /** Sends a 2-dimensional matrix (rows, then columns, then column-major doubles). */

@@ -88,45 +88,29 @@ Java/API/
     ItemType.java             Enum of RoboDK item types (robot, frame, tool, target, ...)
     ProjectionType.java       Enum of curve/point projection modes (used by addCurve/addPoints)
     RunMode.java              Enum of station run modes (simulate, generate program, run robot, ...)
+    WindowState.java          Enum of RoboDK main window states (normal, minimized, fullscreen, ...)
+    ObjectSelectionType.java  Enum of object/feature selection types (used by getPoints)
+    InteractiveMode.java      Enum of 3D mouse interaction modes (used by setInteractiveMode)
+    PluginOperation.java      Enum selecting load/unload/reload for pluginLoad
+    ProgramExecutionType.java Enum: run a program on the simulator only, or on the robot
+    RobotConnectionType.java  Enum of physical robot connection statuses
+    WindowFlags.java          Bitmask constants for the RoboDK window's enabled UI features
+    ItemFlags.java            Bitmask constants for an item's enabled tree/UI features
+    VisibleRefType.java       Constants for an item's reference-frame visibility
+    DisplayRefType.java       Bitmask constants for interactive-mode reference frame display
+    SequenceDisplayFlags.java Bitmask/option constants for showSequence
+    CollisionPair.java        A pair of items (and robot links) considered for collision checking
+    CollisionItem.java        An item (and robot link) currently in collision
+    GetPointsResult.java      Result of RoboDK.getPoints
+    MeasurePoseResult.java    Result of RoboDK.measurePose
+    SprayGunStats.java        Result of RoboDK.sprayGetStats
+    CursorXyzResult.java      Result of RoboDK.getCursorXYZ
+    RobotConnectionParameters.java  Robot driver connection parameters (IP, port, FTP credentials)
     Mat.java                  4x4 homogeneous pose matrix and general matrix operations
     exception/
       RdkException.java       Raised for RoboDK API errors and connection problems
       MatException.java       Raised for invalid Mat operations
 ```
-
-## API coverage
-
-Beyond the connection/socket layer described below, the library currently covers:
-
-* **Station tree**: `getItemByName`, `getItemList(Names)`, `addFrame`, `addTarget`, `addProgram`,
-  `addStation`, `addFile`, `copy`/`paste`, `delete`, `getSelectedItems`/`setSelectedItems`,
-  `getActiveStation`/`setActiveStation`, `closeStation`, `save`.
-* **Geometry**: `addShape` (triangles, e.g. to build primitives such as boxes), `addCurve`,
-  `addPoints`, `projectPoints`, and the matching `Item.addShape`/`addCurve`/`addPoints`/
-  `addGeometry` convenience calls.
-* **Item**: `setParent`/`setParentStatic`, `attachClosest`/`detachClosest`/`detachAll`,
-  pose family (`getPose`/`setPose`, `getPoseAbs`, `getPoseTool`/`setPoseTool`,
-  `getPoseFrame`/`setPoseFrame`, `getGeometryPose`/`setGeometryPose`, `getHtool`/`setHtool`),
-  appearance (`setColor`, `recolor`, `setTransparency`, `scale`), `setAsCartesianTarget`/
-  `setAsJointTarget`.
-* **Robot**: `solveFK`, `solveIK`/`solveIkAll`, `getJointLimits`/`setJointLimits`, `getJointsHome`/
-  `setJointsHome`, `getLink`/`getObjectLink`, `moveJ`/`moveL`/`moveC` (item, joints, or pose
-  targets; blocking or not), `setSpeed`/`setAcceleration`/`setRounding`, `isBusy`/`stop`/
-  `waitMove`/`waitFinished`, `connectRobot`/`disconnectRobot`.
-* **Programs**: `addMoveJ`/`addMoveL`, `showInstructions`/`showTargets`, `getInstructionCount`,
-  `runProgram`/`runCode`/`runInstruction`, `pause`, digital/analog I/O (`setDigitalOutput`,
-  `getDigitalInput`, `waitDigitalInput`, ...).
-* **Collisions**: `collisions`, `collision`, `setCollisionActive`,
-  `enableCollisionCheckingForAllItems`/`disableCollisionCheckingForAllItems`, `isInside`.
-* **Station parameters and low-level commands**: `getParameter`/`setParameter`,
-  `getParameterList`, `command` (the generic `SCMD`/`ICMD` escape hatch used by many RoboDK
-  macros), `setRunMode`/`getRunMode`, `setSimulationSpeed`/`getSimulationSpeed`, `showMessage`,
-  `itemUserPick`, `showRoboDK`/`hideRoboDK`/`fitAll`, `getLicense`, `setViewPose`/`getViewPose`.
-
-A few areas of the reference APIs are intentionally not yet ported (mainly UI-only or advanced
-features: window/item display flags, spray gun simulation, camera snapshots, plugin hosting,
-per-pair collision configuration, and generated-program post-processor details) — following the
-same wire protocol, they can be added the same way as everything else here.
 
 ## Mat
 
@@ -200,10 +184,3 @@ plus any `commandLineArgs`. `connect()` waits (up to `startTimeoutMilliseconds`)
 print that it is running, then connects to it; the process's remaining output is drained on a
 background daemon thread so its stdout pipe never fills up and blocks it.
 
-## Notes on the wire protocol
-
-RoboDK API commands are ASCII strings terminated by `\n`, generally followed by binary
-arguments (32-bit big-endian integers, 64-bit big-endian IEEE 754 doubles, or item
-references made of a 64-bit item id followed by a 32-bit item type). Every command ends with
-a status code read via `checkStatus()`; a non-zero status either carries a warning/error
-message or signals a hard failure, which is surfaced as an `RdkException`.

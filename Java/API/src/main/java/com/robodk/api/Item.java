@@ -183,15 +183,42 @@ public class Item {
     }
 
     /**
-     * Shows or hides this item in the 3D station view.
+     * Shows or hides this item in the 3D station view, and controls the visibility of its
+     * reference frame indicator (see {@link VisibleRefType}).
      */
-    public void setVisible(boolean visible) {
+    public void setVisible(boolean visible, int visibleReference) {
+        int reference = visibleReference;
+        if (reference == VisibleRefType.DEFAULT) {
+            reference = visible ? VisibleRefType.ON : VisibleRefType.OFF;
+        }
         link.checkConnection();
         link.sendLine("S_Visible");
         link.sendItem(this);
         link.sendInt(visible ? 1 : 0);
-        link.sendInt(visible ? 1 : 0);
+        link.sendInt(reference);
         link.checkStatus();
+    }
+
+    /**
+     * Shows or hides this item in the 3D station view.
+     */
+    public void setVisible(boolean visible) {
+        setVisible(visible, VisibleRefType.DEFAULT);
+    }
+
+    /** Marks this item as being in collision (or not), highlighting it in the 3D view. */
+    public void showAsCollided(boolean collided, int robotLinkId) {
+        link.checkConnection();
+        link.sendLine("ShowAsCollided");
+        link.sendItem(this);
+        link.sendInt(robotLinkId);
+        link.sendInt(collided ? 1 : 0);
+        link.checkStatus();
+    }
+
+    /** @see #showAsCollided(boolean, int) */
+    public void showAsCollided(boolean collided) {
+        showAsCollided(collided, 0);
     }
 
     /**
@@ -1463,5 +1490,143 @@ public class Item {
     /** Flushes any pending program generation and disconnects; the underlying {@link RoboDK} link becomes unusable. */
     public void finish() {
         link.disconnect();
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Item flags
+    // ------------------------------------------------------------------------------------
+
+    /** Updates this item's flags, controlling how much access the user has to it; see {@link ItemFlags}. */
+    public void setFlags(int itemFlags) {
+        link.checkConnection();
+        link.sendLine("S_Item_Rights");
+        link.sendItem(this);
+        link.sendInt(itemFlags);
+        link.checkStatus();
+    }
+
+    /** @see #setFlags(int) */
+    public void setFlags() {
+        setFlags(ItemFlags.ALL);
+    }
+
+    /** Returns this item's current flags; see {@link ItemFlags}. */
+    public int getFlags() {
+        link.checkConnection();
+        link.sendLine("G_Item_Rights");
+        link.sendItem(this);
+        int flags = link.recvInt();
+        link.checkStatus();
+        return flags;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Program run type
+    // ------------------------------------------------------------------------------------
+
+    /** Sets whether this program (made through the GUI) runs in the simulator only, or on the physical robot. */
+    public void setRunType(ProgramExecutionType programExecutionType) {
+        link.checkConnection();
+        link.sendLine("S_ProgRunType");
+        link.sendItem(this);
+        link.sendInt(programExecutionType.getValue());
+        link.checkStatus();
+    }
+
+    /** @see #setRunType(ProgramExecutionType) */
+    public ProgramExecutionType getRunType() {
+        link.checkConnection();
+        link.sendLine("G_ProgRunType");
+        link.sendItem(this);
+        int result = link.recvInt();
+        link.checkStatus();
+        return ProgramExecutionType.fromValue(result);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Robot: physical connection details
+    // ------------------------------------------------------------------------------------
+
+    /** Returns the current connection status to the physical robot controller. */
+    public RobotConnectionType connectedState() {
+        link.checkConnection();
+        link.sendLine("ConnectedState");
+        link.sendItem(this);
+        RobotConnectionType status = RobotConnectionType.fromValue(link.recvInt());
+        link.recvLine(); // Status message (unused).
+        link.checkStatus();
+        return status;
+    }
+
+    /** Returns the robot driver connection parameters (IP, port, remote path, FTP credentials). */
+    public RobotConnectionParameters connectionParams() {
+        link.checkConnection();
+        link.sendLine("ConnectParams");
+        link.sendItem(this);
+        String robotIp = link.recvLine();
+        int port = link.recvInt();
+        String remotePath = link.recvLine();
+        String ftpUser = link.recvLine();
+        String ftpPass = link.recvLine();
+        link.checkStatus();
+        return new RobotConnectionParameters(robotIp, port, remotePath, ftpUser, ftpPass);
+    }
+
+    /** Sets the robot driver connection parameters (IP, port, remote path, FTP credentials). */
+    public void setConnectionParams(String robotIp, int port, String remotePath, String ftpUser, String ftpPass) {
+        link.checkConnection();
+        link.sendLine("setConnectParams");
+        link.sendItem(this);
+        link.sendLine(robotIp);
+        link.sendInt(port);
+        link.sendLine(remotePath);
+        link.sendLine(ftpUser);
+        link.sendLine(ftpPass);
+        link.checkStatus();
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Sequence display
+    // ------------------------------------------------------------------------------------
+
+    /** Displays a sequence of poses (for example a path being planned) directly, as a matrix. */
+    public void showSequence(Mat sequence) {
+        link.checkConnection();
+        link.sendLine("Show_Seq");
+        link.sendMatrix(sequence);
+        link.sendItem(this);
+        link.checkStatus();
+    }
+
+    /**
+     * Displays a sequence of joint values or poses, as a temporary animation over this item
+     * (typically a robot or a program).
+     *
+     * @param joints list of joint value arrays; used when {@code flags} includes {@link SequenceDisplayFlags#ROBOT_JOINTS}
+     * @param poses list of poses; used otherwise
+     * @param flags a bitwise OR of {@link SequenceDisplayFlags} constants
+     * @param timeoutMilliseconds how long the sequence stays displayed, or -1 for no timeout
+     */
+    public void showSequence(List<double[]> joints, List<Mat> poses, int flags, int timeoutMilliseconds) {
+        if (joints == null && poses == null) {
+            return;
+        }
+        link.checkConnection();
+        link.sendLine("Show_SeqPoses");
+        link.sendItem(this);
+        link.sendArray(new double[] {flags, timeoutMilliseconds});
+        boolean useJoints = flags != SequenceDisplayFlags.DEFAULT && (flags & SequenceDisplayFlags.ROBOT_JOINTS) != 0;
+        if (useJoints) {
+            link.sendInt(joints.size());
+            for (double[] jointValues : joints) {
+                link.sendArray(jointValues);
+            }
+        } else {
+            link.sendInt(poses.size());
+            for (Mat pose : poses) {
+                link.sendPose(pose);
+            }
+        }
+        link.checkStatus();
     }
 }
