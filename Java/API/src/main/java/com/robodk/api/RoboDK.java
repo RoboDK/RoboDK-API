@@ -17,10 +17,12 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Entry point to the RoboDK API.
@@ -378,6 +380,11 @@ public class RoboDK implements Closeable {
     }
 
     /** Socket read/write timeout, in milliseconds. */
+    public int getSocketTimeoutMilliseconds() {
+        return socketTimeoutMilliseconds;
+    }
+
+    /** @see #getSocketTimeoutMilliseconds() */
     public void setSocketTimeoutMilliseconds(int socketTimeoutMilliseconds) {
         this.socketTimeoutMilliseconds = socketTimeoutMilliseconds;
         if (socket != null) {
@@ -594,6 +601,729 @@ public class RoboDK implements Closeable {
     }
 
     // ------------------------------------------------------------------------------------
+    // Station tree: adding items
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Adds a new, empty station to the project and returns it.
+     */
+    public Item addStation(String name) {
+        checkConnection();
+        sendLine("NewStation");
+        sendLine(name);
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /**
+     * Adds a new reference frame to the station tree.
+     *
+     * @param name name of the new reference frame
+     * @param parent item to attach the new reference frame to (for example another reference
+     *               frame), or {@code null} to attach it to the active station
+     */
+    public Item addFrame(String name, Item parent) {
+        checkConnection();
+        sendLine("Add_FRAME");
+        sendLine(name);
+        sendItem(parent);
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addFrame(String, Item) */
+    public Item addFrame(String name) {
+        return addFrame(name, null);
+    }
+
+    /**
+     * Adds a new target that can be reached with a robot.
+     *
+     * @param name name of the new target
+     * @param parent reference frame to attach the target to, or {@code null}
+     * @param robot robot that will be used to reach this target, or {@code null}
+     */
+    public Item addTarget(String name, Item parent, Item robot) {
+        checkConnection();
+        sendLine("Add_TARGET");
+        sendLine(name);
+        sendItem(parent);
+        sendItem(robot);
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addTarget(String, Item, Item) */
+    public Item addTarget(String name, Item parent) {
+        return addTarget(name, parent, null);
+    }
+
+    /** @see #addTarget(String, Item, Item) */
+    public Item addTarget(String name) {
+        return addTarget(name, null, null);
+    }
+
+    /**
+     * Adds a new, empty program to the station tree. Programs can be used to simulate a
+     * sequence, generate vendor-specific robot programs (offline programming), or run programs
+     * on the physical robot (online programming).
+     *
+     * @param name name of the new program
+     * @param robot robot used by this program, or {@code null} if the station has a single robot
+     */
+    public Item addProgram(String name, Item robot) {
+        checkConnection();
+        sendLine("Add_PROG");
+        sendLine(name);
+        sendItem(robot);
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addProgram(String, Item) */
+    public Item addProgram(String name) {
+        return addProgram(name, null);
+    }
+
+    /**
+     * Loads a file (an object, a robot, a tool, another station, a robot program, ...) into the
+     * open station and returns the newly added item.
+     *
+     * @param filename absolute path to the file to load
+     * @param parent item to attach the newly loaded item to, or {@code null}
+     * @throws RdkException if RoboDK failed to load the file
+     */
+    public Item addFile(String filename, Item parent) {
+        checkConnection();
+        sendLine("Add");
+        sendLine(filename);
+        sendItem(parent);
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(60_000, previousTimeout));
+        Item newItem;
+        try {
+            newItem = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addFile(String, Item) */
+    public Item addFile(String filename) {
+        return addFile(filename, null);
+    }
+
+    /**
+     * Adds a shape provided as a list of triangles (each group of 3 consecutive points forms one
+     * triangle) to the station, or to an existing object.
+     *
+     * @param trianglePoints 3xN (or 6xN, with per-vertex normals) matrix of points, N a multiple of 3
+     * @param addTo existing object to add the shape to, or {@code null} to create a new object
+     * @param shapeOverride if {@code true}, replaces {@code addTo}'s current shape instead of adding to it
+     * @param color RGBA color in the 0-1 range (4 values), or {@code null} for the default gray
+     */
+    public Item addShape(Mat trianglePoints, Item addTo, boolean shapeOverride, double[] color) {
+        double[] rgba = color != null ? color : new double[] {0.5, 0.5, 0.5, 1.0};
+        checkColor(rgba);
+        checkConnection();
+        sendLine("AddShape3");
+        sendMatrix(trianglePoints);
+        sendItem(addTo);
+        sendInt(shapeOverride ? 1 : 0);
+        sendArray(rgba);
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Item newItem;
+        try {
+            newItem = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addShape(Mat, Item, boolean, double[]) */
+    public Item addShape(Mat trianglePoints, Item addTo) {
+        return addShape(trianglePoints, addTo, false, null);
+    }
+
+    /** @see #addShape(Mat, Item, boolean, double[]) */
+    public Item addShape(Mat trianglePoints) {
+        return addShape(trianglePoints, null, false, null);
+    }
+
+    /**
+     * Adds a curve provided as a list of points to the station.
+     *
+     * @param curvePoints 3xN (or 6xN, with per-vertex normals) matrix of points
+     * @param referenceObject item to attach the newly added geometry to, or {@code null}
+     * @param addToRef if {@code true}, the curve is added as part of {@code referenceObject}
+     *                 (a reference object must be provided)
+     * @param projectionType how the curve is projected onto {@code referenceObject}'s surface
+     */
+    public Item addCurve(Mat curvePoints, Item referenceObject, boolean addToRef, ProjectionType projectionType) {
+        checkConnection();
+        sendLine("AddWire");
+        sendMatrix(curvePoints);
+        sendItem(referenceObject);
+        sendInt(addToRef ? 1 : 0);
+        sendInt(projectionType.getValue());
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Item newItem;
+        try {
+            newItem = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addCurve(Mat, Item, boolean, ProjectionType) */
+    public Item addCurve(Mat curvePoints) {
+        return addCurve(curvePoints, null, false, ProjectionType.ALONG_NORMAL_RECALC);
+    }
+
+    /**
+     * Adds a list of points to the station.
+     *
+     * @param points 3xN (or 6xN, with per-vertex normals) matrix of points
+     * @param referenceObject item to attach the newly added geometry to, or {@code null}
+     * @param addToRef if {@code true}, the points are added as part of {@code referenceObject}
+     * @param projectionType how the points are projected onto {@code referenceObject}'s surface
+     */
+    public Item addPoints(Mat points, Item referenceObject, boolean addToRef, ProjectionType projectionType) {
+        checkConnection();
+        sendLine("AddPoints");
+        sendMatrix(points);
+        sendItem(referenceObject);
+        sendInt(addToRef ? 1 : 0);
+        sendInt(projectionType.getValue());
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Item newItem;
+        try {
+            newItem = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #addPoints(Mat, Item, boolean, ProjectionType) */
+    public Item addPoints(Mat points) {
+        return addPoints(points, null, false, ProjectionType.ALONG_NORMAL_RECALC);
+    }
+
+    /**
+     * Projects a list of points onto an object's surface.
+     */
+    public Mat projectPoints(Mat points, Item objectProject, ProjectionType projectionType) {
+        checkConnection();
+        sendLine("ProjectPoints");
+        sendMatrix(points);
+        sendItem(objectProject);
+        sendInt(projectionType.getValue());
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Mat projected;
+        try {
+            projected = recvMatrix();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return projected;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Station management
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Saves an item (or, if {@code itemSave} is {@code null}, the whole open station) to a file.
+     */
+    public void save(String filename, Item itemSave) {
+        checkConnection();
+        sendLine("Save");
+        sendLine(filename);
+        sendItem(itemSave);
+        checkStatus();
+    }
+
+    /** @see #save(String, Item) */
+    public void save(String filename) {
+        save(filename, null);
+    }
+
+    /**
+     * Closes the current station without saving it.
+     */
+    public void closeStation() {
+        checkConnection();
+        sendLine("RemoveStn");
+        checkStatus();
+    }
+
+    /**
+     * Returns the currently active station.
+     */
+    public Item getActiveStation() {
+        checkConnection();
+        sendLine("G_ActiveStn");
+        Item station = recvItem();
+        checkStatus();
+        return station;
+    }
+
+    /**
+     * Sets the currently active station.
+     */
+    public void setActiveStation(Item station) {
+        checkConnection();
+        sendLine("S_ActiveStn");
+        sendItem(station);
+        checkStatus();
+    }
+
+    /**
+     * Makes a copy of an item (and, optionally, its children) to the clipboard, to be inserted
+     * with {@link #paste(Item)}.
+     */
+    public void copy(Item item, boolean copyChildren) {
+        checkConnection();
+        sendLine("Copy2");
+        sendItem(item);
+        sendInt(copyChildren ? 1 : 0);
+        checkStatus();
+    }
+
+    /** @see #copy(Item, boolean) */
+    public void copy(Item item) {
+        copy(item, true);
+    }
+
+    /**
+     * Pastes the item previously copied with {@link #copy(Item, boolean)} into the station,
+     * attached to {@code pasteTo}.
+     */
+    public Item paste(Item pasteTo) {
+        checkConnection();
+        sendLine("Paste");
+        sendItem(pasteTo);
+        Item newItem = recvItem();
+        checkStatus();
+        return newItem;
+    }
+
+    /** @see #paste(Item) */
+    public Item paste() {
+        return paste(null);
+    }
+
+    /**
+     * Removes several items from the station in a single call.
+     */
+    public void delete(List<Item> items) {
+        checkConnection();
+        sendLine("RemoveLst");
+        sendInt(items.size());
+        for (Item item : items) {
+            sendItem(item);
+        }
+        checkStatus();
+    }
+
+    /**
+     * Shows a text message. If {@code popup} is {@code true}, this blocks until the user
+     * dismisses the message box; otherwise the message is shown in the status bar only.
+     */
+    public void showMessage(String message, boolean popup) {
+        checkConnection();
+        if (popup) {
+            sendLine("ShowMessage");
+            sendLine(message);
+            int previousTimeout = socketTimeoutMilliseconds;
+            setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+            try {
+                checkStatus();
+            } finally {
+                setSocketTimeoutMilliseconds(previousTimeout);
+            }
+        } else {
+            sendLine("ShowMessageStatus");
+            sendLine(message);
+            checkStatus();
+        }
+    }
+
+    /** @see #showMessage(String, boolean) */
+    public void showMessage(String message) {
+        showMessage(message, true);
+    }
+
+    /**
+     * Shows the RoboDK main window and brings it to the front.
+     */
+    public void showRoboDK() {
+        checkConnection();
+        sendLine("RAISE");
+        checkStatus();
+    }
+
+    /**
+     * Hides the RoboDK main window.
+     */
+    public void hideRoboDK() {
+        checkConnection();
+        sendLine("HIDE");
+        checkStatus();
+    }
+
+    /**
+     * Zooms in/out the 3D view to fit every item in the station.
+     */
+    public void fitAll() {
+        checkConnection();
+        sendLine("FitAll");
+        checkStatus();
+    }
+
+    /**
+     * Lets the user pick an item from the station tree (or the 3D view), blocking until they do.
+     *
+     * @param message message shown to the user
+     * @param itemType restricts the pickable items to a given type, or {@link ItemType#ANY}
+     */
+    public Item itemUserPick(String message, ItemType itemType) {
+        checkConnection();
+        sendLine("PickItem");
+        sendLine(message);
+        sendInt(itemType == null ? ItemType.ANY.getValue() : itemType.getValue());
+        int previousTimeout = socketTimeoutMilliseconds;
+        setSocketTimeoutMilliseconds(Math.max(3_600_000, previousTimeout));
+        Item item;
+        try {
+            item = recvItem();
+        } finally {
+            setSocketTimeoutMilliseconds(previousTimeout);
+        }
+        checkStatus();
+        return item;
+    }
+
+    /** @see #itemUserPick(String, ItemType) */
+    public Item itemUserPick(String message) {
+        return itemUserPick(message, ItemType.ANY);
+    }
+
+    /** @see #itemUserPick(String, ItemType) */
+    public Item itemUserPick() {
+        return itemUserPick("Pick one item", ItemType.ANY);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Selection
+    // ------------------------------------------------------------------------------------
+
+    /** Returns the items currently selected in the station tree / 3D view. */
+    public List<Item> getSelectedItems() {
+        checkConnection();
+        sendLine("G_Selection");
+        int itemCount = recvInt();
+        List<Item> items = new ArrayList<>(itemCount);
+        for (int i = 0; i < itemCount; i++) {
+            items.add(recvItem());
+        }
+        checkStatus();
+        return items;
+    }
+
+    /** Sets the items currently selected in the station tree / 3D view. */
+    public void setSelectedItems(List<Item> items) {
+        checkConnection();
+        sendLine("S_Selection");
+        sendInt(items.size());
+        for (Item item : items) {
+            sendItem(item);
+        }
+        checkStatus();
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Collisions
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} if {@code objectInside} lies inside the geometry of {@code
+     * objectParent}.
+     */
+    public boolean isInside(Item objectInside, Item objectParent) {
+        checkConnection();
+        sendLine("IsInside");
+        sendItem(objectInside);
+        sendItem(objectParent);
+        int inside = recvInt();
+        checkStatus();
+        return inside > 0;
+    }
+
+    /**
+     * Enables or disables collision checking for every item pair, returning the number of
+     * pairs currently in collision.
+     */
+    public int setCollisionActive(boolean active) {
+        checkConnection();
+        sendLine("Collision_SetState");
+        sendInt(active ? 1 : 0);
+        int collisionCount = recvInt();
+        checkStatus();
+        return collisionCount;
+    }
+
+    /** Enables collision checking between every pair of items in the station. */
+    public void enableCollisionCheckingForAllItems() {
+        command("CollisionMap", "All");
+    }
+
+    /** Disables collision checking between every pair of items in the station. */
+    public void disableCollisionCheckingForAllItems() {
+        command("CollisionMap", "None");
+    }
+
+    /**
+     * Returns the number of pairs of objects that are currently in a collision state.
+     */
+    public int collisions() {
+        checkConnection();
+        sendLine("Collisions");
+        int collisionCount = recvInt();
+        checkStatus();
+        return collisionCount;
+    }
+
+    /**
+     * Returns {@code true} if the two items are currently in a collision state.
+     */
+    public boolean collision(Item item1, Item item2, boolean useCollisionMap) {
+        checkConnection();
+        sendLine("Collided3");
+        sendItem(item1);
+        sendItem(item2);
+        sendInt(useCollisionMap ? 1 : 0);
+        int collisionCount = recvInt();
+        checkStatus();
+        return collisionCount > 0;
+    }
+
+    /** @see #collision(Item, Item, boolean) */
+    public boolean collision(Item item1, Item item2) {
+        return collision(item1, item2, true);
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Simulation / run mode
+    // ------------------------------------------------------------------------------------
+
+    /**
+     * Sets the simulation playback speed. A speed of 1 means real time; the default (5) means 1
+     * second of simulated time takes 1/5th of a second in real time.
+     */
+    public void setSimulationSpeed(double speed) {
+        checkConnection();
+        sendLine("SimulateSpeed");
+        sendInt((int) (speed * 1000.0));
+        checkStatus();
+    }
+
+    /** @see #setSimulationSpeed(double) */
+    public double getSimulationSpeed() {
+        checkConnection();
+        sendLine("GetSimulateSpeed");
+        double speed = recvInt() / 1000.0;
+        checkStatus();
+        return speed;
+    }
+
+    /**
+     * Sets the run mode: simulate movements, validate them quickly, generate a robot program, or
+     * run on the physical robot.
+     */
+    public void setRunMode(RunMode runMode) {
+        checkConnection();
+        sendLine("S_RunMode");
+        sendInt(runMode.getValue());
+        checkStatus();
+    }
+
+    /** @see #setRunMode(RunMode) */
+    public RunMode getRunMode() {
+        checkConnection();
+        sendLine("G_RunMode");
+        RunMode runMode = RunMode.fromValue(recvInt());
+        checkStatus();
+        return runMode;
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Station parameters
+    // ------------------------------------------------------------------------------------
+
+    /** Returns every user parameter defined in the open station. */
+    public List<Map.Entry<String, String>> getParameterList() {
+        checkConnection();
+        sendLine("G_Params");
+        int paramCount = recvInt();
+        List<Map.Entry<String, String>> params = new ArrayList<>(paramCount);
+        for (int i = 0; i < paramCount; i++) {
+            String name = recvLine();
+            String value = recvLine();
+            params.add(new AbstractMap.SimpleEntry<>(name, value));
+        }
+        checkStatus();
+        return params;
+    }
+
+    /**
+     * Returns the value of a station parameter, or {@code null} if it is not defined.
+     */
+    public String getParameter(String parameter) {
+        checkConnection();
+        sendLine("G_Param");
+        sendLine(parameter);
+        String value = recvLine();
+        checkStatus();
+        return value.startsWith("UNKNOWN ") ? null : value;
+    }
+
+    /** Sets (or creates) a station parameter. */
+    public void setParameter(String parameter, String value) {
+        checkConnection();
+        sendLine("S_Param");
+        sendLine(parameter);
+        sendLine(value);
+        checkStatus();
+    }
+
+    /** @see #setParameter(String, String) */
+    public void setParameter(String parameter, double value) {
+        setParameter(parameter, toInvariantString(value));
+    }
+
+    /**
+     * Sends a generic, low level command to RoboDK. Available commands are listed under
+     * <b>Tools &gt; Run Script &gt; Show Commands</b> in the RoboDK GUI.
+     */
+    public String command(String cmd, String value) {
+        checkConnection();
+        sendLine("SCMD");
+        sendLine(cmd);
+        sendLine(value);
+        String response = recvLine();
+        checkStatus();
+        return response;
+    }
+
+    /** @see #command(String, String) */
+    public String command(String cmd) {
+        return command(cmd, "");
+    }
+
+    /** @see #command(String, String) */
+    public String command(String cmd, boolean value) {
+        return command(cmd, value ? "1" : "0");
+    }
+
+    /** @see #command(String, String) */
+    public String command(String cmd, int value) {
+        return command(cmd, Integer.toString(value));
+    }
+
+    /** @see #command(String, String) */
+    public String command(String cmd, double value) {
+        return command(cmd, toInvariantString(value));
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Program execution
+    // ------------------------------------------------------------------------------------
+
+    /** Runs a program (or calls a function) by name; equivalent to {@code runCode(function, true)}. */
+    public int runProgram(String function) {
+        return runCode(function, true);
+    }
+
+    /**
+     * Adds a program call, code, or comment to the station's main program.
+     *
+     * @param code the program name (if {@code codeIsFunctionCall}) or raw code/text to insert
+     * @param codeIsFunctionCall if {@code true}, {@code code} is interpreted as a function/program call
+     * @return the number of instructions that could be successfully added/run
+     */
+    public int runCode(String code, boolean codeIsFunctionCall) {
+        checkConnection();
+        sendLine("RunCode");
+        sendInt(codeIsFunctionCall ? 1 : 0);
+        sendLine(code);
+        int status = recvInt();
+        checkStatus();
+        return status;
+    }
+
+    /**
+     * Shows a message or a comment in the program generated offline (and, optionally, in the
+     * simulator).
+     */
+    public void runMessage(String message, boolean messageIsComment) {
+        checkConnection();
+        sendLine("RunMessage");
+        sendInt(messageIsComment ? 1 : 0);
+        sendLine(message);
+        checkStatus();
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Misc
+    // ------------------------------------------------------------------------------------
+
+    /** Returns the RoboDK license string. */
+    public String getLicense() {
+        checkConnection();
+        sendLine("G_License2");
+        String license = recvLine();
+        recvLine(); // Customer id, currently unused.
+        checkStatus();
+        return license;
+    }
+
+    /** Sets the pose (position and orientation) of the station's camera/view. */
+    public void setViewPose(Mat pose) {
+        checkConnection();
+        sendLine("S_ViewPose");
+        sendPose(pose);
+        checkStatus();
+    }
+
+    /** Returns the pose (position and orientation) of the station's active camera/view. */
+    public Mat getViewPose() {
+        checkConnection();
+        sendLine("G_ViewPose2");
+        sendInt(0); // ViewPoseType.ActiveView
+        Mat pose = recvPose();
+        checkStatus();
+        return pose;
+    }
+
+    // ------------------------------------------------------------------------------------
     // Wire protocol: status handling
     // ------------------------------------------------------------------------------------
 
@@ -706,6 +1436,51 @@ public class RoboDK implements Closeable {
             }
         }
         return values;
+    }
+
+    /** Sends a 2-dimensional matrix (rows, then columns, then column-major doubles). */
+    void sendMatrix(Mat mat) {
+        sendInt(mat.rows());
+        sendInt(mat.cols());
+        ByteBuffer buffer = ByteBuffer.allocate(mat.rows() * mat.cols() * Double.BYTES).order(ByteOrder.BIG_ENDIAN);
+        for (int col = 0; col < mat.cols(); col++) {
+            for (int row = 0; row < mat.rows(); row++) {
+                buffer.putDouble(mat.get(row, col));
+            }
+        }
+        writeBytes(buffer.array());
+    }
+
+    /** Reads a 2-dimensional matrix (rows, then columns, then column-major doubles). */
+    Mat recvMatrix() {
+        int rows = recvInt();
+        int cols = recvInt();
+        Mat mat = new Mat(rows, cols);
+        int byteCount = rows * cols * Double.BYTES;
+        if (byteCount > 0) {
+            ByteBuffer buffer = ByteBuffer.wrap(readBytes(byteCount)).order(ByteOrder.BIG_ENDIAN);
+            for (int col = 0; col < cols; col++) {
+                for (int row = 0; row < rows; row++) {
+                    mat.set(row, col, buffer.getDouble());
+                }
+            }
+        }
+        return mat;
+    }
+
+    /**
+     * Validates that a RoboDK color array has exactly 4 components (red, green, blue, alpha, each
+     * in the 0-1 range), as required by every color-related API call.
+     */
+    /** Formats a double using an invariant, dot-decimal representation (never locale-dependent). */
+    static String toInvariantString(double value) {
+        return String.format(Locale.ROOT, "%s", value);
+    }
+
+    static void checkColor(double[] color) {
+        if (color == null || color.length != 4) {
+            throw new RdkException("Invalid color. A color must be a 4-size double array [r, g, b, a]");
+        }
     }
 
     /** Sends a byte array, prefixed by its length. */

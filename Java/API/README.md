@@ -4,10 +4,11 @@ A Java client library for the [RoboDK API](https://robodk.com/doc/en/RoboDK-API.
 from the reference [RoboDK C# API](../../C%23/API).
 
 This library provides the TCP/IP socket layer and binary serialization primitives used by
-every RoboDK API call, a full `Mat` pose/matrix implementation, and an initial set of calls on
-`RoboDK` and `Item` so the library is usable end to end. More API calls will be added over time
-to reach full parity with the C# (`RoboDK.cs`, `Item.cs`) and Python (`robolink.py`) reference
-implementations, following the same wire protocol.
+every RoboDK API call, a full `Mat` pose/matrix implementation, and a broad set of calls on
+`RoboDK` and `Item` — station/item tree management, reference frames, targets, programs,
+geometry (shapes, curves, points), collisions, robot movement (`MoveJ`/`MoveL`/`MoveC`),
+forward/inverse kinematics, program instructions, I/O, and more — following the same wire
+protocol as the reference C# (`RoboDK.cs`, `Item.cs`) and Python (`robolink.py`) implementations.
 
 This module is part of the `robodk-api-parent` reactor (see the top-level [`../README.md`](../README.md))
 together with the [`../Example`](../Example) module, which is a small runnable application
@@ -81,14 +82,51 @@ Java/API/
   pom.xml
   README.md
   src/main/java/com/robodk/api/
-    RoboDK.java              Socket layer, binary (de)serialization, and RoboDK-level API calls
-    Item.java                Item-level API calls (name, pose, joints, tree navigation, ...)
+    RoboDK.java              Socket layer, binary (de)serialization, and station-level API calls
+    RoboDKLocator.java        Locates the RoboDK executable on Windows/Linux/macOS (package-private)
+    Item.java                Item-level API calls (name, pose, joints, movement, programs, ...)
     ItemType.java             Enum of RoboDK item types (robot, frame, tool, target, ...)
+    ProjectionType.java       Enum of curve/point projection modes (used by addCurve/addPoints)
+    RunMode.java              Enum of station run modes (simulate, generate program, run robot, ...)
     Mat.java                  4x4 homogeneous pose matrix and general matrix operations
     exception/
       RdkException.java       Raised for RoboDK API errors and connection problems
       MatException.java       Raised for invalid Mat operations
 ```
+
+## API coverage
+
+Beyond the connection/socket layer described below, the library currently covers:
+
+* **Station tree**: `getItemByName`, `getItemList(Names)`, `addFrame`, `addTarget`, `addProgram`,
+  `addStation`, `addFile`, `copy`/`paste`, `delete`, `getSelectedItems`/`setSelectedItems`,
+  `getActiveStation`/`setActiveStation`, `closeStation`, `save`.
+* **Geometry**: `addShape` (triangles, e.g. to build primitives such as boxes), `addCurve`,
+  `addPoints`, `projectPoints`, and the matching `Item.addShape`/`addCurve`/`addPoints`/
+  `addGeometry` convenience calls.
+* **Item**: `setParent`/`setParentStatic`, `attachClosest`/`detachClosest`/`detachAll`,
+  pose family (`getPose`/`setPose`, `getPoseAbs`, `getPoseTool`/`setPoseTool`,
+  `getPoseFrame`/`setPoseFrame`, `getGeometryPose`/`setGeometryPose`, `getHtool`/`setHtool`),
+  appearance (`setColor`, `recolor`, `setTransparency`, `scale`), `setAsCartesianTarget`/
+  `setAsJointTarget`.
+* **Robot**: `solveFK`, `solveIK`/`solveIkAll`, `getJointLimits`/`setJointLimits`, `getJointsHome`/
+  `setJointsHome`, `getLink`/`getObjectLink`, `moveJ`/`moveL`/`moveC` (item, joints, or pose
+  targets; blocking or not), `setSpeed`/`setAcceleration`/`setRounding`, `isBusy`/`stop`/
+  `waitMove`/`waitFinished`, `connectRobot`/`disconnectRobot`.
+* **Programs**: `addMoveJ`/`addMoveL`, `showInstructions`/`showTargets`, `getInstructionCount`,
+  `runProgram`/`runCode`/`runInstruction`, `pause`, digital/analog I/O (`setDigitalOutput`,
+  `getDigitalInput`, `waitDigitalInput`, ...).
+* **Collisions**: `collisions`, `collision`, `setCollisionActive`,
+  `enableCollisionCheckingForAllItems`/`disableCollisionCheckingForAllItems`, `isInside`.
+* **Station parameters and low-level commands**: `getParameter`/`setParameter`,
+  `getParameterList`, `command` (the generic `SCMD`/`ICMD` escape hatch used by many RoboDK
+  macros), `setRunMode`/`getRunMode`, `setSimulationSpeed`/`getSimulationSpeed`, `showMessage`,
+  `itemUserPick`, `showRoboDK`/`hideRoboDK`/`fitAll`, `getLicense`, `setViewPose`/`getViewPose`.
+
+A few areas of the reference APIs are intentionally not yet ported (mainly UI-only or advanced
+features: window/item display flags, spray gun simulation, camera snapshots, plugin hosting,
+per-pair collision configuration, and generated-program post-processor details) — following the
+same wire protocol, they can be added the same way as everything else here.
 
 ## Mat
 
