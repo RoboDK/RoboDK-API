@@ -512,7 +512,7 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
     # The binary is always installed as <RoboDK_Root>/<bin_folder>/<binary_name>
     path_root = os.path.dirname(os.path.dirname(path_binary))
 
-    if path_type == "RoboDK_Root":
+    if path_type == "Root":
         return path_root
     elif path_type == "Library":
         return path_root + "/Library"
