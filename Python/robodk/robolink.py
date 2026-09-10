@@ -445,48 +445,81 @@ def RoboDKInstallFound() -> bool:
     path_install = getPathRoboDK()
     return os.path.exists(path_install)
 
+def getPathRoboDK(path_type: str = "Binary") -> str:
+    """Get a path relative to the RoboDK install, such as the executable/binary file, the Library folder,
+    the bundled Python package or the install root folder.
 
-def getPathRoboDK() -> str:
-    """RoboDK's executable/binary file"""
-    from sys import platform as _platform
-    if _platform == "linux" or _platform == "linux2":
-        # Ubuntu, Linux or Debian
-        return os.path.expanduser("~/RoboDK/bin/RoboDK")
-    elif _platform == "darwin":
-        # MacOS
-        #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-        path_app = os.path.expanduser("~") + "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-        if os.path.exists(path_app):
-            return path_app
-        # default install directory
-        return os.path.expanduser("~") + "/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
+    :param path_type: One of:
 
-    else:
-        # Windows assumed
-        if sys.version_info[0] < 3:
-            import _winreg
+        - ``Binary`` (default): RoboDK's executable/binary file. Same as calling with no argument (backwards compatible).
+        - ``Library``: RoboDK's Library folder (``<RoboDK_Root>/Library``).
+        - ``Python``: RoboDK's bundled Python package folder (``<RoboDK_Root>/Python``).
+        - ``Root``: RoboDK's install root folder.
+    """
+    def getPathRoboDKBinary() -> str:
+        """RoboDK's executable/binary file. Not exposed outside of this module: the result is cached
+        (the install location does not change within a process), so use getPathRoboDK() instead."""
+        from sys import platform as _platform
+        if _platform == "linux" or _platform == "linux2":
+            # Ubuntu, Linux or Debian
+            path_home = os.path.expanduser("~/RoboDK/bin/RoboDK")
+            if os.path.exists(path_home):
+                return path_home
+            # Second candidate: system-wide install directory (docker)
+            return "/RoboDK/bin/RoboDK"
+        elif _platform == "darwin":
+            # MacOS
+            #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+            path_app = os.path.expanduser("~") + "/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
+            if os.path.exists(path_app):
+                return path_app
+            
+            # default install directory
+            return os.path.expanduser("~") + "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+
         else:
-            import winreg as _winreg
+            # Windows assumed
+            if sys.version_info[0] < 3:
+                import _winreg
+            else:
+                import winreg as _winreg
 
-        # Try to get the value from the Windows registry:
-        try:
-            #if True:
-            # Open the key and return the handle object.
+            # Try to get the value from the Windows registry:
             try:
-                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_64KEY)
-            except FileNotFoundError:
-                hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
+                #if True:
+                # Open the key and return the handle object.
+                try:
+                    hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_64KEY)
+                except FileNotFoundError:
+                    hKey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\RoboDK", 0, _winreg.KEY_READ | _winreg.KEY_WOW64_32KEY)
 
-            # Read the value.
-            result = _winreg.QueryValueEx(hKey, "INSTDIR")
-            # Close the handle object.
-            _winreg.CloseKey(hKey)
-            # Return only the value from the resulting tuple (value, type_as_int).
-            return result[0].replace("\\", "/") + "/bin/RoboDK.exe"
-        except:  # FileNotFoundError:
-            print("RoboDK was not installed properly. Install RoboDK from www.robodk.com/download.")
+                # Read the value.
+                result = _winreg.QueryValueEx(hKey, "INSTDIR")
+                # Close the handle object.
+                _winreg.CloseKey(hKey)
+                # Return only the value from the resulting tuple (value, type_as_int).
+                return result[0].replace("\\", "/") + "/bin/RoboDK.exe"
+            except:  # FileNotFoundError:
+                print("RoboDK was not installed properly. Install RoboDK from www.robodk.com/download.")
 
-        return "C:/RoboDK/bin/RoboDK.exe"
+            return "C:/RoboDK/bin/RoboDK.exe"
+
+    path_binary = getPathRoboDKBinary()
+
+    if path_type == "Binary":
+        return path_binary
+
+    # The binary is always installed as <RoboDK_Root>/<bin_folder>/<binary_name>
+    path_root = os.path.dirname(os.path.dirname(path_binary))
+
+    if path_type == "RoboDK_Root":
+        return path_root
+    elif path_type == "Library":
+        return path_root + "/Library"
+    elif path_type == "Python":
+        return path_root + "/Python"
+
+    raise InputError("Invalid path_type provided to getPathRoboDK: %s. Expected one of: RoboDK_Binary, Library, Python, RoboDK_Root." % path_type)
 
 
 def getPathIcon() -> str:
