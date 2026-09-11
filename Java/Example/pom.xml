@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.robodk</groupId>
+        <artifactId>robodk-api-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>robodk-api-example</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RoboDK API for Java - Example</name>
+    <description>
+        Small runnable application demonstrating the RoboDK API for Java (API module): connects
+        to a running RoboDK station, lists items, and reads/prints a robot's pose and joints.
+    </description>
+
+    <properties>
+        <exec.mainClass>com.robodk.example.BasicExample</exec.mainClass>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.robodk</groupId>
+            <artifactId>robodk-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Lets the example be run from the command line with:
+                 mvn -pl Example -am exec:java -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <mainClass>${exec.mainClass}</mainClass>
+                </configuration>
+            </plugin>
+            <!-- Lets the example also be run as a plain jar with:
+                 java -cp Example/target/robodk-api-example-*.jar:API/target/robodk-api-*.jar com.robodk.example.BasicExample -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${exec.mainClass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
