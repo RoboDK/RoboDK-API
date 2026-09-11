@@ -63,6 +63,32 @@ ITEM_TYPE_GENERIC = 20  #: Generic :class:`.Item`
 ITEM_TYPE_ROBOT_AXES = 21  #: Robot axes :class:`.Item` (subtype of ITEM_TYPE_ROBOT for axes)
 ITEM_TYPE_NOTES = 22  #: Notes :class:`.Item`
 
+
+def getLinkableItemTypes(itm_type: int) -> list:
+    """Get the list of ITEM_TYPE_* an item of the given type can link to (for example, via Item.setParent()
+    or the robot/frame/tool/reference selection dropdowns in RoboDK). Returns an empty list if the type
+    does not have any specific linkable types (any parent is allowed)."""
+    if itm_type == ITEM_TYPE_TARGET:
+        return [ITEM_TYPE_ROBOT]
+
+    elif itm_type == ITEM_TYPE_PROGRAM:
+        return [ITEM_TYPE_ROBOT]
+
+    elif itm_type == ITEM_TYPE_MACHINING:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL, ITEM_TYPE_OBJECT, ITEM_TYPE_PROGRAM]
+
+    elif itm_type == ITEM_TYPE_ROBOT:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL]
+
+    elif itm_type == ITEM_TYPE_CALIBPROJECT or itm_type == ITEM_TYPE_VALID_ISO9283:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL]
+
+    elif itm_type == ITEM_TYPE_CAMERA:
+        return [ITEM_TYPE_CAMERA]
+
+    return []
+
+
 # Instruction types
 INS_TYPE_INVALID = -1  #: Invalid instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 INS_TYPE_MOVE = 0  #: Move (except MoveC) instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
@@ -445,9 +471,15 @@ def RoboDKInstallFound() -> bool:
     path_install = getPathRoboDK()
     return os.path.exists(path_install)
 
+
+__ROBODK_BINARY_PATH_CACHE = None
+
+
 def getPathRoboDK(path_type: str = "Binary") -> str:
     """Get a path relative to the RoboDK install, such as the executable/binary file, the Library folder,
     the bundled Python package or the install root folder.
+
+    The install location can be overridden with the ``ROBODK_ROOT`` or ``ROBODK_HOME`` environment variable.
 
     :param path_type: One of:
 
@@ -456,26 +488,51 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
         - ``Python``: RoboDK's bundled Python package folder (``<RoboDK_Root>/Python``).
         - ``Root``: RoboDK's install root folder.
     """
-    def getPathRoboDKBinary() -> str:
-        """RoboDK's executable/binary file. Not exposed outside of this module: the result is cached
-        (the install location does not change within a process), so use getPathRoboDK() instead."""
+
+    def _resolvePathRoboDKBinary() -> str:
+        """Platform-specific resolution logic, uncached.
+
+        Resolution order:
+
+            1. The ``ROBODK_ROOT`` or ``ROBODK_HOME`` environment variable, if set.
+            2. The Windows registry (Windows only).
+            3. A ranked list of common install locations per platform.
+        """
         from sys import platform as _platform
+
+        # Environment variable override takes priority over any guesswork.
+        for env_var in ("ROBODK_ROOT", "ROBODK_HOME"):
+            env_root = os.environ.get(env_var)
+            if env_root:
+                env_root = os.path.expanduser(env_root).replace("\\", "/").rstrip("/")
+                if _platform == "linux" or _platform == "linux2":
+                    return env_root + "/bin/RoboDK"
+                elif _platform == "darwin":
+                    return env_root + "/RoboDK.app/Contents/MacOS/RoboDK"
+                return env_root + "/bin/RoboDK.exe"
+
         if _platform == "linux" or _platform == "linux2":
             # Ubuntu, Linux or Debian
-            path_home = os.path.expanduser("~/RoboDK/bin/RoboDK")
-            if os.path.exists(path_home):
-                return path_home
-            # Second candidate: system-wide install directory (docker)
-            return "/RoboDK/bin/RoboDK"
+            candidates = [
+                os.path.expanduser("~/RoboDK/bin/RoboDK"),
+                "/opt/RoboDK/bin/RoboDK",
+                "/usr/local/RoboDK/bin/RoboDK",
+            ]
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    return candidate
+            return candidates[0]
+
         elif _platform == "darwin":
             # MacOS
-            #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-            path_app = os.path.expanduser("~") + "/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
-            if os.path.exists(path_app):
-                return path_app
-            
-            # default install directory
-            return os.path.expanduser("~") + "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+            candidates = [
+                os.path.expanduser("~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"),
+                "/Applications/RoboDK.app/Contents/MacOS/RoboDK",
+            ]
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    return candidate
+            return candidates[0]
 
         else:
             # Windows assumed
@@ -504,7 +561,15 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
 
             return "C:/RoboDK/bin/RoboDK.exe"
 
-    path_binary = getPathRoboDKBinary()
+    def _getPathRoboDKBinary() -> str:
+        """Cached wrapper around _resolvePathRoboDKBinary() (the install location does not change
+        within a process). Nested here: getPathRoboDK() is the only caller."""
+        global __ROBODK_BINARY_PATH_CACHE
+        if __ROBODK_BINARY_PATH_CACHE is None:
+            __ROBODK_BINARY_PATH_CACHE = _resolvePathRoboDKBinary()
+        return __ROBODK_BINARY_PATH_CACHE
+
+    path_binary = _getPathRoboDKBinary()
 
     if path_type == "Binary":
         return path_binary
@@ -519,7 +584,7 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
     elif path_type == "Python":
         return path_root + "/Python"
 
-    raise InputError("Invalid path_type provided to getPathRoboDK: %s. Expected one of: RoboDK_Binary, Library, Python, RoboDK_Root." % path_type)
+    raise InputError("Invalid path_type provided to getPathRoboDK: %s. Expected one of: Binary, Library, Python, Root." % path_type)
 
 
 def getPathIcon() -> str:
