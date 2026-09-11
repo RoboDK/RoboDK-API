@@ -1397,6 +1397,15 @@ class Robolink:
     def __del__(self):
         self.Disconnect()
 
+    def __enter__(self) -> 'Robolink':
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Only close RoboDK if this connection asked for a dedicated new instance
+        # (-NEWINSTANCE) -- otherwise this may be the user's already-running RoboDK.
+        if '-NEWINSTANCE' in self.ARGUMENTS or '/NEWINSTANCE' in self.ARGUMENTS:
+            self.CloseRoboDK()
+
     def _verify_connection(self) -> bool:
         """Verify that we are connected to the RoboDK API server"""
         # Imortant! this should not thread locked
