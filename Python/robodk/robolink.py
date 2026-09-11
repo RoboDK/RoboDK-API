@@ -1307,6 +1307,20 @@ class Robolink:
 
             self.IP = robodk_ip
             self.ARGUMENTS = list(args)
+
+            # ROBODK_AI selects a launch profile for unattended/AI-driven use, adding any of its
+            # arguments not already present (explicit args passed in take precedence).
+            robodk_ai_mode = os.environ.get("ROBODK_AI")
+            if robodk_ai_mode:
+                if robodk_ai_mode.lower() == "snapshot":
+                    ai_args = ["-HIDDEN", "-NOSPLASH", "-NEWINSTANCE", "-SKIPINI", "-Settings=LicenseLoad", "-EXIT_LAST_COM", "-API_NODELAY"]
+                else:
+                    # "noui" or any other value: run headless
+                    ai_args = ["-NOUI", "-NEWINSTANCE", "-SKIPINI", "-Settings=LicenseLoad", "-EXIT_LAST_COM", "-API_NODELAY"]
+                for ai_arg in ai_args:
+                    if ai_arg not in self.ARGUMENTS:
+                        self.ARGUMENTS.append(ai_arg)
+
             if callable(close_std_out):
                 self.STD_OUT_PRINT = close_std_out
                 # Make sure we print debug output through the stdout channel
@@ -1335,7 +1349,7 @@ class Robolink:
                 self.PORT_END = port
                 self.ARGUMENTS.append("-PORT=%i" % port)
 
-            elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
+            elif ('-NEWINSTANCE' in self.ARGUMENTS or '/NEWINSTANCE' in self.ARGUMENTS):
                 from socket import socket
                 if sys.version_info.major >= 3:
                     with socket() as s:
@@ -1367,6 +1381,15 @@ class Robolink:
                 from sys import platform as _platform
                 if _platform == "linux" or _platform == "linux2":
                     self.ARGUMENTS = ["--platform", "minimal"] + self.ARGUMENTS
+
+            # -NEWINSTANCE must be the first argument passed to RoboDK, or it isn't reliably
+            # honored. Enforced last, after every other argument mutation above (including the
+            # --platform minimal prepend), so nothing can push it back down again.
+            for newinstance_flag in ("-NEWINSTANCE", "/NEWINSTANCE"):
+                if newinstance_flag in self.ARGUMENTS:
+                    self.ARGUMENTS.remove(newinstance_flag)
+                    self.ARGUMENTS.insert(0, newinstance_flag)
+                    break
 
         # This is already locked
         self.Connect()
