@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------
 // Copyright 2018 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1087,6 +1087,41 @@ namespace RoboDk.API
             var jointsList = Link.rec_matrix();
             Link.check_status();
             return jointsList;
+        }
+
+        /// <inheritdoc />
+        public List<double[]> SolveIK_Conf(Mat pose, int[] jointConfig, Mat tool = null, Mat reference = null)
+        {
+            if (tool != null)
+            {
+                pose = pose * tool.inv();
+            }
+            if (reference != null)
+            {
+                pose = reference * pose;
+            }
+            Link.check_connection();
+            Link.send_line("G_IK_cmpl");
+            Link.send_pose(pose);
+            Link.send_item(this);
+            Mat jointsList = Link.rec_matrix();
+            Link.check_status();
+            List<double[]> jointsListConf = new List<double[]>();
+            for (int i = 0; i < jointsList.Rows; i++)
+            {
+                double[] joints = this.Joints();
+                for (int j = 0; j < joints.Length; j++)
+                {
+                    joints[j] = jointsList[i, j];
+                }
+
+                var config = this.JointsConfig(joints);
+                if (config[0] == jointConfig[0] && config[1] == jointConfig[1] && config[2] == jointConfig[2])
+                {
+                    jointsListConf.Add(joints);
+                }
+            }
+            return jointsListConf;
         }
 
         /// <inheritdoc />

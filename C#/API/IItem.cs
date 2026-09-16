@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------
 // Copyright 2018 - RoboDK Inc. - https://robodk.com/
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -670,6 +670,17 @@ namespace RoboDk.API
         /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
         /// <returns>double x n x m -> joint list (2D matrix)</returns>
         Mat SolveIK_All(Mat pose, Mat tool = null, Mat reference = null);
+
+        /// <summary>
+        ///     Computes the inverse kinematics for the specified robot, pose and configuration. The function returns all available joint
+        ///     solutions as a list of doubles.
+        /// </summary>
+        /// <param name="pose">4x4 matrix -> pose of the robot tool with respect to the robot frame</param>
+        /// <param name="joint_config">array of int -> robot configuration wanted</param>
+        /// <param name="tool">4x4 matrix -> Optionally provide a tool, otherwise, the robot flange is used. Tip: use robot.PoseTool() to retrieve the active robot tool.</param>
+        /// <param name="reference">4x4 matrix -> Optionally provide a reference, otherwise, the robot base is used. Tip: use robot.PoseFrame() to retrieve the active robot reference frame.</param>
+        /// <returns>double x n x m -> joint list (List of joints)</returns>
+        List<double[]> SolveIK_Conf(Mat pose, int[] joint_config, Mat tool = null, Mat reference = null);
 
         /// <summary>
         ///     Connect to a real robot using the robot driver.
