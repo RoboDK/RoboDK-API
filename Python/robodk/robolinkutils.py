@@ -273,5 +273,76 @@ def SolveIK_Conf(robot: robolink.Item, pose: robomath.Mat, toolpose: robomath.Ma
     return joint_solutions
 
 
+def addFile(RDK: robolink.Robolink, filepath: str, parent: robolink.Item = None) -> robolink.Item:
+    """
+    Add a file to the station and return the newly added :class:`.Item`, working around two RoboDK quirks:
+
+    - Loading a .tool file with no robot parent triggers an interactive robot-selection prompt. If a robot
+      exists in the station, this function attaches the tool to the first available robot before
+      re-parenting it to the requested parent, avoiding the prompt.
+    - :func:`~robodk.robolink.Robolink.AddFile` leaves the new Item with a non-identity pose offset; this
+      function resets it to identity so the Item ends up at its parent's origin.
+
+    :param RDK: The Robolink connection
+    :type RDK: :class:`robolink.Robolink`
+    :param filepath: file to load, as supported by :func:`~robodk.robolink.Robolink.AddFile`
+    :type filepath: str
+    :param parent: item to attach the newly loaded item to (defaults to the active station)
+    :type parent: :class:`.Item`, optional
+
+    :return: The newly added Item
+    :rtype: :class:`.Item`
+    """
+    if parent is None:
+        parent = RDK.ActiveStation()
+
+    if filepath.lower().endswith(".tool") and parent.Type() != robolink.ITEM_TYPE_ROBOT:
+        robots = RDK.ItemList(robolink.ITEM_TYPE_ROBOT)
+        if robots:
+            item = RDK.AddFile(filepath, robots[0])  # Avoids the robot-selection prompt
+            item.setParent(parent)
+        else:
+            item = RDK.AddFile(filepath, parent)
+    else:
+        item = RDK.AddFile(filepath, parent)
+
+    if not item.Valid():
+        raise robolink.InputError("Failed to load file: %s" % filepath)
+
+    if item.Type() == robolink.ITEM_TYPE_ROBOT:
+        # Importing a robot also creates a base Frame that duplicates the requested parent.
+        auto_frame = item.Parent()
+        item.setParent(parent)
+        if auto_frame.Type() == robolink.ITEM_TYPE_FRAME:
+            auto_frame.Delete()
+
+    item.setPose(robomath.eye(4))  # AddFile() adds a pose offset; reset it to the parent's origin
+    return item
+
+
+def getItemParam(item: robolink.Item, param: str) -> Union[str, dict, None]:
+    """
+    Get a station/item parameter or command result via :func:`~robodk.robolink.Item.setParam` used as a
+    query (no value provided), normalizing RoboDK's "no value" responses (an empty dict, an empty string,
+    or an ``(ItemCommand)``/``illegal value`` error string) into ``None``.
+
+    Note: this is unrelated to :func:`~robodk.robolink.Item.getParam`, which retrieves custom binary data
+    previously stored with ``item.setParam(name, bytes)``.
+
+    :param item: The source Item
+    :type item: :class:`.Item`
+    :param param: Parameter/command name, as documented for :func:`~robodk.robolink.Item.setParam`
+    :type param: str
+
+    :return: The parameter value, or None if the parameter does not exist or has no value
+    """
+    value = item.setParam(param)
+    if isinstance(value, dict) and not value:
+        return None
+    if isinstance(value, str) and (not value or value.startswith("(ItemCommand)") or value.startswith("illegal value")):
+        return None
+    return value
+
+
 if __name__ == "__main__":
     pass

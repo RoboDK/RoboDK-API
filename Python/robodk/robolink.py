@@ -63,6 +63,32 @@ ITEM_TYPE_GENERIC = 20  #: Generic :class:`.Item`
 ITEM_TYPE_ROBOT_AXES = 21  #: Robot axes :class:`.Item` (subtype of ITEM_TYPE_ROBOT for axes)
 ITEM_TYPE_NOTES = 22  #: Notes :class:`.Item`
 
+
+def getLinkableItemTypes(itm_type: int) -> list:
+    """Get the list of ITEM_TYPE_* an item of the given type can link to (for example, via Item.setParent()
+    or the robot/frame/tool/reference selection dropdowns in RoboDK). Returns an empty list if the type
+    does not have any specific linkable types (any parent is allowed)."""
+    if itm_type == ITEM_TYPE_TARGET:
+        return [ITEM_TYPE_ROBOT]
+
+    elif itm_type == ITEM_TYPE_PROGRAM:
+        return [ITEM_TYPE_ROBOT]
+
+    elif itm_type == ITEM_TYPE_MACHINING:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL, ITEM_TYPE_OBJECT, ITEM_TYPE_PROGRAM]
+
+    elif itm_type == ITEM_TYPE_ROBOT:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL]
+
+    elif itm_type == ITEM_TYPE_CALIBPROJECT or itm_type == ITEM_TYPE_VALID_ISO9283:
+        return [ITEM_TYPE_ROBOT, ITEM_TYPE_FRAME, ITEM_TYPE_TOOL]
+
+    elif itm_type == ITEM_TYPE_CAMERA:
+        return [ITEM_TYPE_CAMERA]
+
+    return []
+
+
 # Instruction types
 INS_TYPE_INVALID = -1  #: Invalid instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
 INS_TYPE_MOVE = 0  #: Move (except MoveC) instruction type of a :class:`.ITEM_TYPE_INSTRUCTION`
@@ -445,9 +471,15 @@ def RoboDKInstallFound() -> bool:
     path_install = getPathRoboDK()
     return os.path.exists(path_install)
 
+
+__ROBODK_BINARY_PATH_CACHE = None
+
+
 def getPathRoboDK(path_type: str = "Binary") -> str:
     """Get a path relative to the RoboDK install, such as the executable/binary file, the Library folder,
     the bundled Python package or the install root folder.
+
+    The install location can be overridden with the ``ROBODK_ROOT`` or ``ROBODK_HOME`` environment variable.
 
     :param path_type: One of:
 
@@ -456,26 +488,51 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
         - ``Python``: RoboDK's bundled Python package folder (``<RoboDK_Root>/Python``).
         - ``Root``: RoboDK's install root folder.
     """
-    def getPathRoboDKBinary() -> str:
-        """RoboDK's executable/binary file. Not exposed outside of this module: the result is cached
-        (the install location does not change within a process), so use getPathRoboDK() instead."""
+
+    def _resolvePathRoboDKBinary() -> str:
+        """Platform-specific resolution logic, uncached.
+
+        Resolution order:
+
+            1. The ``ROBODK_ROOT`` or ``ROBODK_HOME`` environment variable, if set.
+            2. The Windows registry (Windows only).
+            3. A ranked list of common install locations per platform.
+        """
         from sys import platform as _platform
+
+        # Environment variable override takes priority over any guesswork.
+        for env_var in ("ROBODK_ROOT", "ROBODK_HOME"):
+            env_root = os.environ.get(env_var)
+            if env_root:
+                env_root = os.path.expanduser(env_root).replace("\\", "/").rstrip("/")
+                if _platform == "linux" or _platform == "linux2":
+                    return env_root + "/bin/RoboDK"
+                elif _platform == "darwin":
+                    return env_root + "/RoboDK.app/Contents/MacOS/RoboDK"
+                return env_root + "/bin/RoboDK.exe"
+
         if _platform == "linux" or _platform == "linux2":
             # Ubuntu, Linux or Debian
-            path_home = os.path.expanduser("~/RoboDK/bin/RoboDK")
-            if os.path.exists(path_home):
-                return path_home
-            # Second candidate: system-wide install directory (docker)
-            return "/RoboDK/bin/RoboDK"
+            candidates = [
+                os.path.expanduser("~/RoboDK/bin/RoboDK"),
+                "/opt/RoboDK/bin/RoboDK",
+                "/usr/local/RoboDK/bin/RoboDK",
+            ]
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    return candidate
+            return candidates[0]
+
         elif _platform == "darwin":
             # MacOS
-            #self.APPLICATION_DIR = "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
-            path_app = os.path.expanduser("~") + "/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"
-            if os.path.exists(path_app):
-                return path_app
-            
-            # default install directory
-            return os.path.expanduser("~") + "/Applications/RoboDK.app/Contents/MacOS/RoboDK"
+            candidates = [
+                os.path.expanduser("~/RoboDK/RoboDK.app/Contents/MacOS/RoboDK"),
+                "/Applications/RoboDK.app/Contents/MacOS/RoboDK",
+            ]
+            for candidate in candidates:
+                if os.path.exists(candidate):
+                    return candidate
+            return candidates[0]
 
         else:
             # Windows assumed
@@ -504,7 +561,15 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
 
             return "C:/RoboDK/bin/RoboDK.exe"
 
-    path_binary = getPathRoboDKBinary()
+    def _getPathRoboDKBinary() -> str:
+        """Cached wrapper around _resolvePathRoboDKBinary() (the install location does not change
+        within a process). Nested here: getPathRoboDK() is the only caller."""
+        global __ROBODK_BINARY_PATH_CACHE
+        if __ROBODK_BINARY_PATH_CACHE is None:
+            __ROBODK_BINARY_PATH_CACHE = _resolvePathRoboDKBinary()
+        return __ROBODK_BINARY_PATH_CACHE
+
+    path_binary = _getPathRoboDKBinary()
 
     if path_type == "Binary":
         return path_binary
@@ -519,7 +584,7 @@ def getPathRoboDK(path_type: str = "Binary") -> str:
     elif path_type == "Python":
         return path_root + "/Python"
 
-    raise InputError("Invalid path_type provided to getPathRoboDK: %s. Expected one of: RoboDK_Binary, Library, Python, RoboDK_Root." % path_type)
+    raise InputError("Invalid path_type provided to getPathRoboDK: %s. Expected one of: Binary, Library, Python, Root." % path_type)
 
 
 def getPathIcon() -> str:
@@ -1242,6 +1307,20 @@ class Robolink:
 
             self.IP = robodk_ip
             self.ARGUMENTS = list(args)
+
+            # ROBODK_AI selects a launch profile for unattended/AI-driven use, adding any of its
+            # arguments not already present (explicit args passed in take precedence).
+            robodk_ai_mode = os.environ.get("ROBODK_AI")
+            if robodk_ai_mode:
+                if robodk_ai_mode.lower() == "snapshot":
+                    ai_args = ["-HIDDEN", "-NOSPLASH", "-NEWINSTANCE", "-SKIPINI", "-Settings=LicenseLoad", "-EXIT_LAST_COM", "-API_NODELAY"]
+                else:
+                    # "noui" or any other value: run headless
+                    ai_args = ["-NOUI", "-NEWINSTANCE", "-SKIPINI", "-Settings=LicenseLoad", "-EXIT_LAST_COM", "-API_NODELAY"]
+                for ai_arg in ai_args:
+                    if ai_arg not in self.ARGUMENTS:
+                        self.ARGUMENTS.append(ai_arg)
+
             if callable(close_std_out):
                 self.STD_OUT_PRINT = close_std_out
                 # Make sure we print debug output through the stdout channel
@@ -1270,7 +1349,7 @@ class Robolink:
                 self.PORT_END = port
                 self.ARGUMENTS.append("-PORT=%i" % port)
 
-            elif ('/NEWINSTANCE' in self.ARGUMENTS or '-NEWINSTANCE' in self.ARGUMENTS):
+            elif ('-NEWINSTANCE' in self.ARGUMENTS or '/NEWINSTANCE' in self.ARGUMENTS):
                 from socket import socket
                 if sys.version_info.major >= 3:
                     with socket() as s:
@@ -1303,11 +1382,29 @@ class Robolink:
                 if _platform == "linux" or _platform == "linux2":
                     self.ARGUMENTS = ["--platform", "minimal"] + self.ARGUMENTS
 
+            # -NEWINSTANCE must be the first argument passed to RoboDK, or it isn't reliably
+            # honored. Enforced last, after every other argument mutation above (including the
+            # --platform minimal prepend), so nothing can push it back down again.
+            for newinstance_flag in ("-NEWINSTANCE", "/NEWINSTANCE"):
+                if newinstance_flag in self.ARGUMENTS:
+                    self.ARGUMENTS.remove(newinstance_flag)
+                    self.ARGUMENTS.insert(0, newinstance_flag)
+                    break
+
         # This is already locked
         self.Connect()
 
     def __del__(self):
         self.Disconnect()
+
+    def __enter__(self) -> 'Robolink':
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Only close RoboDK if this connection asked for a dedicated new instance
+        # (-NEWINSTANCE) -- otherwise this may be the user's already-running RoboDK.
+        if '-NEWINSTANCE' in self.ARGUMENTS or '/NEWINSTANCE' in self.ARGUMENTS:
+            self.CloseRoboDK()
 
     def _verify_connection(self) -> bool:
         """Verify that we are connected to the RoboDK API server"""
