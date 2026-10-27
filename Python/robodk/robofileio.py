@@ -15,6 +15,8 @@
 This toolbox includes FTP transfer functions, CSV import/export,
 file operations, etc.
 
+FTP transfers to a robot controller are available through :class:`~robodk.robofileio.RobotFTP` and :func:`~robodk.robofileio.UploadFTP`.
+
 More information about the RoboDK API for Python here:
 
 * https://robodk.com/doc/en/RoboDK-API.html
@@ -276,187 +278,420 @@ def LoadMat(strfile: str, separator: str = ',') -> robomath.Mat:
 
 #-------------------------------------------------------
 # FTP TRANSFER Tools
-def RemoveFileFTP(ftp: 'ftplib.FTP', filepath: str):
-    """Delete a file on a remote server."""
-    import ftplib
-    try:
-        ftp.delete(filepath)
-    except ftplib.all_errors as e:
-        import sys
-        print('POPUP: Could not remove file {0}: {1}'.format(filepath, e))
-        sys.stdout.flush()
 
 
-def RemoveDirFTP(ftp: 'ftplib.FTP', path: str):
-    """Recursively delete a directory tree on a remote server."""
-    import ftplib
-    wd = ftp.pwd()
-    try:
-        names = ftp.nlst(path)
-    except ftplib.all_errors as e:
-        # some FTP servers complain when you try and list non-existent paths
-        print('RemoveDirFTP: Could not remove folder {0}: {1}'.format(path, e))
-        return
+class RobotFTP:
+    """FTP client to transfer robot programs (files or folders) to a robot controller, or to any FTP server.
 
-    for name in names:
-        if os.path.split(name)[1] in ('.', '..'):
-            continue
-        print('RemoveDirFTP: Checking {0}'.format(name))
+    The connection is owned by the object: use it as a context manager (or call :func:`~robodk.robofileio.RobotFTP.Disconnect`) to make sure the connection is always closed.
+    It connects when it is needed, or when :func:`~robodk.robofileio.RobotFTP.Connect` is called explicitly (local files are validated before connecting).
+    Progress and errors are reported in the console, including ``POPUP:`` messages to display the progress in RoboDK.
+
+    Example:
+
+    .. code-block:: python
+
+        from robodk.robofileio import RobotFTP
+
+        with RobotFTP('192.168.0.1', 'robot', 'password') as ftp:
+            ftp.Upload(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '/program')
+
+    .. seealso:: :func:`~robodk.robofileio.UploadFTP`
+    """
+
+    TIMEOUT: float = 30  #: Default timeout, in seconds, to connect and for each FTP operation
+    MAX_DEPTH: int = 32  #: Maximum folder depth of recursive operations
+
+    def __init__(self, server_ip: str, username: str = '', password: str = '', timeout: float = TIMEOUT):
+        self.server_ip = server_ip  #: IP or name of the FTP server (the robot controller)
+        self.username = username  #: FTP user name
+        self.password = password  #: FTP password
+        self.timeout = timeout  #: Timeout, in seconds, to connect and for each FTP operation
+        self.ftp = None  #: ftplib.FTP connection, None if it is not connected
+
+    #----------------------------------------------
+    # Connection
+
+    def __enter__(self) -> 'RobotFTP':
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.Disconnect()
+
+    @staticmethod
+    def FromConnection(ftp: 'ftplib.FTP') -> 'RobotFTP':
+        """Create a RobotFTP object from an existing ftplib.FTP connection"""
+        robotftp = RobotFTP('')
+        robotftp.ftp = ftp
+        return robotftp
+
+    def Connect(self) -> bool:
+        """Connect to the FTP server. A failure is reported as a popup.
+
+        :return: True if the connection was established, False otherwise
+        """
+        import ftplib
+        self.Disconnect()
+        self._print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (self.server_ip, self.username))
         try:
-            ftp.cwd(path + '/' + name)  # if we can cwd to it, it's a folder
-            ftp.cwd(wd)  # don't try a nuke a folder we're in
-            RemoveDirFTP(ftp, path + '/' + name)
-        except ftplib.all_errors:
-            ftp.delete(path + '/' + name)
-            #RemoveFileFTP(ftp, name)
+            self.ftp = ftplib.FTP(self.server_ip, self.username, self.password, timeout=self.timeout)
+            self._print('Connection established')
+            return True
+        except Exception as e:
+            self._error("Connection to %s failed: <p>%s</p>" % (self.server_ip, e))
+            return False
 
-    try:
-        ftp.rmd(path)
-    except ftplib.all_errors as e:
-        print('RemoveDirFTP: Could not remove {0}: {1}'.format(path, e))
-
-
-def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
-    """Upload a folder to a robot through FTP recursively"""
-    import ftplib
-    import os
-    import sys
-    main_folder = os.path.basename(os.path.normpath(localpath))
-    print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (server_ip, username))
-    sys.stdout.flush()
-    try:
-        myFTP = ftplib.FTP(server_ip, username, password)
-        print('Connection established')
-    except Exception:
-        error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
-        sys.stdout.flush()
-        robomath.pause(4)
-        return False
-
-    remote_path_prog = remote_path + '/' + main_folder
-    myPath = r'%s' % localpath
-    print("POPUP: Connected. Deleting existing files on %s..." % remote_path_prog)
-    sys.stdout.flush()
-    RemoveDirFTP(myFTP, remote_path_prog)
-    print("POPUP: Connected. Uploading program to %s..." % server_ip)
-    sys.stdout.flush()
-    try:
-        myFTP.cwd(remote_path)
-        myFTP.mkd(main_folder)
-        myFTP.cwd(remote_path_prog)
-    except Exception:
-        error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Remote path not found or can't be created: %s</font>" % (remote_path))
-        sys.stdout.flush()
-        robomath.pause(4)
-        #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
-        return False
-
-    def uploadThis(path):
-        files = os.listdir(path)
-        os.chdir(path)
-        for f in files:
-            fpath = os.path.join(path, f)
-            if os.path.isfile(fpath):
-                print('  Sending file: %s' % f)
-                print("POPUP: Sending file: %s" % f)
-                sys.stdout.flush()
-                with open(f, 'rb') as fh:
-                    myFTP.storbinary('STOR %s' % f, fh)
-            elif os.path.isdir(fpath):
-                print('  Sending folder: %s' % f)
-                myFTP.mkd(f)
-                myFTP.cwd(f)
-                uploadThis(fpath)
-        myFTP.cwd('..')
-        os.chdir('..')
-
-    uploadThis(myPath)  # now call the recursive function
-    myFTP.close()
-    print("POPUP: Folder trasfer completed: <font color=\"blue\">%s</font>" % remote_path)
-    sys.stdout.flush()
-    return True
-
-
-def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, username: str, password: str) -> bool:
-    """Upload a file to a robot through FTP"""
-    import ftplib
-    filepath = getFileDir(file_path_name)
-    filename = getBaseName(file_path_name)
-    import sys
-    print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (server_ip, username))
-    sys.stdout.flush()
-    try:
-        myFTP = ftplib.FTP(server_ip, username, password)
-    except Exception:
-        error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Connection to %s failed: <p>%s</p></font>" % (server_ip, error_str))
-        sys.stdout.flush()
-        robomath.pause(4)
-        return False
-
-    remote_path_prog = remote_path + '/' + filename
-    print("POPUP: Connected. Deleting remote file %s..." % remote_path_prog)
-    sys.stdout.flush()
-    RemoveFileFTP(myFTP, remote_path_prog)
-    print("POPUP: Connected. Uploading program to %s..." % server_ip)
-    sys.stdout.flush()
-    try:
-        myFTP.cwd(remote_path)
-    except Exception:
-        error_str = sys.exc_info()[1]
-        print("POPUP: <font color=\"red\">Remote path not found or can't be created: %s</font>" % (remote_path))
-        sys.stdout.flush()
-        robomath.pause(4)
-        #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
-        return False
-
-    def uploadThis(localfile, filename):
-        print('  Sending file: %s' % localfile)
-        print("POPUP: Sending file: %s" % filename)
-        sys.stdout.flush()
-        with open(localfile, 'rb') as fh:
-            myFTP.storbinary('STOR %s' % filename, fh)
-
-    uploadThis(file_path_name, filename)
-    myFTP.close()
-    print("POPUP: File trasfer completed: <font color=\"blue\">%s</font>" % remote_path_prog)
-    sys.stdout.flush()
-    return True
-
-
-def UploadFTP(program: Union[str, List[str]], robot_ip: str, remote_path: str, ftp_user: str, ftp_pass: str, pause_sec: float = 2):
-    """Upload a program or a list of programs to the robot through FTP provided the connection parameters"""
-    # Iterate through program list if it is a list of files
-    if isinstance(program, list):
-        if len(program) == 0:
-            print('POPUP: Nothing to transfer')
-            sys.stdout.flush()
-            robomath.pause(pause_sec)
+    def Disconnect(self):
+        """Close the connection, if any. Any error is ignored."""
+        if self.ftp is None:
             return
 
-        for prog in program:
-            UploadFTP(prog, robot_ip, remote_path, ftp_user, ftp_pass, 0)
+        try:
+            self.ftp.quit()  # politely close the session (it fails if the connection is already broken)
+        except Exception:
+            pass
 
-        print("POPUP: <font color=\"blue\">Done: %i files and folders successfully transferred</font>" % len(program))
+        try:
+            self.ftp.close()  # make sure the socket is released
+        except Exception:
+            pass
+
+        self.ftp = None
+
+    #----------------------------------------------
+    # Transfer
+
+    def Upload(self, program: Union[str, List[str]], remote_path: str) -> bool:
+        """Upload a file, a folder (recursively), or a list of files and folders to a remote folder.
+
+        :param program: local file or folder to transfer, or a list of files and folders
+        :param str remote_path: remote folder to transfer to, it must exist (example: ``/program``)
+
+        :return: True if everything was transferred, False otherwise
+        """
+        if isinstance(program, (list, tuple)):
+            # Transfer all the files, do not stop at the first failure
+            ntransferred = sum(1 for item in program if self.Upload(item, remote_path))
+            if ntransferred == len(program):
+                self._print("POPUP: <font color=\"blue\">Done: %i files and folders successfully transferred</font>" % ntransferred)
+            else:
+                self._print("POPUP: <font color=\"red\">Warning: only %i of %i files and folders were transferred</font>" % (ntransferred, len(program)))
+            return ntransferred == len(program)
+
+        if not program or not isinstance(program, str):
+            self._error('File or folder not provided: %s' % repr(program))
+            return False
+
+        if os.path.isdir(program):
+            self._print('Sending program folder %s...' % program)
+            return self.UploadDir(program, remote_path)
+
+        elif os.path.isfile(program):
+            self._print('Sending program file %s...' % program)
+            return self.UploadFile(program, remote_path)
+
+        self._error('File or folder not found: %s' % program)
+        return False
+
+    def UploadFile(self, local_file: str, remote_path: str) -> bool:
+        """Upload one file to a remote folder.
+
+        :param str local_file: local file to transfer
+        :param str remote_path: remote folder to transfer to, it must exist (example: ``/program``)
+
+        :return: True if the file was transferred, False otherwise
+        """
+        import ftplib
+        if not local_file or not os.path.isfile(local_file):
+            self._error('File not found: %s' % local_file)
+            return False
+
+        if not self._Connected():
+            return False
+
+        filename = self._Name(local_file)
+        remote_file = self._Join(remote_path, filename)
+        if not self._Cd(remote_path):
+            return False
+
+        self._print("POPUP: Connected. Deleting remote file %s..." % remote_file)
+        # The file may not exist (it is not an error), the transfer is attempted even if it can not be deleted
+        self.RemoveFile(filename, silent=True)
+
+        self._print("POPUP: Connected. Uploading program to %s..." % self.server_ip)
+        try:
+            self._Store(local_file, filename)
+        except ftplib.all_errors + (ValueError,) as e:
+            self._error('File transfer failed: %s<p>%s</p>' % (remote_file, e))
+            return False
+
+        self._print("POPUP: File transfer completed: <font color=\"blue\">%s</font>" % remote_file)
+        return True
+
+    def UploadDir(self, local_folder: str, remote_path: str) -> bool:
+        """Upload a folder and its contents (recursively) to a remote folder.
+        The remote folder is deleted first, if it exists.
+
+        :param str local_folder: local folder to transfer
+        :param str remote_path: remote folder to transfer to, it must exist (example: ``/program``)
+
+        :return: True if the folder was transferred, False otherwise
+        """
+        import ftplib
+        if not local_folder or not os.path.isdir(local_folder):
+            self._error('Folder not found: %s' % local_folder)
+            return False
+
+        if not self._Connected():
+            return False
+
+        foldername = self._Name(os.path.normpath(local_folder))
+        remote_folder = self._Join(remote_path, foldername)
+
+        self._print("POPUP: Connected. Deleting existing files on %s..." % remote_folder)
+        self.RemoveDir(remote_folder)
+
+        self._print("POPUP: Connected. Uploading program to %s..." % self.server_ip)
+        if not self._Cd(remote_path):
+            return False
+
+        try:
+            self._Mkdir(foldername)  # the folder may still exist if it could not be deleted
+            self.ftp.cwd(foldername)
+            self._UploadContents(local_folder)
+        except ftplib.all_errors + (ValueError,) as e:
+            self._error('Folder transfer failed: %s<p>%s</p>' % (remote_folder, e))
+            return False
+
+        self._print("POPUP: Folder transfer completed: <font color=\"blue\">%s</font>" % remote_folder)
+        return True
+
+    def RemoveFile(self, remote_file: str, silent: bool = False) -> bool:
+        """Delete a file on the FTP server.
+
+        :param str remote_file: remote file to delete
+        :param bool silent: True to report a failure in the console only (deleting a file that does not exist is not always an error)
+
+        :return: True if the file was deleted, False otherwise
+        """
+        import ftplib
+        if not self._Connected():
+            return False
+
+        try:
+            self.ftp.delete(remote_file)
+            return True
+        except ftplib.all_errors as e:
+            self._print('%sCould not remove file %s: %s' % ('' if silent else 'POPUP: ', remote_file, e))
+            return False
+
+    def RemoveDir(self, remote_folder: str, max_depth: int = MAX_DEPTH) -> bool:
+        """Delete a folder and its contents (recursively) on the FTP server.
+
+        :param str remote_folder: remote folder to delete
+        :param int max_depth: maximum folder depth to delete (it prevents an infinite recursion)
+
+        :return: True if the folder was deleted, False otherwise
+        """
+        import ftplib
+        if not self._Connected():
+            return False
+
+        if max_depth <= 0:
+            self._print('Maximum folder depth reached, skipping %s' % remote_folder)
+            return False
+
+        try:
+            names = self.ftp.nlst(remote_folder)
+        except ftplib.all_errors as e:
+            # some FTP servers complain when you try and list non-existent paths
+            self._print('Could not remove folder %s: %s' % (remote_folder, e))
+            return False
+
+        for name in names:
+            # some FTP servers return the complete path instead of the file name only
+            name = self._Name(name)
+            if name in ('', '.', '..'):
+                continue
+
+            remote_item = self._Join(remote_folder, name)
+            self._print('Removing %s' % remote_item)
+            if self._IsDir(remote_item):
+                self.RemoveDir(remote_item, max_depth - 1)
+            else:
+                self.RemoveFile(remote_item, silent=True)
+
+        try:
+            self.ftp.rmd(remote_folder)
+        except ftplib.all_errors as e:
+            self._print('Could not remove folder %s: %s' % (remote_folder, e))
+            return False
+
+        return True
+
+    #----------------------------------------------
+    # Internal
+
+    @staticmethod
+    def _print(message: str):
+        """Display a message in the console (``POPUP:`` messages are displayed in RoboDK)"""
+        print(message)
+        sys.stdout.flush()
+
+    def _error(self, message: str):
+        """Display an error as a popup and give the user time to read it"""
+        self._print("POPUP: <font color=\"red\">%s</font>" % message)
+        robomath.pause(4)
+
+    @staticmethod
+    def _Name(path: str) -> str:
+        """Returns the file or folder name of a local or remote path"""
+        return path.replace('\\', '/').rstrip('/').rsplit('/', 1)[-1]
+
+    @staticmethod
+    def _Join(remote_path: str, name: str) -> str:
+        """Join a remote (POSIX style) path and a file or folder name"""
+        if not remote_path:
+            return name
+
+        return remote_path.rstrip('/') + '/' + name
+
+    @staticmethod
+    def _Check(name: str) -> str:
+        """Make sure a file or folder name can be used in an FTP command.
+        FTP commands are line based, therefore a name containing a new line character could inject arbitrary FTP commands."""
+        if not name or '\r' in name or '\n' in name:
+            raise ValueError('Invalid file or folder name for FTP transfer: %s' % repr(name))
+
+        return name
+
+    def _Connected(self) -> bool:
+        """Returns True if we are connected to the FTP server. It connects if it is not connected yet."""
+        return self.ftp is not None or self.Connect()
+
+    def _IsDir(self, remote_path: str) -> bool:
+        """Returns True if a remote path is a folder (if we can enter it)"""
+        import ftplib
+        try:
+            working_folder = self.ftp.pwd()
+            self.ftp.cwd(remote_path)
+        except ftplib.all_errors:
+            return False
+
+        try:
+            self.ftp.cwd(working_folder)  # don't stay inside a folder that may be deleted
+        except ftplib.all_errors:
+            pass
+
+        return True
+
+    def _Cd(self, remote_path: str) -> bool:
+        """Set the remote working folder. A failure is reported as a popup."""
+        import ftplib
+        try:
+            self.ftp.cwd(remote_path)
+            return True
+        except ftplib.all_errors as e:
+            self._error("Remote path not found or can't be created: %s<p>%s</p>" % (remote_path, e))
+            #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
+            return False
+
+    def _Mkdir(self, name: str):
+        """Create a folder in the remote working folder. An existing folder is not an error."""
+        import ftplib
+        self._Check(name)
+        try:
+            self.ftp.mkd(name)
+        except ftplib.all_errors:
+            pass  # the folder may already exist
+
+    def _Store(self, local_file: str, name: str):
+        """Upload one file to the remote working folder"""
+        self._Check(name)
+        self._print('  Sending file: %s' % local_file)
+        self._print("POPUP: Sending file: %s" % name)
+        with open(local_file, 'rb') as fh:
+            self.ftp.storbinary('STOR %s' % name, fh)
+
+    def _UploadContents(self, local_folder: str):
+        """Upload the contents of a local folder to the remote working folder, recursively.
+        The remote working folder is left unchanged."""
+        for name in sorted(os.listdir(local_folder)):
+            local_item = os.path.join(local_folder, name)
+            if os.path.isfile(local_item):
+                self._Store(local_item, name)
+
+            elif os.path.isdir(local_item):
+                self._print('  Sending folder: %s' % name)
+                self._Mkdir(name)
+                self.ftp.cwd(name)
+                self._UploadContents(local_item)
+                self.ftp.cwd('..')
+
+
+def RemoveFileFTP(ftp: 'ftplib.FTP', filepath: str) -> bool:
+    """Delete a file on a remote server.
+
+    :return: True if the file was deleted, False otherwise
+
+    .. seealso:: :func:`RobotFTP.RemoveFile <robodk.robofileio.RobotFTP.RemoveFile>`
+    """
+    return RobotFTP.FromConnection(ftp).RemoveFile(filepath)
+
+
+def RemoveDirFTP(ftp: 'ftplib.FTP', path: str) -> bool:
+    """Recursively delete a directory tree on a remote server.
+
+    :return: True if the folder was deleted, False otherwise
+
+    .. seealso:: :func:`RobotFTP.RemoveDir <robodk.robofileio.RobotFTP.RemoveDir>`
+    """
+    return RobotFTP.FromConnection(ftp).RemoveDir(path)
+
+
+def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str, password: str, timeout: float = RobotFTP.TIMEOUT) -> bool:
+    """Upload a folder to a robot through FTP recursively
+
+    :return: True if the folder was transferred, False otherwise
+
+    .. seealso:: :func:`RobotFTP.UploadDir <robodk.robofileio.RobotFTP.UploadDir>`
+    """
+    with RobotFTP(server_ip, username, password, timeout) as ftp:
+        return ftp.UploadDir(localpath, remote_path)
+
+
+def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, username: str, password: str, timeout: float = RobotFTP.TIMEOUT) -> bool:
+    """Upload a file to a robot through FTP
+
+    :return: True if the file was transferred, False otherwise
+
+    .. seealso:: :func:`RobotFTP.UploadFile <robodk.robofileio.RobotFTP.UploadFile>`
+    """
+    with RobotFTP(server_ip, username, password, timeout) as ftp:
+        return ftp.UploadFile(file_path_name, remote_path)
+
+
+def UploadFTP(program: Union[str, List[str]], robot_ip: str, remote_path: str, ftp_user: str, ftp_pass: str, pause_sec: float = 2) -> bool:
+    """Upload a program or a list of programs to the robot through FTP provided the connection parameters
+
+    :return: True if all the files and folders were transferred, False otherwise
+
+    .. seealso:: :func:`RobotFTP.Upload <robodk.robofileio.RobotFTP.Upload>`
+    """
+    if isinstance(program, (list, tuple)) and len(program) == 0:
+        print('POPUP: Nothing to transfer')
         sys.stdout.flush()
         robomath.pause(pause_sec)
-        print("POPUP: Done")
-        sys.stdout.flush()
-        return
+        return False
 
-    import os
-    if os.path.isfile(program):
-        print('Sending program file %s...' % program)
-        UploadFileFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)
-    else:
-        print('Sending program folder %s...' % program)
-        UploadDirFTP(program, robot_ip, remote_path, ftp_user, ftp_pass)
+    # All the files and folders are transferred through the same connection
+    with RobotFTP(robot_ip, ftp_user, ftp_pass) as ftp:
+        success = ftp.Upload(program, remote_path)
 
     robomath.pause(pause_sec)
     print("POPUP: Done")
     sys.stdout.flush()
+    return success
 
 
 if __name__ == "__main__":
