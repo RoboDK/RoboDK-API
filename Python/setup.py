@@ -110,6 +110,7 @@ setup(
         'apps': ['PySide2==5.15.*'],
         'cv': ['opencv-contrib-python', 'numpy'],
         'lint': ['astroid'],
+        'sftp': ['paramiko'],
     },
 
     # If there are data files included in your packages that need to be
