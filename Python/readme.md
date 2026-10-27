@@ -62,7 +62,7 @@ pip install robodk
 RoboDK will automatically install external Python dependencies based on your usage. However, if you do not have an active ethernet connection or wish to install them all at once, you can specify external dependencies (see extras_require in [setup.py](./setup.py)):
 ```
 # cd path-to-python/Scripts
-pip install robodk[cv,apps,lint]
+pip install robodk[cv,apps,lint,sftp]
 ```
 
 The Python interpreter and editor used by RoboDK can be set in:

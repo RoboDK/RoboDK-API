@@ -15,7 +15,8 @@
 This toolbox includes FTP transfer functions, CSV import/export,
 file operations, etc.
 
-FTP transfers to a robot controller are available through :class:`~robodk.robofileio.RobotFTP` and :func:`~robodk.robofileio.UploadFTP`.
+FTP transfers to a robot controller are available through :class:`~robodk.robofileio.RobotFTP` and :func:`~robodk.robofileio.UploadFTP`,
+SFTP (SSH) through :class:`~robodk.robofileio.RobotSFTP` and :func:`~robodk.robofileio.UploadSFTP`, and FTPS (FTP over TLS) through :class:`~robodk.robofileio.RobotFTPS`.
 
 More information about the RoboDK API for Python here:
 
@@ -296,18 +297,23 @@ class RobotFTP:
         with RobotFTP('192.168.0.1', 'robot', 'password') as ftp:
             ftp.Upload(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '/program')
 
-    .. seealso:: :func:`~robodk.robofileio.UploadFTP`
+    Subclass it to support another protocol: all the protocol specific operations are the one line
+    ``_Open``, ``_Close``, ``_Pwd``, ``_Cwd``, ``_List``, ``_Delete``, ``_Mkd``, ``_Rmd`` and ``_Put`` methods and the ``_Errors`` tuple.
+
+    .. seealso:: :class:`~robodk.robofileio.RobotSFTP`, :class:`~robodk.robofileio.RobotFTPS`, :func:`~robodk.robofileio.UploadFTP`
     """
 
-    TIMEOUT: float = 30  #: Default timeout, in seconds, to connect and for each FTP operation
+    TIMEOUT: float = 30  #: Default timeout, in seconds, to connect and for each operation
     MAX_DEPTH: int = 32  #: Maximum folder depth of recursive operations
+    PORT: int = 21  #: Default port of the protocol
 
-    def __init__(self, server_ip: str, username: str = '', password: str = '', timeout: float = TIMEOUT):
-        self.server_ip = server_ip  #: IP or name of the FTP server (the robot controller)
-        self.username = username  #: FTP user name
-        self.password = password  #: FTP password
-        self.timeout = timeout  #: Timeout, in seconds, to connect and for each FTP operation
-        self.ftp = None  #: ftplib.FTP connection, None if it is not connected
+    def __init__(self, server_ip: str, username: str = '', password: str = '', timeout: float = TIMEOUT, port: int = None):
+        self.server_ip = server_ip  #: IP or name of the server (the robot controller)
+        self.username = username  #: User name
+        self.password = password  #: Password
+        self.timeout = timeout  #: Timeout, in seconds, to connect and for each operation
+        self.port = port  #: Port of the server, None to use the default port of the protocol
+        self.ftp = None  #: Connection to the server (ftplib.FTP), None if it is not connected
 
     #----------------------------------------------
     # Connection
@@ -318,23 +324,22 @@ class RobotFTP:
     def __exit__(self, exc_type, exc_value, traceback):
         self.Disconnect()
 
-    @staticmethod
-    def FromConnection(ftp: 'ftplib.FTP') -> 'RobotFTP':
-        """Create a RobotFTP object from an existing ftplib.FTP connection"""
-        robotftp = RobotFTP('')
+    @classmethod
+    def FromConnection(cls, ftp) -> 'RobotFTP':
+        """Create a RobotFTP object from an existing connection (an ftplib.FTP object)"""
+        robotftp = cls('')
         robotftp.ftp = ftp
         return robotftp
 
     def Connect(self) -> bool:
-        """Connect to the FTP server. A failure is reported as a popup.
+        """Connect to the server. A failure is reported as a popup.
 
         :return: True if the connection was established, False otherwise
         """
-        import ftplib
         self.Disconnect()
         self._print("POPUP: <p>Connecting to <strong>%s</strong> using user name <strong>%s</strong> and password ****</p><p>Please wait...</p>" % (self.server_ip, self.username))
         try:
-            self.ftp = ftplib.FTP(self.server_ip, self.username, self.password, timeout=self.timeout)
+            self.ftp = self._Open()
             self._print('Connection established')
             return True
         except Exception as e:
@@ -347,7 +352,7 @@ class RobotFTP:
             return
 
         try:
-            self.ftp.quit()  # politely close the session (it fails if the connection is already broken)
+            self._Close()  # politely close the session (it fails if the connection is already broken)
         except Exception:
             pass
 
@@ -401,7 +406,6 @@ class RobotFTP:
 
         :return: True if the file was transferred, False otherwise
         """
-        import ftplib
         if not local_file or not os.path.isfile(local_file):
             self._error('File not found: %s' % local_file)
             return False
@@ -421,7 +425,7 @@ class RobotFTP:
         self._print("POPUP: Connected. Uploading program to %s..." % self.server_ip)
         try:
             self._Store(local_file, filename)
-        except ftplib.all_errors + (ValueError,) as e:
+        except self._Errors + (ValueError,) as e:
             self._error('File transfer failed: %s<p>%s</p>' % (remote_file, e))
             return False
 
@@ -437,7 +441,6 @@ class RobotFTP:
 
         :return: True if the folder was transferred, False otherwise
         """
-        import ftplib
         if not local_folder or not os.path.isdir(local_folder):
             self._error('Folder not found: %s' % local_folder)
             return False
@@ -457,9 +460,9 @@ class RobotFTP:
 
         try:
             self._Mkdir(foldername)  # the folder may still exist if it could not be deleted
-            self.ftp.cwd(foldername)
+            self._Cwd(foldername)
             self._UploadContents(local_folder)
-        except ftplib.all_errors + (ValueError,) as e:
+        except self._Errors + (ValueError,) as e:
             self._error('Folder transfer failed: %s<p>%s</p>' % (remote_folder, e))
             return False
 
@@ -467,33 +470,31 @@ class RobotFTP:
         return True
 
     def RemoveFile(self, remote_file: str, silent: bool = False) -> bool:
-        """Delete a file on the FTP server.
+        """Delete a file on the server.
 
         :param str remote_file: remote file to delete
         :param bool silent: True to report a failure in the console only (deleting a file that does not exist is not always an error)
 
         :return: True if the file was deleted, False otherwise
         """
-        import ftplib
         if not self._Connected():
             return False
 
         try:
-            self.ftp.delete(remote_file)
+            self._Delete(remote_file)
             return True
-        except ftplib.all_errors as e:
+        except self._Errors as e:
             self._print('%sCould not remove file %s: %s' % ('' if silent else 'POPUP: ', remote_file, e))
             return False
 
     def RemoveDir(self, remote_folder: str, max_depth: int = MAX_DEPTH) -> bool:
-        """Delete a folder and its contents (recursively) on the FTP server.
+        """Delete a folder and its contents (recursively) on the server.
 
         :param str remote_folder: remote folder to delete
         :param int max_depth: maximum folder depth to delete (it prevents an infinite recursion)
 
         :return: True if the folder was deleted, False otherwise
         """
-        import ftplib
         if not self._Connected():
             return False
 
@@ -502,9 +503,9 @@ class RobotFTP:
             return False
 
         try:
-            names = self.ftp.nlst(remote_folder)
-        except ftplib.all_errors as e:
-            # some FTP servers complain when you try and list non-existent paths
+            names = self._List(remote_folder)
+        except self._Errors as e:
+            # some servers complain when you try and list non-existent paths
             self._print('Could not remove folder %s: %s' % (remote_folder, e))
             return False
 
@@ -522,12 +523,65 @@ class RobotFTP:
                 self.RemoveFile(remote_item, silent=True)
 
         try:
-            self.ftp.rmd(remote_folder)
-        except ftplib.all_errors as e:
+            self._Rmd(remote_folder)
+        except self._Errors as e:
             self._print('Could not remove folder %s: %s' % (remote_folder, e))
             return False
 
         return True
+
+    #----------------------------------------------
+    # Protocol operations (override these to support another protocol)
+
+    @property
+    def _Errors(self) -> tuple:
+        """Exceptions that a failed operation can raise"""
+        import ftplib
+        return ftplib.all_errors
+
+    def _Open(self):
+        """Establish the connection and return it"""
+        import ftplib
+        if self.port:
+            ftp = ftplib.FTP(timeout=self.timeout)
+            ftp.connect(self.server_ip, self.port)
+            ftp.login(self.username, self.password)
+            return ftp
+
+        return ftplib.FTP(self.server_ip, self.username, self.password, timeout=self.timeout)
+
+    def _Close(self):
+        """Close the session"""
+        self.ftp.quit()
+
+    def _Pwd(self) -> str:
+        """Returns the remote working folder"""
+        return self.ftp.pwd()
+
+    def _Cwd(self, remote_path: str):
+        """Set the remote working folder"""
+        self.ftp.cwd(remote_path)
+
+    def _List(self, remote_path: str) -> List[str]:
+        """List the contents of a remote folder"""
+        return self.ftp.nlst(remote_path)
+
+    def _Delete(self, remote_file: str):
+        """Delete a remote file"""
+        self.ftp.delete(remote_file)
+
+    def _Mkd(self, name: str):
+        """Create a folder in the remote working folder"""
+        self.ftp.mkd(name)
+
+    def _Rmd(self, remote_folder: str):
+        """Delete an empty remote folder"""
+        self.ftp.rmd(remote_folder)
+
+    def _Put(self, local_file: str, name: str):
+        """Upload one file to the remote working folder"""
+        with open(local_file, 'rb') as fh:
+            self.ftp.storbinary('STOR %s' % name, fh)
 
     #----------------------------------------------
     # Internal
@@ -566,43 +620,40 @@ class RobotFTP:
         return name
 
     def _Connected(self) -> bool:
-        """Returns True if we are connected to the FTP server. It connects if it is not connected yet."""
+        """Returns True if we are connected to the server. It connects if it is not connected yet."""
         return self.ftp is not None or self.Connect()
 
     def _IsDir(self, remote_path: str) -> bool:
         """Returns True if a remote path is a folder (if we can enter it)"""
-        import ftplib
         try:
-            working_folder = self.ftp.pwd()
-            self.ftp.cwd(remote_path)
-        except ftplib.all_errors:
+            working_folder = self._Pwd()
+            self._Cwd(remote_path)
+        except self._Errors:
             return False
 
         try:
-            self.ftp.cwd(working_folder)  # don't stay inside a folder that may be deleted
-        except ftplib.all_errors:
+            self._Cwd(working_folder)  # don't stay inside a folder that may be deleted
+        except self._Errors:
             pass
 
         return True
 
     def _Cd(self, remote_path: str) -> bool:
         """Set the remote working folder. A failure is reported as a popup."""
-        import ftplib
         try:
-            self.ftp.cwd(remote_path)
+            self._Cwd(remote_path)
             return True
-        except ftplib.all_errors as e:
+        except self._Errors as e:
             self._error("Remote path not found or can't be created: %s<p>%s</p>" % (remote_path, e))
             #contin = mbox("Remote path\n%s\nnot found or can't create folder.\n\nChange path and permissions and retry." % remote_path)
             return False
 
     def _Mkdir(self, name: str):
         """Create a folder in the remote working folder. An existing folder is not an error."""
-        import ftplib
         self._Check(name)
         try:
-            self.ftp.mkd(name)
-        except ftplib.all_errors:
+            self._Mkd(name)
+        except self._Errors:
             pass  # the folder may already exist
 
     def _Store(self, local_file: str, name: str):
@@ -610,8 +661,7 @@ class RobotFTP:
         self._Check(name)
         self._print('  Sending file: %s' % local_file)
         self._print("POPUP: Sending file: %s" % name)
-        with open(local_file, 'rb') as fh:
-            self.ftp.storbinary('STOR %s' % name, fh)
+        self._Put(local_file, name)
 
     def _UploadContents(self, local_folder: str):
         """Upload the contents of a local folder to the remote working folder, recursively.
@@ -624,9 +674,153 @@ class RobotFTP:
             elif os.path.isdir(local_item):
                 self._print('  Sending folder: %s' % name)
                 self._Mkdir(name)
-                self.ftp.cwd(name)
+                self._Cwd(name)
                 self._UploadContents(local_item)
-                self.ftp.cwd('..')
+                self._Cwd('..')
+
+
+class RobotSFTP(RobotFTP):
+    """SFTP (SSH File Transfer Protocol) client to transfer robot programs to a robot controller, or to any SFTP server.
+    Unlike FTP, the credentials and the files are encrypted.
+
+    It requires the ``paramiko`` module, which is installed automatically the first time a transfer is attempted
+    (it can also be installed manually with ``python -m pip install robodk[sftp]``).
+
+    By default any host key is accepted, like FTP does. Pass ``verify_host_key=True`` to only accept
+    the servers listed in the known hosts file of the system (``~/.ssh/known_hosts``).
+
+    Example:
+
+    .. code-block:: python
+
+        from robodk.robofileio import RobotSFTP
+
+        with RobotSFTP('192.168.0.1', 'robot', 'password') as sftp:
+            sftp.Upload(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '/program')
+
+    .. seealso:: :class:`~robodk.robofileio.RobotFTP`, :func:`~robodk.robofileio.UploadSFTP`
+    """
+
+    PORT: int = 22  #: Default port of the SSH protocol
+
+    def __init__(self, server_ip: str, username: str = '', password: str = '', timeout: float = RobotFTP.TIMEOUT, port: int = None, verify_host_key: bool = False):
+        RobotFTP.__init__(self, server_ip, username, password, timeout, port)
+        self.verify_host_key = verify_host_key  #: True to only accept the host keys listed in the known hosts file of the system
+        self.ssh = None  #: SSH connection (paramiko.SSHClient), None if it is not connected
+        self.paramiko = None  #: paramiko module, it is imported when it is needed
+
+    @staticmethod
+    def _Paramiko():
+        """Returns the paramiko module. It is installed if it is not available yet (it is only required for SFTP transfers).
+
+        :raises ImportError: if paramiko is not available and it could not be installed
+        """
+        from robodk.robolink import import_install
+        import_install('paramiko')  # it does nothing if paramiko is already available
+        import paramiko
+        return paramiko
+
+    #----------------------------------------------
+    # Protocol operations
+
+    @property
+    def _Errors(self) -> tuple:
+        if self.paramiko is None:
+            return (OSError,)
+
+        return (OSError, self.paramiko.SSHException)
+
+    def _Open(self):
+        self.paramiko = self._Paramiko()
+        ssh = self.paramiko.SSHClient()
+        if self.verify_host_key:
+            ssh.load_system_host_keys()
+            ssh.set_missing_host_key_policy(self.paramiko.RejectPolicy())
+        else:
+            # Accept any host key: a robot controller is usually on a local network and is not in the known hosts file
+            ssh.set_missing_host_key_policy(self.paramiko.AutoAddPolicy())
+
+        ssh.connect(self.server_ip, port=self.port if self.port else self.PORT, username=self.username, password=self.password, timeout=self.timeout, look_for_keys=False, allow_agent=False)
+        self.ssh = ssh
+        return ssh.open_sftp()
+
+    def _Close(self):
+        self.ftp.close()
+        if self.ssh is not None:
+            self.ssh.close()
+            self.ssh = None
+
+    def _Pwd(self) -> str:
+        return self.ftp.getcwd()
+
+    def _Cwd(self, remote_path: str):
+        self.ftp.chdir(remote_path)
+
+    def _List(self, remote_path: str) -> List[str]:
+        return self.ftp.listdir(remote_path)
+
+    def _Delete(self, remote_file: str):
+        self.ftp.remove(remote_file)
+
+    def _Mkd(self, name: str):
+        self.ftp.mkdir(name)
+
+    def _Rmd(self, remote_folder: str):
+        self.ftp.rmdir(remote_folder)
+
+    def _Put(self, local_file: str, name: str):
+        self.ftp.put(local_file, name)
+
+    def _IsDir(self, remote_path: str) -> bool:
+        """Returns True if a remote path is a folder"""
+        import stat
+        try:
+            return stat.S_ISDIR(self.ftp.stat(remote_path).st_mode)
+        except self._Errors:
+            return False
+
+
+class RobotFTPS(RobotFTP):
+    """FTPS (FTP over TLS) client to transfer robot programs to a robot controller, or to any FTPS server.
+    Unlike FTP, the credentials and the files are encrypted. It does not require any additional module.
+
+    Example:
+
+    .. code-block:: python
+
+        from robodk.robofileio import RobotFTPS
+
+        with RobotFTPS('192.168.0.1', 'robot', 'password') as ftps:
+            ftps.Upload('C:/RoboDK/Prog1.src', '/program')
+
+    .. seealso:: :class:`~robodk.robofileio.RobotFTP`, :class:`~robodk.robofileio.RobotSFTP`
+    """
+
+    def _Open(self):
+        import ftplib
+        ftp = ftplib.FTP_TLS(timeout=self.timeout)
+        ftp.connect(self.server_ip, self.port if self.port else self.PORT)
+        ftp.login(self.username, self.password)
+        ftp.prot_p()  # encrypt the data channel (the file transfers), not only the commands
+        return ftp
+
+
+def _UploadProgram(ftp_class, program: Union[str, List[str]], robot_ip: str, remote_path: str, username: str, password: str, pause_sec: float) -> bool:
+    """Shared implementation of UploadFTP and UploadSFTP"""
+    if isinstance(program, (list, tuple)) and len(program) == 0:
+        print('POPUP: Nothing to transfer')
+        sys.stdout.flush()
+        robomath.pause(pause_sec)
+        return False
+
+    # All the files and folders are transferred through the same connection
+    with ftp_class(robot_ip, username, password) as ftp:
+        success = ftp.Upload(program, remote_path)
+
+    robomath.pause(pause_sec)
+    print("POPUP: Done")
+    sys.stdout.flush()
+    return success
 
 
 def RemoveFileFTP(ftp: 'ftplib.FTP', filepath: str) -> bool:
@@ -654,7 +848,7 @@ def UploadDirFTP(localpath: str, server_ip: str, remote_path: str, username: str
 
     :return: True if the folder was transferred, False otherwise
 
-    .. seealso:: :func:`RobotFTP.UploadDir <robodk.robofileio.RobotFTP.UploadDir>`
+    .. seealso:: :func:`RobotFTP.UploadDir <robodk.robofileio.RobotFTP.UploadDir>`, :func:`~robodk.robofileio.UploadDirSFTP`
     """
     with RobotFTP(server_ip, username, password, timeout) as ftp:
         return ftp.UploadDir(localpath, remote_path)
@@ -665,7 +859,7 @@ def UploadFileFTP(file_path_name: str, server_ip: str, remote_path: str, usernam
 
     :return: True if the file was transferred, False otherwise
 
-    .. seealso:: :func:`RobotFTP.UploadFile <robodk.robofileio.RobotFTP.UploadFile>`
+    .. seealso:: :func:`RobotFTP.UploadFile <robodk.robofileio.RobotFTP.UploadFile>`, :func:`~robodk.robofileio.UploadFileSFTP`
     """
     with RobotFTP(server_ip, username, password, timeout) as ftp:
         return ftp.UploadFile(file_path_name, remote_path)
@@ -676,22 +870,74 @@ def UploadFTP(program: Union[str, List[str]], robot_ip: str, remote_path: str, f
 
     :return: True if all the files and folders were transferred, False otherwise
 
-    .. seealso:: :func:`RobotFTP.Upload <robodk.robofileio.RobotFTP.Upload>`
+    Example:
+
+    .. code-block:: python
+
+        from robodk.robofileio import UploadFTP, UploadFileFTP, RobotFTPS
+
+        UploadFTP(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '192.168.0.1', '/program', 'robot', 'password')
+
+        # Transfer one file or one folder only
+        UploadFileFTP('C:/RoboDK/Prog1.src', '192.168.0.1', '/program', 'robot', 'password')
+
+        # FTPS (FTP over TLS) encrypts the credentials and the files, it does not require any additional module
+        with RobotFTPS('192.168.0.1', 'robot', 'password') as ftps:
+            ftps.Upload('C:/RoboDK/Prog1.src', '/program')
+
+    .. seealso:: :func:`RobotFTP.Upload <robodk.robofileio.RobotFTP.Upload>`, :func:`~robodk.robofileio.UploadSFTP`
     """
-    if isinstance(program, (list, tuple)) and len(program) == 0:
-        print('POPUP: Nothing to transfer')
-        sys.stdout.flush()
-        robomath.pause(pause_sec)
-        return False
+    return _UploadProgram(RobotFTP, program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec)
 
-    # All the files and folders are transferred through the same connection
-    with RobotFTP(robot_ip, ftp_user, ftp_pass) as ftp:
-        success = ftp.Upload(program, remote_path)
 
-    robomath.pause(pause_sec)
-    print("POPUP: Done")
-    sys.stdout.flush()
-    return success
+def UploadDirSFTP(localpath: str, server_ip: str, remote_path: str, username: str, password: str, timeout: float = RobotFTP.TIMEOUT) -> bool:
+    """Upload a folder to a robot through SFTP (SSH) recursively.
+    The paramiko module is installed automatically the first time it is needed.
+
+    :return: True if the folder was transferred, False otherwise
+
+    .. seealso:: :func:`RobotSFTP.UploadDir <robodk.robofileio.RobotFTP.UploadDir>`, :func:`~robodk.robofileio.UploadDirFTP`
+    """
+    with RobotSFTP(server_ip, username, password, timeout) as sftp:
+        return sftp.UploadDir(localpath, remote_path)
+
+
+def UploadFileSFTP(file_path_name: str, server_ip: str, remote_path: str, username: str, password: str, timeout: float = RobotFTP.TIMEOUT) -> bool:
+    """Upload a file to a robot through SFTP (SSH).
+    The paramiko module is installed automatically the first time it is needed.
+
+    :return: True if the file was transferred, False otherwise
+
+    .. seealso:: :func:`RobotSFTP.UploadFile <robodk.robofileio.RobotFTP.UploadFile>`, :func:`~robodk.robofileio.UploadFileFTP`
+    """
+    with RobotSFTP(server_ip, username, password, timeout) as sftp:
+        return sftp.UploadFile(file_path_name, remote_path)
+
+
+def UploadSFTP(program: Union[str, List[str]], robot_ip: str, remote_path: str, ftp_user: str, ftp_pass: str, pause_sec: float = 2) -> bool:
+    """Upload a program or a list of programs to the robot through SFTP (SSH) provided the connection parameters.
+    The paramiko module is installed automatically the first time it is needed.
+
+    :return: True if all the files and folders were transferred, False otherwise
+
+    Example:
+
+    .. code-block:: python
+
+        from robodk.robofileio import UploadSFTP, UploadFileSFTP, RobotSFTP
+
+        UploadSFTP(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '192.168.0.1', '/program', 'robot', 'password')
+
+        # Transfer one file or one folder only
+        UploadFileSFTP('C:/RoboDK/Prog1.src', '192.168.0.1', '/program', 'robot', 'password')
+
+        # Use RobotSFTP to reuse one connection, to use another port or to only accept known host keys
+        with RobotSFTP('192.168.0.1', 'robot', 'password', verify_host_key=True) as sftp:
+            sftp.Upload(['C:/RoboDK/Prog1.src', 'C:/RoboDK/Prog2.src'], '/program')
+
+    .. seealso:: :func:`RobotSFTP.Upload <robodk.robofileio.RobotFTP.Upload>`, :func:`~robodk.robofileio.UploadFTP`
+    """
+    return _UploadProgram(RobotSFTP, program, robot_ip, remote_path, ftp_user, ftp_pass, pause_sec)
 
 
 if __name__ == "__main__":
