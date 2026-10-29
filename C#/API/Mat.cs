@@ -461,6 +461,103 @@ namespace RoboDk.API
         }
 
         /// <summary>
+        ///     Returns the quaternion of a pose (4x4 matrix).
+        ///     The translation part of the pose is ignored.
+        ///     See also: FromQuaternion()
+        /// </summary>
+        /// <param name="Ti">Homogeneous matrix (4x4)</param>
+        /// <returns>Unit quaternion as [q1, q2, q3, q4], scalar part first (ABB convention)</returns>
+        public static double[] ToQuaternion(Mat Ti)
+        {
+            const double Tolerance_0 = 1e-9;
+            const double Tolerance_180 = 1e-7;
+            double[] q = new double[4];
+
+            double cosangle = Math.Min(Math.Max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0);  // Calculate the rotation angle
+            if (cosangle > 1.0 - Tolerance_0)
+            {
+                // Identity matrix
+                q[0] = 1.0;
+                q[1] = 0.0;
+                q[2] = 0.0;
+                q[3] = 0.0;
+            }
+            else if (cosangle < -1.0 + Tolerance_180)
+            {
+                // 180 rotation around an axis
+                double[] diag = new[] { Ti[0, 0], Ti[1, 1], Ti[2, 2] };
+                int k = Array.IndexOf(diag, diag.Max());
+                double[] col = new[] { Ti[0, k], Ti[1, k], Ti[2, k] };
+                col[k] = col[k] + 1.0;
+                double[] rotvector = col.Select(n => n / SqrtA(2.0 * (1.0 + diag[k]))).ToArray();
+
+                double SqrtA(double d)
+                {
+                    if (d <= 0.0)
+                    {
+                        return 0.0;
+                    }
+                    return Math.Sqrt(d);
+                }
+
+                q[0] = 0.0;
+                q[1] = rotvector[0];
+                q[2] = rotvector[1];
+                q[3] = rotvector[2];
+            }
+            else
+            {
+                // No edge case, normal calculation
+                double a = Ti[0, 0];
+                double b = Ti[1, 1];
+                double c = Ti[2, 2];
+                double sign2 = 1.0;
+                double sign3 = 1.0;
+                double sign4 = 1.0;
+                if (Ti[2, 1] - Ti[1, 2] < 0)
+                {
+                    sign2 = -1.0;
+                }
+                if (Ti[0, 2] - Ti[2, 0] < 0)
+                {
+                    sign3 = -1.0;
+                }
+                if (Ti[1, 0] - Ti[0, 1] < 0)
+                {
+                    sign4 = -1.0;
+                }
+                q[0] =         Math.Sqrt(Math.Max( a + b + c + 1.0, 0.0)) / 2.0;
+                q[1] = sign2 * Math.Sqrt(Math.Max( a - b - c + 1.0, 0.0)) / 2.0;
+                q[2] = sign3 * Math.Sqrt(Math.Max(-a + b - c + 1.0, 0.0)) / 2.0;
+                q[3] = sign4 * Math.Sqrt(Math.Max(-a - b + c + 1.0, 0.0)) / 2.0;
+            }
+            return q;
+        }
+
+        /// <summary>
+        ///     Returns the pose (4x4 matrix) from quaternion data.
+        ///     The quaternion is normalized and the translation of the returned pose is zero.
+        ///     See also: ToQuaternion()
+        /// </summary>
+        /// <param name="qin">Quaternion as [q1, q2, q3, q4], scalar part first (ABB convention)</param>
+        /// <returns>Homogeneous matrix (4x4)</returns>
+        public static Mat FromQuaternion(double[] qin)
+        {
+            var qnorm = Math.Sqrt(qin[0] * qin[0] + qin[1] * qin[1] + qin[2] * qin[2] + qin[3] * qin[3]);
+            var q = new double[4];
+            q[0] = qin[0] / qnorm;
+            q[1] = qin[1] / qnorm;
+            q[2] = qin[2] / qnorm;
+            q[3] = qin[3] / qnorm;
+            var pose = new Mat(1 - 2 * q[2] * q[2] - 2 * q[3] * q[3], 2 * q[1] * q[2] - 2 * q[3] * q[0],
+                2 * q[1] * q[3] + 2 * q[2] * q[0], 0, 2 * q[1] * q[2] + 2 * q[3] * q[0],
+                1 - 2 * q[1] * q[1] - 2 * q[3] * q[3], 2 * q[2] * q[3] - 2 * q[1] * q[0], 0,
+                2 * q[1] * q[3] - 2 * q[2] * q[0], 2 * q[2] * q[3] + 2 * q[1] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2],
+                0);
+            return pose;
+        }
+
+        /// <summary>
         ///     Calculates the pose from the position and euler angles ([x,y,z,rx,ry,rz] array)
         ///     The result is the same as calling: H = transl(x,y,z)*rotx(rx*pi/180)*roty(ry*pi/180)*rotz(rz*pi/180)
         /// </summary>
@@ -1238,99 +1335,6 @@ namespace RoboDk.API
         #endregion
 
         #region Private Methods
-
-        /// <summary>
-        ///     Returns the quaternion of a pose (4x4 matrix)
-        /// </summary>
-        /// <param name="Ti"></param>
-        /// <returns></returns>
-        private static double[] ToQuaternion(Mat Ti)
-        {
-            const double Tolerance_0 = 1e-9;
-            const double Tolerance_180 = 1e-7;
-            double[] q = new double[4];
-
-            double cosangle = Math.Min(Math.Max(((Ti[0, 0] + Ti[1, 1] + Ti[2, 2] - 1.0) * 0.5), -1.0), 1.0);  // Calculate the rotation angle
-            if (cosangle > 1.0 - Tolerance_0)
-            {
-                // Identity matrix
-                q[0] = 1.0;
-                q[1] = 0.0;
-                q[2] = 0.0;
-                q[3] = 0.0;
-            }
-            else if (cosangle < -1.0 + Tolerance_180)
-            {
-                // 180 rotation around an axis
-                double[] diag = new[] { Ti[0, 0], Ti[1, 1], Ti[2, 2] };
-                int k = Array.IndexOf(diag, diag.Max());
-                double[] col = new[] { Ti[0, k], Ti[1, k], Ti[2, k] };
-                col[k] = col[k] + 1.0;
-                double[] rotvector = col.Select(n => n / SqrtA(2.0 * (1.0 + diag[k]))).ToArray();
-
-                double SqrtA(double d)
-                {
-                    if (d <= 0.0)
-                    {
-                        return 0.0;
-                    }
-                    return Math.Sqrt(d);
-                }
-
-                q[0] = 0.0;
-                q[1] = rotvector[0];
-                q[2] = rotvector[1];
-                q[3] = rotvector[2];
-            }
-            else
-            {
-                // No edge case, normal calculation
-                double a = Ti[0, 0];
-                double b = Ti[1, 1];
-                double c = Ti[2, 2];
-                double sign2 = 1.0;
-                double sign3 = 1.0;
-                double sign4 = 1.0;
-                if (Ti[2, 1] - Ti[1, 2] < 0)
-                {
-                    sign2 = -1.0;
-                }
-                if (Ti[0, 2] - Ti[2, 0] < 0)
-                {
-                    sign3 = -1.0;
-                }
-                if (Ti[1, 0] - Ti[0, 1] < 0)
-                {
-                    sign4 = -1.0;
-                }
-                q[0] =         Math.Sqrt(Math.Max( a + b + c + 1.0, 0.0)) / 2.0;
-                q[1] = sign2 * Math.Sqrt(Math.Max( a - b - c + 1.0, 0.0)) / 2.0;
-                q[2] = sign3 * Math.Sqrt(Math.Max(-a + b - c + 1.0, 0.0)) / 2.0;
-                q[3] = sign4 * Math.Sqrt(Math.Max(-a - b + c + 1.0, 0.0)) / 2.0;
-            }
-            return q;
-        }
-
-        /// <summary>
-        ///     Returns the pose (4x4 matrix) from quaternion data
-        /// </summary>
-        /// <param name="q"></param>
-        /// <returns></returns>
-        private static Mat FromQuaternion(double[] qin)
-        {
-            var qnorm = Math.Sqrt(qin[0] * qin[0] + qin[1] * qin[1] + qin[2] * qin[2] + qin[3] * qin[3]);
-            var q = new double[4];
-            q[0] = qin[0] / qnorm;
-            q[1] = qin[1] / qnorm;
-            q[2] = qin[2] / qnorm;
-            q[3] = qin[3] / qnorm;
-            var pose = new Mat(1 - 2 * q[2] * q[2] - 2 * q[3] * q[3], 2 * q[1] * q[2] - 2 * q[3] * q[0],
-                2 * q[1] * q[3] + 2 * q[2] * q[0], 0, 2 * q[1] * q[2] + 2 * q[3] * q[0],
-                1 - 2 * q[1] * q[1] - 2 * q[3] * q[3], 2 * q[2] * q[3] - 2 * q[1] * q[0], 0,
-                2 * q[1] * q[3] - 2 * q[2] * q[0], 2 * q[2] * q[3] + 2 * q[1] * q[0], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2],
-                0);
-            return pose;
-        }
 
         /// <summary>
         ///     Converts a pose to an ABB target
