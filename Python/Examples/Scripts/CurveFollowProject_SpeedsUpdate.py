@@ -7,8 +7,8 @@
 from robodk.robolink import *  # RoboDK API
 from robodk import roboapps
 
-from PySide2.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDoubleSpinBox, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout
-from PySide2 import QtCore
+from PySide6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDoubleSpinBox, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout
+from PySide6 import QtCore
 
 RDK = Robolink()
 
@@ -114,10 +114,10 @@ if __name__ == "__main__":
     app = roboapps.get_qt_app(True, True)
     
     window = set_speed()
-    window.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+    window.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     window.show()
 
-    app.exec_()
+    app.exec()
 
 
 

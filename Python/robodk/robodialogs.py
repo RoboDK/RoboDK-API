@@ -26,13 +26,21 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple
 
-# robodialogs is compatible with PySide2 and tkinter. At least one must be present.
+# robodialogs is compatible with PySide6, PySide2 and tkinter. At least one must be present.
+# Qt is preferred when available: PySide6 first, then PySide2 (legacy, Python 3.10 and older).
+QT_API = None  #: Name of the Qt binding in use ('PySide6' or 'PySide2'), or None if Qt is not available
 ENABLE_QT = False
 try:
-    from PySide2 import QtWidgets, QtCore
+    from PySide6 import QtWidgets, QtCore
+    QT_API = 'PySide6'
     ENABLE_QT = True
 except ImportError:
-    pass
+    try:
+        from PySide2 import QtWidgets, QtCore
+        QT_API = 'PySide2'
+        ENABLE_QT = True
+    except ImportError:
+        pass
 
 ENABLE_TK = False
 try:
@@ -49,9 +57,17 @@ except ImportError:
     pass
 
 if not ENABLE_TK and not ENABLE_QT:
-    s = 'PySide2 and/or tkinter is not present on the system. Please install PySide2: "python -m pip install PySide2" or "python -m pip install robodk[apps]"'
-    print(s)
-    #raise ImportError(s)
+    import warnings
+    s = 'Neither PySide6, PySide2 nor tkinter is present on the system: dialogs are not available. Please install PySide6: "python -m pip install PySide6-Essentials" or "python -m pip install robodk[apps]"'
+    warnings.warn(s)
+
+
+def _exec(dialog):
+    """Run the modal event loop of a Qt dialog or message box and return its result.
+    PySide6 provides exec(), PySide2 only provides exec_(). exec is a keyword in Python 2, hence getattr."""
+    if hasattr(dialog, 'exec'):
+        return getattr(dialog, 'exec')()
+    return dialog.exec_()
 
 FILE_TYPES_ALL = ('All Files', '.*')  #: File type filter for all files
 FILE_TYPES_ROBODK = ('RoboDK Files', '.sld .rdk .robot .tool .rdka .rdkbak .rdkp .py')  #: File type filter for RoboDK files
@@ -870,13 +886,13 @@ if ENABLE_QT:
         @staticmethod
         def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
             app = get_qt_app(robodk_theme=False)
-            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
+            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.Option.ShowDirsOnly)
             return file if file else None
 
         @staticmethod
         def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder'):
             app = get_qt_app(robodk_theme=False)
-            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
+            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.Option.ShowDirsOnly)
             return file if file else None
 
         @staticmethod
@@ -887,14 +903,14 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Information)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -905,9 +921,9 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Information)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
@@ -919,7 +935,7 @@ if ENABLE_QT:
             else:
                 msg_box.setText(msg)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -930,14 +946,14 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Question)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Question)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
 
         @staticmethod
@@ -948,21 +964,21 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Question)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Question)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             if ret == QtWidgets.QMessageBox.StandardButton.Cancel:
                 return None
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
 
         class InputDialogQt(QtWidgets.QDialog):
 
-            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.Dialog):
+            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.WindowType.Dialog):
                 super().__init__(parent, f)
 
                 # Set the window title
@@ -979,7 +995,7 @@ if ENABLE_QT:
                 if msg:
                     label = QtWidgets.QLabel(msg, self)
                     label.setWordWrap(True)
-                    label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+                    label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
 
                 # Create the widget holding the value
                 self.widget, self.funcs = value_to_qt_widget(value)
@@ -987,9 +1003,9 @@ if ENABLE_QT:
                     raise Exception("Invalid or unsupported input type: " + str(value))
 
                 # Add the static buttons
-                button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Horizontal, self)
-                QtCore.QObject.connect(button_box, QtCore.SIGNAL('accepted()'), self, QtCore.SLOT('accept()'))
-                QtCore.QObject.connect(button_box, QtCore.SIGNAL('rejected()'), self, QtCore.SLOT('reject()'))
+                button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Orientation.Horizontal, self)
+                button_box.accepted.connect(self.accept)
+                button_box.rejected.connect(self.reject)
 
                 # Add the 'Restore Defaults' button
                 if default_button:
@@ -1000,7 +1016,7 @@ if ENABLE_QT:
                 max_h_actions = 1
                 if actions:
                     if len(actions) > max_h_actions:
-                        button_box_actions = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical, self)
+                        button_box_actions = QtWidgets.QDialogButtonBox(QtCore.Qt.Orientation.Vertical, self)
                         for (button_text, button_action) in actions:
                             button = button_box_actions.addButton(button_text, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
                             button.clicked.connect(button_action)
@@ -1013,14 +1029,14 @@ if ENABLE_QT:
                 self.has_scroll = type(value) is dict and len(value.keys()) > 10
                 if self.has_scroll:
                     self.scroll_widget = QtWidgets.QScrollArea()
-                    self.scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    self.scroll_widget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
                     self.scroll_widget.setWidgetResizable(True)
                     self.scroll_widget.setWidget(self.widget)
                     self.scroll_widget.setMinimumWidth(self.widget.minimumWidth() + 20)
 
                 # Create the main layout
                 layout = QtWidgets.QVBoxLayout(self)
-                layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+                layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
                 if msg:
                     layout.addWidget(label)
                 layout.addWidget(self.scroll_widget if self.has_scroll else self.widget)
@@ -1049,14 +1065,14 @@ if ENABLE_QT:
 
             app = get_qt_app()
 
-            dialog = DialogsQt.InputDialogQt(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, actions=actions, f=QtCore.Qt.Dialog | QtCore.Qt.WindowStaysOnTopHint)
+            dialog = DialogsQt.InputDialogQt(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, actions=actions, f=QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
             if embed:
                 from robodk.robolink import EmbedWindow
                 size = dialog.sizeHint()
                 EmbedWindow(dialog.windowTitle(), size_w=size.width(), size_h=size.height())
 
-            ret = dialog.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(dialog)
             if not ret:
                 return None
 

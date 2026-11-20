@@ -30,7 +30,9 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple, Dict
 
-if robodialogs.ENABLE_QT:
+if robodialogs.QT_API == 'PySide6':
+    from PySide6 import QtWidgets, QtCore, QtGui
+elif robodialogs.QT_API == 'PySide2':
     from PySide2 import QtWidgets, QtCore, QtGui
 
 if robodialogs.ENABLE_TK:
@@ -304,7 +306,7 @@ def Registry(varname: str, setvalue: str = None):
 """
 UI utilities (Qt and Tkinter utilities).
 
-Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt (PySide2).
+Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt (PySide6, or PySide2 on Python 3.10 and older).
 """
 
 
@@ -452,7 +454,7 @@ def get_robodk_theme(RDK: robolink.Robolink = None) -> str:
 
 
 """
-PySide2 / Qt utilities
+Qt utilities (PySide6 or PySide2, see robodialogs.QT_API)
 """
 
 if robodialogs.ENABLE_QT:
@@ -471,13 +473,15 @@ if robodialogs.ENABLE_QT:
         :type RDK: robolink.Robolink
 
         :return: The QApplication instance
-        :rtype: :class:`PySide2.QtWidgets.QApplication`
+        :rtype: :class:`PySide6.QtWidgets.QApplication`
         """
 
         app = QtWidgets.QApplication.instance()
         if app is None:
-            QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-            QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DisableWindowContextHelpButton, True)
+            if robodialogs.QT_API == 'PySide2':
+                # Qt 6 always enables high DPI scaling and removed the context help button: these attributes only exist in Qt 5
+                QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
+                QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DisableWindowContextHelpButton, True)
             app = QtWidgets.QApplication([])
 
         if robodk_icon:
@@ -506,7 +510,7 @@ if robodialogs.ENABLE_QT:
         """Set a Qt application theme to match RoboDK's theme.
 
         :param app: The QApplication
-        :type app: :class:`PySide2.QtWidgets.QApplication`
+        :type app: :class:`PySide6.QtWidgets.QApplication`
         """
         # RoboDK theme : Qt theme
         qt_theme_map = {
@@ -562,7 +566,7 @@ if robodialogs.ENABLE_QT:
         :param icon_name: The name of the icon
         :type icon_name: str
         :return: a QImage of the icon if it succeeds, else None
-        :rtype: :class:`PySide2.QtGui.QImage`
+        :rtype: :class:`PySide6.QtGui.QImage`
 
         .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icons`
         """
@@ -588,7 +592,7 @@ if robodialogs.ENABLE_QT:
         Retrieve a dictionary of available RoboDK icons, such as robot, tool and frame icons (requires Qt module).
 
         :return: a dictionary of QImage of available icons
-        :rtype: dict of :class:`PySide2.QtGui.QImage`
+        :rtype: dict of :class:`PySide6.QtGui.QImage`
 
         .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icon`
         """
@@ -758,7 +762,7 @@ if robodialogs.ENABLE_QT:
             h_layout = QtWidgets.QHBoxLayout()
             h_layout.setSpacing(0)
             h_layout.setContentsMargins(0, 0, 0, 0)
-            h_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+            h_layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
             for v in value:
                 f_widget, f_func = value_to_qt_widget(v, None)
                 func.extend(f_func)
@@ -784,7 +788,7 @@ if robodialogs.ENABLE_QT:
             f_layout.setVerticalSpacing(1)
             f_layout.setHorizontalSpacing(10)
             f_layout.setContentsMargins(0, 0, 0, 0)
-            f_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+            f_layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
 
             for key, val in value.items():
 
@@ -830,7 +834,7 @@ if robodialogs.ENABLE_TK:
         :type RDK: robolink.Robolink
 
         :return: The QApplication instance
-        :rtype: :class:`PySide2.QtWidgets.QApplication`
+        :rtype: :class:`PySide6.QtWidgets.QApplication`
         """
 
         app = tkinter.Tk()
@@ -1343,7 +1347,7 @@ def ShowExample():
                     icon_widget.adjustSize()
 
                     scroll_widget = QtWidgets.QScrollArea()
-                    scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    scroll_widget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
                     scroll_widget.setWidgetResizable(True)
                     scroll_widget.setWidget(icon_widget)
                     scroll_widget.setMinimumWidth(icon_widget.minimumWidth() + 20)
@@ -1353,7 +1357,7 @@ def ShowExample():
                     icon_window.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
                     icon_window.setLayout(QtWidgets.QVBoxLayout())
                     icon_window.layout().addWidget(scroll_widget)
-                    icon_window.exec_()
+                    robodialogs._exec(icon_window)
                 else:
                     from robodk import robodialogs
                     robodialogs.ShowMessage('No icons to display! Is the plug-in enabled?')

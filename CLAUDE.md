@@ -24,7 +24,7 @@ For writing, porting, or debugging application code against this API (Robolink/I
 # Install (development)
 pip install -e Python/
 
-# Install with optional extras
+# Install with optional extras (apps = PySide6-Essentials for Qt dialogs; apps-pyside2 = legacy PySide2 for Python <= 3.10)
 pip install robodk[cv,apps,lint]
 
 # Run all unit tests (RoboDK must be running with the matching .rdk station open)
@@ -94,7 +94,7 @@ Python/
   robodk/
     robolink.py      # Robolink + Item classes; TCP socket protocol
     robomath.py      # Pose math (Mat class, rotations, Euler conversions)
-    robodialogs.py   # UI dialogs (open/save file, message prompts)
+    robodialogs.py   # UI dialogs (open/save file, message prompts); picks PySide6, then PySide2, then tkinter (robodialogs.QT_API)
     robofileio.py    # CSV, FTP, file utilities
     roboapps.py      # App Loader plug-in framework
     robolinkutils.py # Helpers built on top of robolink

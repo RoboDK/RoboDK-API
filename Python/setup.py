@@ -8,7 +8,7 @@ from __future__ import print_function  # (Must be always at the top)
 from setuptools import setup  # Always prefer setuptools over distutils
 from pathlib import Path
 
-VERSION = '6.0.2'
+VERSION = '6.1.0'
 
 this_directory = Path(__file__).parent
 LONG_DESCRIPTION = (this_directory / "readme.md").read_text()
@@ -107,7 +107,8 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'apps': ['PySide2==5.15.*'],
+        'apps': ['PySide6-Essentials==6.12.*'],  # Qt dialogs and Add-in settings UI (PySide6 is tried first, then PySide2, then tkinter)
+        'apps-pyside2': ['PySide2==5.15.*'],  # Legacy Qt 5 binding for Python 3.10 and older
         'cv': ['opencv-contrib-python', 'numpy'],
         'lint': ['astroid'],
         'sftp': ['paramiko'],
