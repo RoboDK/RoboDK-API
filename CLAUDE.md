@@ -34,8 +34,8 @@ python -m unittest -v
 # Run a specific test module
 python -m nose2 test_RobotSim6Axes
 
-# Lint a script
-pylint --load-plugins=pylint_robodk <script.py>
+# Lint a script (the former pylint_robodk plugin is gone; pylint resolves the robodk package by itself)
+pylint <script.py>
 ```
 
 Test dependencies: `pip install nose2 nose2-html-report parameterized`
@@ -99,7 +99,6 @@ Python/
     roboapps.py      # App Loader plug-in framework
     robolinkutils.py # Helpers built on top of robolink
   robolink/          # Thin re-export package (legacy compatibility)
-  pylint_robodk/     # Pylint plugin for RoboDK-aware linting
   tests/             # unittest suite (requires a live RoboDK instance)
   Examples/          # 200+ standalone scripts
 ```

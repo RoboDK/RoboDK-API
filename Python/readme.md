@@ -275,10 +275,7 @@ Linting (source-code checker)
 -------------------------------
 Pylint is a source-code, bug and quality checker for Python programming. Pylint is integrated by default when using RoboDK's default settings (VScode/VScodium text editor).
 
-If you prefer using other text editors you can use the pylint_robodk module with Pylint for linting. The following argument must be passed to pylint to activate this feature:
-```
---load-plugins=pylint_robodk
-```
+With any other editor, run pylint on your script directly: it resolves the `robodk` package like any other installed package. The former `pylint_robodk` plugin and its `--load-plugins=pylint_robodk` argument are no longer needed and were removed.
 
 
 More about RoboDK

@@ -90,7 +90,7 @@ setup(
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     # packages=find_packages(),
-    packages=['robodk', 'robolink', 'pylint_robodk'],
+    packages=['robodk', 'robolink'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -109,8 +109,8 @@ setup(
     extras_require={
         'apps': ['PySide6-Essentials==6.12.*'],  # Qt dialogs and Add-in settings UI (PySide6 is tried first, then PySide2, then tkinter)
         'apps-pyside2': ['PySide2==5.15.*'],  # Legacy Qt 5 binding for Python 3.10 and older
-        'cv': ['opencv-contrib-python', 'numpy'],
-        'lint': ['astroid'],
+        'cv': ['opencv-python', 'numpy'],  # ArUco/ChArUco are in the main OpenCV module since 4.7; never install contrib alongside it
+        'lint': ['pylint'],  # kept so "robodk[lint]" still works; the pylint_robodk plugin was removed (pylint resolves the robodk package by itself)
         'sftp': ['paramiko'],
     },
 
