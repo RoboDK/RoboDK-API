@@ -61,6 +61,35 @@ class TestImport(unittest.TestCase):
             robolink._private_runtime_loaded = original
         self.setUp()
 
+    def test_qt_binding_resolved_lazily(self):
+        # Importing robodk must not load any Qt binding: add-ins import robodk first and their own binding afterwards,
+        # and the binding is chosen on the first dialog / get_qt_app() call so that it matches the script's widgets
+        import subprocess, sys, os
+        env = dict(os.environ, QT_QPA_PLATFORM="offscreen", PYTHONPATH=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        code = "import sys; from robodk import robolink, roboapps, robodialogs, robofileio; print('QTLOADED', 'PySide6' in sys.modules or 'PySide2' in sys.modules)"
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+        self.assertEqual(proc.returncode, 0, proc.stderr[-500:])
+        self.assertIn("QTLOADED False", proc.stdout)
+        for binding in ("PySide2", "PySide6"):
+            if subprocess.run([sys.executable, "-c", "import " + binding], capture_output=True).returncode != 0:
+                continue
+            # The add-in pattern: robodk first, the binding second, then roboapps.get_qt_app() and the add-in's widgets
+            code = chr(10).join([
+                "from robodk import robolink, roboapps, robodialogs",
+                "from %s import QtWidgets" % binding,
+                "app = roboapps.get_qt_app(False, False)",
+                "QtWidgets.QLabel('x')",  # fails with 'Must construct a QApplication before a QWidget' if app is the other binding
+                "print('API', robodialogs.QT_API, type(app).__module__.split('.')[0])",
+            ])
+            proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+            self.assertEqual(proc.returncode, 0, binding + ": " + proc.stderr[-500:])
+            self.assertIn("API %s %s" % (binding, binding), proc.stdout)
+        # ENABLE_QT = False right after the import forces tkinter and keeps Qt out of the process
+        code = "import sys; from robodk import robodialogs; robodialogs.ENABLE_QT = False; from robodk import roboapps; print('TK', robodialogs.QT_API, 'PySide6' in sys.modules or 'PySide2' in sys.modules)"
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+        self.assertEqual(proc.returncode, 0, proc.stderr[-500:])
+        self.assertIn("TK None False", proc.stdout)
+
     def test_pyside2_already_loaded(self):
         # A script that imported PySide2 before robodk must stay on PySide2: loading PySide6 next to it crashes the process
         import subprocess, sys, os

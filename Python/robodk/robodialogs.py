@@ -27,26 +27,85 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     from typing import List, Union, Any, Tuple
 
 # robodialogs is compatible with PySide6, PySide2 and tkinter. At least one must be present.
-# Qt is preferred when available: PySide6 first, then PySide2 (legacy, Python 3.10 and older).
-# Exception: if the script already imported PySide2, PySide2 is used. Loading Qt 6 into a process that already holds
-# Qt 5 crashes it (access violation, no traceback), so this module never loads a second Qt major.
-QT_API = None  #: Name of the Qt binding in use ('PySide6' or 'PySide2'), or None if Qt is not available
-ENABLE_QT = False
-if 'PySide2' in sys.modules and 'PySide6' not in sys.modules:
-    _QT_CANDIDATES = ('PySide2', 'PySide6')
-else:
-    _QT_CANDIDATES = ('PySide6', 'PySide2')
-for _qt_name in _QT_CANDIDATES:
-    try:
-        if _qt_name == 'PySide6':
-            from PySide6 import QtWidgets, QtCore
-        else:
-            from PySide2 import QtWidgets, QtCore
-        QT_API = _qt_name
-        ENABLE_QT = True
-        break
-    except ImportError:
-        continue
+#
+# The Qt binding is chosen the first time it is needed (first dialog, roboapps.get_qt_app(), or a read of
+# robodialogs.QT_API / robodialogs.ENABLE_QT), not when robodk is imported. Every script imports robodk before its
+# own Qt binding, so an import-time choice could not see it:
+#
+#     from robodk import robolink, roboapps     # no Qt loaded yet
+#     from PySide2 import QtWidgets             # the script's choice
+#     app = roboapps.get_qt_app()               # -> PySide2: the script's widgets get a matching QApplication
+#
+# Order of preference at that moment:
+#   1. a binding whose QApplication already exists (a Qt application is running in this process);
+#   2. the binding the script already imported (PySide2 or PySide6 in sys.modules); the other one is never loaded,
+#      two Qt majors in one process are only safe while a single one creates widgets;
+#   3. PySide6, then PySide2 (legacy, Python 3.10 and older), then tkinter.
+# Set robodialogs.ENABLE_QT = False right after the import to force tkinter.
+#
+# Module attributes created on first access (Python 3.7+, see __getattr__ below; resolved at import before that):
+#   QT_API     Name of the Qt binding in use ('PySide6' or 'PySide2'), or None if Qt is not available
+#   ENABLE_QT  True if a Qt binding is in use
+#   QtWidgets, QtCore, DialogsQt   the binding's modules and the Qt implementation of the dialogs
+_QT_LAZY_ATTRIBUTES = ('QT_API', 'ENABLE_QT', 'QtWidgets', 'QtCore', 'DialogsQt')
+_QT_RESOLVED = False
+
+
+def _qt_candidates():
+    """Bindings to try, in order (see the module comment)."""
+    for name in ('PySide2', 'PySide6'):
+        widgets = sys.modules.get(name + '.QtWidgets')
+        if widgets is not None and widgets.QApplication.instance() is not None:
+            return (name,)
+    if 'PySide2' in sys.modules and 'PySide6' not in sys.modules:
+        return ('PySide2',)
+    if 'PySide6' in sys.modules and 'PySide2' not in sys.modules:
+        return ('PySide6',)
+    return ('PySide6', 'PySide2')
+
+
+def _resolve_qt():
+    """Pick the Qt binding (once) and define QT_API, ENABLE_QT, QtWidgets, QtCore and DialogsQt. Returns ENABLE_QT."""
+    global _QT_RESOLVED, QT_API, ENABLE_QT, QtWidgets, QtCore, DialogsQt
+    if _QT_RESOLVED:
+        return ENABLE_QT
+    _QT_RESOLVED = True
+    QT_API = None
+    QtWidgets = QtCore = DialogsQt = None
+    if globals().get('ENABLE_QT', True) is not False:  # not forced off by the script
+        for name in _qt_candidates():
+            try:
+                if name == 'PySide6':
+                    from PySide6 import QtWidgets, QtCore
+                else:
+                    from PySide2 import QtWidgets, QtCore
+                QT_API = name
+                break
+            except ImportError:
+                continue
+    ENABLE_QT = QT_API is not None
+    if ENABLE_QT:
+        DialogsQt = _make_dialogs_qt()
+    elif not ENABLE_TK:
+        import warnings
+        warnings.warn('Neither PySide6, PySide2 nor tkinter is present on the system: dialogs are not available. Please install PySide6: "python -m pip install PySide6-Essentials" or "python -m pip install robodk[apps]"')
+    return ENABLE_QT
+
+
+def _qt():
+    """True if the dialogs use Qt (resolving the binding on the first call). Honours ENABLE_QT = False set by the script."""
+    if globals().get('ENABLE_QT') is False:
+        return False
+    return _resolve_qt()
+
+
+def __getattr__(name):
+    # Python 3.7+: QT_API, ENABLE_QT, QtWidgets, QtCore and DialogsQt are created on first access
+    if name in _QT_LAZY_ATTRIBUTES:
+        _resolve_qt()
+        return globals()[name]
+    raise AttributeError("module 'robodk.robodialogs' has no attribute '%s'" % name)
+
 
 ENABLE_TK = False
 try:
@@ -61,11 +120,6 @@ try:
     ENABLE_TK = True
 except ImportError:
     pass
-
-if not ENABLE_TK and not ENABLE_QT:
-    import warnings
-    s = 'Neither PySide6, PySide2 nor tkinter is present on the system: dialogs are not available. Please install PySide6: "python -m pip install PySide6-Essentials" or "python -m pip install robodk[apps]"'
-    warnings.warn(s)
 
 
 def _exec(dialog):
@@ -113,7 +167,7 @@ def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         file_path = DialogsQt.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
         if not file_path:
             return None
@@ -147,7 +201,7 @@ def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
 
     .. seealso:: :func:`~robodk.robodialogs.getSaveFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         file_path = DialogsQt.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
         if not file_path:
             return None
@@ -177,7 +231,7 @@ def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', st
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileNames`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -204,7 +258,7 @@ def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', s
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -231,7 +285,7 @@ def getSaveFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', st
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -252,7 +306,7 @@ def getOpenFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Open F
 
     .. seealso:: :func:`~robodk.robodialogs.getSaveFolder`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFolder(path_preference, strtitle)
     else:
         return DialogsTk.getOpenFolder(path_preference, strtitle)
@@ -279,7 +333,7 @@ def getSaveFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Save t
     if 'popup_msg' in kwargs:
         strtitle = kwargs['popup_msg']
 
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getSaveFolder(path_preference, strtitle)
     else:
         return DialogsTk.getSaveFolder(path_preference, strtitle)
@@ -299,7 +353,7 @@ def ShowMessage(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageOkCancel`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessage(msg, title)
     else:
         return DialogsTk.ShowMessage(msg, title)
@@ -319,7 +373,7 @@ def ShowMessageOkCancel(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessage`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageOkCancel(msg, title)
     else:
         return DialogsTk.ShowMessageOkCancel(msg, title)
@@ -339,7 +393,7 @@ def ShowMessageYesNo(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageYesNoCancel`, :func:`~robodk.robodialogs.ShowMessageOkCancel`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageYesNo(msg, title)
     else:
         return DialogsTk.ShowMessageYesNo(msg, title)
@@ -359,7 +413,7 @@ def ShowMessageYesNoCancel(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageYesNo`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageYesNoCancel(msg, title)
     else:
         return DialogsTk.ShowMessageYesNoCancel(msg, title)
@@ -387,7 +441,7 @@ def mbox(msg: str, b1: str = 'OK', b2: str = 'Cancel', frame: bool = True, t: fl
 
     .. seealso:: :func:`~robodk.robodialogs.InputDialog`
     """
-    if ENABLE_QT and b1 == 'OK' and b2 == 'Cancel' and frame and t is False:
+    if _qt() and b1 == 'OK' and b2 == 'Cancel' and frame and t is False:
         if entry is None:
             return DialogsQt.ShowMessageOkCancel(msg=msg, title='Input')
         else:
@@ -441,7 +495,7 @@ def InputDialog(msg: str, value: Any, title: str = None, default_button: bool = 
             }))
 
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.InputDialog(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, embed=embed, actions=actions, *args, **kwargs)
     else:
         return DialogsTk.InputDialog(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, embed=embed, actions=actions, *args, **kwargs)
@@ -845,8 +899,9 @@ if ENABLE_TK:
             return msgbox.returning
 
 
-if ENABLE_QT:
-
+def _make_dialogs_qt():
+    """Defines DialogsQt for the binding chosen by _resolve_qt (QtWidgets and QtCore are set by then)."""
+    global get_qt_app, value_to_qt_widget, widget_to_value
     from robodk.roboapps import get_qt_app, value_to_qt_widget, widget_to_value
 
     class DialogsQt:
@@ -1083,6 +1138,13 @@ if ENABLE_QT:
                 return None
 
             return widget_to_value(dialog.funcs, dialog.default_value)
+
+    return DialogsQt
+
+
+if sys.version_info < (3, 7):
+    # No module __getattr__ before 3.7: choose the binding at import time, as older versions of this module did
+    _resolve_qt()
 
 
 if __name__ == "__main__":
