@@ -26,13 +26,86 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple
 
-# robodialogs is compatible with PySide2 and tkinter. At least one must be present.
-ENABLE_QT = False
-try:
-    from PySide2 import QtWidgets, QtCore
-    ENABLE_QT = True
-except ImportError:
-    pass
+# robodialogs is compatible with PySide6, PySide2 and tkinter. At least one must be present.
+#
+# The Qt binding is chosen the first time it is needed (first dialog, roboapps.get_qt_app(), or a read of
+# robodialogs.QT_API / robodialogs.ENABLE_QT), not when robodk is imported. Every script imports robodk before its
+# own Qt binding, so an import-time choice could not see it:
+#
+#     from robodk import robolink, roboapps     # no Qt loaded yet
+#     from PySide2 import QtWidgets             # the script's choice
+#     app = roboapps.get_qt_app()               # -> PySide2: the script's widgets get a matching QApplication
+#
+# Order of preference at that moment:
+#   1. a binding whose QApplication already exists (a Qt application is running in this process);
+#   2. the binding the script already imported (PySide2 or PySide6 in sys.modules); the other one is never loaded,
+#      two Qt majors in one process are only safe while a single one creates widgets;
+#   3. PySide6, then PySide2 (legacy, Python 3.10 and older), then tkinter.
+# Set robodialogs.ENABLE_QT = False right after the import to force tkinter.
+#
+# Module attributes created on first access (Python 3.7+, see __getattr__ below; resolved at import before that):
+#   QT_API     Name of the Qt binding in use ('PySide6' or 'PySide2'), or None if Qt is not available
+#   ENABLE_QT  True if a Qt binding is in use
+#   QtWidgets, QtCore, DialogsQt   the binding's modules and the Qt implementation of the dialogs
+_QT_LAZY_ATTRIBUTES = ('QT_API', 'ENABLE_QT', 'QtWidgets', 'QtCore', 'DialogsQt')
+_QT_RESOLVED = False
+
+
+def _qt_candidates():
+    """Bindings to try, in order (see the module comment)."""
+    for name in ('PySide2', 'PySide6'):
+        widgets = sys.modules.get(name + '.QtWidgets')
+        if widgets is not None and widgets.QApplication.instance() is not None:
+            return (name,)
+    if 'PySide2' in sys.modules and 'PySide6' not in sys.modules:
+        return ('PySide2',)
+    if 'PySide6' in sys.modules and 'PySide2' not in sys.modules:
+        return ('PySide6',)
+    return ('PySide6', 'PySide2')
+
+
+def _resolve_qt():
+    """Pick the Qt binding (once) and define QT_API, ENABLE_QT, QtWidgets, QtCore and DialogsQt. Returns ENABLE_QT."""
+    global _QT_RESOLVED, QT_API, ENABLE_QT, QtWidgets, QtCore, DialogsQt
+    if _QT_RESOLVED:
+        return ENABLE_QT
+    _QT_RESOLVED = True
+    QT_API = None
+    QtWidgets = QtCore = DialogsQt = None
+    if globals().get('ENABLE_QT', True) is not False:  # not forced off by the script
+        for name in _qt_candidates():
+            try:
+                if name == 'PySide6':
+                    from PySide6 import QtWidgets, QtCore
+                else:
+                    from PySide2 import QtWidgets, QtCore
+                QT_API = name
+                break
+            except ImportError:
+                continue
+    ENABLE_QT = QT_API is not None
+    if ENABLE_QT:
+        DialogsQt = _make_dialogs_qt()
+    elif not ENABLE_TK:
+        import warnings
+        warnings.warn('Neither PySide6, PySide2 nor tkinter is present on the system: dialogs are not available. Please install PySide6: "python -m pip install PySide6-Essentials" or "python -m pip install robodk[apps]"')
+    return ENABLE_QT
+
+
+def _qt():
+    """True if the dialogs use Qt (resolving the binding on the first call). Honours ENABLE_QT = False set by the script."""
+    if globals().get('ENABLE_QT') is False:
+        return False
+    return _resolve_qt()
+
+
+def __getattr__(name):
+    # Python 3.7+: QT_API, ENABLE_QT, QtWidgets, QtCore and DialogsQt are created on first access
+    if name in _QT_LAZY_ATTRIBUTES:
+        _resolve_qt()
+        return globals()[name]
+    raise AttributeError("module 'robodk.robodialogs' has no attribute '%s'" % name)
+
 
 ENABLE_TK = False
 try:
@@ -48,10 +121,13 @@ try:
 except ImportError:
     pass
 
-if not ENABLE_TK and not ENABLE_QT:
-    s = 'PySide2 and/or tkinter is not present on the system. Please install PySide2: "python -m pip install PySide2" or "python -m pip install robodk[apps]"'
-    print(s)
-    #raise ImportError(s)
+
+def _exec(dialog):
+    """Run the modal event loop of a Qt dialog or message box and return its result.
+    PySide6 provides exec(), PySide2 only provides exec_(). exec is a keyword in Python 2, hence getattr."""
+    if hasattr(dialog, 'exec'):
+        return getattr(dialog, 'exec')()
+    return dialog.exec_()
 
 FILE_TYPES_ALL = ('All Files', '.*')  #: File type filter for all files
 FILE_TYPES_ROBODK = ('RoboDK Files', '.sld .rdk .robot .tool .rdka .rdkbak .rdkp .py')  #: File type filter for RoboDK files
@@ -91,7 +167,7 @@ def getOpenFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         file_path = DialogsQt.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
         if not file_path:
             return None
@@ -125,7 +201,7 @@ def getSaveFile(path_preference: str = DEFAULT_FOLDER, strfile: str = '', strtit
 
     .. seealso:: :func:`~robodk.robodialogs.getSaveFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         file_path = DialogsQt.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
         if not file_path:
             return None
@@ -155,7 +231,7 @@ def getOpenFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', st
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileNames`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getOpenFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -182,7 +258,7 @@ def getOpenFileNames(path_preference: str = DEFAULT_FOLDER, strfile: str = '', s
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getOpenFileNames(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -209,7 +285,7 @@ def getSaveFileName(path_preference: str = DEFAULT_FOLDER, strfile: str = '', st
 
     .. seealso:: :func:`~robodk.robodialogs.getOpenFileName`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
     else:
         return DialogsTk.getSaveFileName(path_preference, strfile, strtitle, defaultextension, filetypes)
@@ -230,7 +306,7 @@ def getOpenFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Open F
 
     .. seealso:: :func:`~robodk.robodialogs.getSaveFolder`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getOpenFolder(path_preference, strtitle)
     else:
         return DialogsTk.getOpenFolder(path_preference, strtitle)
@@ -257,7 +333,7 @@ def getSaveFolder(path_preference: str = DEFAULT_FOLDER, strtitle: str = 'Save t
     if 'popup_msg' in kwargs:
         strtitle = kwargs['popup_msg']
 
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.getSaveFolder(path_preference, strtitle)
     else:
         return DialogsTk.getSaveFolder(path_preference, strtitle)
@@ -277,7 +353,7 @@ def ShowMessage(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageOkCancel`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessage(msg, title)
     else:
         return DialogsTk.ShowMessage(msg, title)
@@ -297,7 +373,7 @@ def ShowMessageOkCancel(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessage`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageOkCancel(msg, title)
     else:
         return DialogsTk.ShowMessageOkCancel(msg, title)
@@ -317,7 +393,7 @@ def ShowMessageYesNo(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageYesNoCancel`, :func:`~robodk.robodialogs.ShowMessageOkCancel`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageYesNo(msg, title)
     else:
         return DialogsTk.ShowMessageYesNo(msg, title)
@@ -337,7 +413,7 @@ def ShowMessageYesNoCancel(msg: str, title: str = None) -> bool:
 
     .. seealso:: :func:`~robodk.robodialogs.ShowMessageYesNo`
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.ShowMessageYesNoCancel(msg, title)
     else:
         return DialogsTk.ShowMessageYesNoCancel(msg, title)
@@ -365,7 +441,7 @@ def mbox(msg: str, b1: str = 'OK', b2: str = 'Cancel', frame: bool = True, t: fl
 
     .. seealso:: :func:`~robodk.robodialogs.InputDialog`
     """
-    if ENABLE_QT and b1 == 'OK' and b2 == 'Cancel' and frame and t is False:
+    if _qt() and b1 == 'OK' and b2 == 'Cancel' and frame and t is False:
         if entry is None:
             return DialogsQt.ShowMessageOkCancel(msg=msg, title='Input')
         else:
@@ -419,7 +495,7 @@ def InputDialog(msg: str, value: Any, title: str = None, default_button: bool = 
             }))
 
     """
-    if ENABLE_QT:
+    if _qt():
         return DialogsQt.InputDialog(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, embed=embed, actions=actions, *args, **kwargs)
     else:
         return DialogsTk.InputDialog(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, embed=embed, actions=actions, *args, **kwargs)
@@ -823,8 +899,9 @@ if ENABLE_TK:
             return msgbox.returning
 
 
-if ENABLE_QT:
-
+def _make_dialogs_qt():
+    """Defines DialogsQt for the binding chosen by _resolve_qt (QtWidgets and QtCore are set by then)."""
+    global get_qt_app, value_to_qt_widget, widget_to_value
     from robodk.roboapps import get_qt_app, value_to_qt_widget, widget_to_value
 
     class DialogsQt:
@@ -870,13 +947,13 @@ if ENABLE_QT:
         @staticmethod
         def getOpenFolder(path_preference=DEFAULT_FOLDER, strtitle='Open Folder'):
             app = get_qt_app(robodk_theme=False)
-            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
+            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.Option.ShowDirsOnly)
             return file if file else None
 
         @staticmethod
         def getSaveFolder(path_preference=DEFAULT_FOLDER, strtitle='Save to Folder'):
             app = get_qt_app(robodk_theme=False)
-            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.ShowDirsOnly)
+            file = QtWidgets.QFileDialog.getExistingDirectory(None, strtitle, path_preference, QtWidgets.QFileDialog.Option.ShowDirsOnly)
             return file if file else None
 
         @staticmethod
@@ -887,14 +964,14 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Information)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -905,9 +982,9 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Information)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Ok)
 
@@ -919,7 +996,7 @@ if ENABLE_QT:
             else:
                 msg_box.setText(msg)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Ok
 
         @staticmethod
@@ -930,14 +1007,14 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Question)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Question)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
 
         @staticmethod
@@ -948,21 +1025,21 @@ if ENABLE_QT:
             app = get_qt_app()
 
             msg_box = QtWidgets.QMessageBox()
-            msg_box.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowStaysOnTopHint)
+            msg_box.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint | QtCore.Qt.WindowType.WindowStaysOnTopHint)
             msg_box.setWindowTitle(title)
-            msg_box.setIcon(QtWidgets.QMessageBox.Question)
+            msg_box.setIcon(QtWidgets.QMessageBox.Icon.Question)
             msg_box.setText(msg)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No | QtWidgets.QMessageBox.StandardButton.Cancel)
             msg_box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
 
-            ret = msg_box.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(msg_box)
             if ret == QtWidgets.QMessageBox.StandardButton.Cancel:
                 return None
             return ret == QtWidgets.QMessageBox.StandardButton.Yes
 
         class InputDialogQt(QtWidgets.QDialog):
 
-            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.Dialog):
+            def __init__(self, msg, value, title=None, default_button=False, default_value=None, actions=None, parent=None, f=QtCore.Qt.WindowType.Dialog):
                 super().__init__(parent, f)
 
                 # Set the window title
@@ -979,7 +1056,7 @@ if ENABLE_QT:
                 if msg:
                     label = QtWidgets.QLabel(msg, self)
                     label.setWordWrap(True)
-                    label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+                    label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
 
                 # Create the widget holding the value
                 self.widget, self.funcs = value_to_qt_widget(value)
@@ -987,9 +1064,9 @@ if ENABLE_QT:
                     raise Exception("Invalid or unsupported input type: " + str(value))
 
                 # Add the static buttons
-                button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Horizontal, self)
-                QtCore.QObject.connect(button_box, QtCore.SIGNAL('accepted()'), self, QtCore.SLOT('accept()'))
-                QtCore.QObject.connect(button_box, QtCore.SIGNAL('rejected()'), self, QtCore.SLOT('reject()'))
+                button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, QtCore.Qt.Orientation.Horizontal, self)
+                button_box.accepted.connect(self.accept)
+                button_box.rejected.connect(self.reject)
 
                 # Add the 'Restore Defaults' button
                 if default_button:
@@ -1000,7 +1077,7 @@ if ENABLE_QT:
                 max_h_actions = 1
                 if actions:
                     if len(actions) > max_h_actions:
-                        button_box_actions = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical, self)
+                        button_box_actions = QtWidgets.QDialogButtonBox(QtCore.Qt.Orientation.Vertical, self)
                         for (button_text, button_action) in actions:
                             button = button_box_actions.addButton(button_text, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
                             button.clicked.connect(button_action)
@@ -1013,14 +1090,14 @@ if ENABLE_QT:
                 self.has_scroll = type(value) is dict and len(value.keys()) > 10
                 if self.has_scroll:
                     self.scroll_widget = QtWidgets.QScrollArea()
-                    self.scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    self.scroll_widget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
                     self.scroll_widget.setWidgetResizable(True)
                     self.scroll_widget.setWidget(self.widget)
                     self.scroll_widget.setMinimumWidth(self.widget.minimumWidth() + 20)
 
                 # Create the main layout
                 layout = QtWidgets.QVBoxLayout(self)
-                layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+                layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
                 if msg:
                     layout.addWidget(label)
                 layout.addWidget(self.scroll_widget if self.has_scroll else self.widget)
@@ -1049,18 +1126,25 @@ if ENABLE_QT:
 
             app = get_qt_app()
 
-            dialog = DialogsQt.InputDialogQt(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, actions=actions, f=QtCore.Qt.Dialog | QtCore.Qt.WindowStaysOnTopHint)
+            dialog = DialogsQt.InputDialogQt(msg=msg, value=value, title=title, default_button=default_button, default_value=default_value, actions=actions, f=QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.WindowStaysOnTopHint)
 
             if embed:
                 from robodk.robolink import EmbedWindow
                 size = dialog.sizeHint()
                 EmbedWindow(dialog.windowTitle(), size_w=size.width(), size_h=size.height())
 
-            ret = dialog.exec_()  # exec() is a reserved keyword in Python 2.7. exec_() is no longer supported for PySide 6 and later.
+            ret = _exec(dialog)
             if not ret:
                 return None
 
             return widget_to_value(dialog.funcs, dialog.default_value)
+
+    return DialogsQt
+
+
+if sys.version_info < (3, 7):
+    # No module __getattr__ before 3.7: choose the binding at import time, as older versions of this module did
+    _resolve_qt()
 
 
 if __name__ == "__main__":

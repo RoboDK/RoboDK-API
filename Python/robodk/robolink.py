@@ -595,6 +595,49 @@ def getPathIcon() -> str:
     return iconpath
 
 
+# The PySide2 wheel ships its own copy of the Microsoft C runtime (msvcp140.dll & co., a 2019 build) inside its package
+# folder, and Windows resolves an extension's dependencies from the extension's own folder first. A process that imported
+# PySide2 first therefore runs on that 2019 runtime, and every binary built with a newer compiler that is loaded afterwards
+# (PySide6, pymeshlab, ...) dies with an access violation (exit code 0xC0000005, -1073741819) that Python cannot catch.
+# The RoboDK Python bundle removes those per-package runtime copies; a plain "pip install PySide2" does not.
+# import_install() detects the loaded runtime and raises ImportError instead of crashing for the modules listed here.
+RUNTIME_SENSITIVE_MODULES = ('pymeshlab', 'PySide6')
+
+
+def _private_runtime_loaded():
+    """Path of a Microsoft C runtime DLL that this process loaded from a PySide2/shiboken2 package folder, or None."""
+    import ctypes
+    try:
+        k = ctypes.windll.kernel32
+        k.GetModuleHandleW.restype = ctypes.c_void_p
+        k.GetModuleHandleW.argtypes = [ctypes.c_wchar_p]
+        k.GetModuleFileNameW.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint32]
+    except Exception:  # not Windows
+        return None
+    for name in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'ucrtbase.dll', 'concrt140.dll'):
+        handle = k.GetModuleHandleW(name)
+        if not handle:
+            continue
+        buf = ctypes.create_unicode_buffer(1024)
+        k.GetModuleFileNameW(handle, buf, 1024)
+        parts = buf.value.replace('/', chr(92)).lower().split(chr(92))
+        if len(parts) >= 2 and parts[-2] in ('pyside2', 'shiboken2'):
+            return buf.value
+    return None
+
+
+def _check_qt_dll_clash(module_name: str):
+    """Raise ImportError instead of letting the process crash when the MSVC runtime in use is the private 2019 copy of a
+    PySide2/shiboken2 package folder and module_name needs a newer one."""
+    import sys
+    top = module_name.split('.')[0]
+    if top in sys.modules or top not in RUNTIME_SENSITIVE_MODULES:
+        return
+    runtime = _private_runtime_loaded()
+    if runtime:
+        raise ImportError("Importing %s now would crash Python: this process runs on the 2019 Microsoft C runtime that PySide2 loaded from %s, and %s needs a newer one. Import %s before PySide2, delete the msvcp140*/vcruntime140*/ucrtbase.dll copies from the PySide2 and shiboken2 folders (the RoboDK bundle does this), or use PySide6-Essentials." % (top, runtime, top, top))
+
+
 def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = None, upgrade_pip: bool = False):
     """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
@@ -613,7 +656,10 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
         import_install('numpy', 'numpy>=1.23')
         import_install('pandas', 'pandas~=1.4')
 
+    Raises ImportError (instead of crashing the process) when the module needs a newer Microsoft C runtime than the private
+    copy PySide2 loaded, see RUNTIME_SENSITIVE_MODULES.
     """
+    _check_qt_dll_clash(module_name)
     try:
         exec('import ' + module_name, globals())
         return
@@ -626,13 +672,16 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
         msg = "Installing required Python module: " + module_name
 
         def execute(cmd):
+            """Run a command, echo its output live and return it as one string."""
             print("Running command:")
             print(cmd)
             print("...")
+            output = []
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  #, universal_newlines=True)
-            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8", errors="replace"):  # or another encoding
                 # display line output
                 line = line.strip()
+                output.append(line)
                 print(line)
                 msgproc = msg + " - " + line
                 if rdk:
@@ -641,6 +690,26 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                     sys.stdout.flush()
                     print("Status Message: " + msgproc)
                     sys.stdout.flush()
+            proc.wait()
+            return '\n'.join(output)
+
+        def refresh_import_system(pip_output):
+            """Make the package pip just installed importable in this process.
+
+            The import system caches the content of every sys.path folder, and a folder that did not exist when the
+            failed import was attempted (typically the user site-packages, created by pip's first "Defaulting to user
+            installation" fallback when the Python folder is not writable) is remembered as having no importer at all
+            until importlib.invalidate_caches() is called. Without it, the package is only found after a restart."""
+            import importlib
+            importlib.invalidate_caches()
+            if 'Defaulting to user installation' in pip_output:
+                import site
+                import os
+                user_site = site.getusersitepackages()
+                if os.path.isdir(user_site) and not any(os.path.normcase(os.path.abspath(p)) == os.path.normcase(user_site) for p in sys.path):
+                    print("Warning: %s was installed in the user folder (%s) because the Python folder is not writable. Adding it to sys.path for this process." % (pip_name, user_site))
+                    sys.path.append(user_site)
+                    importlib.invalidate_caches()
 
         if pip_name is None:
             pip_name = module_name
@@ -657,7 +726,8 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 cmd = sys.executable + ' -m pip install --upgrade pip'
                 execute(cmd)
             cmd = sys.executable + ' -m pip install ' + pip_name
-            execute(cmd)
+            pip_output = execute(cmd)
+            refresh_import_system(pip_output)
             exec('import ' + module_name, globals())
             msg = "Python module installed successfully: " + module_name + "."
             if rdk:
@@ -667,8 +737,8 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 print("Status Message: " + msg)
                 sys.stdout.flush()
 
-        except Exception:
-            msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
+        except Exception as e:
+            msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges (%s)" % (module_name, str(e).strip() or type(e).__name__)
             print(msg)
             if rdk:
                 rdk.ShowMessage(msg, True)

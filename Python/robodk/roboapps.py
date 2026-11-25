@@ -30,8 +30,31 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
     # Python 3.5+ type hints. Type hints are stripped for <3.5
     from typing import List, Union, Any, Tuple, Dict
 
-if robodialogs.ENABLE_QT:
-    from PySide2 import QtWidgets, QtCore, QtGui
+# The Qt binding (PySide6 or PySide2) is chosen by robodialogs the first time a Qt function below is called, so that a
+# script can import robodk first and its own binding afterwards (see robodialogs). QtWidgets, QtCore and QtGui are
+# module attributes from then on (and on first access through roboapps.QtWidgets etc. on Python 3.7+).
+_QT_MODULES = ('QtWidgets', 'QtCore', 'QtGui')
+
+
+def _require_qt():
+    """Bind QtWidgets, QtCore and QtGui to the Qt binding chosen by robodialogs. Raises ImportError without Qt."""
+    global QtWidgets, QtCore, QtGui
+    if 'QtGui' in globals():
+        return
+    if not robodialogs._qt():
+        raise ImportError('No Qt binding available: install PySide6-Essentials (python -m pip install robodk[apps])')
+    if robodialogs.QT_API == 'PySide6':
+        from PySide6 import QtWidgets, QtCore, QtGui
+    else:
+        from PySide2 import QtWidgets, QtCore, QtGui
+
+
+def __getattr__(name):
+    if name in _QT_MODULES:
+        _require_qt()
+        return globals()[name]
+    raise AttributeError("module 'robodk.roboapps' has no attribute '%s'" % name)
+
 
 if robodialogs.ENABLE_TK:
     if sys.version_info[0] < 3:
@@ -304,7 +327,7 @@ def Registry(varname: str, setvalue: str = None):
 """
 UI utilities (Qt and Tkinter utilities).
 
-Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt (PySide2).
+Use these to easily create GUI Apps, settings forms, using either Tkinter or Qt (PySide6, or PySide2 on Python 3.10 and older).
 """
 
 
@@ -452,365 +475,373 @@ def get_robodk_theme(RDK: robolink.Robolink = None) -> str:
 
 
 """
-PySide2 / Qt utilities
+Qt utilities (PySide6 or PySide2, see robodialogs.QT_API)
 """
 
-if robodialogs.ENABLE_QT:
+def get_qt_app(robodk_icon: bool = True, robodk_theme: bool = True, RDK: robolink.Robolink = None) -> 'QtWidgets.QApplication':
+    """
+    Get the QApplication instance.
 
-    def get_qt_app(robodk_icon: bool = True, robodk_theme: bool = True, RDK: robolink.Robolink = None) -> QtWidgets.QApplication:
-        """
-        Get the QApplication instance.
+    Note: If RoboDK is not running, The RoboDK theme is not applied.
 
-        Note: If RoboDK is not running, The RoboDK theme is not applied.
+    :param robodk_icon: Applies the RoboDK logo, defaults to True
+    :type robodk_icon: bool
+    :param robodk_theme: Applies the current RoboDK theme, defaults to True
+    :type robodk_theme: bool
+    :param RDK: Link to the running RoboDK instance for the theme, defaults to None
+    :type RDK: robolink.Robolink
 
-        :param robodk_icon: Applies the RoboDK logo, defaults to True
-        :type robodk_icon: bool
-        :param robodk_theme: Applies the current RoboDK theme, defaults to True
-        :type robodk_theme: bool
-        :param RDK: Link to the running RoboDK instance for the theme, defaults to None
-        :type RDK: robolink.Robolink
+    :return: The QApplication instance
+    :rtype: :class:`PySide6.QtWidgets.QApplication`
+    """
+    _require_qt()
 
-        :return: The QApplication instance
-        :rtype: :class:`PySide2.QtWidgets.QApplication`
-        """
-
-        app = QtWidgets.QApplication.instance()
-        if app is None:
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        if robodialogs.QT_API == 'PySide2':
+            # Qt 6 always enables high DPI scaling and removed the context help button: these attributes only exist in Qt 5
             QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
             QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DisableWindowContextHelpButton, True)
-            app = QtWidgets.QApplication([])
+        app = QtWidgets.QApplication([])
 
-        if robodk_icon:
-            from robodk import robolink
-            icon_path = robolink.getPathIcon()
-            from os import path
-            if path.exists(icon_path):
-                if sys.platform.startswith('win'):
-                    import ctypes
-                    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
-                app_icon = QtGui.QIcon(icon_path)
-                app.setWindowIcon(app_icon)
+    if robodk_icon:
+        from robodk import robolink
+        icon_path = robolink.getPathIcon()
+        from os import path
+        if path.exists(icon_path):
+            if sys.platform.startswith('win'):
+                import ctypes
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(str(app))  # Enable the taskbar icon
+            app_icon = QtGui.QIcon(icon_path)
+            app.setWindowIcon(app_icon)
 
-        if robodk_theme:
-            if RDK is None:
-                RDK = robolink.Robolink(robodk_path='')  # If no running instance of RoboDK is found, do not instantiate RoboDK
-            try:
-                if RDK._is_connected():
-                    set_qt_theme(app, RDK)
-            except Exception:
-                pass
-
-        return app
-
-    def set_qt_theme(app: QtWidgets.QApplication, RDK: robolink.Robolink = None):
-        """Set a Qt application theme to match RoboDK's theme.
-
-        :param app: The QApplication
-        :type app: :class:`PySide2.QtWidgets.QApplication`
-        """
-        # RoboDK theme : Qt theme
-        qt_theme_map = {
-            #'Light': None,  # light is default Qt theme
-            'Dark': 'Fusion',
-            'Windows': 'Windows',
-            'Windows XP': 'windowsxp',
-            'Windows Vista': 'windowsvista',
-            'Fusion': 'Fusion',
-        }
-
-        rdk_theme = get_robodk_theme(RDK)
-        qt_themes = QtWidgets.QStyleFactory.keys()
-
-        if rdk_theme in qt_theme_map and qt_theme_map[rdk_theme] in qt_themes:
-            qt_theme = qt_theme_map[rdk_theme]
-        #elif qt_themes:
-        #    qt_theme = qt_themes[0]
-        else:
-            return
-
-        app.setStyle(QtWidgets.QStyleFactory.create(qt_theme))
-
-        if rdk_theme == 'Dark':
-            darkPalette = QtGui.QPalette()
-            darkColor = QtGui.QColor(45, 45, 45)
-            disabledColor = QtGui.QColor(127, 127, 127)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Window, darkColor)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(18, 18, 18))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.AlternateBase, darkColor)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("black"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Button, darkColor)
-            darkPalette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor("white"))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(42, 130, 218))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
-            darkPalette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor("black"))
-
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.HighlightedText, disabledColor)
-            darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.WindowText, disabledColor)
-
-            app.setPalette(darkPalette)
-
-    def get_qt_robodk_icon(icon_name: str, RDK: robolink.Robolink = None) -> QtGui.QImage:
-        """
-        Retrieve a RoboDK icon by name, such as robot, tool and frame icons (requires Qt module).
-
-        :param icon_name: The name of the icon
-        :type icon_name: str
-        :return: a QImage of the icon if it succeeds, else None
-        :rtype: :class:`PySide2.QtGui.QImage`
-
-        .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icons`
-        """
+    if robodk_theme:
         if RDK is None:
-            from robodk.robolink import Robolink
-            RDK = Robolink()
+            RDK = robolink.Robolink(robodk_path='')  # If no running instance of RoboDK is found, do not instantiate RoboDK
+        try:
+            if RDK._is_connected():
+                set_qt_theme(app, RDK)
+        except Exception:
+            pass
 
-        if 'Addin Manager' in RDK.Command('PluginsList'):
-            img_hex = RDK.PluginCommand('Addin Manager', 'IconGet', icon_name)
-        else:
-            img_hex = RDK.PluginCommand('App Loader', 'IconGet', icon_name)
-        if type(img_hex) is not str or img_hex == '':
-            return None
+    return app
 
-        byte_array = QtCore.QByteArray.fromHex(img_hex.encode())
-        image = QtGui.QImage()  # QImage does not require a QApplication instance, as appose to QPixmap
-        if not image.loadFromData(byte_array):
-            return None
-        return image
+def set_qt_theme(app: 'QtWidgets.QApplication', RDK: robolink.Robolink = None):
+    """Set a Qt application theme to match RoboDK's theme.
 
-    def get_qt_robodk_icons(RDK: robolink.Robolink = None) -> QtGui.QImage:
-        """
-        Retrieve a dictionary of available RoboDK icons, such as robot, tool and frame icons (requires Qt module).
+    :param app: The QApplication
+    :type app: :class:`PySide6.QtWidgets.QApplication`
+    """
+    _require_qt()
+    # RoboDK theme : Qt theme
+    qt_theme_map = {
+        #'Light': None,  # light is default Qt theme
+        'Dark': 'Fusion',
+        'Windows': 'Windows',
+        'Windows XP': 'windowsxp',
+        'Windows Vista': 'windowsvista',
+        'Fusion': 'Fusion',
+    }
 
-        :return: a dictionary of QImage of available icons
-        :rtype: dict of :class:`PySide2.QtGui.QImage`
+    rdk_theme = get_robodk_theme(RDK)
+    qt_themes = QtWidgets.QStyleFactory.keys()
 
-        .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icon`
-        """
-        if RDK is None:
-            from robodk.robolink import Robolink
-            RDK = Robolink()
+    if rdk_theme in qt_theme_map and qt_theme_map[rdk_theme] in qt_themes:
+        qt_theme = qt_theme_map[rdk_theme]
+    #elif qt_themes:
+    #    qt_theme = qt_themes[0]
+    else:
+        return
 
-        tree_icons = [
-            "station",
-            "frame",
-            "object",
-            "robot",
-            'mechanism',
-            "tcp",
-            "target",
-            "targetjoint",
-            "nodeprogram",
-            "nodemachining",
-            "nodemachining_printing",
-            "nodemachining_curves",
-            "nodemachining_milling",
-            "nodemachining_points",
-            "python",
-            "folder",
-            "notes",
-            "curve",
-            "point",
-            "surface",
-        ]
+    app.setStyle(QtWidgets.QStyleFactory.create(qt_theme))
 
-        sim_icons = [
-            'play',
-            'pause',
-            'stop',
-            'fastfwd',
-            'start',
-            'end',
-        ]
+    if rdk_theme == 'Dark':
+        darkPalette = QtGui.QPalette()
+        darkColor = QtGui.QColor(45, 45, 45)
+        disabledColor = QtGui.QColor(127, 127, 127)
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Window, darkColor)
+        darkPalette.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor("white"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(18, 18, 18))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.AlternateBase, darkColor)
+        darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor("black"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor("white"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor("white"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor("white"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Button, darkColor)
+        darkPalette.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor("white"))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(42, 130, 218))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(42, 130, 218))
+        darkPalette.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtGui.QColor("black"))
 
-        edit_icons = [
-            'edit-copy',
-            'edit-cut',
-            'edit-paste',
-            'edit',
-            'loopno',
-            'loopyes',
-            'redo',
-            'undo',
-            'save',
-            'saveas',
-            'config',
-            'configure',
-            'newfile',
-            'newfile_online',
-            'newstation',
-        ]
+        darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, disabledColor)
+        darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, disabledColor)
+        darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.HighlightedText, disabledColor)
+        darkPalette.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.WindowText, disabledColor)
 
-        mouse_icons = [
-            'cursormoveframe',
-            'cursormoveobject',
-            'cursorpan',
-            'cursorselectrectangle',
-            'cursorsnone',
-            'cursorsrotate',
-            'cursorzoom',
-        ]
+        app.setPalette(darkPalette)
 
-        program_icons = [
-            'inschangespeed',
-            'inschangezone',
-            'inscode',
-            'inscomment',
-            'insevent',
-            'insmanageio',
-            'insmoveC',
-            'insmoveJ',
-            'insmoveL',
-            'insprint',
-            'insprogcall',
-            'instimer',
-        ]
+def get_qt_robodk_icon(icon_name: str, RDK: robolink.Robolink = None) -> 'QtGui.QImage':
+    """
+    Retrieve a RoboDK icon by name, such as robot, tool and frame icons (requires Qt module).
 
-        view_icons = [
-            'view-axometric',
-            'view-bottom',
-            'view-front',
-            'view-fullscreen',
-            'view-isometric',
-            'view-left',
-            'view-rear',
-            'view-right',
-            'view-rotate-left',
-            'view-rotate-right',
-            'view-top',
-        ]
+    :param icon_name: The name of the icon
+    :type icon_name: str
+    :return: a QImage of the icon if it succeeds, else None
+    :rtype: :class:`PySide6.QtGui.QImage`
 
-        action_icons = [
-            'add',
-            'plus',
-            'minus',
-            'yes',
-            'no',
-            'close',
-            'replace',
-            'information',
-            'questionmark',
-            'warning',
-            'snapshot',
-            'workspace',
-            'anchor',
-            'connect',
-            'export',
-            'package',
-        ]
+    .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icons`
+    """
+    _require_qt()
+    if RDK is None:
+        from robodk.robolink import Robolink
+        RDK = Robolink()
 
-        icons = {}
-        for name in tree_icons + sim_icons + edit_icons + mouse_icons + program_icons + view_icons + action_icons:
-            icon = get_qt_robodk_icon(name, RDK)
-            if not icon:
+    if 'Addin Manager' in RDK.Command('PluginsList'):
+        img_hex = RDK.PluginCommand('Addin Manager', 'IconGet', icon_name)
+    else:
+        img_hex = RDK.PluginCommand('App Loader', 'IconGet', icon_name)
+    if type(img_hex) is not str or img_hex == '':
+        return None
+
+    byte_array = QtCore.QByteArray.fromHex(img_hex.encode())
+    image = QtGui.QImage()  # QImage does not require a QApplication instance, as appose to QPixmap
+    if not image.loadFromData(byte_array):
+        return None
+    return image
+
+def get_qt_robodk_icons(RDK: robolink.Robolink = None) -> 'QtGui.QImage':
+    """
+    Retrieve a dictionary of available RoboDK icons, such as robot, tool and frame icons (requires Qt module).
+
+    :return: a dictionary of QImage of available icons
+    :rtype: dict of :class:`PySide6.QtGui.QImage`
+
+    .. seealso:: :func:`~robodk.roboapps.get_qt_robodk_icon`
+    """
+    _require_qt()
+    if RDK is None:
+        from robodk.robolink import Robolink
+        RDK = Robolink()
+
+    tree_icons = [
+        "station",
+        "frame",
+        "object",
+        "robot",
+        'mechanism',
+        "tcp",
+        "target",
+        "targetjoint",
+        "nodeprogram",
+        "nodemachining",
+        "nodemachining_printing",
+        "nodemachining_curves",
+        "nodemachining_milling",
+        "nodemachining_points",
+        "python",
+        "folder",
+        "notes",
+        "curve",
+        "point",
+        "surface",
+    ]
+
+    sim_icons = [
+        'play',
+        'pause',
+        'stop',
+        'fastfwd',
+        'start',
+        'end',
+    ]
+
+    edit_icons = [
+        'edit-copy',
+        'edit-cut',
+        'edit-paste',
+        'edit',
+        'loopno',
+        'loopyes',
+        'redo',
+        'undo',
+        'save',
+        'saveas',
+        'config',
+        'configure',
+        'newfile',
+        'newfile_online',
+        'newstation',
+    ]
+
+    mouse_icons = [
+        'cursormoveframe',
+        'cursormoveobject',
+        'cursorpan',
+        'cursorselectrectangle',
+        'cursorsnone',
+        'cursorsrotate',
+        'cursorzoom',
+    ]
+
+    program_icons = [
+        'inschangespeed',
+        'inschangezone',
+        'inscode',
+        'inscomment',
+        'insevent',
+        'insmanageio',
+        'insmoveC',
+        'insmoveJ',
+        'insmoveL',
+        'insprint',
+        'insprogcall',
+        'instimer',
+    ]
+
+    view_icons = [
+        'view-axometric',
+        'view-bottom',
+        'view-front',
+        'view-fullscreen',
+        'view-isometric',
+        'view-left',
+        'view-rear',
+        'view-right',
+        'view-rotate-left',
+        'view-rotate-right',
+        'view-top',
+    ]
+
+    action_icons = [
+        'add',
+        'plus',
+        'minus',
+        'yes',
+        'no',
+        'close',
+        'replace',
+        'information',
+        'questionmark',
+        'warning',
+        'snapshot',
+        'workspace',
+        'anchor',
+        'connect',
+        'export',
+        'package',
+    ]
+
+    icons = {}
+    for name in tree_icons + sim_icons + edit_icons + mouse_icons + program_icons + view_icons + action_icons:
+        icon = get_qt_robodk_icon(name, RDK)
+        if not icon:
+            continue
+        icons[name] = icon
+    return icons
+
+def value_to_qt_widget(value: Any, parent: 'QtWidgets.QWidget' = None) -> 'Tuple[QtWidgets.QWidget, List]':
+    """
+    Convert a value to a widget. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
+
+    The widget is automatically created for supported types:
+    - bool, int, float, str (base types)
+    - list or tuple of base types
+    - dropdown formatted as [int, [str, str, ...]] i.e. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
+    - dictionary of supported values, formatted as {label:value}
+
+    :return: (widget, funcs) the widget, and a list of get functions to retrieve the value of the widget
+    """
+    _require_qt()
+    widget = None
+    func = []
+    value_type = type(value)
+
+    if value_type is float:
+        widget = QtWidgets.QDoubleSpinBox(parent)
+        import decimal
+        decimals = min(6, max(3, abs(decimal.Decimal(str(value)).as_tuple().exponent)))
+        widget.setDecimals(decimals)
+        widget.setRange(-9999999., 9999999.)
+        widget.setValue(value)
+        func = [widget.value]
+
+    elif value_type is int:
+        widget = QtWidgets.QSpinBox(parent)
+        widget.setRange(-9999999, 9999999)
+        widget.setValue(value)
+        func = [widget.value]
+
+    elif value_type is str:
+        widget = QtWidgets.QLineEdit(parent)
+        widget.setText(value)
+        func = [widget.text]
+
+    elif value_type is bool:
+        widget = QtWidgets.QCheckBox("Activate", parent)
+        widget.setChecked(value)
+        func = [widget.isChecked]
+
+    # List or tuple of PODs
+    elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.setSpacing(0)
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
+        for v in value:
+            f_widget, f_func = value_to_qt_widget(v, None)
+            func.extend(f_func)
+            h_layout.addWidget(f_widget)
+        widget = QtWidgets.QWidget(parent)
+        widget.setLayout(h_layout)
+
+    # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
+    # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
+    elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
+        index = value[0]
+        if isinstance(index, str):
+            index = value[1].index(value[0])
+        options = value[1]
+        widget = QtWidgets.QComboBox(parent)
+        widget.addItems(options)
+        widget.setCurrentIndex(max(0, min(len(options) - 1, index)))
+        func = [widget.currentIndex]  # str index will be replaced with int index once saved
+
+    # Dictionary of label:value
+    elif value_type is dict:
+        f_layout = QtWidgets.QFormLayout()
+        f_layout.setVerticalSpacing(1)
+        f_layout.setHorizontalSpacing(10)
+        f_layout.setContentsMargins(0, 0, 0, 0)
+        f_layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
+
+        for key, val in value.items():
+
+            if key.endswith('$') and key.startswith('$'):
+                # Section separator
+                label = QtWidgets.QLabel()
+                label.setText("[ " + key[1:-1].upper() + " ]")
+                label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
+                spacing = 0
+                if f_layout.rowCount() > 0:
+                    spacing += 15
+                label.setContentsMargins(0, spacing, 0, 5)
+                func.extend([key])
+                f_layout.addRow(label)
                 continue
-            icons[name] = icon
-        return icons
 
-    def value_to_qt_widget(value: Any, parent: QtWidgets.QWidget = None) -> Tuple[QtWidgets.QWidget, List]:
-        """
-        Convert a value to a widget. For instance, a float into a QDoubleSpinBox, a bool into a QCheckBox.
+            label = QtWidgets.QLabel(key)
+            f_widget, f_func = value_to_qt_widget(val)
+            func.extend(f_func)
+            f_layout.addRow(label, f_widget)
 
-        The widget is automatically created for supported types:
-        - bool, int, float, str (base types)
-        - list or tuple of base types
-        - dropdown formatted as [int, [str, str, ...]] i.e. [1, ['Option #1', 'Option #2']] where 1 means the default selected option is Option #2.
-        - dictionary of supported values, formatted as {label:value}
+        widget = QtWidgets.QWidget(parent)
+        widget.setLayout(f_layout)
 
-        :return: (widget, funcs) the widget, and a list of get functions to retrieve the value of the widget
-        """
-        widget = None
-        func = []
-        value_type = type(value)
+    return widget, func
 
-        if value_type is float:
-            widget = QtWidgets.QDoubleSpinBox(parent)
-            import decimal
-            decimals = min(6, max(3, abs(decimal.Decimal(str(value)).as_tuple().exponent)))
-            widget.setDecimals(decimals)
-            widget.setRange(-9999999., 9999999.)
-            widget.setValue(value)
-            func = [widget.value]
 
-        elif value_type is int:
-            widget = QtWidgets.QSpinBox(parent)
-            widget.setRange(-9999999, 9999999)
-            widget.setValue(value)
-            func = [widget.value]
-
-        elif value_type is str:
-            widget = QtWidgets.QLineEdit(parent)
-            widget.setText(value)
-            func = [widget.text]
-
-        elif value_type is bool:
-            widget = QtWidgets.QCheckBox("Activate", parent)
-            widget.setChecked(value)
-            func = [widget.isChecked]
-
-        # List or tuple of PODs
-        elif value_type in [list, tuple] and len(value) > 0 and all(isinstance(n, (float, int, str, bool)) for n in value):
-            h_layout = QtWidgets.QHBoxLayout()
-            h_layout.setSpacing(0)
-            h_layout.setContentsMargins(0, 0, 0, 0)
-            h_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
-            for v in value:
-                f_widget, f_func = value_to_qt_widget(v, None)
-                func.extend(f_func)
-                h_layout.addWidget(f_widget)
-            widget = QtWidgets.QWidget(parent)
-            widget.setLayout(h_layout)
-
-        # Dropdown with specified index as int [1, ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in range(len(value[1]))" check, as developer can remove choices
-        # Dropdown with specified index as str ['Second line', ['First line', 'Second line', 'Third line']] # NOTE: Removed the "value[0] in value[1]" check, as developer can remove choices
-        elif value_type is list and (len(value) == 2) and isinstance(value[0], (int, str)) and isinstance(value[1], list) and all(isinstance(n, str) for n in value[1]):
-            index = value[0]
-            if isinstance(index, str):
-                index = value[1].index(value[0])
-            options = value[1]
-            widget = QtWidgets.QComboBox(parent)
-            widget.addItems(options)
-            widget.setCurrentIndex(max(0, min(len(options) - 1, index)))
-            func = [widget.currentIndex]  # str index will be replaced with int index once saved
-
-        # Dictionary of label:value
-        elif value_type is dict:
-            f_layout = QtWidgets.QFormLayout()
-            f_layout.setVerticalSpacing(1)
-            f_layout.setHorizontalSpacing(10)
-            f_layout.setContentsMargins(0, 0, 0, 0)
-            f_layout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
-
-            for key, val in value.items():
-
-                if key.endswith('$') and key.startswith('$'):
-                    # Section separator
-                    label = QtWidgets.QLabel()
-                    label.setText("[ " + key[1:-1].upper() + " ]")
-                    label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignBottom)
-                    spacing = 0
-                    if f_layout.rowCount() > 0:
-                        spacing += 15
-                    label.setContentsMargins(0, spacing, 0, 5)
-                    func.extend([key])
-                    f_layout.addRow(label)
-                    continue
-
-                label = QtWidgets.QLabel(key)
-                f_widget, f_func = value_to_qt_widget(val)
-                func.extend(f_func)
-                f_layout.addRow(label, f_widget)
-
-            widget = QtWidgets.QWidget(parent)
-            widget.setLayout(f_layout)
-
-        return widget, func
-
+if sys.version_info < (3, 7) and robodialogs.ENABLE_QT:
+    _require_qt()
 
 """
 Tkinter utilities
@@ -830,7 +861,7 @@ if robodialogs.ENABLE_TK:
         :type RDK: robolink.Robolink
 
         :return: The QApplication instance
-        :rtype: :class:`PySide2.QtWidgets.QApplication`
+        :rtype: :class:`PySide6.QtWidgets.QApplication`
         """
 
         app = tkinter.Tk()
@@ -1332,6 +1363,7 @@ def ShowExample():
                 robodialogs.ShowMessageYesNo('Are you enjoying RoboDK?')
 
             def showIcons():
+                _require_qt()
                 icons = get_qt_robodk_icons()
                 if icons:
                     icon_widget = QtWidgets.QWidget()
@@ -1343,7 +1375,7 @@ def ShowExample():
                     icon_widget.adjustSize()
 
                     scroll_widget = QtWidgets.QScrollArea()
-                    scroll_widget.setFrameShape(QtWidgets.QFrame.NoFrame)
+                    scroll_widget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
                     scroll_widget.setWidgetResizable(True)
                     scroll_widget.setWidget(icon_widget)
                     scroll_widget.setMinimumWidth(icon_widget.minimumWidth() + 20)
@@ -1353,7 +1385,7 @@ def ShowExample():
                     icon_window.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
                     icon_window.setLayout(QtWidgets.QVBoxLayout())
                     icon_window.layout().addWidget(scroll_widget)
-                    icon_window.exec_()
+                    robodialogs._exec(icon_window)
                 else:
                     from robodk import robodialogs
                     robodialogs.ShowMessage('No icons to display! Is the plug-in enabled?')

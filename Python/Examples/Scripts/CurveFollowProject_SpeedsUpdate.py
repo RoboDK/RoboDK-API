@@ -5,10 +5,10 @@
 # https://robodk.com/doc/en/PythonAPI/examples.html#robot-machining-settings
 
 from robodk.robolink import *  # RoboDK API
-from robodk import roboapps
+from robodk import roboapps, robodialogs
 
-from PySide2.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDoubleSpinBox, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout
-from PySide2 import QtCore
+from PySide6.QtWidgets import QApplication, QMainWindow, QLineEdit, QProgressBar, QDoubleSpinBox, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFormLayout
+from PySide6 import QtCore
 
 RDK = Robolink()
 
@@ -111,13 +111,19 @@ class set_speed(QMainWindow):
 if __name__ == "__main__":
 
     #RDK = Robolink()
-    app = roboapps.get_qt_app(True, True)
+    if getattr(robodialogs, 'QT_API', None) == 'PySide6':
+        app = roboapps.get_qt_app(True, True)  # QApplication with the RoboDK icon and theme
+    else:
+        # The robodk package in use predates 6.1.0 and runs its dialogs on PySide2: its QApplication would be a Qt 5 one,
+        # and this Qt 6 window would fail with "QWidget: Must construct a QApplication before a QWidget".
+        print('The robodk package in use does not support PySide6 (update it to 6.1.0 or newer). Running without the RoboDK theme.')
+        app = QApplication.instance() or QApplication([])
     
     window = set_speed()
-    window.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+    window.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     window.show()
 
-    app.exec_()
+    app.exec()
 
 
 
