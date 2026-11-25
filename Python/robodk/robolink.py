@@ -595,6 +595,27 @@ def getPathIcon() -> str:
     return iconpath
 
 
+# Packages that ship their own copy of the Qt 5 DLLs (Qt5Core.dll, Qt5Gui.dll, ...). Windows loads a DLL by name once per
+# process, so importing one of these after PySide2 (which ships another Qt 5 build) makes it run on PySide2's DLLs and the
+# process dies with an access violation (exit code 0xC0000005, -1073741819) that Python cannot catch. The reverse order and
+# PySide6 (Qt 6 DLLs have different names) are fine. Checked by import_install() before importing.
+QT5_BUNDLED_MODULES = ('pymeshlab',)
+
+
+def _check_qt_dll_clash(module_name: str):
+    """Raise ImportError instead of letting the process crash when importing module_name would load a second Qt 5 or a Qt 6
+    into a process that already holds PySide2's Qt 5 (both end in an access violation Python cannot catch)."""
+    import sys
+    top = module_name.split('.')[0]
+    if top in sys.modules:
+        return
+    pyside2_loaded = 'PySide2' in sys.modules
+    if top in QT5_BUNDLED_MODULES and pyside2_loaded:
+        raise ImportError("Importing %s after PySide2 would crash Python: both ship Qt 5 DLLs with the same names and PySide2's copies are already loaded. Import %s before PySide2, or use PySide6-Essentials instead of PySide2 (RoboDK v7)." % (top, top))
+    if top == 'PySide6' and pyside2_loaded:
+        raise ImportError("Importing PySide6 after PySide2 would crash Python: Qt 5 is already loaded in this process. Use one Qt binding per script (PySide6-Essentials is the one RoboDK v7 ships).")
+
+
 def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = None, upgrade_pip: bool = False):
     """Import a module by first installing it if the corresponding package is not available. If the module name does not match the pip install command, provide the pip_name for install purposes.
     Optionally, you can pass the RoboDK API Robolink object to see install progress in RoboDK's status bar.
@@ -613,7 +634,10 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
         import_install('numpy', 'numpy>=1.23')
         import_install('pandas', 'pandas~=1.4')
 
+    Raises ImportError (instead of crashing the process) when the module bundles its own Qt 5 DLLs and PySide2 was already
+    imported, see QT5_BUNDLED_MODULES.
     """
+    _check_qt_dll_clash(module_name)
     try:
         exec('import ' + module_name, globals())
         return

@@ -28,19 +28,25 @@ if sys.version_info.major >= 3 and sys.version_info.minor >= 5:
 
 # robodialogs is compatible with PySide6, PySide2 and tkinter. At least one must be present.
 # Qt is preferred when available: PySide6 first, then PySide2 (legacy, Python 3.10 and older).
+# Exception: if the script already imported PySide2, PySide2 is used. Loading Qt 6 into a process that already holds
+# Qt 5 crashes it (access violation, no traceback), so this module never loads a second Qt major.
 QT_API = None  #: Name of the Qt binding in use ('PySide6' or 'PySide2'), or None if Qt is not available
 ENABLE_QT = False
-try:
-    from PySide6 import QtWidgets, QtCore
-    QT_API = 'PySide6'
-    ENABLE_QT = True
-except ImportError:
+if 'PySide2' in sys.modules and 'PySide6' not in sys.modules:
+    _QT_CANDIDATES = ('PySide2', 'PySide6')
+else:
+    _QT_CANDIDATES = ('PySide6', 'PySide2')
+for _qt_name in _QT_CANDIDATES:
     try:
-        from PySide2 import QtWidgets, QtCore
-        QT_API = 'PySide2'
+        if _qt_name == 'PySide6':
+            from PySide6 import QtWidgets, QtCore
+        else:
+            from PySide2 import QtWidgets, QtCore
+        QT_API = _qt_name
         ENABLE_QT = True
+        break
     except ImportError:
-        pass
+        continue
 
 ENABLE_TK = False
 try:
