@@ -672,13 +672,16 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
         msg = "Installing required Python module: " + module_name
 
         def execute(cmd):
+            """Run a command, echo its output live and return it as one string."""
             print("Running command:")
             print(cmd)
             print("...")
+            output = []
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  #, universal_newlines=True)
-            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+            for line in io.TextIOWrapper(proc.stdout, encoding="utf-8", errors="replace"):  # or another encoding
                 # display line output
                 line = line.strip()
+                output.append(line)
                 print(line)
                 msgproc = msg + " - " + line
                 if rdk:
@@ -687,6 +690,26 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                     sys.stdout.flush()
                     print("Status Message: " + msgproc)
                     sys.stdout.flush()
+            proc.wait()
+            return '\n'.join(output)
+
+        def refresh_import_system(pip_output):
+            """Make the package pip just installed importable in this process.
+
+            The import system caches the content of every sys.path folder, and a folder that did not exist when the
+            failed import was attempted (typically the user site-packages, created by pip's first "Defaulting to user
+            installation" fallback when the Python folder is not writable) is remembered as having no importer at all
+            until importlib.invalidate_caches() is called. Without it, the package is only found after a restart."""
+            import importlib
+            importlib.invalidate_caches()
+            if 'Defaulting to user installation' in pip_output:
+                import site
+                import os
+                user_site = site.getusersitepackages()
+                if os.path.isdir(user_site) and not any(os.path.normcase(os.path.abspath(p)) == os.path.normcase(user_site) for p in sys.path):
+                    print("Warning: %s was installed in the user folder (%s) because the Python folder is not writable. Adding it to sys.path for this process." % (pip_name, user_site))
+                    sys.path.append(user_site)
+                    importlib.invalidate_caches()
 
         if pip_name is None:
             pip_name = module_name
@@ -703,7 +726,8 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 cmd = sys.executable + ' -m pip install --upgrade pip'
                 execute(cmd)
             cmd = sys.executable + ' -m pip install ' + pip_name
-            execute(cmd)
+            pip_output = execute(cmd)
+            refresh_import_system(pip_output)
             exec('import ' + module_name, globals())
             msg = "Python module installed successfully: " + module_name + "."
             if rdk:
@@ -713,8 +737,8 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
                 print("Status Message: " + msg)
                 sys.stdout.flush()
 
-        except Exception:
-            msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges" % module_name
+        except Exception as e:
+            msg = "Unable to load or install <strong>%s</strong>. Make sure you have internet connection and administrator privileges (%s)" % (module_name, str(e).strip() or type(e).__name__)
             print(msg)
             if rdk:
                 rdk.ShowMessage(msg, True)

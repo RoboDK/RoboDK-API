@@ -43,6 +43,50 @@ class TestImport(unittest.TestCase):
             self.assertTrue(hasattr(dialog, 'exec') or hasattr(dialog, 'exec_'))
         self.setUp()
 
+    def test_import_install_refreshes_import_system(self):
+        # After pip installs a package, import_install must import it in the same process even when the package landed in
+        # a sys.path folder that did not exist at the first (failed) import, or in the user site-packages pip fell back to
+        import sys, os, io, subprocess, site, tempfile
+        from robodk import robolink
+
+        def fake_pip(folder, name, user_fallback):
+
+            class FakePopen:
+
+                def __init__(self, cmd, **kwargs):
+                    os.makedirs(folder)
+                    with open(os.path.join(folder, name + '.py'), 'w') as f:
+                        f.write('X = 1\n')
+                    text = ('Defaulting to user installation because normal site-packages is not writeable\n' if user_fallback else '') + 'Successfully installed ' + name + '\n'
+                    self.stdout = io.BytesIO(text.encode())
+
+                def wait(self):
+                    return 0
+
+            return FakePopen
+
+        cases = [('zz_probe_cached_folder', True, False), ('zz_probe_user_site', False, True)]
+        originals = subprocess.Popen, site.getusersitepackages
+        folders = []
+        try:
+            for name, on_path_before, user_fallback in cases:
+                folder = os.path.join(tempfile.mkdtemp(), 'site-packages')  # does not exist yet: importlib caches "no importer"
+                folders.append(folder)
+                if on_path_before:
+                    sys.path.append(folder)
+                subprocess.Popen = fake_pip(folder, name, user_fallback)
+                site.getusersitepackages = lambda folder=folder: folder
+                robolink.import_install(name)
+                self.assertIn(name, sys.modules, name)
+                self.assertEqual(os.path.normcase(os.path.dirname(sys.modules[name].__file__)), os.path.normcase(folder))
+                self.assertTrue(any(os.path.normcase(os.path.abspath(p)) == os.path.normcase(folder) for p in sys.path))
+        finally:
+            subprocess.Popen, site.getusersitepackages = originals
+            for name, _, _ in cases:
+                sys.modules.pop(name, None)
+            sys.path[:] = [p for p in sys.path if os.path.normcase(os.path.abspath(p)) not in {os.path.normcase(f) for f in folders}]
+        self.setUp()
+
     def test_runtime_clash_guard(self):
         # import_install must refuse, with an ImportError, to import a runtime-sensitive module while the process runs on
         # the private MSVC runtime of a PySide2 package folder (simulated here)
