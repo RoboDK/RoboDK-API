@@ -595,25 +595,47 @@ def getPathIcon() -> str:
     return iconpath
 
 
-# Packages that ship their own copy of the Qt 5 DLLs (Qt5Core.dll, Qt5Gui.dll, ...). Windows loads a DLL by name once per
-# process, so importing one of these after PySide2 (which ships another Qt 5 build) makes it run on PySide2's DLLs and the
-# process dies with an access violation (exit code 0xC0000005, -1073741819) that Python cannot catch. The reverse order and
-# PySide6 (Qt 6 DLLs have different names) are fine. Checked by import_install() before importing.
-QT5_BUNDLED_MODULES = ('pymeshlab',)
+# The PySide2 wheel ships its own copy of the Microsoft C runtime (msvcp140.dll & co., a 2019 build) inside its package
+# folder, and Windows resolves an extension's dependencies from the extension's own folder first. A process that imported
+# PySide2 first therefore runs on that 2019 runtime, and every binary built with a newer compiler that is loaded afterwards
+# (PySide6, pymeshlab, ...) dies with an access violation (exit code 0xC0000005, -1073741819) that Python cannot catch.
+# The RoboDK Python bundle removes those per-package runtime copies; a plain "pip install PySide2" does not.
+# import_install() detects the loaded runtime and raises ImportError instead of crashing for the modules listed here.
+RUNTIME_SENSITIVE_MODULES = ('pymeshlab', 'PySide6')
+
+
+def _private_runtime_loaded():
+    """Path of a Microsoft C runtime DLL that this process loaded from a PySide2/shiboken2 package folder, or None."""
+    import ctypes
+    try:
+        k = ctypes.windll.kernel32
+        k.GetModuleHandleW.restype = ctypes.c_void_p
+        k.GetModuleHandleW.argtypes = [ctypes.c_wchar_p]
+        k.GetModuleFileNameW.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint32]
+    except Exception:  # not Windows
+        return None
+    for name in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'ucrtbase.dll', 'concrt140.dll'):
+        handle = k.GetModuleHandleW(name)
+        if not handle:
+            continue
+        buf = ctypes.create_unicode_buffer(1024)
+        k.GetModuleFileNameW(handle, buf, 1024)
+        parts = buf.value.replace('/', chr(92)).lower().split(chr(92))
+        if len(parts) >= 2 and parts[-2] in ('pyside2', 'shiboken2'):
+            return buf.value
+    return None
 
 
 def _check_qt_dll_clash(module_name: str):
-    """Raise ImportError instead of letting the process crash when importing module_name would load a second Qt 5 or a Qt 6
-    into a process that already holds PySide2's Qt 5 (both end in an access violation Python cannot catch)."""
+    """Raise ImportError instead of letting the process crash when the MSVC runtime in use is the private 2019 copy of a
+    PySide2/shiboken2 package folder and module_name needs a newer one."""
     import sys
     top = module_name.split('.')[0]
-    if top in sys.modules:
+    if top in sys.modules or top not in RUNTIME_SENSITIVE_MODULES:
         return
-    pyside2_loaded = 'PySide2' in sys.modules
-    if top in QT5_BUNDLED_MODULES and pyside2_loaded:
-        raise ImportError("Importing %s after PySide2 would crash Python: both ship Qt 5 DLLs with the same names and PySide2's copies are already loaded. Import %s before PySide2, or use PySide6-Essentials instead of PySide2 (RoboDK v7)." % (top, top))
-    if top == 'PySide6' and pyside2_loaded:
-        raise ImportError("Importing PySide6 after PySide2 would crash Python: Qt 5 is already loaded in this process. Use one Qt binding per script (PySide6-Essentials is the one RoboDK v7 ships).")
+    runtime = _private_runtime_loaded()
+    if runtime:
+        raise ImportError("Importing %s now would crash Python: this process runs on the 2019 Microsoft C runtime that PySide2 loaded from %s, and %s needs a newer one. Import %s before PySide2, delete the msvcp140*/vcruntime140*/ucrtbase.dll copies from the PySide2 and shiboken2 folders (the RoboDK bundle does this), or use PySide6-Essentials." % (top, runtime, top, top))
 
 
 def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = None, upgrade_pip: bool = False):
@@ -634,8 +656,8 @@ def import_install(module_name: str, pip_name: str = None, rdk: 'Robolink' = Non
         import_install('numpy', 'numpy>=1.23')
         import_install('pandas', 'pandas~=1.4')
 
-    Raises ImportError (instead of crashing the process) when the module bundles its own Qt 5 DLLs and PySide2 was already
-    imported, see QT5_BUNDLED_MODULES.
+    Raises ImportError (instead of crashing the process) when the module needs a newer Microsoft C runtime than the private
+    copy PySide2 loaded, see RUNTIME_SENSITIVE_MODULES.
     """
     _check_qt_dll_clash(module_name)
     try:

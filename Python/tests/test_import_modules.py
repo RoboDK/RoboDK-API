@@ -43,21 +43,22 @@ class TestImport(unittest.TestCase):
             self.assertTrue(hasattr(dialog, 'exec') or hasattr(dialog, 'exec_'))
         self.setUp()
 
-    def test_qt5_dll_clash_guard(self):
-        # import_install must refuse, with an ImportError, to import a Qt 5 bundling module once PySide2 is loaded
-        import sys, types
+    def test_runtime_clash_guard(self):
+        # import_install must refuse, with an ImportError, to import a runtime-sensitive module while the process runs on
+        # the private MSVC runtime of a PySide2 package folder (simulated here)
+        import sys
         from robodk import robolink
-        fake = types.ModuleType('PySide2')
-        had_pyside2 = 'PySide2' in sys.modules
-        sys.modules.setdefault('PySide2', fake)
+        original = robolink._private_runtime_loaded
+        robolink._private_runtime_loaded = lambda: 'C:/some/site-packages/PySide2/msvcp140.dll'
         try:
             self.assertNotIn('pymeshlab', sys.modules)
             with self.assertRaises(ImportError) as ctx:
                 robolink.import_install('pymeshlab')
             self.assertIn('PySide2', str(ctx.exception))
+            robolink._private_runtime_loaded = lambda: None
+            robolink._check_qt_dll_clash('pymeshlab')  # must not raise: a shared runtime is in use
         finally:
-            if not had_pyside2:
-                sys.modules.pop('PySide2', None)
+            robolink._private_runtime_loaded = original
         self.setUp()
 
     def test_pyside2_already_loaded(self):
@@ -71,9 +72,11 @@ class TestImport(unittest.TestCase):
         proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
         self.assertEqual(proc.returncode, 0, proc.stderr[-500:])
         self.assertIn("API PySide2", proc.stdout)
-        code = chr(10).join(["from PySide2 import QtCore; from robodk import robolink", "try:", "    robolink.import_install('PySide6')", "except ImportError as e:", "    print('GUARD', 'Qt 5' in str(e))"])
+        # import_install('PySide6') after PySide2 either works (shared runtime) or raises; it must never crash the process
+        code = chr(10).join(["from PySide2 import QtCore; from robodk import robolink", "try:", "    robolink.import_install('PySide6'); print('GUARD ok')", "except ImportError as e:", "    print('GUARD', 'runtime' in str(e))"])
         proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
-        self.assertIn("GUARD True", proc.stdout, proc.stderr[-500:])
+        self.assertEqual(proc.returncode, 0, proc.stderr[-500:])
+        self.assertIn("GUARD", proc.stdout, proc.stderr[-500:])
 
     def test_import_legacy(self):
         # Support backward compatibility until we deprecate "from robolink .."
